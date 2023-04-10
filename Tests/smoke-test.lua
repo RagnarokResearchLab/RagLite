@@ -1,5 +1,5 @@
 local specFiles = {
-	"Tests/placeholder-test.lua",
+	"Tests/DB/validate-creature-spawns.lua",
 }
 
 local numFailedTests = C_Runtime.RunBasicTests(specFiles)
