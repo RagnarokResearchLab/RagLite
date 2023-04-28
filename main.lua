@@ -1,5 +1,7 @@
 local uv = require("uv")
 
+local RealmServer = require("Core.RealmServer")
+
 local WorldServer = {}
 
 function WorldServer:StartGameLoop()
@@ -21,6 +23,7 @@ function WorldServer:StartGameLoop()
 		local remainingTickTime = math.max(0, serverTickTimeInMilliseconds - lastTickDurationInMilliseconds)
 		-- print("Sleeping for the remaining tick time", remainingTickTime)
 		uv.sleep(remainingTickTime) -- TODO inaccuarate on Windows, should use QueryPerformanceCounter?
+		uv.run("once") -- Will never get to the runtime's default loop, so poll manually
 	end
 end
 
@@ -48,4 +51,5 @@ function WorldServer:SpawnCreatures(mapID, spawnInfo)
 	printf("%s (%d) spawned in %s", spawnInfo.creatureID, spawnInfo.amount, mapID)
 end
 
+RealmServer:Start()
 WorldServer:StartGameLoop()
