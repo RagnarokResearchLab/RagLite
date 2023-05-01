@@ -1,0 +1,42 @@
+[
+	{
+		"language": "enGB",
+		"name": "Niflheim",
+		"type": "TEST",
+		"population": "Low",
+		"hostName": "localhost",
+		"port": 1734
+	},
+	{
+		"language": "enUS",
+		"name": "Valhalla",
+		"type": "CLASSIC",
+		"population": "Medium",
+		"hostName": "localhost",
+		"port": 1735
+	},
+	{
+		"language": "enUS",
+		"name": "Folkvangr",
+		"type": "RENEWAL",
+		"population": "High",
+		"hostName": "localhost",
+		"port": 1736
+	},
+	{
+		"language": "enUS",
+		"name": "Fensalir",
+		"type": "PVP",
+		"population": "Offline",
+		"hostName": "localhost",
+		"port": 1738
+	},
+	{
+		"language": "enUS",
+		"name": "Hvergelmir",
+		"type": "TBD",
+		"population": "Full",
+		"hostName": "localhost",
+		"port": 1737
+	}
+]
