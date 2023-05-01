@@ -1,0 +1,27 @@
+name: Static Analysis
+
+on:
+  pull_request:
+    paths-ignore:
+      - "README.MD"
+    types: [opened, synchronize, reopened, ready_for_review]
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - "README.MD"
+
+jobs:
+  check-format:
+    name: Lint the codebase
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v1
+
+      - name: Download luacheck
+        run: curl --silent --location --output luacheck https://github.com/lunarmodules/luacheck/releases/download/v1.1.0/luacheck
+
+      - name: Run luacheck
+        run: chmod +x luacheck && ./luacheck .
