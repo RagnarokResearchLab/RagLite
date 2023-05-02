@@ -16,11 +16,10 @@ function WorldServer:StartGameLoop()
 		local timeAfterUpdate = uv.hrtime()
 		local lastTickDurationInNanoseconds = timeAfterUpdate - timeBeforeUpdate
 		local lastTickDurationInMilliseconds = lastTickDurationInNanoseconds / 10E5
-		-- print("Last tick time", lastTickDurationInMilliseconds)
 
 		local remainingTickTime = math.max(0, serverTickTimeInMilliseconds - lastTickDurationInMilliseconds)
-		-- print("Sleeping for the remaining tick time", remainingTickTime)
-		uv.sleep(remainingTickTime) -- TODO inaccuarate on Windows, should use QueryPerformanceCounter?
+		uv.sleep(remainingTickTime)
+
 		uv.run("once") -- Will never get to the runtime's default loop, so poll manually
 	end
 end
