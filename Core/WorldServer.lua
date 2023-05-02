@@ -2,11 +2,14 @@ local uv = require("uv")
 
 local WorldServer = {}
 
+function WorldServer:Start()
+	self:CreateWorldState()
+	self:StartGameLoop()
+end
+
 function WorldServer:StartGameLoop()
 	local TARGET_FPS = 50
 	local serverTickTimeInMilliseconds = 1000 / TARGET_FPS
-
-	self:CreateWorldState()
 
 	while true do
 		local timeBeforeUpdate = uv.hrtime()
