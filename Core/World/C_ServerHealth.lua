@@ -46,6 +46,10 @@ function C_ServerHealth.ComputeMetricsOverInterval(observationIntervalInMillisec
 		error("Cannot compute server health metrics on an empty data set", 0)
 	end
 
+	if tickCount == 1 then
+		error("Cannot compute server health metrics for a single data point", 0)
+	end
+
 	local averageTickDuration = accumulatedTickDuration / tickCount
 
 	local minTickDuration = math_min(unpack(tickDurations))
