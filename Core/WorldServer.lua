@@ -6,6 +6,7 @@ local C_ServerHealth = require("Core.World.C_ServerHealth")
 local TARGET_FPS = 50
 
 local WorldServer = {
+	worldStateUpdateTimer = nil,
 	tickTimeInMilliseconds = 1000 / TARGET_FPS,
 }
 
@@ -53,9 +54,9 @@ function WorldServer:HEALTH_STATUS_UPDATE(elapsedTimeInMilliseconds)
 end
 
 function WorldServer:StartGameLoop()
-	while true do
+	self.worldStateUpdateTimer = C_Timer.NewTicker(self.tickTimeInMilliseconds, function()
 		self:SimulateNextTick()
-	end
+	end)
 end
 
 function WorldServer:SimulateNextTick()
@@ -68,11 +69,6 @@ function WorldServer:SimulateNextTick()
 	local lastTickDurationInMilliseconds = lastTickDurationInNanoseconds / 10E5
 
 	C_ServerHealth.UpdateWithTickTime(lastTickDurationInMilliseconds)
-
-	local remainingTickTime = math.max(0, self.tickTimeInMilliseconds - lastTickDurationInMilliseconds)
-	uv.sleep(remainingTickTime)
-
-	uv.run("once") -- Will never get to the runtime's default loop, so poll manually
 end
 
 function WorldServer:CreateWorldState()
