@@ -1,3 +1,4 @@
+local ffi = require("ffi")
 local uv = require("uv")
 
 local C_ServerHealth = require("Core.World.C_ServerHealth")
@@ -9,9 +10,26 @@ local WorldServer = {
 }
 
 function WorldServer:Start()
+	self:SetProcessTimerResolution()
 	self:CreateWorldState()
 	self:EnableHealthStatusUpdates()
 	self:StartGameLoop()
+end
+
+function WorldServer:SetProcessTimerResolution()
+	if ffi.os ~= "Windows" then
+		return -- Linux/OSX should already use a 1ms clock by default
+	end
+
+	ffi.cdef([[
+		typedef unsigned int UINT;
+		UINT timeBeginPeriod(UINT uPeriod);
+		UINT timeEndPeriod(UINT uPeriod);
+	]])
+
+	local winmm = ffi.load("winmm")
+	-- The global clock cycle is 15.6ms on Windows, which delays libuv's timers far too long to reach the targeted tick rate
+	assert(winmm.timeBeginPeriod(1), "Failed to set process timer resolution")
 end
 
 function WorldServer:EnableHealthStatusUpdates()
