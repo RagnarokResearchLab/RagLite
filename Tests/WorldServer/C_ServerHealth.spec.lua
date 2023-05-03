@@ -51,6 +51,17 @@ describe("C_ServerHealth", function()
 			assertThrows(computeMetricsOverZeroInterval, expectedErrorMessage)
 		end)
 
+		it("should throw when there is only a single data point", function()
+			local function computeMetricsOnSingleDataPoint()
+				C_ServerHealth.Reset()
+				C_ServerHealth.UpdateWithTickTime(1)
+				C_ServerHealth.ComputeMetricsOverInterval(123)
+			end
+			-- Technically, we could just set standardDeviation to zero, but computing metrics for one tick doesn't make sense
+			local expectedErrorMessage = "Cannot compute server health metrics for a single data point"
+			assertThrows(computeMetricsOnSingleDataPoint, expectedErrorMessage)
+		end)
+
 		it("should return a table with the updated metrics when the current data set is not empty", function()
 			C_ServerHealth.UpdateWithTickTime(44)
 			C_ServerHealth.UpdateWithTickTime(103)
