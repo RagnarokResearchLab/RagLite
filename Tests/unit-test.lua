@@ -1,5 +1,5 @@
 local specFiles = {
-	"Tests/placeholder-test.lua",
+	"Tests/WorldServer/C_ServerHealth.spec.lua",
 }
 
 local numFailedSections = C_Runtime.RunDetailedTests(specFiles)

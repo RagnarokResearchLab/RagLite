@@ -1,10 +1,33 @@
 local uv = require("uv")
 
+local C_ServerHealth = require("Core.World.C_ServerHealth")
+
 local WorldServer = {}
 
 function WorldServer:Start()
 	self:CreateWorldState()
+	self:EnableHealthStatusUpdates()
 	self:StartGameLoop()
+end
+
+function WorldServer:EnableHealthStatusUpdates()
+	local observationStartTimeInNanoseconds = uv.hrtime()
+	self.healthStatusTicker = C_Timer.NewTicker(1000 * 10, function()
+		local now = uv.hrtime()
+		local elapsedTimeInNanoseconds = now - observationStartTimeInNanoseconds
+		local elapsedTimeInMilliseconds = elapsedTimeInNanoseconds / 10E5
+		self:HEALTH_STATUS_UPDATE(elapsedTimeInMilliseconds)
+		observationStartTimeInNanoseconds = now
+	end)
+end
+
+function WorldServer:HEALTH_STATUS_UPDATE(elapsedTimeInMilliseconds)
+	local metrics = C_ServerHealth.ComputeMetricsOverInterval(elapsedTimeInMilliseconds)
+	local healthStatusSummaryText = C_ServerHealth.GetFormattedMetricsString(metrics)
+
+	print(healthStatusSummaryText)
+
+	C_ServerHealth.Reset()
 end
 
 function WorldServer:StartGameLoop()
@@ -19,6 +42,8 @@ function WorldServer:StartGameLoop()
 		local timeAfterUpdate = uv.hrtime()
 		local lastTickDurationInNanoseconds = timeAfterUpdate - timeBeforeUpdate
 		local lastTickDurationInMilliseconds = lastTickDurationInNanoseconds / 10E5
+
+		C_ServerHealth.UpdateWithTickTime(lastTickDurationInMilliseconds)
 
 		local remainingTickTime = math.max(0, serverTickTimeInMilliseconds - lastTickDurationInMilliseconds)
 		uv.sleep(remainingTickTime)
