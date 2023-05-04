@@ -18,6 +18,9 @@ globals = {
 	"assertTrue",
 	"before",
 	"describe",
+	"dump",
+	"format",
 	"it",
+	"path",
 	"printf",
 }
