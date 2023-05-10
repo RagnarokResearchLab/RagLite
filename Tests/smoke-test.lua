@@ -1,3 +1,5 @@
+package.path = "?.lua"
+
 local specFiles = {
 	"Tests/DB/validate-creature-spawns.lua",
 	"Tests/RealmServer/serves-realm-list.lua",
