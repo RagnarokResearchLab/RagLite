@@ -1,3 +1,5 @@
+package.path = "?.lua"
+
 local RealmServer = require("Core.RealmServer")
 local WorldServer = require("Core.WorldServer")
 
