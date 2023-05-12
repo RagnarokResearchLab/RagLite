@@ -7,6 +7,7 @@ local tonumber = tonumber
 
 local bit_band = bit.band
 local bit_rshift = bit.rshift
+local string_filesize = string.filesize
 local ffi_cast = ffi.cast
 local ffi_sizeof = ffi.sizeof
 local ffi_string = ffi.string
@@ -221,9 +222,9 @@ function RagnarokGRF:ExtractFileInMemory(fileName)
 	local timeToDecompress = (timeAfterDecompress - timeAfterRead) / 10E5
 
 	printf(
-		"[RagnarokGRF] Blocking read for %.2f ms; decompressed %d bytes in %.2f ms",
+		"[RagnarokGRF] Blocking read for %.2f ms; decompressed %s in %.2f ms",
 		timeToRead,
-		entry.byteAlignedSizeInBytes,
+		string_filesize(entry.byteAlignedSizeInBytes),
 		timeToDecompress
 	)
 
