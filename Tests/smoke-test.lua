@@ -1,6 +1,8 @@
 package.path = "?.lua"
 
 local specFiles = {
+	"Tests/AssetServer/404-not-found.lua",
+	"Tests/AssetServer/serves-grf-contents.lua",
 	"Tests/DB/validate-creature-spawns.lua",
 	"Tests/RealmServer/serves-realm-list.lua",
 }
