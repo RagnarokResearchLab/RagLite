@@ -4,13 +4,17 @@ RealmServer:Start()
 
 local uv = require("uv")
 
-local function onRealmListReceived(client, chunk)
+local receivedChunks = buffer.new()
+
+local function assertRealmListWasReceived(client)
 	local expectedFileContents = C_FileSystem.ReadFile("Config/realm-list.json")
 	local expectedContentLength = #expectedFileContents
-	local contentLength = tonumber(chunk:match("Content%-Length: (%d+)"))
-	local contentType = chunk:match("Content%-Type: application/json; charset=utf%-8")
-	local status = chunk:match("HTTP/1%.1 200 OK")
-	local responseBody = chunk:sub(#chunk - contentLength + 1)
+
+	local chunks = tostring(receivedChunks)
+	local contentLength = tonumber(chunks:match("Content%-Length: (%d+)"))
+	local contentType = chunks:match("Content%-Type: application/json; charset=utf%-8")
+	local status = chunks:match("HTTP/1%.1 200 OK")
+	local responseBody = chunks:sub(#chunks - contentLength + 1)
 
 	client:shutdown()
 	client:close()
@@ -37,17 +41,23 @@ local function createTestClient(realmsRoute)
 				return
 			end
 
-			-- Daringly, assume it arrives in a single chunk (because it's unlikely to ever exceed the OS' buffer size)
-			onRealmListReceived(client, chunk)
+			receivedChunks:put(chunk)
 		end)
 		client:write("GET " .. realmsRoute .. " HTTP/1.1\r\nHost: example.com\r\n\r\n")
 	end)
+
+	return client
 end
 
-createTestClient("/realms/")
-createTestClient("/realms")
+local clientA = createTestClient("/realms/")
+local clientB = createTestClient("/realms")
 
-C_Timer.After(100, function()
+C_Timer.After(150, function()
+	assertRealmListWasReceived(clientA)
+	assertRealmListWasReceived(clientB)
+end)
+
+C_Timer.After(300, function()
 	RealmServer:Stop()
 end)
 
