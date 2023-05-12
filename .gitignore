@@ -1,5 +1,6 @@
 *.log
 data.grf
+*.mp3
 *.bin
 *.exe
 evo
