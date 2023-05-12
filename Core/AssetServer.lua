@@ -1,3 +1,5 @@
+local uv = require("uv")
+
 local string_filesize = string.filesize
 local printf = _G.printf
 
@@ -57,6 +59,13 @@ end
 function AssetServer:FILE_DATA_REQUESTED(requestID, requestedFilePath)
 	print("[AssetServer] FILE_DATA_REQUESTED", requestID, requestedFilePath)
 
+	local absoluteFilePath = path.join(uv.cwd(), requestedFilePath)
+	local hasFileOnDisk = C_FileSystem.Exists(absoluteFilePath)
+	if hasFileOnDisk then
+		self:SendLocalFile(requestID, absoluteFilePath)
+		return
+	end
+
 	local hasFileInGRF = self.grfArchive:IsFileEntry(requestedFilePath)
 	if not hasFileInGRF then
 		self:SendNotFoundError(requestID)
@@ -81,6 +90,25 @@ function AssetServer:SendNotFoundError(requestID)
 	print("[AssetServer] Sending 404 error in response to request " .. requestID)
 	self.webserver:WriteStatus(requestID, "404 Not Found")
 	self.webserver:SendResponse(requestID, "")
+end
+
+function AssetServer:SendLocalFile(requestID, requestedFilePath)
+	print("[AssetServer] Serving local file in response to request " .. requestID)
+	local responseBody = C_FileSystem.ReadFile(requestedFilePath)
+
+	self.webserver:WriteStatus(requestID, "200 OK")
+	self.webserver:WriteHeader(requestID, "Access-Control-Allow-Origin", "*") -- Avoid CORS issues in the WebView
+
+	local fileType = path.extname(requestedFilePath)
+	fileType = string.lower(fileType)
+	local isScriptFile = (fileType == ".js") or (fileType == ".mjs")
+	if isScriptFile then
+		self.webserver:WriteHeader(requestID, "Content-Type", "text/javascript")
+	else
+		self.webserver:WriteHeader(requestID, "Content-Type", "application/octet-stream")
+	end
+
+	self.webserver:SendResponse(requestID, responseBody)
 end
 
 return AssetServer
