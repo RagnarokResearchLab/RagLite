@@ -241,6 +241,21 @@ function RagnarokGRF:ExtractFileInMemory(fileName)
 	return decompressedBuffer
 end
 
+function RagnarokGRF:IsFileEntry(fileName)
+	-- Windows paths are problematic on other platforms
+	fileName = string_lower(fileName)
+	fileName = fileName:gsub("\\", "/")
+
+	local firstCharacter = fileName:sub(1, 1)
+	local isAbsolutePosixPath = (firstCharacter == "/")
+	if isAbsolutePosixPath then -- HTTP route handlers may add this (it's unnecessary and not how GRF paths are stored)
+		fileName = fileName:sub(2)
+	end
+
+	local entry = self.fileTable.entries[fileName]
+	return entry ~= nil
+end
+
 ffi.cdef(RagnarokGRF.cdefs)
 assert(RagnarokGRF.HEADER_SIZE_IN_BYTES == ffi_sizeof("grf_header_t")) -- Basic sanity check
 
