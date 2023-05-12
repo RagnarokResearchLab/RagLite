@@ -17,6 +17,7 @@ globals = {
 	"assertThrows",
 	"assertTrue",
 	"before",
+	"buffer",
 	"describe",
 	"dump",
 	"format",
