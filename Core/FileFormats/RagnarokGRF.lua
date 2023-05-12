@@ -47,6 +47,7 @@ local RagnarokGRF = {
 
 function RagnarokGRF:Construct()
 	local instance = {
+		pathToGRF = "",
 		fileTable = {},
 	}
 
@@ -73,10 +74,13 @@ function RagnarokGRF:Open(pathToGRF)
 	printf("[RagnarokGRF] Opening archive in read-only mode: %s", pathToGRF)
 	self.fileHandle = assert(io.open(pathToGRF, "rb"))
 
+	self.pathToGRF = pathToGRF
+
 	self:DecodeArchiveMetadata()
 end
 
 function RagnarokGRF:Close()
+	printf("[RagnarokGRF] Closing handle to archive: %s", self.pathToGRF)
 	self.fileHandle:close()
 end
 
@@ -200,6 +204,12 @@ function RagnarokGRF:ExtractFileInMemory(fileName)
 	-- Windows paths are problematic on other platforms
 	fileName = string_lower(fileName)
 	fileName = fileName:gsub("\\", "/")
+
+	local firstCharacter = fileName:sub(1, 1)
+	local isAbsolutePosixPath = (firstCharacter == "/")
+	if isAbsolutePosixPath then -- HTTP route handlers may add this (it's unnecessary and not how GRF paths are stored)
+		fileName = fileName:sub(2)
+	end
 
 	local entry = self.fileTable.entries[fileName]
 	if not entry then

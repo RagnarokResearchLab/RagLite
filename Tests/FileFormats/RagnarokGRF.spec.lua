@@ -117,6 +117,17 @@ describe("RagnarokGRF", function()
 				"I'm inside the GRF archive, just minding my business. Would you like some tea?"
 			assertEquals(fileContents, expectedFileContents)
 		end)
+
+		it("should be tolerant of absolute paths", function()
+			local grf = RagnarokGRF()
+			grf:Open("Tests/Fixtures/test.grf")
+			local fileContents = grf:ExtractFileInMemory("/subdirectory/hello.txt")
+			grf:Close()
+
+			local expectedFileContents =
+				"I'm inside the GRF archive, just minding my business. Would you like some tea?"
+			assertEquals(fileContents, expectedFileContents)
+		end)
 	end)
 
 	describe("ExtractFileToDisk", function()
