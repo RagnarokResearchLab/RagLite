@@ -7,6 +7,7 @@ local tonumber = tonumber
 
 local bit_band = bit.band
 local bit_rshift = bit.rshift
+local string_filesize = string.filesize
 local ffi_cast = ffi.cast
 local ffi_sizeof = ffi.sizeof
 local ffi_string = ffi.string
@@ -46,6 +47,7 @@ local RagnarokGRF = {
 
 function RagnarokGRF:Construct()
 	local instance = {
+		pathToGRF = "",
 		fileTable = {},
 	}
 
@@ -72,10 +74,13 @@ function RagnarokGRF:Open(pathToGRF)
 	printf("[RagnarokGRF] Opening archive in read-only mode: %s", pathToGRF)
 	self.fileHandle = assert(io.open(pathToGRF, "rb"))
 
+	self.pathToGRF = pathToGRF
+
 	self:DecodeArchiveMetadata()
 end
 
 function RagnarokGRF:Close()
+	printf("[RagnarokGRF] Closing handle to archive: %s", self.pathToGRF)
 	self.fileHandle:close()
 end
 
@@ -200,6 +205,12 @@ function RagnarokGRF:ExtractFileInMemory(fileName)
 	fileName = string_lower(fileName)
 	fileName = fileName:gsub("\\", "/")
 
+	local firstCharacter = fileName:sub(1, 1)
+	local isAbsolutePosixPath = (firstCharacter == "/")
+	if isAbsolutePosixPath then -- HTTP route handlers may add this (it's unnecessary and not how GRF paths are stored)
+		fileName = fileName:sub(2)
+	end
+
 	local entry = self.fileTable.entries[fileName]
 	if not entry then
 		error("Failed to extract file " .. fileName .. " (no such entry exists)", 0)
@@ -221,13 +232,28 @@ function RagnarokGRF:ExtractFileInMemory(fileName)
 	local timeToDecompress = (timeAfterDecompress - timeAfterRead) / 10E5
 
 	printf(
-		"[RagnarokGRF] Blocking read for %.2f ms; decompressed %d bytes in %.2f ms",
+		"[RagnarokGRF] Blocking read for %.2f ms; decompressed %s in %.2f ms",
 		timeToRead,
-		entry.byteAlignedSizeInBytes,
+		string_filesize(entry.byteAlignedSizeInBytes),
 		timeToDecompress
 	)
 
 	return decompressedBuffer
+end
+
+function RagnarokGRF:IsFileEntry(fileName)
+	-- Windows paths are problematic on other platforms
+	fileName = string_lower(fileName)
+	fileName = fileName:gsub("\\", "/")
+
+	local firstCharacter = fileName:sub(1, 1)
+	local isAbsolutePosixPath = (firstCharacter == "/")
+	if isAbsolutePosixPath then -- HTTP route handlers may add this (it's unnecessary and not how GRF paths are stored)
+		fileName = fileName:sub(2)
+	end
+
+	local entry = self.fileTable.entries[fileName]
+	return entry ~= nil
 end
 
 ffi.cdef(RagnarokGRF.cdefs)
