@@ -1,20 +1,20 @@
 {
-	"compilerOptions": {
-	  "target": "es6",
-	  "lib": [ "ES2020", "DOM"],
-	  "module": "none",
-	  "outDir": "./",
-	  "rootDir": "./",
-	  "strict": true,
-	  "moduleResolution": "node",
-	  "esModuleInterop": true,
-	  "allowJs": true,
-	  "checkJs": true,
-	  "sourceMap": false,
-	  "declaration": true,
-	  "incremental": true,
-	  "removeComments": true,
-	  "declarationDir": "./tsbuild/declarations",
-	},
-	"exclude": ["node_modules", "**/*.d.ts"]
-  }
+  "compilerOptions": {
+    "target": "es6",
+    "lib": ["ES2020", "DOM"],
+    "module": "none",
+    "outDir": "./",
+    "rootDir": "./",
+    "strict": true,
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "allowJs": true,
+    "checkJs": true,
+    "sourceMap": false,
+    "declaration": true,
+    "incremental": true,
+    "removeComments": true,
+    "declarationDir": "./tsbuild/declarations"
+  },
+  "exclude": ["node_modules", "**/*.d.ts"]
+}
