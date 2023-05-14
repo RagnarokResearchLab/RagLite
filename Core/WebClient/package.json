@@ -5,6 +5,8 @@
   "main": "test.js",
   "scripts": {
     "test": "exit 0",
+    "checks": "npx prettier --check .",
+    "autoformat": "npx prettier --write .",
     "build": "tsc --noEmit && esbuild demo.ts --bundle --outfile=demo.js --platform=browser --target=es2017",
     "dev": "tsc -w"
   },
@@ -20,6 +22,7 @@
   "homepage": "https://github.com/RagnarokResearchLab/RagLite#readme",
   "devDependencies": {
     "esbuild": "^0.17.19",
+    "prettier": "^2.8.8",
     "typescript": "^5.0.4"
   },
   "dependencies": {
