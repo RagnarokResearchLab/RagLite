@@ -4,3 +4,8 @@ data.grf
 *.bin
 *.exe
 evo
+node_modules
+*.map
+tsbuild
+*.js
+*.tsbuildinfo
