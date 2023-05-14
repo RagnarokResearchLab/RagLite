@@ -21,5 +21,8 @@
   "devDependencies": {
     "esbuild": "^0.17.19",
     "typescript": "^5.0.4"
+  },
+  "dependencies": {
+    "@babylonjs/core": "^6.3.1"
   }
 }
