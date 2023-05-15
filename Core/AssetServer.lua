@@ -1,10 +1,18 @@
 local uv = require("uv")
 
 local string_filesize = string.filesize
+local string_lower = string.lower
 local printf = _G.printf
 
 local AssetServer = {
 	DEFAULT_PORT = 9005,
+	-- Only those types that the browser needs for processing the files correctly are relevant here
+	relevantContentTypes = {
+		[".htm"] = "text/html",
+		[".html"] = "text/html",
+		[".css"] = "text/css",
+		[".js"] = "text/javascript",
+	},
 }
 
 local RagnarokGRF = require("Core.FileFormats.RagnarokGRF")
@@ -51,9 +59,7 @@ function AssetServer:INCOMING_FILE_DATA_REQUEST(webserver, event, payload)
 		return
 	end
 
-	if requestDetails.endpoint == "/*" then
-		self:FILE_DATA_REQUESTED(requestID, requestDetails.url)
-	end
+	self:FILE_DATA_REQUESTED(requestID, requestDetails.url)
 end
 
 function AssetServer:FILE_DATA_REQUESTED(requestID, requestedFilePath)
@@ -95,20 +101,19 @@ end
 function AssetServer:SendLocalFile(requestID, requestedFilePath)
 	print("[AssetServer] Serving local file in response to request " .. requestID)
 	local responseBody = C_FileSystem.ReadFile(requestedFilePath)
+	local contentType = self:GetContentType(requestedFilePath)
 
 	self.webserver:WriteStatus(requestID, "200 OK")
 	self.webserver:WriteHeader(requestID, "Access-Control-Allow-Origin", "*") -- Avoid CORS issues in the WebView
-
-	local fileType = path.extname(requestedFilePath)
-	fileType = string.lower(fileType)
-	local isScriptFile = (fileType == ".js") or (fileType == ".mjs")
-	if isScriptFile then
-		self.webserver:WriteHeader(requestID, "Content-Type", "text/javascript")
-	else
-		self.webserver:WriteHeader(requestID, "Content-Type", "application/octet-stream")
-	end
-
+	self.webserver:WriteHeader(requestID, "Content-Type", contentType)
 	self.webserver:SendResponse(requestID, responseBody)
+end
+
+function AssetServer:GetContentType(requestedFilePath)
+	local fileExtension = path.extname(requestedFilePath)
+	fileExtension = string_lower(fileExtension)
+
+	return self.relevantContentTypes[fileExtension] or "application/octet-stream"
 end
 
 return AssetServer
