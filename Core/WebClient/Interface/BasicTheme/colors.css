@@ -1,0 +1,25 @@
+:root {
+  --text-color: #403c33;
+  --text-dark: #000000;
+  --mouseover-text-color: #666666;
+
+  --accent-color: lightsteelblue;
+
+  --background-color: white;
+  --button-background-color: #fafffb;
+  --button-border-color: rgb(170, 175, 171);
+  --button-border-color-dark: #5a5c69;
+  --button-hover-color: #bed6f2;
+
+  --background-gradient: repeating-linear-gradient(
+    #f5faf6,
+    #f5faf6 2px,
+    #eef3ef 2px,
+    #eef3ef 4px
+  );
+
+  --border-color-dark: black;
+  --border-color-light: #c0c5c1;
+
+  --box-shadow-color: rgba(0, 0, 0, 0.1);
+}

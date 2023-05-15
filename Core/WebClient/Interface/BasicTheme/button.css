@@ -1,0 +1,36 @@
+:root {
+  --button-margin: 0.25rem;
+  --button-transition-duration: 0.4s;
+}
+
+.button {
+  min-width: 5rem;
+
+  cursor: pointer;
+
+  color: var(--text-color);
+  background-color: var(--button-background-color);
+
+  border: 2px solid var(--button-border-color);
+  border-bottom-color: var(--button-border-color-dark);
+  border-right-color: var(--button-border-color-dark);
+  border-radius: var(--border-radius-rounded);
+
+  margin: var(--button-margin);
+  padding: var(--inline-padding);
+
+  transition-duration: var(--button-transition-duration);
+}
+
+.button:hover {
+  background-color: var(--button-hover-color);
+}
+
+.button:active {
+  color: var(--mouseover-text-color);
+
+  border-top-color: var(--button-border-color-dark);
+  border-left-color: var(--button-border-color-dark);
+  border-right-color: var(--button-border-color);
+  border-bottom-color: var(--button-border-color);
+}
