@@ -45,6 +45,7 @@ function CreateDemoScene() {
       new SubMesh(index, 0, verticesCount, index * 6, 6, cube);
     }
 
+    cube.position.y = 2.5;
     cube.material = new MultiMaterial("multi", scene);
 
     const materials = [
@@ -85,4 +86,12 @@ function CreateDemoScene() {
   });
 }
 
+import BasicLoginWindow from "./Interface/LoginUI/BasicLoginWindow";
+
+function CreateBasicUI() {
+  const uiParent = document.getElementById("uiParent") as HTMLDivElement;
+  const loginWindow = new BasicLoginWindow(uiParent);
+}
+
 CreateDemoScene();
+CreateBasicUI();
