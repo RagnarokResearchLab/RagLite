@@ -1,0 +1,14 @@
+/* Global CSS reset for undesirable browser defaults */
+@import "./reset.css";
+
+/* Global theme settings */
+@import "./BasicTheme/colors.css";
+@import "./BasicTheme/fonts.css";
+@import "./BasicTheme/layout.css";
+
+/* Default widget styles */
+@import "./BasicTheme/button.css";
+@import "./BasicTheme/window.css";
+
+/* Overrides for specific components */
+@import "./BasicTheme/Widgets/BasicLoginWindow.css";
