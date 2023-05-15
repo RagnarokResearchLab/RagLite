@@ -27,13 +27,13 @@ describe("RagnarokGRF", function()
 
 			assertEquals(grf.signature, RagnarokGRF.MAGIC_HEADER)
 			assertEquals(grf.encryptionKey, "")
-			assertEquals(grf.fileTableOffsetRelativeToHeader, 352)
+			assertEquals(grf.fileTableOffsetRelativeToHeader, 384)
 			assertEquals(grf.scramblingSeed, 0)
-			assertEquals(grf.fileCount, 3)
+			assertEquals(grf.fileCount, 4)
 			assertEquals(grf.version, 2.0)
 
-			assertEquals(grf.fileTable.compressedSizeInBytes, 87)
-			assertEquals(grf.fileTable.decompressedSizeInBytes, 102)
+			assertEquals(grf.fileTable.compressedSizeInBytes, 111)
+			assertEquals(grf.fileTable.decompressedSizeInBytes, 134)
 			assertEquals(#grf.fileTable.entries, grf.fileCount)
 
 			assertEquals(grf.fileTable.entries["subdirectory/hello.txt"].compressedSizeInBytes, 82)

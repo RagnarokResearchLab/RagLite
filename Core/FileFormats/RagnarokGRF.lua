@@ -144,8 +144,7 @@ function RagnarokGRF:DecodeFileEntries()
 
 	local entries = {}
 	for index = 0, self.fileCount - 1 do
-		local normalizedCaseInsensitiveFilePath = self:DecodeFileName(movingConversionPointer)
-		local numProcessedBytesToSkip = #normalizedCaseInsensitiveFilePath -- Normalization doesn't change the length
+		local normalizedCaseInsensitiveFilePath, numProcessedBytesToSkip = self:DecodeFileName(movingConversionPointer)
 		movingConversionPointer = movingConversionPointer + numProcessedBytesToSkip + 1 -- \0 terminator
 
 		-- Some redundancy could be removed here to reduce memory pressure, but it enables faster lookups
@@ -168,13 +167,11 @@ function RagnarokGRF:DecodeFileEntries()
 end
 
 function RagnarokGRF:DecodeFileName(pointerToNullTerminatedStringBytes)
-	local name = ffi_string(pointerToNullTerminatedStringBytes)
+	local fileName = ffi_string(pointerToNullTerminatedStringBytes)
 
-	-- Converting to a standardized format avoids crossplatform headaches
-	local normalizedFilePath = name:gsub("\\", "/")
-	local normalizedCaseInsensitiveFilePath = normalizedFilePath:lower()
-
-	return normalizedCaseInsensitiveFilePath
+	-- Converting to a standardized format ASAP avoids crossplatform and encoding headaches
+	local normalizedFileName = self:GetNormalizedFilePath(fileName)
+	return normalizedFileName, #fileName
 end
 
 -- To measure (and optimize) the worst-case decompression time, it'll be convenient to find the largest files easily
@@ -201,15 +198,7 @@ end
 function RagnarokGRF:ExtractFileInMemory(fileName)
 	local timeBefore = uv.hrtime()
 
-	-- Windows paths are problematic on other platforms
-	fileName = string_lower(fileName)
-	fileName = fileName:gsub("\\", "/")
-
-	local firstCharacter = fileName:sub(1, 1)
-	local isAbsolutePosixPath = (firstCharacter == "/")
-	if isAbsolutePosixPath then -- HTTP route handlers may add this (it's unnecessary and not how GRF paths are stored)
-		fileName = fileName:sub(2)
-	end
+	fileName = self:GetNormalizedFilePath(fileName)
 
 	local entry = self.fileTable.entries[fileName]
 	if not entry then
@@ -242,15 +231,7 @@ function RagnarokGRF:ExtractFileInMemory(fileName)
 end
 
 function RagnarokGRF:IsFileEntry(fileName)
-	-- Windows paths are problematic on other platforms
-	fileName = string_lower(fileName)
-	fileName = fileName:gsub("\\", "/")
-
-	local firstCharacter = fileName:sub(1, 1)
-	local isAbsolutePosixPath = (firstCharacter == "/")
-	if isAbsolutePosixPath then -- HTTP route handlers may add this (it's unnecessary and not how GRF paths are stored)
-		fileName = fileName:sub(2)
-	end
+	fileName = self:GetNormalizedFilePath(fileName)
 
 	local entry = self.fileTable.entries[fileName]
 	return entry ~= nil
@@ -258,6 +239,78 @@ end
 
 function RagnarokGRF:GetFileList()
 	return self.fileTable.entries
+end
+
+-- This probably should be moved elsewhere (later)
+if ffi.os == "Windows" then
+	ffi.cdef([[
+		int MultiByteToWideChar(unsigned int CodePage, unsigned long dwFlags, const char* lpMultiByteStr, int cbMultiByte, wchar_t* lpWideCharStr, int cchWideChar);
+		int WideCharToMultiByte(unsigned int CodePage, unsigned long dwFlags, const wchar_t* lpWideCharStr, int cchWideChar, char* lpMultiByteStr, int cbMultiByte, const char* lpDefaultChar, int* lpUsedDefaultChar);
+	]])
+
+	local CP949 = 949
+	local CP_UTF8 = 65001
+
+	function RagnarokGRF:DecodeMultiByteString(input)
+		local unicodeLen = ffi.C.MultiByteToWideChar(CP949, 0, input, -1, nil, 0)
+		local unicodeStr = ffi.new("wchar_t[?]", unicodeLen)
+		ffi.C.MultiByteToWideChar(CP949, 0, input, -1, unicodeStr, unicodeLen)
+
+		local outputLen = ffi.C.WideCharToMultiByte(CP_UTF8, 0, unicodeStr, -1, nil, 0, nil, nil)
+		local outputStr = ffi.new("char[?]", outputLen)
+		ffi.C.WideCharToMultiByte(CP_UTF8, 0, unicodeStr, -1, outputStr, outputLen, nil, nil)
+
+		return ffi.string(outputStr)
+	end
+else
+	ffi.cdef([[
+		typedef void* iconv_t;
+		iconv_t iconv_open(const char* tocode, const char* fromcode);
+		size_t iconv(iconv_t cd, char** inbuf, size_t* inbytesleft, char** outbuf, size_t* outbytesleft);
+		int iconv_close(iconv_t cd);
+	]])
+
+	function RagnarokGRF:DecodeMultiByteString(input)
+		local fromEncoding = "CP949"
+		local toEncoding = "UTF-8"
+		local cd = ffi.C.iconv_open(toEncoding, fromEncoding)
+		if cd == ffi.cast("iconv_t", -1) then
+			error("iconv_open failed: " .. ffi.string(ffi.C.strerror(ffi.errno())))
+		end
+
+		local inbuf = ffi.new("char*[1]", ffi.new("char[?]", #input + 1, input))
+		local inbytesleft = ffi.new("size_t[1]", #input)
+		local outbufSize = #input * 4 -- Worst case scenario for UTF-8
+		local outbufStorage = ffi.new("char[?]", outbufSize) -- Storage for the output buffer
+		local outbuf = ffi.new("char*[1]", outbufStorage) -- Pointer to the output buffer
+		local outbytesleft = ffi.new("size_t[1]", outbufSize)
+
+		if ffi.C.iconv(cd, inbuf, inbytesleft, outbuf, outbytesleft) == -1 then
+			ffi.C.iconv_close(cd)
+			error("iconv failed: " .. ffi.string(ffi.C.strerror(ffi.errno())))
+		end
+
+		ffi.C.iconv_close(cd)
+		return ffi.string(outbufStorage) -- Construct the string from the start of the output buffer
+	end
+end
+
+function RagnarokGRF:GetNormalizedFilePath(fileName)
+	-- Must convert to UTF8 first to avoid operating on codepoints by accident
+	fileName = self:DecodeMultiByteString(fileName)
+
+	-- Windows paths are problematic on other platforms
+	fileName = string_lower(fileName)
+	fileName = fileName:gsub("\\", "/")
+
+	-- HTTP route handlers may add this (it's unnecessary and not how GRF paths are stored)
+	local firstCharacter = fileName:sub(1, 1)
+	local isAbsolutePosixPath = (firstCharacter == "/")
+	if isAbsolutePosixPath then
+		fileName = fileName:sub(2)
+	end
+
+	return fileName
 end
 
 ffi.cdef(RagnarokGRF.cdefs)
