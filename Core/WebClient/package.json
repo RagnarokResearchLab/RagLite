@@ -7,7 +7,7 @@
     "test": "exit 0",
     "checks": "npx prettier --check .",
     "autoformat": "npx prettier --write .",
-    "build": "tsc --noEmit && esbuild demo.ts --bundle --outfile=demo.js --platform=browser --target=es2017",
+    "build": "tsc && esbuild demo.ts --bundle --outfile=demo.js --platform=browser --target=es2017",
     "dev": "tsc -w"
   },
   "repository": {
