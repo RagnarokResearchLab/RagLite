@@ -256,6 +256,10 @@ function RagnarokGRF:IsFileEntry(fileName)
 	return entry ~= nil
 end
 
+function RagnarokGRF:GetFileList()
+	return self.fileTable.entries
+end
+
 ffi.cdef(RagnarokGRF.cdefs)
 assert(RagnarokGRF.HEADER_SIZE_IN_BYTES == ffi_sizeof("grf_header_t")) -- Basic sanity check
 
