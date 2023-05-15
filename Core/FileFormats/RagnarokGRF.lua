@@ -198,9 +198,10 @@ end
 function RagnarokGRF:ExtractFileInMemory(fileName)
 	local timeBefore = uv.hrtime()
 
-	fileName = self:GetNormalizedFilePath(fileName)
+	local normalizedFileName = self:GetNormalizedFilePath(fileName)
 
-	local entry = self.fileTable.entries[fileName]
+	-- The name may already have been normalized if extracting based on the decoded file list
+	local entry = self.fileTable.entries[normalizedFileName] or self.fileTable.entries[fileName]
 	if not entry then
 		error("Failed to extract file " .. fileName .. " (no such entry exists)", 0)
 	end
