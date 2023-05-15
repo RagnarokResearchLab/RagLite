@@ -35,6 +35,10 @@ class BasicLoginWindow {
     this.quitButton.className = "button";
     this.quitButton.innerText = "Quit";
 
+    this.quitButton.onclick = () => {
+      fetch("http://localhost:9009/webview/shutdown");
+    };
+
     this.footer = document.createElement("div");
     this.footer.className = "window-footer";
     this.footer.appendChild(this.loginButton);
