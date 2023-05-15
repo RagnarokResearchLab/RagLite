@@ -202,4 +202,40 @@ describe("RagnarokGRF", function()
 			assertTrue(isFileEntry)
 		end)
 	end)
+
+	describe("GetFileList", function()
+		it("should return the decoded file list", function()
+			local grf = RagnarokGRF()
+			grf:Open("Tests/Fixtures/test.grf")
+			grf:Close()
+			local fileList = grf:GetFileList()
+
+			assertEquals(fileList["hello-grf.txt"].name, "hello-grf.txt")
+			assertEquals(fileList["subdirectory/hello.txt"].name, "subdirectory/hello.txt")
+			assertEquals(fileList["uppercase.png"].name, "uppercase.png")
+			assertEquals(fileList["안녕하세요.txt"].name, "안녕하세요.txt")
+		end)
+	end)
+
+	describe("GetNormalizedFilePath", function()
+		it("should convert EUC-KR names to UTF8", function()
+			assertEquals(
+				RagnarokGRF:GetNormalizedFilePath("\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA.txt"),
+				"유저인터페이스.txt"
+			)
+		end)
+
+		it("should convert upper-case to lower-case characters", function()
+			assertEquals(RagnarokGRF:GetNormalizedFilePath("TEST.BMP"), "test.bmp")
+		end)
+
+		it("should remove leading path separators", function()
+			-- These are added by the HTTP route handler, but they're useless for path lookups
+			assertEquals(RagnarokGRF:GetNormalizedFilePath("/hello/world.txt"), "hello/world.txt")
+		end)
+
+		it("should replace Windows path separators with POSIX ones", function()
+			assertEquals(RagnarokGRF:GetNormalizedFilePath("hello\\world.txt"), "hello/world.txt")
+		end)
+	end)
 end)
