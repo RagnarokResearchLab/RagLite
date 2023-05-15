@@ -183,6 +183,19 @@ describe("RagnarokGRF", function()
 
 			assertEquals(fileContents, expectedFileContents)
 		end)
+
+		it("should accept normalized path names", function()
+			local grf = RagnarokGRF()
+			grf:Open("Tests/Fixtures/test.grf")
+			grf:ExtractFileToDisk("안녕하세요.txt", "안녕하세요.txt")
+			grf:Close()
+
+			local fileContents = C_FileSystem.ReadFile("안녕하세요.txt")
+			C_FileSystem.Delete("안녕하세요.txt")
+			local expectedFileContents = "안녕하십니까"
+
+			assertEquals(fileContents, expectedFileContents)
+		end)
 	end)
 
 	describe("IsFileEntry", function()
