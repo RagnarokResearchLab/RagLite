@@ -12,6 +12,13 @@ local AssetServer = {
 		[".html"] = "text/html",
 		[".css"] = "text/css",
 		[".js"] = "text/javascript",
+		[".wav"] = "audio/wav",
+		[".mp3"] = "audio/mpeg",
+		[".ogg"] = "audio/ogg",
+		[".png"] = "image/png",
+		[".jpg"] = "image/jpeg",
+		[".bmp"] = "image/bmp",
+		[".json"] = "application/json",
 	},
 }
 
