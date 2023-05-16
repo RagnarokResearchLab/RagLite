@@ -13,6 +13,13 @@ describe("AssetServer", function()
 				[".css"] = "text/css",
 				[".htm"] = "text/html",
 				[".html"] = "text/html",
+				[".wav"] = "audio/wav",
+				[".mp3"] = "audio/mpeg",
+				[".ogg"] = "audio/ogg",
+				[".png"] = "image/png",
+				[".jpg"] = "image/jpeg",
+				[".bmp"] = "image/bmp",
+				[".json"] = "application/json",
 			}
 
 			for extension, expectedContentType in pairs(supportedFileExtensions) do
