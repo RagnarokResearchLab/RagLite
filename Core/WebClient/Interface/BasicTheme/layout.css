@@ -3,6 +3,15 @@
   --inline-padding: 5px;
 
   --border-radius-rounded: 7.5px;
+
+  --ui-layer-world: 1;
+  --ui-layer-background: 1000;
+  --ui-layer-low: 2000;
+  --ui-layer-medium: 3000;
+  --ui-layer-high: 4000;
+  --ui-layer-dialog: 5000;
+  --ui-layer-fullscreen: 6000;
+  --ui-layer-fullscreen-dialog: 7000;
   --ui-layer-overlay: 8000;
   --ui-layer-tooltip: 9000;
 }
