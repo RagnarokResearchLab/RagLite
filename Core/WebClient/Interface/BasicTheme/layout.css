@@ -3,5 +3,6 @@
   --inline-padding: 5px;
 
   --border-radius-rounded: 7.5px;
+  --ui-layer-overlay: 8000;
   --ui-layer-tooltip: 9000;
 }
