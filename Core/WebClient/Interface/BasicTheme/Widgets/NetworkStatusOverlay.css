@@ -1,0 +1,58 @@
+.network-status {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  padding: 10px;
+  background: rgba(0, 0, 0, 0.7);
+  color: #ffffff;
+  font-size: 16px;
+  border-radius: 3px;
+  z-index: var(--ui-layer-overlay);
+}
+
+.network-status.OK,
+.network-status .OK {
+  color: lightgreen;
+}
+
+.network-status.ERR,
+.network-status .ERR {
+  color: red;
+}
+
+.network-status.TBD,
+.network-status .TBD {
+  color: rgba(255, 220, 0, 1);
+}
+
+.network-status.NYI,
+.network-status .NYI {
+  color: grey;
+}
+
+.networking-status-line {
+  /* The unicode symbols might appear too large unless explicitly scaled down to fit the inline content */
+  line-height: 1em;
+}
+
+.networking-status-icon {
+  width: 1em;
+  margin-right: 0.125rem;
+  display: inline-block;
+}
+
+.network-status .OK::before {
+  content: "✓";
+}
+
+.network-status .ERR::before {
+  content: "✗";
+}
+
+.network-status .TBD::before {
+  content: "?";
+}
+
+.network-status .NYI::before {
+  content: "/";
+}
