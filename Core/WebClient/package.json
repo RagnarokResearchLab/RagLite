@@ -8,7 +8,9 @@
     "checks": "npx prettier --check .",
     "autoformat": "npx prettier --write .",
     "build": "tsc && esbuild main.tsx --bundle --outfile=tsbuild/webclient.js --platform=browser --target=es2017 --jsx-factory=React.createElement --jsx-fragment=React.Fragment",
-    "dev": "esbuild main.tsx --bundle --outfile=tsbuild/webclient.js --platform=browser --target=es2017 --jsx-factory=React.createElement --jsx-fragment=React.Fragment --watch"
+    "watch:build": "esbuild main.tsx --bundle --outfile=tsbuild/webclient.js --platform=browser --target=es2017 --jsx-factory=React.createElement --jsx-fragment=React.Fragment --watch",
+    "watch:tsc": "tsc -w",
+    "dev": "concurrently npm:watch:*"
   },
   "repository": {
     "type": "git",
@@ -25,6 +27,7 @@
     "prettier": "^2.8.8",
     "@types/react": "^18.2.6",
     "@types/react-dom": "^18.2.4",
+    "concurrently": "^8.0.1",
     "typescript": "^5.0.4"
   },
   "dependencies": {
