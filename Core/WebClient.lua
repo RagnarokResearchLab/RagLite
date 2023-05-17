@@ -54,6 +54,10 @@ function WebClient:WEBVIEW_OPERATION_REQUESTED(requestID, requestedFilePath)
 	if requestedFilePath == "/webview/shutdown" then
 		print("[WebClient] Received shutdown request - exiting ...")
 		os.exit(0)
+	elseif requestedFilePath == "/webview/ping" then
+		print("[WebClient] Received PING request - responding with PONG")
+		self.webserver:WriteHeader(requestID, "Access-Control-Allow-Origin", "*") -- Avoid CORS issues in the WebView
+		self.webserver:SendResponse(requestID, "PONG")
 	end
 end
 

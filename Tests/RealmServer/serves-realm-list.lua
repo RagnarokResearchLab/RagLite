@@ -13,6 +13,7 @@ local function assertRealmListWasReceived(client)
 	local chunks = tostring(receivedChunks)
 	local contentLength = tonumber(chunks:match("Content%-Length: (%d+)"))
 	local contentType = chunks:match("Content%-Type: application/json; charset=utf%-8")
+	local accessControl = chunks:match("Access%-Control%-Allow%-Origin: %*")
 	local status = chunks:match("HTTP/1%.1 200 OK")
 	local responseBody = chunks:sub(#chunks - contentLength + 1)
 
@@ -26,6 +27,7 @@ local function assertRealmListWasReceived(client)
 	)
 	assert(contentLength == expectedContentLength, "Should receive the expected content length header")
 	assert(responseBody == expectedFileContents, "Should receive the realm list as stored on disk")
+	assert(accessControl == "Access-Control-Allow-Origin: *", "Should receive a wildcard CORS header")
 end
 
 local function createTestClient(realmsRoute)

@@ -2,6 +2,8 @@ import React from "react";
 import ReactDOM from "react-dom";
 import { createRoot } from "react-dom/client";
 
+import WebClient from "./Interface/WebClient";
+
 import {
   ArcRotateCamera,
   Color3,
@@ -14,8 +16,6 @@ import {
   SubMesh,
   Vector3,
 } from "@babylonjs/core";
-
-import IngameUI from "./Interface/IngameUI";
 
 const canvas = document.getElementById(
   "renderCanvas"
@@ -100,6 +100,6 @@ const container = document.getElementById("uiParent");
 const root = createRoot(container!);
 root.render(
   <SharedRenderingContext.Provider value={engine}>
-    <IngameUI />
+    <WebClient />
   </SharedRenderingContext.Provider>
 );

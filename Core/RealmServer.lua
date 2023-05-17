@@ -58,6 +58,7 @@ function RealmServer:SendRealmList(requestID)
 	local responseBody = self.realmList
 	self.webserver:WriteStatus(requestID, "200 OK")
 	self.webserver:WriteHeader(requestID, "Content-Type", "application/json; charset=utf-8")
+	self.webserver:WriteHeader(requestID, "Access-Control-Allow-Origin", "*") -- Avoid CORS issues in the WebView
 	self.webserver:SendResponse(requestID, responseBody)
 end
 
