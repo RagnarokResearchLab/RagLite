@@ -15,19 +15,19 @@ import {
   Vector3,
 } from "@babylonjs/core";
 
-import BasicLoginWindow from "./Interface/LoginUI/BasicLoginWindow";
+import IngameUI from "./Interface/IngameUI";
 
-function CreateDemoScene() {
-  const canvas = document.getElementById(
-    "renderCanvas"
-  ) as HTMLCanvasElement | null;
+const canvas = document.getElementById(
+  "renderCanvas"
+) as HTMLCanvasElement | null;
 
-  if (!canvas) {
-    throw new Error("Cannot find render canvas");
-  }
+if (!canvas) {
+  throw new Error("Cannot find render canvas");
+}
 
-  const engine = new Engine(canvas, true);
+const engine = new Engine(canvas, true);
 
+function CreateDemoScene(engine: Engine) {
   const createScene = function () {
     const scene = new Scene(engine);
 
@@ -92,8 +92,14 @@ function CreateDemoScene() {
   });
 }
 
+import { SharedRenderingContext } from "./Interface/SharedRenderingContext";
+
+CreateDemoScene(engine);
+
 const container = document.getElementById("uiParent");
 const root = createRoot(container!);
-root.render(<BasicLoginWindow />);
-
-CreateDemoScene();
+root.render(
+  <SharedRenderingContext.Provider value={engine}>
+    <IngameUI />
+  </SharedRenderingContext.Provider>
+);
