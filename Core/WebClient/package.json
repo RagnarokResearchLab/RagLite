@@ -7,7 +7,7 @@
     "test": "exit 0",
     "checks": "npx prettier --check .",
     "autoformat": "npx prettier --write .",
-    "build": "tsc && esbuild demo.ts --bundle --outfile=demo.js --platform=browser --target=es2017",
+    "build": "tsc && esbuild main.tsx --bundle --outfile=main.js --platform=browser --target=es2017 --jsx-factory=React.createElement --jsx-fragment=React.Fragment",
     "dev": "tsc -w"
   },
   "repository": {

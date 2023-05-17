@@ -1,3 +1,7 @@
+import React from "react";
+import ReactDOM from "react-dom";
+import { createRoot } from "react-dom/client";
+
 import {
   ArcRotateCamera,
   Color3,
@@ -10,6 +14,8 @@ import {
   SubMesh,
   Vector3,
 } from "@babylonjs/core";
+
+import BasicLoginWindow from "./Interface/LoginUI/BasicLoginWindow";
 
 function CreateDemoScene() {
   const canvas = document.getElementById(
@@ -86,12 +92,8 @@ function CreateDemoScene() {
   });
 }
 
-import BasicLoginWindow from "./Interface/LoginUI/BasicLoginWindow";
-
-function CreateBasicUI() {
-  const uiParent = document.getElementById("uiParent") as HTMLDivElement;
-  const loginWindow = new BasicLoginWindow(uiParent);
-}
+const container = document.getElementById("uiParent");
+const root = createRoot(container!);
+root.render(<BasicLoginWindow />);
 
 CreateDemoScene();
-CreateBasicUI();
