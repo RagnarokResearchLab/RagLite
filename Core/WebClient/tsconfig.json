@@ -8,8 +8,6 @@
     "strict": true,
     "moduleResolution": "node",
     "esModuleInterop": true,
-    "allowJs": true,
-    "checkJs": true,
     "sourceMap": false,
     "declaration": true,
     "incremental": true,
