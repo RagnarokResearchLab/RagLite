@@ -27,6 +27,16 @@ body {
   height: 100%;
 }
 
+#uiParent {
+  /* It's an invisible container and should not handle clicks */
+  pointer-events: none;
+}
+
+#uiParent > * {
+  /* UI widgets should allow interaction (obviously) */
+  pointer-events: auto;
+}
+
 p {
   margin: 0;
 }
