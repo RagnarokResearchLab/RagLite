@@ -7,7 +7,7 @@
     "test": "exit 0",
     "checks": "npx prettier --check .",
     "autoformat": "npx prettier --write .",
-    "build": "tsc && esbuild demo.ts --bundle --outfile=demo.js --platform=browser --target=es2017",
+    "build": "tsc && esbuild main.tsx --bundle --outfile=tsbuild/webclient.js --platform=browser --target=es2017 --jsx-factory=React.createElement --jsx-fragment=React.Fragment",
     "dev": "tsc -w"
   },
   "repository": {
@@ -23,9 +23,13 @@
   "devDependencies": {
     "esbuild": "^0.17.19",
     "prettier": "^2.8.8",
+    "@types/react": "^18.2.6",
+    "@types/react-dom": "^18.2.4",
     "typescript": "^5.0.4"
   },
   "dependencies": {
-    "@babylonjs/core": "^6.3.1"
+    "@babylonjs/core": "^6.3.1",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
   }
 }
