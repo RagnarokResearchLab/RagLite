@@ -14,6 +14,10 @@
 #miniMapZoneText {
   /* Must add overlay padding for visual consistency here */
   margin-bottom: 10px;
+  max-width: 15em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
 }
 
 .minimap-image {

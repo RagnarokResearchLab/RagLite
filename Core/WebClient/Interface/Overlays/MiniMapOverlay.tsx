@@ -1,7 +1,10 @@
-import React, { useContext } from "react";
+import React, { useContext, useState } from "react";
 import SharedWorldStateContext from "../SharedWorldStateContext";
 
+import GameTooltip from "../Tooltips/GameTooltip";
+
 const MiniMap = () => {
+  const [isHovering, setIsHovering] = useState(false);
   const worldState = useContext(SharedWorldStateContext);
 
   if (!worldState) {
@@ -10,14 +13,19 @@ const MiniMap = () => {
 
   return (
     <div id="miniMapOverlay">
-      <p id="miniMapZoneText">
-        {worldState.displayName} ({worldState.mapID})
+      <p
+        id="miniMapZoneText"
+        onMouseEnter={() => setIsHovering(true)}
+        onMouseLeave={() => setIsHovering(false)}
+      >
+        {worldState.displayName}
       </p>
       <img
         src={`Interface/Assets/minimap-placeholder.bmp`}
         className="minimap-image"
         alt={worldState.displayName}
       />
+      {isHovering && <GameTooltip>{worldState.displayName}</GameTooltip>}
     </div>
   );
 };
