@@ -1,0 +1,23 @@
+#miniMapOverlay {
+  position: fixed;
+  bottom: 10px;
+  right: 10px;
+  padding: 10px;
+  background: rgba(0, 0, 0, 0.7);
+  color: #ffffff;
+  font-size: 16px;
+  border-radius: 3px;
+  z-index: var(--ui-layer-overlay);
+  text-align: center;
+}
+
+#miniMapZoneText {
+  /* Must add overlay padding for visual consistency here */
+  margin-bottom: 10px;
+}
+
+.minimap-image {
+  width: 256px;
+  height: 256px;
+  border: 5px solid lightblue;
+}

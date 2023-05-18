@@ -13,5 +13,6 @@
 /* Overrides for specific components */
 @import "./BasicTheme/Widgets/BasicLoginWindow.css";
 @import "./BasicTheme/Widgets/GameTooltip.css";
+@import "./BasicTheme/Widgets/MiniMapOverlay.css";
 @import "./BasicTheme/Widgets/NetworkStatusOverlay.css";
 @import "./BasicTheme/Widgets/PerformanceMetricsOverlay.css";
