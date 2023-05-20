@@ -9,6 +9,7 @@ function WebClient:Start()
 	C_WebView.NavigateToURL(htmlEntryPoint) -- Loading the HTML directly won't resolve external files (e.g., CSS)
 
 	C_WebView.SetWindowTitle("RagLite WebClient")
+	C_WebView.SetWindowSize(800, 600) -- OSX fullscreen won't work without explicit window sizes being set first
 	C_WebView.ToggleFullscreenMode()
 
 	-- Hacky, remove once JSON RPC is usable
