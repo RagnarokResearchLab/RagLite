@@ -10,7 +10,7 @@
     "build": "tsc && esbuild main.tsx --bundle --outfile=tsbuild/webclient.js --platform=browser --target=es2017 --jsx-factory=React.createElement --jsx-fragment=React.Fragment",
     "watch:build": "esbuild main.tsx --bundle --outfile=tsbuild/webclient.js --platform=browser --target=es2017 --jsx-factory=React.createElement --jsx-fragment=React.Fragment --watch",
     "watch:tsc": "tsc -w",
-    "dev": "concurrently npm:watch:*"
+    "start": "concurrently npm:watch:*"
   },
   "repository": {
     "type": "git",
