@@ -27,6 +27,7 @@ local AssetServer = {
 	routeHandlers = {
 		["/*"] = "FILE_DATA_REQUESTED",
 		["/"] = "GRF_FILE_LIST_REQUESTED",
+		["/ui/minimap/*"] = "MINIMAP_IMAGE_REQUESTED",
 	},
 }
 
@@ -99,6 +100,13 @@ function AssetServer:GRF_FILE_LIST_REQUESTED(requestID, requestedFilePath)
 	end
 
 	self:SendFileListAsJSON(requestID, requestedFilePath)
+end
+
+function AssetServer:MINIMAP_IMAGE_REQUESTED(requestID, requestedFilePath)
+	print("[AssetServer] MINIMAP_IMAGE_REQUESTED", requestID, requestedFilePath)
+
+	local minimapImagePath = requestedFilePath:gsub("/ui/minimap/", "data/texture/유저인터페이스/map/")
+	self:FILE_DATA_REQUESTED(requestID, minimapImagePath)
 end
 
 function AssetServer:FILE_DATA_REQUESTED(requestID, requestedFilePath)
