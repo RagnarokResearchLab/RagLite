@@ -4,7 +4,7 @@
   "description": "",
   "main": "test.js",
   "scripts": {
-    "test": "mocha --loader ts-node/esm --extension ts ./Tests/**/*.ts",
+    "test": "jest",
     "checks": "npx prettier --check .",
     "autoformat": "npx prettier --write .",
     "build": "tsc && esbuild main.tsx --bundle --outfile=tsbuild/webclient.js --platform=browser --target=es2017 --jsx-factory=React.createElement --jsx-fragment=React.Fragment",
@@ -29,6 +29,7 @@
     "concurrently": "^8.0.1",
     "esbuild": "^0.17.19",
     "jest": "^29.5.0",
+    "jest-environment-jsdom": "^29.5.0",
     "prettier": "^2.8.8",
     "ts-jest": "^29.1.0",
     "typescript": "^5.0.4"
