@@ -232,9 +232,10 @@ function RagnarokGRF:ExtractFileInMemory(fileName)
 end
 
 function RagnarokGRF:IsFileEntry(fileName)
-	fileName = self:GetNormalizedFilePath(fileName)
+	local normalizedFileName = self:GetNormalizedFilePath(fileName)
 
-	local entry = self.fileTable.entries[fileName]
+	-- The name may already have been normalized if a proper unicode name was used
+	local entry = self.fileTable.entries[normalizedFileName] or self.fileTable.entries[fileName]
 	return entry ~= nil
 end
 
