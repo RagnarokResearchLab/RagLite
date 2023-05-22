@@ -21,6 +21,8 @@ const MiniMap = () => {
     ? placeholderMiniMapImage
     : `http://localhost:9005/ui/minimap/${worldState.mapID}` + ".bmp";
 
+  if (isInLoginScreen) return <></>;
+
   return (
     <div id="miniMapOverlay">
       <p
