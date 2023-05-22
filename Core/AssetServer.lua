@@ -131,8 +131,11 @@ end
 function AssetServer:SendFileData(requestID, requestedFilePath)
 	print("[AssetServer] Serving file data in response to request " .. requestID)
 	local responseBody = self.grfArchive:ExtractFileInMemory(requestedFilePath)
+	local contentType = self:GetContentType(requestedFilePath)
+
 	self.webserver:WriteStatus(requestID, "200 OK")
-	self.webserver:WriteHeader(requestID, "Content-Type", "application/octet-stream")
+	self.webserver:WriteHeader(requestID, "Access-Control-Allow-Origin", "*") -- Avoid CORS issues in the WebView
+	self.webserver:WriteHeader(requestID, "Content-Type", contentType)
 	self.webserver:SendResponse(requestID, responseBody)
 
 	printf("[AssetServer] Responding with %s: %s", string_filesize(#responseBody), requestedFilePath)
