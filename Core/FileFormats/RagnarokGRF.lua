@@ -311,6 +311,9 @@ function RagnarokGRF:GetNormalizedFilePath(fileName)
 		fileName = fileName:sub(2)
 	end
 
+	-- Not sure why they're even in there - maybe accidentally used \\\\ to escape twice? Weird.
+	fileName = fileName:gsub("//", "/")
+
 	return fileName
 end
 
