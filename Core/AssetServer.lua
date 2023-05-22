@@ -24,6 +24,11 @@ local AssetServer = {
 		[".bmp"] = "image/bmp",
 		[".json"] = "application/json",
 	},
+	routeHandlers = {
+		["/*"] = "FILE_DATA_REQUESTED",
+		["/"] = "GRF_FILE_LIST_REQUESTED",
+		["/ui/minimap/*"] = "MINIMAP_IMAGE_REQUESTED",
+	},
 }
 
 local RagnarokGRF = require("Core.FileFormats.RagnarokGRF")
@@ -59,8 +64,9 @@ function AssetServer:CreateWebServer()
 	local HttpServer = require("HttpServer")
 	local server = HttpServer()
 
-	server:AddRoute("/", "GET")
-	server:AddRoute("/*", "GET")
+	for urlPattern, requestHandler in pairs(self.routeHandlers) do
+		server:AddRoute(urlPattern, "GET")
+	end
 
 	function server.HTTP_REQUEST_FINISHED(...)
 		self:INCOMING_FILE_DATA_REQUEST(...)
@@ -83,16 +89,28 @@ function AssetServer:INCOMING_FILE_DATA_REQUEST(webserver, event, payload)
 		return
 	end
 
-	self:FILE_DATA_REQUESTED(requestID, requestDetails.url)
+	local eventID = self.routeHandlers[requestDetails.endpoint]
+	local eventHandler = self[eventID] or self.FILE_DATA_REQUESTED
+	eventHandler(self, requestID, requestDetails.url)
+end
+
+function AssetServer:GRF_FILE_LIST_REQUESTED(requestID, requestedFilePath)
+	if requestedFilePath ~= "/" then
+		return
+	end
+
+	self:SendFileListAsJSON(requestID, requestedFilePath)
+end
+
+function AssetServer:MINIMAP_IMAGE_REQUESTED(requestID, requestedFilePath)
+	print("[AssetServer] MINIMAP_IMAGE_REQUESTED", requestID, requestedFilePath)
+
+	local minimapImagePath = requestedFilePath:gsub("/ui/minimap/", "data/texture/유저인터페이스/map/")
+	self:FILE_DATA_REQUESTED(requestID, minimapImagePath)
 end
 
 function AssetServer:FILE_DATA_REQUESTED(requestID, requestedFilePath)
 	print("[AssetServer] FILE_DATA_REQUESTED", requestID, requestedFilePath)
-
-	if requestedFilePath == "/" then
-		self:SendFileListAsJSON(requestID, requestedFilePath)
-		return
-	end
 
 	local absoluteFilePath = path.join(uv.cwd(), requestedFilePath)
 	local hasFileOnDisk = C_FileSystem.Exists(absoluteFilePath)
@@ -112,10 +130,12 @@ end
 
 function AssetServer:SendFileData(requestID, requestedFilePath)
 	print("[AssetServer] Serving file data in response to request " .. requestID)
-
 	local responseBody = self.grfArchive:ExtractFileInMemory(requestedFilePath)
+	local contentType = self:GetContentType(requestedFilePath)
+
 	self.webserver:WriteStatus(requestID, "200 OK")
-	self.webserver:WriteHeader(requestID, "Content-Type", "application/octet-stream")
+	self.webserver:WriteHeader(requestID, "Access-Control-Allow-Origin", "*") -- Avoid CORS issues in the WebView
+	self.webserver:WriteHeader(requestID, "Content-Type", contentType)
 	self.webserver:SendResponse(requestID, responseBody)
 
 	printf("[AssetServer] Responding with %s: %s", string_filesize(#responseBody), requestedFilePath)
