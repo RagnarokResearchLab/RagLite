@@ -1,11 +1,15 @@
+local json = require("json")
 local uv = require("uv")
+
+local printf = _G.printf
 
 local string_filesize = string.filesize
 local string_lower = string.lower
-local printf = _G.printf
+local table_insert = table.insert
 
 local AssetServer = {
 	DEFAULT_PORT = 9005,
+	grfFileList = {},
 	-- Only those types that the browser needs for processing the files correctly are relevant here
 	relevantContentTypes = {
 		[".htm"] = "text/html",
@@ -30,6 +34,18 @@ function AssetServer:Start(grfFilePath)
 
 	local grf = RagnarokGRF()
 	grf:Open(grfFilePath)
+
+	local fileList = grf:GetFileList()
+	local fileNames = {}
+	-- No need to send the metadata, since the client can't decode it anyway
+	for key, fileEntry in ipairs(fileList) do
+		table_insert(fileNames, fileEntry.name)
+	end
+
+	-- This is for human consumption, not efficient data transfer
+	table.sort(fileNames)
+	self.grfFileList = json.prettier(fileNames)
+
 	self.grfArchive = grf
 end
 
@@ -43,6 +59,7 @@ function AssetServer:CreateWebServer()
 	local HttpServer = require("HttpServer")
 	local server = HttpServer()
 
+	server:AddRoute("/", "GET")
 	server:AddRoute("/*", "GET")
 
 	function server.HTTP_REQUEST_FINISHED(...)
@@ -71,6 +88,11 @@ end
 
 function AssetServer:FILE_DATA_REQUESTED(requestID, requestedFilePath)
 	print("[AssetServer] FILE_DATA_REQUESTED", requestID, requestedFilePath)
+
+	if requestedFilePath == "/" then
+		self:SendFileListAsJSON(requestID, requestedFilePath)
+		return
+	end
 
 	local absoluteFilePath = path.join(uv.cwd(), requestedFilePath)
 	local hasFileOnDisk = C_FileSystem.Exists(absoluteFilePath)
@@ -114,6 +136,15 @@ function AssetServer:SendLocalFile(requestID, requestedFilePath)
 	self.webserver:WriteHeader(requestID, "Access-Control-Allow-Origin", "*") -- Avoid CORS issues in the WebView
 	self.webserver:WriteHeader(requestID, "Content-Type", contentType)
 	self.webserver:SendResponse(requestID, responseBody)
+end
+
+function AssetServer:SendFileListAsJSON(requestID, requestedFilePath)
+	printf("[AssetServer] Serving table of contents in response to request " .. requestID)
+
+	self.webserver:WriteStatus(requestID, "200 OK")
+	self.webserver:WriteHeader(requestID, "Access-Control-Allow-Origin", "*") -- Avoid CORS issues in the WebView
+	self.webserver:WriteHeader(requestID, "Content-Type", "application/json")
+	self.webserver:SendResponse(requestID, self.grfFileList)
 end
 
 function AssetServer:GetContentType(requestedFilePath)
