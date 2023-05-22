@@ -4,7 +4,7 @@
   "description": "",
   "main": "test.js",
   "scripts": {
-    "test": "mocha --require ts-node/register --extension ts ./Tests/**/*.ts",
+    "test": "mocha --loader ts-node/esm --extension ts ./Tests/**/*.ts",
     "checks": "npx prettier --check .",
     "autoformat": "npx prettier --write .",
     "build": "tsc && esbuild main.tsx --bundle --outfile=tsbuild/webclient.js --platform=browser --target=es2017 --jsx-factory=React.createElement --jsx-fragment=React.Fragment",
