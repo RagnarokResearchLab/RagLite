@@ -1,8 +1,8 @@
 /** @type {import('ts-jest').JestConfigWithTsJest} */
 module.exports = {
-//   preset: 'ts-jest',
+  //   preset: 'ts-jest',
   preset: "ts-jest/presets/default-esm",
-  testEnvironment: 'node',
-  extensionsToTreatAsEsm: ['.ts'],
+  testEnvironment: "node",
+  extensionsToTreatAsEsm: [".ts"],
   transform: {},
 };
