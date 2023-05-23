@@ -12,6 +12,7 @@ describe("WorldState", () => {
 			C_Unit.addKnownUnit("player", new Unit("player"))
 			C_Unit.setMapPosition("player", new Vector2D(42, 123))
 		})
+
 		afterAll(()=>{
 			C_Unit.removeKnownUnit("player")
 		})
