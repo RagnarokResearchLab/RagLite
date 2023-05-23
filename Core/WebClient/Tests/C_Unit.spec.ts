@@ -2,11 +2,20 @@ import { deepStrictEqual as assertEquals } from "node:assert";
 
 import { Vector2 as Vector2D } from "@babylonjs/core";
 
-import C_Unit from "../API/WorldState/C_Unit";
+import C_Unit, { Unit } from "../API/WorldState/C_Unit";
 
 describe("WorldState", () => {
   describe("C_Unit", () => {
     describe("getWorldPosition", () => {
+
+		beforeAll(()=>{
+			C_Unit.addKnownUnit("player", new Unit("player"))
+			C_Unit.setMapPosition("player", new Vector2D(42, 123))
+		})
+		afterAll(()=>{
+			C_Unit.removeKnownUnit("player")
+		})
+
       it("should return null if an unknown unit ID was passed", () => {
         assertEquals(C_Unit.getWorldPosition("does-not-exist"), null);
       });
