@@ -7,5 +7,5 @@ evo
 node_modules
 *.map
 tsbuild
-*.js
+webclient.js
 *.tsbuildinfo
