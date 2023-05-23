@@ -1,11 +1,11 @@
 import { Vector2 as Vector2D } from "@babylonjs/core";
 
 class Unit {
-  unitID : string;
+  unitID: string;
   mapPosition: Vector2D;
-  constructor(unitID : string) {
-	this.unitID = unitID;
-	this.mapPosition = new Vector2D(0, 0);
+  constructor(unitID: string) {
+    this.unitID = unitID;
+    this.mapPosition = new Vector2D(0, 0);
   }
   // worldPosition: Vector3D;
 }
@@ -13,30 +13,30 @@ class Unit {
 const C_Unit = {
   knownUnits: {} as Record<string, Unit>,
   getMapPosition: (unitID: string): Vector2D | null => {
-	const unit = C_Unit.knownUnits[unitID];
+    const unit = C_Unit.knownUnits[unitID];
 
-	if(!unit) return null;
+    if (!unit) return null;
 
-	return unit.mapPosition;
+    return unit.mapPosition;
   },
-  addKnownUnit(unitID : string, unitToAdd : Unit) {
-	// NYI
-	// error if already exists OR overwrite?
-	C_Unit.knownUnits[unitID] = unitToAdd;
+  addKnownUnit(unitID: string, unitToAdd: Unit) {
+    // NYI
+    // error if already exists OR overwrite?
+    C_Unit.knownUnits[unitID] = unitToAdd;
   },
-  removeKnownUnit(unitID : string) {
-	// NYI
-	// err if not exists
-	// else remove unit
+  removeKnownUnit(unitID: string) {
+    // NYI
+    // err if not exists
+    // else remove unit
   },
-  setMapPosition(unitID : string, newMapPosition : Vector2D) {
-	// NYI
-	// err if not known
-	const unit = C_Unit.knownUnits[unitID];
-	unit.mapPosition = newMapPosition;
-  }
+  setMapPosition(unitID: string, newMapPosition: Vector2D) {
+    // NYI
+    // err if not known
+    const unit = C_Unit.knownUnits[unitID];
+    unit.mapPosition = newMapPosition;
+  },
 } as const;
 
 export default C_Unit;
 
-export {Unit};
+export { Unit };
