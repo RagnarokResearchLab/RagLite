@@ -17,17 +17,23 @@ const C_Unit = {
 
 	if(!unit) return null;
 
-	return new Vector2D(0, 0); // TODO replace with actual unit position
+	return unit.mapPosition;
   },
   addKnownUnit(unitID : string, unitToAdd : Unit) {
 	// NYI
+	// error if already exists OR overwrite?
 	C_Unit.knownUnits[unitID] = unitToAdd;
   },
   removeKnownUnit(unitID : string) {
 	// NYI
+	// err if not exists
+	// else remove unit
   },
   setMapPosition(unitID : string, newMapPosition : Vector2D) {
 	// NYI
+	// err if not known
+	const unit = C_Unit.knownUnits[unitID];
+	unit.mapPosition = newMapPosition;
   }
 } as const;
 
