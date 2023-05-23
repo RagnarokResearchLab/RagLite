@@ -12,7 +12,7 @@ class Unit {
 
 const C_Unit = {
   knownUnits: {} as Record<string, Unit>,
-  getWorldPosition: (unitID: string): Vector2D | null => {
+  getMapPosition: (unitID: string): Vector2D | null => {
 	const unit = C_Unit.knownUnits[unitID];
 
 	if(!unit) return null;
@@ -21,6 +21,7 @@ const C_Unit = {
   },
   addKnownUnit(unitID : string, unitToAdd : Unit) {
 	// NYI
+	C_Unit.knownUnits[unitID] = unitToAdd;
   },
   removeKnownUnit(unitID : string) {
 	// NYI
