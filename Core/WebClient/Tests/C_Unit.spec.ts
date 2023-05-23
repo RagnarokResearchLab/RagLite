@@ -7,15 +7,14 @@ import C_Unit, { Unit } from "../API/WorldState/C_Unit";
 describe("WorldState", () => {
   describe("C_Unit", () => {
     describe("getMapPosition", () => {
+      beforeAll(() => {
+        C_Unit.addKnownUnit("player", new Unit("player"));
+        C_Unit.setMapPosition("player", new Vector2D(42, 123));
+      });
 
-		beforeAll(()=>{
-			C_Unit.addKnownUnit("player", new Unit("player"))
-			C_Unit.setMapPosition("player", new Vector2D(42, 123))
-		})
-
-		afterAll(()=>{
-			C_Unit.removeKnownUnit("player")
-		})
+      afterAll(() => {
+        C_Unit.removeKnownUnit("player");
+      });
 
       it("should return null if an unknown unit ID was passed", () => {
         assertEquals(C_Unit.getMapPosition("does-not-exist"), null);
