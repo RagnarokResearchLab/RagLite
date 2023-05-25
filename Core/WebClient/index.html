@@ -10,6 +10,13 @@
   <body>
     <canvas id="renderCanvas"></canvas>
     <div id="uiParent"></div>
+    <script>
+      const preventContextMenu = (event) => {
+        event.preventDefault();
+      };
+
+      window.addEventListener("contextmenu", preventContextMenu);
+    </script>
     <script src="./tsbuild/webclient.js"></script>
   </body>
 </html>
