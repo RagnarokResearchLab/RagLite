@@ -21,7 +21,6 @@
 	padding: 10px;
 	background: rgba(0, 0, 0, 0.7);
 	color: #ffffff;
-	font-size: 16px;
 	border-radius: 3px;
 	z-index: var(--ui-layer-overlay);
 	text-align: center;
@@ -32,7 +31,7 @@
 }
 
 #miniMapZoneText {
-  font-size: 0.85em;
+  font-size: 0.8em;
   margin-bottom: 10px;
   width: 100%;
   text-overflow: ellipsis;
@@ -55,7 +54,6 @@
 	padding: 10px;
 	background: rgba(0, 0, 0, 0.7);
 	color: #ffffff;
-	font-size: 16px;
 	border-radius: 3px;
 	z-index: var(--ui-layer-overlay);
 	text-align: center;
@@ -68,7 +66,6 @@
   }
 
   #miniMapZoneText {
-	font-size: 0.85em;
 	margin-bottom: 10px;
 	width: 100%;
 	text-overflow: ellipsis;
