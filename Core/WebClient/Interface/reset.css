@@ -47,3 +47,12 @@ hr {
   border: none;
   border-top: 1px solid var(--accent-color);
 }
+
+#babylonjsLoadingDiv {
+  z-index: var(--ui-layer-fullscreen);
+  text-transform: uppercase;
+}
+
+#babylonjsLoadingDiv > div:nth-child(1) {
+  margin-top: 10rem !important;
+}
