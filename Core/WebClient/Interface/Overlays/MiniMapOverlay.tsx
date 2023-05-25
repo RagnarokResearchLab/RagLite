@@ -1,4 +1,4 @@
-import React, { useContext, useState, useRef, useEffect } from "react";
+import React, { useContext, useRef, useEffect } from "react";
 import SharedWorldStateContext from "../SharedWorldStateContext";
 import SharedDatabaseContext from "../SharedDatabaseContext";
 import GameTooltip from "../Tooltips/GameTooltip";
@@ -7,7 +7,6 @@ const placeholderMiniMapImage = "Interface/Assets/minimap-placeholder.bmp";
 
 const MiniMap = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [isHovering, setIsHovering] = useState(false);
   const worldState = useContext(SharedWorldStateContext);
   const db = useContext(SharedDatabaseContext);
 
@@ -54,13 +53,10 @@ const MiniMap = () => {
     <div id="miniMapOverlay">
       <p
         id="miniMapZoneText"
-        onMouseEnter={() => setIsHovering(true)}
-        onMouseLeave={() => setIsHovering(false)}
       >
         {displayName}
       </p>
       <canvas ref={canvasRef} className="minimap-image" />
-      {isHovering && <GameTooltip>{displayName}</GameTooltip>}
     </div>
   );
 };
