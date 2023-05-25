@@ -28,3 +28,17 @@
   border: 5px solid lightblue;
   box-sizing: border-box; /* consider padding and border in the element's total width */
 }
+
+
+.minimap-image {
+	width: 256px;
+	height: 256px;
+	border: 5px solid lightblue;
+	box-sizing: border-box;
+	transition: all 0.5s ease-in-out;  /* Transition effect */
+  }
+
+  .minimap-image:hover {
+	/* This is the maximum size of the mini map images (full resolution) */
+	transform: scale(2);
+  }
