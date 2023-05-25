@@ -62,7 +62,7 @@
   }
 
   #miniMapOverlay:hover {
-	transform: scale(2); /* This will scale the whole container */
+	/* transform: scale(2); This will scale the whole container */
   }
 
   #miniMapZoneText {

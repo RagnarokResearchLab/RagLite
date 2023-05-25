@@ -5,11 +5,11 @@ interface MapMarkerProps {
   y: number;
   width: number;
   height: number;
-  onHover: () => void;
-  onExit: () => void;
+  onMouseEnter: () => void;
+  onMouseLeave: () => void;
 }
 
-const MapMarker: FC<MapMarkerProps> = ({ x, y, width, height, onHover, onExit }) => {
+const MapMarker: FC<MapMarkerProps> = ({ x, y, width, height, onMouseEnter, onMouseLeave }) => {
   return (
     <div
       style={{
@@ -18,8 +18,10 @@ const MapMarker: FC<MapMarkerProps> = ({ x, y, width, height, onHover, onExit })
         top: y,
         width: width,
         height: height,
+		backgroundColor: 'green',
       }}
-      onMouseEnter={onHover}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
     ></div>
   );
 };

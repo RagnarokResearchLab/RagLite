@@ -72,11 +72,11 @@ const MiniMap = () => {
     y={100} // Use actual position
     width={10} // Use actual size
     height={10} // Use actual size
-    onHover={() => {
+    onMouseEnter={() => {
 		setShowTooltip(true); setTooltipText("To Prontera (prontera.rsw)")
 	}
 }
-    onExit={() => {
+    onMouseLeave={() => {
 		setShowTooltip(false); setTooltipText("")}
 	}
   />
