@@ -1,10 +1,12 @@
 import React, { useContext, useEffect, useState } from "react";
 import SharedWorldStateContext from "../SharedWorldStateContext";
 import SharedDatabaseContext from "../SharedDatabaseContext";
+import { SharedRenderingContext } from "../SharedRenderingContext";
 
 const DebugMenuOverlay = () => {
   const worldState = useContext(SharedWorldStateContext);
   const db = useContext(SharedDatabaseContext);
+  const engine = useContext(SharedRenderingContext);
   const [worlds, setWorlds] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [loaded, setLoaded] = useState(false);
@@ -43,6 +45,17 @@ const DebugMenuOverlay = () => {
     }
   };
 
+  const showLoadingScreen = () => {
+    if (!engine) return;
+
+    engine.loadingScreen.displayLoadingUI();
+    engine.loadingUIText = "Please stand by...";
+
+    setTimeout(() => {
+      engine.loadingScreen.hideLoadingUI();
+    }, 3000);
+  };
+
   const filteredWorlds = searchTerm
     ? worlds.filter(
         (mapID) =>
@@ -54,6 +67,11 @@ const DebugMenuOverlay = () => {
 
   return (
     <div className={`debug-menu ${loaded ? "loaded" : ""}`}>
+      <fieldset>
+        <legend>Toggle UI elements</legend>
+        <button onClick={showLoadingScreen}>Loading Screen</button>
+      </fieldset>
+
       <fieldset>
         <legend>Force map change</legend>
         <input
