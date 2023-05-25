@@ -1,12 +1,16 @@
-import React, { useContext, useRef, useEffect } from "react";
+import React, { useContext, useRef, useState, useEffect } from "react";
 import SharedWorldStateContext from "../SharedWorldStateContext";
 import SharedDatabaseContext from "../SharedDatabaseContext";
 import GameTooltip from "../Tooltips/GameTooltip";
+
+import MapMarker from "./MapMarker";
 
 const placeholderMiniMapImage = "Interface/Assets/minimap-placeholder.bmp";
 
 const MiniMap = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [tooltipText, setTooltipText] = useState("");
+  const [showTooltip, setShowTooltip] = useState(false);
   const worldState = useContext(SharedWorldStateContext);
   const db = useContext(SharedDatabaseContext);
 
@@ -50,14 +54,35 @@ const MiniMap = () => {
   if (isInLoginScreen) return <></>;
 
   return (
-    <div id="miniMapOverlay">
-      <p
-        id="miniMapZoneText"
-      >
-        {displayName}
-      </p>
-      <canvas ref={canvasRef} className="minimap-image" />
-    </div>
+<div id="miniMapOverlay">
+  <p
+    id="miniMapZoneText"
+    // onMouseEnter={() => setIsHovering(true)}
+    // onMouseLeave={() => setIsHovering(false)}
+  >
+    {displayName}
+  </p>
+  <img
+    src={miniMapImageToDisplay}
+    className="minimap-image"
+    alt={displayName}
+  />
+  <MapMarker
+    x={100} // Use actual position
+    y={100} // Use actual position
+    width={10} // Use actual size
+    height={10} // Use actual size
+    onHover={() => {
+		setShowTooltip(true); setTooltipText("To Prontera (prontera.rsw)")
+	}
+}
+    onExit={() => {
+		setShowTooltip(false); setTooltipText("")}
+	}
+  />
+  {showTooltip && <GameTooltip>{tooltipText}</GameTooltip>}
+</div>
+
   );
 };
 
