@@ -134,7 +134,7 @@ function AssetServer:SendFileData(requestID, requestedFilePath)
 	local contentType = self:GetContentType(requestedFilePath)
 
 	local isBitmap = path.extname(requestedFilePath) == ".bmp" -- TBD case sensitive, unit tests, move elsewhere
-	if isBitmap then
+	if isBitmap then -- todo icas_in not working - how come?
 		responseBody = self:ReplaceTransparentPixelsBeforeSending(responseBody)
 	end
 
