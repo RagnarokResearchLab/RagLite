@@ -163,7 +163,6 @@ function AssetServer:ReplaceTransparentPixelsBeforeSending(fileContents)
 	-- Re-encode image with the new pixel data
 	local imageSize = image.width * image.height * 4 -- We know it's RGBA so this is always safe
 	local updatedFileContents = ffi.string(image.data, imageSize)	-- ImageToString
-	print("updatedFileContents", #updatedFileContents)
 
 	-- Encode as BMP again before sending since that's the content-type the browser expects
 	local result = buffer.new()
