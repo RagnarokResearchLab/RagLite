@@ -133,12 +133,34 @@ function AssetServer:SendFileData(requestID, requestedFilePath)
 	local responseBody = self.grfArchive:ExtractFileInMemory(requestedFilePath)
 	local contentType = self:GetContentType(requestedFilePath)
 
+	local isBitmap = path.extname(requestedFilePath) == ".bmp" -- TBD case sensitive, unit tests, move elsewhere
+	if isBitmap then
+		responseBody = self:ReplaceTransparentPixelsBeforeSending(responseBody)
+	end
+
 	self.webserver:WriteStatus(requestID, "200 OK")
 	self.webserver:WriteHeader(requestID, "Access-Control-Allow-Origin", "*") -- Avoid CORS issues in the WebView
 	self.webserver:WriteHeader(requestID, "Content-Type", contentType)
 	self.webserver:SendResponse(requestID, responseBody)
 
 	printf("[AssetServer] Responding with %s: %s", string_filesize(#responseBody), requestedFilePath)
+end
+
+function AssetServer:ReplaceTransparentPixelsBeforeSending(fileContents)
+	-- TODO benchmark
+	print("ReplaceTransparentPixelsBeforeSending")
+	local ffi = require("ffi")
+	local stbi = require("stbi")
+	local magentaColor = ffi.new("stbi_color_t",  { 255, 0, 255, 255 }) -- not exact, they use variations too...
+	local sourceColor = magentaColor
+	local replacementColor = ffi.new("stbi_color_t", { 255, 0, 255, 0 })
+	local image=  ffi.new("stbi_image_t")
+	stbi.bindings.stbi_load_rgba(fileContents, #fileContents, image) -- replace with C_ImageProcessing calls, simplify, test
+	stbi.replace_pixel_color_rgba(image, sourceColor, replacementColor)
+	local imageSize = image.width * image.height * 4 -- We know it's RGBA so this is always safe
+	local updatedFileContents = ffi.string(image.data, imageSize)	-- ImageToString
+	print("updatedFileContents", #updatedFileContents)
+	return updatedFileContents
 end
 
 function AssetServer:SendNotFoundError(requestID)
