@@ -153,6 +153,8 @@ function AssetServer:ReplaceTransparentPixelsBeforeSending(fileContents)
 	local ffi = require("ffi")
 	local stbi = require("stbi")
 
+	-- C_ImageProcessing.RecolorPixelsInPlace(pixelBuffer, sourceColor, replacementColor)
+
 	-- Replace all shades of magenta that are known to be used in GRF assets
 	local magentaColor = ffi.new("stbi_color_t",  { 255, 0, 255, 255 }) -- not exact, they use variations too...
 	local sourceColor = magentaColor
