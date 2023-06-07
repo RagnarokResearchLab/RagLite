@@ -148,7 +148,7 @@ end
 
 function AssetServer:ReplaceTransparentPixelsBeforeSending(fileContents)
 	-- TODO benchmark, decide if bmp, jpg, png, tga should be sent?
-	print("ReplaceTransparentPixelsBeforeSending")
+	local timeBeforeEncoding = uv.hrtime() -- console.startTimer("Re-encoding BMP with transparency")
 	local ffi = require("ffi")
 	local stbi = require("stbi")
 
@@ -173,6 +173,9 @@ function AssetServer:ReplaceTransparentPixelsBeforeSending(fileContents)
 	local numBytesWritten = stbi.bindings.stbi_encode_bmp(image, startPointer, length)
 	result:commit(numBytesWritten)
 
+	local timeAfterEncoding = uv.hrtime() -- console.endTimer("Re-encoding BMP with transparency")
+	local encodingTimeInMilliseconds = (timeAfterEncoding - timeBeforeEncoding) / 10E5
+	print("Re-encoding BMP with transparency", encodingTimeInMilliseconds)
 	return tostring(result) -- upvalues
 end
 
