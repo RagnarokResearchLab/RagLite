@@ -105,7 +105,8 @@ end
 function AssetServer:MINIMAP_IMAGE_REQUESTED(requestID, requestedFilePath)
 	print("[AssetServer] MINIMAP_IMAGE_REQUESTED", requestID, requestedFilePath)
 
-	local minimapImagePath = requestedFilePath:gsub("/ui/minimap/", "data/texture/유저인터페이스/map/")
+	local minimapImagePath = requestedFilePath:gsub(".png", ".bmp") -- Browser must receive PNG for transparency, BMP doesn't always work (e.g., empty maps)
+	minimapImagePath = minimapImagePath:gsub("/ui/minimap/", "data/texture/유저인터페이스/map/")
 	self:FILE_DATA_REQUESTED(requestID, minimapImagePath)
 end
 
@@ -157,19 +158,50 @@ function AssetServer:ReplaceTransparentPixelsBeforeSending(fileContents)
 	local sourceColor = magentaColor
 	local replacementColor = ffi.new("stbi_color_t", { 255, 0, 255, 0 })
 	local image=  ffi.new("stbi_image_t")
+
+
+
 	stbi.bindings.stbi_load_rgba(fileContents, #fileContents, image) -- replace with C_ImageProcessing calls, simplify, test
+
+	for v=0, image.height - 1, 1 do
+		for u=0, image.width - 1, 1 do
+
+			if u % 100 == 0  and v % 100 == 0  then
+				local red = image.data[v*u + u + 0]
+				local green = image.data[v*u + u + 1]
+				local blue = image.data[v*u + u + 2]
+				local alpha = image.data[v*u + u + 3]
+				print(u, v, red, green, blue, alpha)
+			end
+		end
+	end
+
 	stbi.replace_pixel_color_rgba(image, sourceColor, replacementColor)
 
+
+	for v=0, image.height - 1, 1 do
+		for u=0, image.width - 1, 1 do
+
+			if u % 100 == 0  and v % 100 == 0  then
+				local red = image.data[v*u + u + 0]
+				local green = image.data[v*u + u + 1]
+				local blue = image.data[v*u + u + 2]
+				local alpha = image.data[v*u + u + 3]
+				print(u, v, red, green, blue, alpha)
+			end
+		end
+	end
+
 	-- Re-encode image with the new pixel data
-	local imageSize = image.width * image.height * 4 -- We know it's RGBA so this is always safe
-	local updatedFileContents = ffi.string(image.data, imageSize)	-- ImageToString
+	-- local imageSize = image.width * image.height * 4 -- We know it's RGBA so this is always safe
+	-- local updatedFileContents = ffi.string(image.data, imageSize)	-- ImageToString
 
 	-- Encode as BMP again before sending since that's the content-type the browser expects
 	local result = buffer.new()
 	local maxFileSize = stbi.max_bitmap_size(image.width, image.height, 4)
 	local startPointer, length = result:reserve(maxFileSize)
 	image.channels = 4 -- overwrite useless setting stored by stbi (should be handled automatically..)
-	local numBytesWritten = stbi.bindings.stbi_encode_bmp(image, startPointer, length)
+	local numBytesWritten = stbi.bindings.stbi_encode_png(image, startPointer, length, 0)
 	result:commit(numBytesWritten)
 
 	local timeAfterEncoding = uv.hrtime() -- console.endTimer("Re-encoding BMP with transparency")
