@@ -147,20 +147,32 @@ function AssetServer:SendFileData(requestID, requestedFilePath)
 end
 
 function AssetServer:ReplaceTransparentPixelsBeforeSending(fileContents)
-	-- TODO benchmark
+	-- TODO benchmark, decide if bmp, jpg, png, tga should be sent?
 	print("ReplaceTransparentPixelsBeforeSending")
 	local ffi = require("ffi")
 	local stbi = require("stbi")
+
+	-- Replace all shades of magenta that are known to be used in GRF assets
 	local magentaColor = ffi.new("stbi_color_t",  { 255, 0, 255, 255 }) -- not exact, they use variations too...
 	local sourceColor = magentaColor
 	local replacementColor = ffi.new("stbi_color_t", { 255, 0, 255, 0 })
 	local image=  ffi.new("stbi_image_t")
 	stbi.bindings.stbi_load_rgba(fileContents, #fileContents, image) -- replace with C_ImageProcessing calls, simplify, test
 	stbi.replace_pixel_color_rgba(image, sourceColor, replacementColor)
+
+	-- Re-encode image with the new pixel data
 	local imageSize = image.width * image.height * 4 -- We know it's RGBA so this is always safe
 	local updatedFileContents = ffi.string(image.data, imageSize)	-- ImageToString
 	print("updatedFileContents", #updatedFileContents)
-	return updatedFileContents
+
+	-- Encode as BMP again before sending since that's the content-type the browser expects
+	local result = buffer.new()
+	local maxFileSize = stbi.max_bitmap_size(image.width, image.height, 4)
+	local startPointer, length = result:reserve(maxFileSize)
+	local numBytesWritten = stbi.bindings.stbi_encode_bmp(image, startPointer, length)
+	result:commit(numBytesWritten)
+
+	return tostring(result) -- upvalues
 end
 
 function AssetServer:SendNotFoundError(requestID)
