@@ -17,7 +17,7 @@ function WebClient:Start()
 	self:StartWebServer()
 end
 
-function WebClient:CreateWebServer()
+function WebClient:CreateWebServer() -- tbd websocket, msg protocol?
 	-- JSON RPC currently crashes the Lua runtime (VM Panic), so registering JS callbacks won't work
 	-- This workaround allows controlling the native window from within the WebView until that's fixed
 	local HttpServer = require("HttpServer")
