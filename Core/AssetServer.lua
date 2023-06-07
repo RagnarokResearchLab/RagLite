@@ -169,6 +169,7 @@ function AssetServer:ReplaceTransparentPixelsBeforeSending(fileContents)
 	local result = buffer.new()
 	local maxFileSize = stbi.max_bitmap_size(image.width, image.height, 4)
 	local startPointer, length = result:reserve(maxFileSize)
+	image.channels = 4 -- overwrite useless setting stored by stbi (should be handled automatically..)
 	local numBytesWritten = stbi.bindings.stbi_encode_bmp(image, startPointer, length)
 	result:commit(numBytesWritten)
 
