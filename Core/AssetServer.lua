@@ -148,7 +148,7 @@ function AssetServer:SendFileData(requestID, requestedFilePath)
 end
 
 function AssetServer:ReplaceTransparentPixelsBeforeSending(fileContents)
-	-- TODO benchmark, decide if bmp, jpg, png, tga should be sent?
+	-- TODO benchmark, decide if bmp, jpg, png, tga should be sent? (BMP = 3ms, PNG = 100ms ...)
 	local timeBeforeEncoding = uv.hrtime() -- console.startTimer("Re-encoding BMP with transparency")
 	local ffi = require("ffi")
 	local stbi = require("stbi")
@@ -163,34 +163,34 @@ function AssetServer:ReplaceTransparentPixelsBeforeSending(fileContents)
 
 	stbi.bindings.stbi_load_rgba(fileContents, #fileContents, image) -- replace with C_ImageProcessing calls, simplify, test
 
-	for v=0, image.height - 1, 1 do
-		for u=0, image.width - 1, 1 do
+	-- for v=0, image.height - 1, 1 do
+	-- 	for u=0, image.width - 1, 1 do
 
-			if u % 100 == 0  and v % 100 == 0  then
-				local red = image.data[v*u + u + 0]
-				local green = image.data[v*u + u + 1]
-				local blue = image.data[v*u + u + 2]
-				local alpha = image.data[v*u + u + 3]
-				print(u, v, red, green, blue, alpha)
-			end
-		end
-	end
+	-- 		if u % 100 == 0  and v % 100 == 0  then
+	-- 			local red = image.data[v*u + u + 0]
+	-- 			local green = image.data[v*u + u + 1]
+	-- 			local blue = image.data[v*u + u + 2]
+	-- 			local alpha = image.data[v*u + u + 3]
+	-- 			print(u, v, red, green, blue, alpha)
+	-- 		end
+	-- 	end
+	-- end
 
 	stbi.replace_pixel_color_rgba(image, sourceColor, replacementColor)
 
 
-	for v=0, image.height - 1, 1 do
-		for u=0, image.width - 1, 1 do
+	-- for v=0, image.height - 1, 1 do
+	-- 	for u=0, image.width - 1, 1 do
 
-			if u % 100 == 0  and v % 100 == 0  then
-				local red = image.data[v*u + u + 0]
-				local green = image.data[v*u + u + 1]
-				local blue = image.data[v*u + u + 2]
-				local alpha = image.data[v*u + u + 3]
-				print(u, v, red, green, blue, alpha)
-			end
-		end
-	end
+	-- 		if u % 100 == 0  and v % 100 == 0  then
+	-- 			local red = image.data[v*u + u + 0]
+	-- 			local green = image.data[v*u + u + 1]
+	-- 			local blue = image.data[v*u + u + 2]
+	-- 			local alpha = image.data[v*u + u + 3]
+	-- 			print(u, v, red, green, blue, alpha)
+	-- 		end
+	-- 	end
+	-- end
 
 	-- Re-encode image with the new pixel data
 	-- local imageSize = image.width * image.height * 4 -- We know it's RGBA so this is always safe
