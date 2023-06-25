@@ -66,7 +66,16 @@ function gpu.requestLogicalDevice(adapter, options)
 
 	local requestedDevice
 	local function onDeviceRequested(status, device, message, userdata)
-		assert(status == ffi.C.WGPURequestDeviceStatus_Success, "Failed to request logical WebGPU device")
+		local success = status == ffi.C.WGPURequestDeviceStatus_Success
+		if not success then
+			error(
+				format(
+					"Failed to request logical WebGPU device (status: %s)\n%s",
+					tonumber(status),
+					ffi.string(message)
+				)
+			)
+		end
 		requestedDevice = device
 	end
 	webgpu.bindings.wgpu_adapter_request_device(adapter, deviceDescriptor, onDeviceRequested, nil)
