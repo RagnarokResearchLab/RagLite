@@ -2,6 +2,7 @@ local bit = require("bit")
 local ffi = require("ffi")
 local glfw = require("glfw")
 local webgpu = require("webgpu")
+local uv = require("uv")
 local validation = require("validation")
 
 local gpu = require("Core.NativeClient.gpu")
@@ -231,6 +232,8 @@ function Renderer:RenderNextFrame(graphicsContext)
 end
 
 function Renderer:UploadGeometry(graphicsContext, vertexArray, triangleIndices, colorsRGB)
+	local nanosecondsBeforeUpload = uv.hrtime()
+
 	local vertexPositionsBufferSize = #vertexArray * ffi.sizeof("float")
 	local vertexCount = #triangleIndices
 	local numVertexColorValues = #colorsRGB / 3
@@ -301,6 +304,10 @@ function Renderer:UploadGeometry(graphicsContext, vertexArray, triangleIndices, 
 		triangleIndexBufferSize = triangleIndexBufferSize,
 		triangleIndicesCount = triangleIndicesCount,
 	})
+
+	local nanosecondsAfterUpload = uv.hrtime()
+	local uploadTimeInMilliseconds = (nanosecondsAfterUpload - nanosecondsBeforeUpload) / 10E5
+	printf("Geometry upload took %.2f ms", uploadTimeInMilliseconds)
 end
 
 return Renderer
