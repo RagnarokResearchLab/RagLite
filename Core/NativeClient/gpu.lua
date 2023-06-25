@@ -52,12 +52,13 @@ function gpu.requestLogicalDevice(adapter, options)
 	requiredLimits.limits.maxTextureDimension1D = 0
 	requiredLimits.limits.maxTextureDimension2D = 0
 	requiredLimits.limits.maxTextureDimension3D = 0
-	requiredLimits.limits.maxVertexAttributes = 1
-	requiredLimits.limits.maxVertexBuffers = 1
-	local numVertices = 6
-	local numAttributesPerVertex = 2
-	requiredLimits.limits.maxBufferSize = numVertices * numAttributesPerVertex * ffi.sizeof("float")
-	requiredLimits.limits.maxVertexBufferArrayStride = numAttributesPerVertex * ffi.sizeof("float")
+	requiredLimits.limits.maxVertexAttributes = 2 -- Vertex positions, vertex colors
+	requiredLimits.limits.maxVertexBuffers = 2 -- Vertex positions, vertex colors
+	requiredLimits.limits.maxInterStageShaderComponents = 3 -- Vertex index, position, color
+	local numVertices = 6 -- Should be configurable (later)
+	local numComponentsPerVertex = 3 -- sizeof(Vertex3D) = positions (x, y, z)
+	requiredLimits.limits.maxBufferSize = numVertices * numComponentsPerVertex * ffi.sizeof("float")
+	requiredLimits.limits.maxVertexBufferArrayStride = numComponentsPerVertex * ffi.sizeof("float")
 
 	requiredLimits.limits.minStorageBufferOffsetAlignment = supportedLimits.limits.minStorageBufferOffsetAlignment
 	requiredLimits.limits.minUniformBufferOffsetAlignment = supportedLimits.limits.minUniformBufferOffsetAlignment

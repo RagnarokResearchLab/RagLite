@@ -14,7 +14,7 @@ local ffi_new = ffi.new
 local table_insert = table.insert
 
 local Renderer = {
-	clearColorRGBA = { 0, 0.5, 1, 1.0 },
+	clearColorRGBA = { 0.05, 0.05, 0.05, 1.0 },
 	pipelines = {},
 	sceneObjects = {},
 }
@@ -85,18 +85,28 @@ function Renderer:CreateBasicTriangleDrawingPipeline(graphicsContext)
 	local shaderModule = webgpu.bindings.wgpu_device_create_shader_module(graphicsContext.device, shaderDesc)
 
 	-- Configure vertex processing pipeline (vertex fetch/vertex shader stages)
-	local vertexAttribute = ffi.new("WGPUVertexAttribute")
-	vertexAttribute.shaderLocation = 0 -- Pass as first argument
-	vertexAttribute.format = ffi.C.WGPUVertexFormat_Float32x2 -- Vector2D (float)
-	vertexAttribute.offset = 0
+	local positionAttrib = ffi.new("WGPUVertexAttribute")
+	positionAttrib.shaderLocation = 0 -- Pass as first argument
+	positionAttrib.format = ffi.C.WGPUVertexFormat_Float32x2 -- Vector2D (float)
+	positionAttrib.offset = 0
 
-	local vertexBufferLayout = ffi.new("WGPUVertexBufferLayout")
-	vertexBufferLayout.attributeCount = 1 -- Position
-	vertexBufferLayout.attributes = vertexAttribute
-	vertexBufferLayout.arrayStride = 2 * ffi.sizeof("float") -- sizeof(Vector2D)
-	vertexBufferLayout.stepMode = ffi.C.WGPUVertexStepMode_Vertex
+	local vertexBufferLayout = ffi.new("WGPUVertexBufferLayout[?]", 2) -- Positions, colors
+	vertexBufferLayout[0].attributeCount = 1 -- Position
+	vertexBufferLayout[0].attributes = positionAttrib
+	vertexBufferLayout[0].arrayStride = 2 * ffi.sizeof("float") -- sizeof(Vector2D) = position
+	vertexBufferLayout[0].stepMode = ffi.C.WGPUVertexStepMode_Vertex
 
-	pipelineDesc.vertex.bufferCount = 1
+	local colorAttrib = ffi.new("WGPUVertexAttribute")
+	colorAttrib.shaderLocation = 1 -- Pass as second argument
+	colorAttrib.format = ffi.C.WGPUVertexFormat_Float32x3 -- Vector3D (float) = RGB color
+	colorAttrib.offset = 0
+
+	vertexBufferLayout[1].attributeCount = 1 -- Color
+	vertexBufferLayout[1].attributes = colorAttrib
+	vertexBufferLayout[1].arrayStride = 3 * ffi.sizeof("float") -- sizeof(Vector23) = color
+	vertexBufferLayout[1].stepMode = ffi.C.WGPUVertexStepMode_Vertex
+
+	pipelineDesc.vertex.bufferCount = 2 -- positions, colors
 	pipelineDesc.vertex.module = shaderModule
 	pipelineDesc.vertex.entryPoint = "vs_main"
 	pipelineDesc.vertex.constantCount = 0
@@ -172,9 +182,16 @@ function Renderer:RenderNextFrame(graphicsContext)
 			webgpu.bindings.wgpu_render_pass_encoder_set_vertex_buffer(
 				renderPass,
 				0,
-				bufferInfo.vertexBuffer,
+				bufferInfo.vertexPositionsBuffer,
 				0,
-				bufferInfo.vertexBufferSize
+				bufferInfo.vertexPositionsBufferSize
+			)
+			webgpu.bindings.wgpu_render_pass_encoder_set_vertex_buffer(
+				renderPass,
+				1,
+				bufferInfo.vertexColorsBuffer,
+				0,
+				bufferInfo.vertexColorsBufferSize
 			)
 			local instanceCount = 1
 			local firstVertexIndex = 0
@@ -203,35 +220,54 @@ function Renderer:RenderNextFrame(graphicsContext)
 	webgpu.bindings.wgpu_swap_chain_present(swapChain)
 end
 
-function Renderer:UploadGeometry(graphicsContext, vertexArray)
-	local requiredBufferSizeInBytes = #vertexArray * ffi.sizeof("float")
+function Renderer:UploadGeometry(graphicsContext, vertexArray, colorsRGB)
+	local vertexPositionsBufferSize = #vertexArray * ffi.sizeof("float")
 	local vertexCount = #vertexArray / 2 -- sizeof(Vector2D)
+	local numVertexColorValues = #colorsRGB / 3
+
+	assert(vertexCount == numVertexColorValues, "Cannot upload geometry with missing vertex colors")
 
 	local bufferDescriptor = ffi.new("WGPUBufferDescriptor")
-	bufferDescriptor.size = requiredBufferSizeInBytes
+	bufferDescriptor.size = vertexPositionsBufferSize
 	bufferDescriptor.usage = bit.bor(ffi.C.WGPUBufferUsage_CopyDst, ffi.C.WGPUBufferUsage_Vertex)
 	bufferDescriptor.mappedAtCreation = false
 
-	local vertexBuffer = webgpu.bindings.wgpu_device_create_buffer(graphicsContext.device, bufferDescriptor)
-
+	local vertexPositionsBuffer = webgpu.bindings.wgpu_device_create_buffer(graphicsContext.device, bufferDescriptor)
+	printf(
+		"Uploading geometry: %d vertex positions (total buffer size: %s)",
+		vertexCount,
+		string.filesize(vertexPositionsBufferSize)
+	)
 	webgpu.bindings.wgpu_queue_write_buffer(
 		webgpu.bindings.wgpu_device_get_queue(graphicsContext.device),
-		vertexBuffer,
+		vertexPositionsBuffer,
 		0,
-		ffi.new("float[?]", requiredBufferSizeInBytes, vertexArray),
-		requiredBufferSizeInBytes
+		ffi.new("float[?]", vertexPositionsBufferSize, vertexArray),
+		vertexPositionsBufferSize
 	)
 
+	local vertexColorsBufferSize = #colorsRGB * ffi.sizeof("float") -- sizeof (ColorRGB)
+	bufferDescriptor.size = vertexColorsBufferSize
+	local vertexColorsBuffer = webgpu.bindings.wgpu_device_create_buffer(graphicsContext.device, bufferDescriptor)
 	printf(
-		"Uploading geometry: %d vertices (total buffer size: %s)",
-		vertexCount,
-		string.filesize(requiredBufferSizeInBytes)
+		"Uploading geometry: %d vertex colors (total buffer size: %s)",
+		numVertexColorValues,
+		string.filesize(vertexColorsBufferSize)
+	)
+	webgpu.bindings.wgpu_queue_write_buffer(
+		webgpu.bindings.wgpu_device_get_queue(graphicsContext.device),
+		vertexColorsBuffer,
+		0,
+		ffi.new("float[?]", vertexColorsBufferSize, colorsRGB),
+		vertexColorsBufferSize
 	)
 
 	table.insert(self.sceneObjects, {
-		vertexBuffer = vertexBuffer,
-		vertexBufferSize = requiredBufferSizeInBytes,
+		vertexPositionsBuffer = vertexPositionsBuffer,
+		vertexPositionsBufferSize = vertexPositionsBufferSize,
 		vertexCount = vertexCount,
+		vertexColorsBuffer = vertexColorsBuffer,
+		vertexColorsBufferSize = vertexColorsBufferSize,
 	})
 end
 

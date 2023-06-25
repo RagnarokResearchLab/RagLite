@@ -27,7 +27,27 @@ function NativeClient:Start()
 		-0.55,
 		0.5,
 	}
-	Renderer:UploadGeometry(self.graphicsContext, vertexArray)
+	local vertexColorsRGB = {
+		1.0,
+		0.0,
+		0.0,
+		0.0,
+		1.0,
+		0.0,
+		0.0,
+		0.0,
+		1.0,
+		1.0,
+		1.0,
+		0.0,
+		1.0,
+		0.0,
+		1.0,
+		0.0,
+		1.0,
+		1.0,
+	}
+	Renderer:UploadGeometry(self.graphicsContext, vertexArray, vertexColorsRGB)
 
 	self:StartRenderLoop()
 end
