@@ -46,6 +46,24 @@ function gpu.requestLogicalDevice(adapter, options)
 	deviceDescriptor.requiredFeaturesCount = options.requiredFeaturesCount
 	deviceDescriptor.defaultQueue.label = options.defaultQueue.label
 
+	local supportedLimits = ffi.new("WGPUSupportedLimits")
+	webgpu.bindings.wgpu_adapter_get_limits(adapter, supportedLimits)
+	local requiredLimits = ffi.new("WGPURequiredLimits")
+	requiredLimits.limits.maxTextureDimension1D = 0
+	requiredLimits.limits.maxTextureDimension2D = 0
+	requiredLimits.limits.maxTextureDimension3D = 0
+	requiredLimits.limits.maxVertexAttributes = 1
+	requiredLimits.limits.maxVertexBuffers = 1
+	local numVertices = 6
+	local numAttributesPerVertex = 2
+	requiredLimits.limits.maxBufferSize = numVertices * numAttributesPerVertex * ffi.sizeof("float")
+	requiredLimits.limits.maxVertexBufferArrayStride = numAttributesPerVertex * ffi.sizeof("float")
+
+	requiredLimits.limits.minStorageBufferOffsetAlignment = supportedLimits.limits.minStorageBufferOffsetAlignment
+	requiredLimits.limits.minUniformBufferOffsetAlignment = supportedLimits.limits.minUniformBufferOffsetAlignment
+
+	deviceDescriptor.requiredLimits = requiredLimits
+
 	local requestedDevice
 	local function onDeviceRequested(status, device, message, userdata)
 		assert(status == ffi.C.WGPURequestDeviceStatus_Success, "Failed to request logical WebGPU device")
