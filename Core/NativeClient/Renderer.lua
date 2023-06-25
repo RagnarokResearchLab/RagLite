@@ -16,6 +16,7 @@ local table_insert = table.insert
 local Renderer = {
 	clearColorRGBA = { 0, 0.5, 1, 1.0 },
 	pipelines = {},
+	sceneObjects = {},
 }
 
 function Renderer:CreateGraphicsContext(nativeWindowHandle)
@@ -84,10 +85,22 @@ function Renderer:CreateBasicTriangleDrawingPipeline(graphicsContext)
 	local shaderModule = webgpu.bindings.wgpu_device_create_shader_module(graphicsContext.device, shaderDesc)
 
 	-- Configure vertex processing pipeline (vertex fetch/vertex shader stages)
-	pipelineDesc.vertex.bufferCount = 0
+	local vertexAttribute = ffi.new("WGPUVertexAttribute")
+	vertexAttribute.shaderLocation = 0 -- Pass as first argument
+	vertexAttribute.format = ffi.C.WGPUVertexFormat_Float32x2 -- Vector2D (float)
+	vertexAttribute.offset = 0
+
+	local vertexBufferLayout = ffi.new("WGPUVertexBufferLayout")
+	vertexBufferLayout.attributeCount = 1 -- Position
+	vertexBufferLayout.attributes = vertexAttribute
+	vertexBufferLayout.arrayStride = 2 * ffi.sizeof("float") -- sizeof(Vector2D)
+	vertexBufferLayout.stepMode = ffi.C.WGPUVertexStepMode_Vertex
+
+	pipelineDesc.vertex.bufferCount = 1
 	pipelineDesc.vertex.module = shaderModule
 	pipelineDesc.vertex.entryPoint = "vs_main"
 	pipelineDesc.vertex.constantCount = 0
+	pipelineDesc.vertex.buffers = vertexBufferLayout
 
 	-- Configure primitive generation pipeline (primitive assembly/rasterization stages)
 	pipelineDesc.primitive.topology = ffi.C.WGPUPrimitiveTopology_TriangleList
@@ -154,17 +167,26 @@ function Renderer:RenderNextFrame(graphicsContext)
 
 	for index, pipeline in ipairs(self.pipelines) do
 		webgpu.bindings.wgpu_render_pass_encoder_set_pipeline(renderPass, pipeline)
-		local vertexCount = 3
-		local instanceCount = 1
-		local firstVertexIndex = 0
-		local firstInstanceIndex = 0
-		webgpu.bindings.wgpu_render_pass_encoder_draw(
-			renderPass,
-			vertexCount,
-			instanceCount,
-			firstVertexIndex,
-			firstInstanceIndex
-		)
+
+		for _, bufferInfo in ipairs(self.sceneObjects) do
+			webgpu.bindings.wgpu_render_pass_encoder_set_vertex_buffer(
+				renderPass,
+				0,
+				bufferInfo.vertexBuffer,
+				0,
+				bufferInfo.vertexBufferSize
+			)
+			local instanceCount = 1
+			local firstVertexIndex = 0
+			local firstInstanceIndex = 0
+			webgpu.bindings.wgpu_render_pass_encoder_draw(
+				renderPass,
+				bufferInfo.vertexCount,
+				instanceCount,
+				firstVertexIndex,
+				firstInstanceIndex
+			)
+		end
 	end
 
 	webgpu.bindings.wgpu_render_pass_encoder_end(renderPass)
@@ -182,8 +204,8 @@ function Renderer:RenderNextFrame(graphicsContext)
 end
 
 function Renderer:UploadGeometry(graphicsContext, vertexArray)
-	local vertexCount = #vertexArray
-	local requiredBufferSizeInBytes = vertexCount * ffi.sizeof("float")
+	local requiredBufferSizeInBytes = #vertexArray * ffi.sizeof("float")
+	local vertexCount = #vertexArray / 2 -- sizeof(Vector2D)
 
 	local bufferDescriptor = ffi.new("WGPUBufferDescriptor")
 	bufferDescriptor.size = requiredBufferSizeInBytes
@@ -199,6 +221,18 @@ function Renderer:UploadGeometry(graphicsContext, vertexArray)
 		ffi.new("float[?]", requiredBufferSizeInBytes, vertexArray),
 		requiredBufferSizeInBytes
 	)
+
+	printf(
+		"Uploading geometry: %d vertices (total buffer size: %s)",
+		vertexCount,
+		string.filesize(requiredBufferSizeInBytes)
+	)
+
+	table.insert(self.sceneObjects, {
+		vertexBuffer = vertexBuffer,
+		vertexBufferSize = requiredBufferSizeInBytes,
+		vertexCount = vertexCount,
+	})
 end
 
 return Renderer

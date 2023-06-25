@@ -20,6 +20,12 @@ function NativeClient:Start()
 		-0.5, -- x_1, y_1
 		0,
 		0.5, -- x_2, y_2
+		-0.55,
+		-0.5,
+		-0.05,
+		0.5,
+		-0.55,
+		0.5,
 	}
 	Renderer:UploadGeometry(self.graphicsContext, vertexArray)
 
