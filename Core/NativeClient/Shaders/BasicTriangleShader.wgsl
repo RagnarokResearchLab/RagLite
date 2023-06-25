@@ -27,5 +27,9 @@ fn vs_main(in: VertexInput) -> VertexOutput {
 
 @fragment
 fn fs_main(in: VertexOutput) -> @location(0) vec4f {
-    return vec4f(in.color, 1.0);
+    // WebGPU assumes that the colors output by the fragment shader are linear
+    // When setting the surface format to BGRA8UnormSrgb it performs a linear to sRGB conversion.
+
+    let linear_color = pow(in.color, vec3f(2.2));
+    return vec4f(linear_color, 1.0);
 }

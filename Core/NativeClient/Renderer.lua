@@ -56,6 +56,9 @@ function Renderer:CreateSwapchain(context)
 	local surface = glfw.bindings.glfw_get_wgpu_surface(context.instance, context.window)
 	local textureFormat = webgpu.bindings.wgpu_surface_get_preferred_format(surface, context.adapter)
 
+	print("Using preferred swap chain texture format:", tonumber(textureFormat))
+	assert(textureFormat == ffi.C.WGPUTextureFormat_BGRA8UnormSrgb, "Only sRGB texture formats are currently supported")
+
 	swapChainDescriptor.format = textureFormat
 	swapChainDescriptor.usage = ffi.C.WGPUTextureUsage_RenderAttachment
 	swapChainDescriptor.presentMode = ffi.C.WGPUPresentMode_Fifo
