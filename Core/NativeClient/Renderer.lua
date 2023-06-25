@@ -231,10 +231,31 @@ function Renderer:RenderNextFrame(graphicsContext)
 	webgpu.bindings.wgpu_swap_chain_present(swapChain)
 end
 
+-- local binary_and = bit.band
+-- local binary_negation = bit.bnot
+local function copyDestPadToNextAlignment(size)
+	local paddedSize
+	if size % 4 == 0 then
+		paddedSize = size
+	end
+	if size % 4 == 1 then
+		paddedSize = size + 3
+	end
+	if size % 4 == 2 then
+		paddedSize = size + 2
+	end
+	if size % 4 == 3 then
+		paddedSize = size + 1
+	end
+
+	-- print(size, paddedSize)
+	return paddedSize
+end
+
 function Renderer:UploadGeometry(graphicsContext, vertexArray, triangleIndices, colorsRGB)
 	local nanosecondsBeforeUpload = uv.hrtime()
 
-	local vertexPositionsBufferSize = #vertexArray * ffi.sizeof("float")
+	local vertexPositionsBufferSize = copyDestPadToNextAlignment(#vertexArray * ffi.sizeof("float"))
 	local vertexCount = #triangleIndices
 	local numVertexColorValues = #colorsRGB / 3
 
@@ -259,7 +280,7 @@ function Renderer:UploadGeometry(graphicsContext, vertexArray, triangleIndices, 
 		vertexPositionsBufferSize
 	)
 
-	local vertexColorsBufferSize = #colorsRGB * ffi.sizeof("float") -- sizeof (ColorRGB)
+	local vertexColorsBufferSize = copyDestPadToNextAlignment(#colorsRGB * ffi.sizeof("float")) -- sizeof (ColorRGB)
 	bufferDescriptor.size = vertexColorsBufferSize
 	local vertexColorsBuffer = webgpu.bindings.wgpu_device_create_buffer(graphicsContext.device, bufferDescriptor)
 	printf(
@@ -279,7 +300,7 @@ function Renderer:UploadGeometry(graphicsContext, vertexArray, triangleIndices, 
 	bufferDescriptor.usage = bit.bor(ffi.C.WGPUBufferUsage_CopyDst, ffi.C.WGPUBufferUsage_Index)
 	local triangleIndicesBuffer = webgpu.bindings.wgpu_device_create_buffer(graphicsContext.device, bufferDescriptor)
 	local triangleIndicesCount = #triangleIndices
-	local triangleIndexBufferSize = #triangleIndices * ffi.sizeof("uint16_t")
+	local triangleIndexBufferSize = copyDestPadToNextAlignment(#triangleIndices * ffi.sizeof("uint16_t"))
 	bufferDescriptor.size = triangleIndexBufferSize
 	printf(
 		"Uploading geometry: %d triangle indices (total buffer size: %s)",
