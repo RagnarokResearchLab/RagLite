@@ -55,7 +55,7 @@ function gpu.requestLogicalDevice(adapter, options)
 	requiredLimits.limits.maxVertexAttributes = 2 -- Vertex positions, vertex colors
 	requiredLimits.limits.maxVertexBuffers = 2 -- Vertex positions, vertex colors
 	requiredLimits.limits.maxInterStageShaderComponents = 3 -- Vertex index, position, color
-	local numVertices = 6 -- Should be configurable (later)
+	local numVertices = 65536 -- Should be configurable (later)
 	local numComponentsPerVertex = 3 -- sizeof(Vertex3D) = positions (x, y, z)
 	requiredLimits.limits.maxBufferSize = numVertices * numComponentsPerVertex * ffi.sizeof("float")
 	requiredLimits.limits.maxVertexBufferArrayStride = numComponentsPerVertex * ffi.sizeof("float")
