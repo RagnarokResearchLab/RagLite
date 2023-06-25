@@ -13,19 +13,23 @@ function NativeClient:Start()
 	Renderer:CreatePipelineConfigurations(self.graphicsContext)
 
 	-- Hardcoded for now, replace with actual geometry later
-	local vertexArray = {
+	local vertexPositions = {
 		-0.5,
-		-0.5, -- x_0, y_0
+		-0.5,
 		0.5,
-		-0.5, -- x_1, y_1
+		-0.5,
+		0.5,
+		0.5,
+		-0.5,
+		0.5,
+	}
+	local triangleIndices = {
 		0,
-		0.5, -- x_2, y_2
-		-0.55,
-		-0.5,
-		-0.05,
-		0.5,
-		-0.55,
-		0.5,
+		1,
+		2,
+		0,
+		2,
+		3,
 	}
 	local vertexColorsRGB = {
 		1.0,
@@ -47,7 +51,7 @@ function NativeClient:Start()
 		1.0,
 		1.0,
 	}
-	Renderer:UploadGeometry(self.graphicsContext, vertexArray, vertexColorsRGB)
+	Renderer:UploadGeometry(self.graphicsContext, vertexPositions, triangleIndices, vertexColorsRGB)
 
 	self:StartRenderLoop()
 end

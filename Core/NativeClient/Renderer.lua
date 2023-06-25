@@ -193,15 +193,25 @@ function Renderer:RenderNextFrame(graphicsContext)
 				0,
 				bufferInfo.vertexColorsBufferSize
 			)
+			webgpu.bindings.wgpu_render_pass_encoder_set_index_buffer(
+				renderPass,
+				bufferInfo.triangleIndicesBuffer,
+				ffi.C.WGPUIndexFormat_Uint16,
+				0,
+				bufferInfo.triangleIndexBufferSize
+			)
+
 			local instanceCount = 1
 			local firstVertexIndex = 0
 			local firstInstanceIndex = 0
-			webgpu.bindings.wgpu_render_pass_encoder_draw(
+			local indexBufferOffset = 0
+			webgpu.bindings.wgpu_render_pass_encoder_draw_indexed(
 				renderPass,
-				bufferInfo.vertexCount,
+				bufferInfo.triangleIndicesCount,
 				instanceCount,
 				firstVertexIndex,
-				firstInstanceIndex
+				firstInstanceIndex,
+				indexBufferOffset
 			)
 		end
 	end
@@ -220,12 +230,12 @@ function Renderer:RenderNextFrame(graphicsContext)
 	webgpu.bindings.wgpu_swap_chain_present(swapChain)
 end
 
-function Renderer:UploadGeometry(graphicsContext, vertexArray, colorsRGB)
+function Renderer:UploadGeometry(graphicsContext, vertexArray, triangleIndices, colorsRGB)
 	local vertexPositionsBufferSize = #vertexArray * ffi.sizeof("float")
-	local vertexCount = #vertexArray / 2 -- sizeof(Vector2D)
+	local vertexCount = #triangleIndices
 	local numVertexColorValues = #colorsRGB / 3
 
-	assert(vertexCount == numVertexColorValues, "Cannot upload geometry with missing vertex colors")
+	assert(vertexCount == numVertexColorValues, "Cannot upload geometry with missing or incomplete vertex colors")
 
 	local bufferDescriptor = ffi.new("WGPUBufferDescriptor")
 	bufferDescriptor.size = vertexPositionsBufferSize
@@ -262,12 +272,34 @@ function Renderer:UploadGeometry(graphicsContext, vertexArray, colorsRGB)
 		vertexColorsBufferSize
 	)
 
+	-- TODO A writeBuffer operation must copy a number of bytes that is a multiple of 4. To ensure so we can switch bufferDesc.size for (bufferDesc.size + 3) & ~4.
+	bufferDescriptor.usage = bit.bor(ffi.C.WGPUBufferUsage_CopyDst, ffi.C.WGPUBufferUsage_Index)
+	local triangleIndicesBuffer = webgpu.bindings.wgpu_device_create_buffer(graphicsContext.device, bufferDescriptor)
+	local triangleIndicesCount = #triangleIndices
+	local triangleIndexBufferSize = #triangleIndices * ffi.sizeof("uint16_t")
+	bufferDescriptor.size = triangleIndexBufferSize
+	printf(
+		"Uploading geometry: %d triangle indices (total buffer size: %s)",
+		triangleIndicesCount,
+		string.filesize(triangleIndexBufferSize)
+	)
+	webgpu.bindings.wgpu_queue_write_buffer(
+		webgpu.bindings.wgpu_device_get_queue(graphicsContext.device),
+		triangleIndicesBuffer,
+		0,
+		ffi.new("uint16_t[?]", triangleIndexBufferSize, triangleIndices),
+		triangleIndexBufferSize
+	)
+
 	table.insert(self.sceneObjects, {
 		vertexPositionsBuffer = vertexPositionsBuffer,
 		vertexPositionsBufferSize = vertexPositionsBufferSize,
-		vertexCount = vertexCount,
+		vertexCount = vertexCount, -- Obsolete if using draw_indexed?
 		vertexColorsBuffer = vertexColorsBuffer,
 		vertexColorsBufferSize = vertexColorsBufferSize,
+		triangleIndicesBuffer = triangleIndicesBuffer,
+		triangleIndexBufferSize = triangleIndexBufferSize,
+		triangleIndicesCount = triangleIndicesCount,
 	})
 end
 
