@@ -181,4 +181,24 @@ function Renderer:RenderNextFrame(graphicsContext)
 	webgpu.bindings.wgpu_swap_chain_present(swapChain)
 end
 
+function Renderer:UploadGeometry(graphicsContext, vertexArray)
+	local vertexCount = #vertexArray
+	local requiredBufferSizeInBytes = vertexCount * ffi.sizeof("float")
+
+	local bufferDescriptor = ffi.new("WGPUBufferDescriptor")
+	bufferDescriptor.size = requiredBufferSizeInBytes
+	bufferDescriptor.usage = bit.bor(ffi.C.WGPUBufferUsage_CopyDst, ffi.C.WGPUBufferUsage_Vertex)
+	bufferDescriptor.mappedAtCreation = false
+
+	local vertexBuffer = webgpu.bindings.wgpu_device_create_buffer(graphicsContext.device, bufferDescriptor)
+
+	webgpu.bindings.wgpu_queue_write_buffer(
+		webgpu.bindings.wgpu_device_get_queue(graphicsContext.device),
+		vertexBuffer,
+		0,
+		ffi.new("float[?]", requiredBufferSizeInBytes, vertexArray),
+		requiredBufferSizeInBytes
+	)
+end
+
 return Renderer

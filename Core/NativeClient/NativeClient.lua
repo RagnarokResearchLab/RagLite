@@ -11,6 +11,18 @@ function NativeClient:Start()
 	self.mainWindow = self:CreateMainWindow()
 	self.graphicsContext = Renderer:CreateGraphicsContext(self.mainWindow)
 	Renderer:CreatePipelineConfigurations(self.graphicsContext)
+
+	-- Hardcoded for now, replace with actual geometry later
+	local vertexArray = {
+		-0.5,
+		-0.5, -- x_0, y_0
+		0.5,
+		-0.5, -- x_1, y_1
+		0,
+		0.5, -- x_2, y_2
+	}
+	Renderer:UploadGeometry(self.graphicsContext, vertexArray)
+
 	self:StartRenderLoop()
 end
 
