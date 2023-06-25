@@ -69,14 +69,38 @@ end
 
 function Renderer:CreateBasicTriangleDrawingPipeline(graphicsContext)
 	local surface = glfw.bindings.glfw_get_wgpu_surface(graphicsContext.instance, graphicsContext.window)
+	-- print(surface)
 	local descriptor = ffi.new("WGPURenderPipelineDescriptor")
 	local pipelineDesc = descriptor
 
 	-- Setup basic example shaders (will be replaced later with more useful ones)
-	local shaderSource = C_FileSystem.ReadFile("Core/NativeClient/Shaders/BasicTriangleShader.wgsl")
+	local shaderSource = [[
+@vertex
+fn vs_main(@builtin(vertex_index) in_vertex_index: u32) -> @builtin(position) vec4f {
+	var p = vec2f(0.0, 0.0);
+	if (in_vertex_index == 0u) {
+		p = vec2f(-0.5, -0.5);
+	} else if (in_vertex_index == 1u) {
+		p = vec2f(0.5, -0.5);
+	} else {
+		p = vec2f(0.0, 0.5);
+	}
+	return vec4f(p, 0.0, 1.0);
+}
+
+@fragment
+fn fs_main() -> @location(0) vec4f {
+	return vec4f(1.0, 0.4, 1.0, 0.3);
+}
+
+	]]
+	--C_FileSystem.ReadFile("Core/NativeClient/Shaders/BasicTriangleShader.wgsl")
 
 	local shaderDesc = ffi.new("WGPUShaderModuleDescriptor")
+	shaderDesc.hintCount = 0
+	shaderDesc.hints = ffi.NULL
 	local shaderCodeDesc = ffi.new("WGPUShaderModuleWGSLDescriptor")
+	shaderCodeDesc.chain.next = ffi.NULL
 	shaderCodeDesc.chain.sType = ffi.C.WGPUSType_ShaderModuleWGSLDescriptor
 	shaderDesc.nextInChain = shaderCodeDesc.chain
 	shaderCodeDesc.code = shaderSource
@@ -85,9 +109,11 @@ function Renderer:CreateBasicTriangleDrawingPipeline(graphicsContext)
 
 	-- Configure vertex processing pipeline (vertex fetch/vertex shader stages)
 	pipelineDesc.vertex.bufferCount = 0
+	pipelineDesc.vertex.buffers = ffi.NULL
 	pipelineDesc.vertex.module = shaderModule
 	pipelineDesc.vertex.entryPoint = "vs_main"
 	pipelineDesc.vertex.constantCount = 0
+	pipelineDesc.vertex.constants = ffi.NULL
 
 	-- Configure primitive generation pipeline (primitive assembly/rasterization stages)
 	pipelineDesc.primitive.topology = ffi.C.WGPUPrimitiveTopology_TriangleList
@@ -100,11 +126,21 @@ function Renderer:CreateBasicTriangleDrawingPipeline(graphicsContext)
 	fragmentState.module = shaderModule
 	fragmentState.entryPoint = "fs_main"
 	fragmentState.constantCount = 0
+	fragmentState.constants = ffi.NULL
 
 	pipelineDesc.fragment = fragmentState
 
 	-- Configure alpha blending pipeline (blending stage)
 	local blendState = ffi.new("WGPUBlendState")
+
+	blendState.color.srcFactor = ffi.C.WGPUBlendFactor_SrcAlpha
+	blendState.color.dstFactor = ffi.C.WGPUBlendFactor_OneMinusSrcAlpha
+	blendState.color.operation = ffi.C.WGPUBlendOperation_Add
+
+	blendState.alpha.srcFactor = ffi.C.WGPUBlendFactor_Zero
+	blendState.alpha.dstFactor = ffi.C.WGPUBlendFactor_One
+	blendState.alpha.operation = ffi.C.WGPUBlendOperation_Add
+
 	local colorTarget = ffi.new("WGPUColorTargetState")
 	colorTarget.format = webgpu.bindings.wgpu_surface_get_preferred_format(surface, graphicsContext.adapter)
 	colorTarget.blend = blendState
@@ -113,9 +149,7 @@ function Renderer:CreateBasicTriangleDrawingPipeline(graphicsContext)
 	fragmentState.targetCount = 1
 	fragmentState.targets = colorTarget
 
-	blendState.color.srcFactor = ffi.C.WGPUBlendFactor_SrcAlpha
-	blendState.color.dstFactor = ffi.C.WGPUBlendFactor_OneMinusSrcAlpha
-	blendState.color.operation = ffi.C.WGPUBlendOperation_Add
+	pipelineDesc.depthStencil = ffi.NULL
 
 	-- Configure multisampling (here: disabled - we don't map fragments to more than one sample)
 	local samplesPerPixel = 1
@@ -143,12 +177,16 @@ function Renderer:RenderNextFrame(graphicsContext)
 	-- Clearing is a built-in mechanism of the render pass
 	local renderPassColorAttachment = ffi_new("WGPURenderPassColorAttachment")
 	renderPassColorAttachment.view = nextTextureView
+	renderPassColorAttachment.resolveTarget = ffi.NULL
 	renderPassColorAttachment.loadOp = ffi.C.WGPULoadOp_Clear
 	renderPassColorAttachment.storeOp = ffi.C.WGPUStoreOp_Store
 	renderPassColorAttachment.clearValue = ffi_new("WGPUColor", self.clearColorRGBA)
 
 	renderPassDescriptor.colorAttachmentCount = 1
 	renderPassDescriptor.colorAttachments = renderPassColorAttachment
+	renderPassDescriptor.depthStencilAttachment = ffi.NULL
+	renderPassDescriptor.timestampWriteCount = 0
+	renderPassDescriptor.timestampWrites = ffi.NULL
 
 	local renderPass = webgpu.bindings.wgpu_command_encoder_begin_render_pass(commandEncoder, renderPassDescriptor)
 
@@ -178,6 +216,7 @@ function Renderer:RenderNextFrame(graphicsContext)
 	local commandBuffers = ffi_new("WGPUCommandBuffer[1]", commandBuffer)
 	webgpu.bindings.wgpu_queue_submit(queue, 1, commandBuffers)
 
+	-- webgpu.bindings.wgpu_instance_process_events(graphicsContext.instance)
 	webgpu.bindings.wgpu_swap_chain_present(swapChain)
 end
 
