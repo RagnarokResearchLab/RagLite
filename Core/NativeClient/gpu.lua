@@ -59,6 +59,9 @@ function gpu.requestLogicalDevice(adapter, options)
 	local numComponentsPerVertex = 3 -- sizeof(Vertex3D) = positions (x, y, z)
 	requiredLimits.limits.maxBufferSize = numVertices * numComponentsPerVertex * ffi.sizeof("float")
 	requiredLimits.limits.maxVertexBufferArrayStride = numComponentsPerVertex * ffi.sizeof("float")
+	requiredLimits.limits.maxBindGroups = 1
+	requiredLimits.limits.maxUniformBuffersPerShaderStage = 1
+	requiredLimits.limits.maxUniformBufferBindingSize = 16 * ffi.sizeof("float")
 
 	requiredLimits.limits.minStorageBufferOffsetAlignment = supportedLimits.limits.minStorageBufferOffsetAlignment
 	requiredLimits.limits.minUniformBufferOffsetAlignment = supportedLimits.limits.minUniformBufferOffsetAlignment

@@ -11,6 +11,7 @@ function NativeClient:Start()
 	self.mainWindow = self:CreateMainWindow()
 	self.graphicsContext = Renderer:CreateGraphicsContext(self.mainWindow)
 	Renderer:CreatePipelineConfigurations(self.graphicsContext)
+	Renderer:CreateUniformBuffer(self.graphicsContext)
 
 	-- Hardcoded for now, replace with actual geometry later
 	local vertexPositions = {

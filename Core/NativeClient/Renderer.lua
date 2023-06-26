@@ -15,10 +15,24 @@ local ffi_new = ffi.new
 local table_insert = table.insert
 
 local Renderer = {
+	cdefs = [[
+		// Must match the struct defined in the shader
+		typedef struct PerSceneData {
+			float color[4];
+			float time;
+			// Total struct size must align to 16 byte boundary
+			// See https://gpuweb.github.io/gpuweb/wgsl/#address-space-layout-constraints
+			float padding[3]; // Needs to be updateds whenever the struct changes!
+		} scenewide_uniform_t;
+	]],
 	clearColorRGBA = { 0.05, 0.05, 0.05, 1.0 },
 	pipelines = {},
 	sceneObjects = {},
 }
+
+ffi.cdef(Renderer.cdefs)
+
+assert(ffi.sizeof("scenewide_uniform_t") % 16 == 0, "Structs in uniform address space must be aligned to a 16 byte boundary (as per the WebGPU specification)")
 
 function Renderer:CreateGraphicsContext(nativeWindowHandle)
 	validation.validateStruct(nativeWindowHandle, "nativeWindowHandle")
@@ -86,7 +100,9 @@ function Renderer:CreateBasicTriangleDrawingPipeline(graphicsContext)
 	shaderDesc.nextInChain = shaderCodeDesc.chain
 	shaderCodeDesc.code = shaderSource
 
+	-- timer.start("Compiling shaders")
 	local shaderModule = webgpu.bindings.wgpu_device_create_shader_module(graphicsContext.device, shaderDesc)
+	-- timer.stop("Compiling shaders")
 
 	-- Configure vertex processing pipeline (vertex fetch/vertex shader stages)
 	local positionAttrib = ffi.new("WGPUVertexAttribute")
@@ -151,6 +167,51 @@ function Renderer:CreateBasicTriangleDrawingPipeline(graphicsContext)
 	pipelineDesc.multisample.mask = bitmaskAllBitsEnabled
 	pipelineDesc.multisample.alphaToCoverageEnabled = false
 
+	-- Configure resource layout for the vertex shader (global clock, provided as uniform)
+	local bindingLayout = ffi.new("WGPUBindGroupLayoutEntry")
+
+	-- bindingLayout.buffer.nextInChain = nullptr
+	bindingLayout.buffer.type = ffi.C.WGPUBufferBindingType_Undefined
+	bindingLayout.buffer.hasDynamicOffset = false
+
+	-- bindingLayout.sampler.nextInChain = nullptr
+	bindingLayout.sampler.type = ffi.C.WGPUSamplerBindingType_Undefined
+
+	-- bindingLayout.storageTexture.nextInChain = nullptr
+	bindingLayout.storageTexture.access = ffi.C.WGPUStorageTextureAccess_Undefined
+	bindingLayout.storageTexture.format = ffi.C.WGPUTextureFormat_Undefined
+	bindingLayout.storageTexture.viewDimension = ffi.C.WGPUTextureViewDimension_Undefined
+
+	-- bindingLayout.texture.nextInChain = nullptr
+	bindingLayout.texture.multisampled = false
+	bindingLayout.texture.sampleType = ffi.C.WGPUTextureSampleType_Undefined
+	bindingLayout.texture.viewDimension = ffi.C.WGPUTextureViewDimension_Undefined
+
+	bindingLayout.binding = 0
+	bindingLayout.visibility = bit.bor(ffi.C.WGPUShaderStage_Vertex, ffi.C.WGPUShaderStage_Fragment)
+
+	bindingLayout.buffer.type = ffi.C.WGPUBufferBindingType_Uniform
+	bindingLayout.buffer.minBindingSize = ffi.sizeof("scenewide_uniform_t")
+
+	local bindGroupLayoutDesc = ffi.new("WGPUBindGroupLayoutDescriptor")
+	-- bindGroupLayoutDesc.nextInChain = nullptr
+	bindGroupLayoutDesc.entryCount = 1
+	bindGroupLayoutDesc.entries = bindingLayout
+	local bindGroupLayout =
+		webgpu.bindings.wgpu_device_create_bind_group_layout(graphicsContext.device, bindGroupLayoutDesc)
+	self.bindGroupLayoutDesc = bindGroupLayoutDesc
+
+	local layoutDesc = ffi.new("WGPUPipelineLayoutDescriptor")
+	-- layoutDesc.nextInChain = nullptr
+	layoutDesc.bindGroupLayoutCount = 1
+	local bindGroupLayouts = ffi.new("WGPUBindGroupLayout[?]", 1)
+	bindGroupLayouts[0] = bindGroupLayout
+	layoutDesc.bindGroupLayouts = bindGroupLayouts
+	local layout = webgpu.bindings.wgpu_device_create_pipeline_layout(graphicsContext.device, layoutDesc)
+	pipelineDesc.layout = layout
+
+	self.bindGroupLayout = bindGroupLayout
+
 	return webgpu.bindings.wgpu_device_create_render_pipeline(graphicsContext.device, descriptor)
 end
 
@@ -204,6 +265,20 @@ function Renderer:RenderNextFrame(graphicsContext)
 				0,
 				bufferInfo.triangleIndexBufferSize
 			)
+
+			-- TBD Only update the fields that have actually changed (i.e., time but not color)?
+			local currentTime = uv.hrtime() / 10E9
+			self.perSceneUniformData.time = currentTime
+			webgpu.bindings.wgpu_queue_write_buffer(
+				webgpu.bindings.wgpu_device_get_queue(graphicsContext.device),
+				self.uniformBuffer,
+				0,
+				self.perSceneUniformData,
+				ffi.sizeof(self.perSceneUniformData)
+			)
+
+			-- webgpu.bindings.wgpu_queue_write_buffer(webgpu.bindings.wgpu_device_get_queue(graphicsContext.device), self.uniformBuffer, 0, globalClockSeconds, ffi.sizeof("float"))
+			webgpu.bindings.wgpu_render_pass_encoder_set_bind_group(renderPass, 0, self.bindGroup, 0, nil)
 
 			local instanceCount = 1
 			local firstVertexIndex = 0
@@ -332,6 +407,45 @@ function Renderer:UploadGeometry(graphicsContext, vertexArray, triangleIndices, 
 	local nanosecondsAfterUpload = uv.hrtime()
 	local uploadTimeInMilliseconds = (nanosecondsAfterUpload - nanosecondsBeforeUpload) / 10E5
 	printf("Geometry upload took %.2f ms", uploadTimeInMilliseconds)
+end
+
+function Renderer:CreateUniformBuffer(graphicsContext)
+	local bufferDescriptor = ffi.new("WGPUBufferDescriptor")
+	bufferDescriptor.size = ffi.sizeof("scenewide_uniform_t")
+	bufferDescriptor.usage = bit.bor(ffi.C.WGPUBufferUsage_CopyDst, ffi.C.WGPUBufferUsage_Uniform)
+	bufferDescriptor.mappedAtCreation = false
+
+	local uniformBuffer = webgpu.bindings.wgpu_device_create_buffer(graphicsContext.device, bufferDescriptor)
+
+	local currentTime = uv.hrtime() / 10E9
+	local perSceneUniformData = ffi.new("scenewide_uniform_t")
+	perSceneUniformData.time = ffi.new("float", currentTime)
+	perSceneUniformData.color = ffi.new("float[4]", { 0.0, 1.0, 0.4, 1.0 })
+	self.perSceneUniformData = perSceneUniformData
+
+	webgpu.bindings.wgpu_queue_write_buffer(
+		webgpu.bindings.wgpu_device_get_queue(graphicsContext.device),
+		uniformBuffer,
+		0,
+		perSceneUniformData,
+		ffi.sizeof(perSceneUniformData)
+	)
+
+	local binding = ffi.new("WGPUBindGroupEntry")
+
+	binding.binding = 0
+	binding.buffer = uniformBuffer
+	binding.offset = 0
+	binding.size = ffi.sizeof(perSceneUniformData)
+
+	local bindGroupDesc = ffi.new("WGPUBindGroupDescriptor")
+	bindGroupDesc.layout = self.bindGroupLayout
+	bindGroupDesc.entryCount = self.bindGroupLayoutDesc.entryCount
+	bindGroupDesc.entries = binding
+	local bindGroup = webgpu.bindings.wgpu_device_create_bind_group(graphicsContext.device, bindGroupDesc)
+	self.bindGroup = bindGroup
+
+	self.uniformBuffer = uniformBuffer
 end
 
 return Renderer
