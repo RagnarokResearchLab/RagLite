@@ -32,7 +32,10 @@ local Renderer = {
 
 ffi.cdef(Renderer.cdefs)
 
-assert(ffi.sizeof("scenewide_uniform_t") % 16 == 0, "Structs in uniform address space must be aligned to a 16 byte boundary (as per the WebGPU specification)")
+assert(
+	ffi.sizeof("scenewide_uniform_t") % 16 == 0,
+	"Structs in uniform address space must be aligned to a 16 byte boundary (as per the WebGPU specification)"
+)
 
 function Renderer:CreateGraphicsContext(nativeWindowHandle)
 	validation.validateStruct(nativeWindowHandle, "nativeWindowHandle")
@@ -107,13 +110,13 @@ function Renderer:CreateBasicTriangleDrawingPipeline(graphicsContext)
 	-- Configure vertex processing pipeline (vertex fetch/vertex shader stages)
 	local positionAttrib = ffi.new("WGPUVertexAttribute")
 	positionAttrib.shaderLocation = 0 -- Pass as first argument
-	positionAttrib.format = ffi.C.WGPUVertexFormat_Float32x2 -- Vector2D (float)
+	positionAttrib.format = ffi.C.WGPUVertexFormat_Float32x3 -- Vector3D (float)
 	positionAttrib.offset = 0
 
 	local vertexBufferLayout = ffi.new("WGPUVertexBufferLayout[?]", 2) -- Positions, colors
 	vertexBufferLayout[0].attributeCount = 1 -- Position
 	vertexBufferLayout[0].attributes = positionAttrib
-	vertexBufferLayout[0].arrayStride = 2 * ffi.sizeof("float") -- sizeof(Vector2D) = position
+	vertexBufferLayout[0].arrayStride = 3 * ffi.sizeof("float") -- sizeof(Vector3D) = position
 	vertexBufferLayout[0].stepMode = ffi.C.WGPUVertexStepMode_Vertex
 
 	local colorAttrib = ffi.new("WGPUVertexAttribute")
@@ -334,7 +337,7 @@ function Renderer:UploadGeometry(graphicsContext, vertexArray, triangleIndices, 
 	local nanosecondsBeforeUpload = uv.hrtime()
 
 	local vertexPositionsBufferSize = copyDestPadToNextAlignment(#vertexArray * ffi.sizeof("float"))
-	local vertexCount = #triangleIndices
+	local vertexCount = #vertexArray / 3 -- sizeof(Vector3D)
 	local numVertexColorValues = #colorsRGB / 3
 
 	assert(vertexCount == numVertexColorValues, "Cannot upload geometry with missing or incomplete vertex colors")
