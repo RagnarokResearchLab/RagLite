@@ -50,8 +50,9 @@ function gpu.requestLogicalDevice(adapter, options)
 	webgpu.bindings.wgpu_adapter_get_limits(adapter, supportedLimits)
 	local requiredLimits = ffi.new("WGPURequiredLimits")
 	requiredLimits.limits.maxTextureDimension1D = 0
-	requiredLimits.limits.maxTextureDimension2D = 0
+	requiredLimits.limits.maxTextureDimension2D = 4096
 	requiredLimits.limits.maxTextureDimension3D = 0
+	requiredLimits.limits.maxTextureArrayLayers = 1 -- For the depth/stencil texture
 	requiredLimits.limits.maxVertexAttributes = 2 -- Vertex positions, vertex colors
 	requiredLimits.limits.maxVertexBuffers = 2 -- Vertex positions, vertex colors
 	requiredLimits.limits.maxInterStageShaderComponents = 3 -- Vertex index, position, color

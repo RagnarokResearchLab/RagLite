@@ -215,6 +215,28 @@ function Renderer:CreateBasicTriangleDrawingPipeline(graphicsContext)
 
 	self.bindGroupLayout = bindGroupLayout
 
+	-- Configure depth testing (Z buffer)
+	local depthStencilState = ffi.new("WGPUDepthStencilState")
+	depthStencilState.format = ffi.C.WGPUTextureFormat_Depth24Plus
+	depthStencilState.depthWriteEnabled = true
+	depthStencilState.depthCompare = ffi.C.WGPUCompareFunction_Less
+	depthStencilState.stencilReadMask = 0
+	depthStencilState.stencilWriteMask = 0
+	depthStencilState.depthBias = 0
+	depthStencilState.depthBiasSlopeScale = 0
+	depthStencilState.depthBiasClamp = 0
+
+	depthStencilState.stencilFront.compare = ffi.C.WGPUCompareFunction_Always
+	depthStencilState.stencilFront.failOp = ffi.C.WGPUStencilOperation_Keep
+	depthStencilState.stencilFront.depthFailOp = ffi.C.WGPUStencilOperation_Keep
+	depthStencilState.stencilFront.passOp = ffi.C.WGPUStencilOperation_Keep
+
+	depthStencilState.stencilBack.compare = ffi.C.WGPUCompareFunction_Always
+	depthStencilState.stencilBack.failOp = ffi.C.WGPUStencilOperation_Keep
+	depthStencilState.stencilBack.depthFailOp = ffi.C.WGPUStencilOperation_Keep
+	depthStencilState.stencilBack.passOp = ffi.C.WGPUStencilOperation_Keep
+	pipelineDesc.depthStencil = depthStencilState
+
 	return webgpu.bindings.wgpu_device_create_render_pipeline(graphicsContext.device, descriptor)
 end
 
@@ -240,6 +262,23 @@ function Renderer:RenderNextFrame(graphicsContext)
 
 	renderPassDescriptor.colorAttachmentCount = 1
 	renderPassDescriptor.colorAttachments = renderPassColorAttachment
+
+	-- Enable Z buffering in the fragment stage
+	local depthStencilAttachment = ffi.new("WGPURenderPassDepthStencilAttachment")
+	depthStencilAttachment.view = self.depthTextureView
+	-- The initial value of the depth buffer, meaning "far"
+	depthStencilAttachment.depthClearValue = 1.0
+	depthStencilAttachment.depthLoadOp = ffi.C.WGPULoadOp_Clear
+	depthStencilAttachment.depthStoreOp = ffi.C.WGPUStoreOp_Store -- Enable depth write (should disable for UI later?)
+	depthStencilAttachment.depthReadOnly = false
+
+	-- Stencil setup, mandatory but unused
+	depthStencilAttachment.stencilClearValue = 0
+	depthStencilAttachment.stencilLoadOp = ffi.C.WGPULoadOp_Clear
+	depthStencilAttachment.stencilStoreOp = ffi.C.WGPUStoreOp_Store
+	depthStencilAttachment.stencilReadOnly = true
+
+	renderPassDescriptor.depthStencilAttachment = depthStencilAttachment
 
 	local renderPass = webgpu.bindings.wgpu_command_encoder_begin_render_pass(commandEncoder, renderPassDescriptor)
 
@@ -449,6 +488,41 @@ function Renderer:CreateUniformBuffer(graphicsContext)
 	self.bindGroup = bindGroup
 
 	self.uniformBuffer = uniformBuffer
+end
+
+function Renderer:EnableDepthBuffer(graphicsContext)
+	local contentWidthInPixels = ffi.new("int[1]")
+	local contentHeightInPixels = ffi.new("int[1]")
+	glfw.bindings.glfw_get_window_size(graphicsContext.window, contentWidthInPixels, contentHeightInPixels)
+
+	-- Create the depth texture
+	local depthTextureDesc = ffi.new("WGPUTextureDescriptor")
+	depthTextureDesc.dimension = ffi.C.WGPUTextureDimension_2D
+	depthTextureDesc.format = ffi.C.WGPUTextureFormat_Depth24Plus
+	depthTextureDesc.mipLevelCount = 1
+	depthTextureDesc.sampleCount = 1
+	depthTextureDesc.size = {
+		ffi.cast("unsigned int", tonumber(contentWidthInPixels[0])),
+		ffi.cast("unsigned int", tonumber(contentHeightInPixels[0])),
+		1,
+	}
+	depthTextureDesc.usage = ffi.C.WGPUTextureUsage_RenderAttachment
+	depthTextureDesc.viewFormatCount = 1
+	depthTextureDesc.viewFormats = ffi.new("WGPUTextureFormat[1]", ffi.C.WGPUTextureFormat_Depth24Plus)
+	local depthTexture = webgpu.bindings.wgpu_device_create_texture(graphicsContext.device, depthTextureDesc)
+
+	-- Create the view of the depth texture manipulated by the rasterizer
+	local depthTextureViewDesc = ffi.new("WGPUTextureViewDescriptor")
+	depthTextureViewDesc.aspect = ffi.C.WGPUTextureAspect_DepthOnly
+	depthTextureViewDesc.baseArrayLayer = 0
+	depthTextureViewDesc.arrayLayerCount = 1
+	depthTextureViewDesc.baseMipLevel = 0
+	depthTextureViewDesc.mipLevelCount = 1
+	depthTextureViewDesc.dimension = ffi.C.WGPUTextureViewDimension_2D
+	depthTextureViewDesc.format = ffi.C.WGPUTextureFormat_Depth24Plus
+	local depthTextureView = webgpu.bindings.wgpu_texture_create_view(depthTexture, depthTextureViewDesc)
+
+	self.depthTextureView = depthTextureView
 end
 
 return Renderer
