@@ -46,9 +46,41 @@ function gpu.requestLogicalDevice(adapter, options)
 	deviceDescriptor.requiredFeaturesCount = options.requiredFeaturesCount
 	deviceDescriptor.defaultQueue.label = options.defaultQueue.label
 
+	local supportedLimits = ffi.new("WGPUSupportedLimits")
+	webgpu.bindings.wgpu_adapter_get_limits(adapter, supportedLimits)
+	local requiredLimits = ffi.new("WGPURequiredLimits")
+	requiredLimits.limits.maxTextureDimension1D = 0
+	requiredLimits.limits.maxTextureDimension2D = 4096
+	requiredLimits.limits.maxTextureDimension3D = 0
+	requiredLimits.limits.maxTextureArrayLayers = 1 -- For the depth/stencil texture
+	requiredLimits.limits.maxVertexAttributes = 2 -- Vertex positions, vertex colors
+	requiredLimits.limits.maxVertexBuffers = 2 -- Vertex positions, vertex colors
+	requiredLimits.limits.maxInterStageShaderComponents = 3 -- Vertex index, position, color
+	local numVertices = 65536 -- Should be configurable (later)
+	local numComponentsPerVertex = 3 -- sizeof(Vertex3D) = positions (x, y, z)
+	requiredLimits.limits.maxBufferSize = numVertices * numComponentsPerVertex * ffi.sizeof("float")
+	requiredLimits.limits.maxVertexBufferArrayStride = numComponentsPerVertex * ffi.sizeof("float")
+	requiredLimits.limits.maxBindGroups = 1
+	requiredLimits.limits.maxUniformBuffersPerShaderStage = 1
+	requiredLimits.limits.maxUniformBufferBindingSize = 16 * ffi.sizeof("float")
+
+	requiredLimits.limits.minStorageBufferOffsetAlignment = supportedLimits.limits.minStorageBufferOffsetAlignment
+	requiredLimits.limits.minUniformBufferOffsetAlignment = supportedLimits.limits.minUniformBufferOffsetAlignment
+
+	deviceDescriptor.requiredLimits = requiredLimits
+
 	local requestedDevice
 	local function onDeviceRequested(status, device, message, userdata)
-		assert(status == ffi.C.WGPURequestDeviceStatus_Success, "Failed to request logical WebGPU device")
+		local success = status == ffi.C.WGPURequestDeviceStatus_Success
+		if not success then
+			error(
+				format(
+					"Failed to request logical WebGPU device (status: %s)\n%s",
+					tonumber(status),
+					ffi.string(message)
+				)
+			)
+		end
 		requestedDevice = device
 	end
 	webgpu.bindings.wgpu_adapter_request_device(adapter, deviceDescriptor, onDeviceRequested, nil)

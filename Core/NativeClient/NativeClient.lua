@@ -11,6 +11,72 @@ function NativeClient:Start()
 	self.mainWindow = self:CreateMainWindow()
 	self.graphicsContext = Renderer:CreateGraphicsContext(self.mainWindow)
 	Renderer:CreatePipelineConfigurations(self.graphicsContext)
+	Renderer:CreateUniformBuffer(self.graphicsContext)
+	Renderer:EnableDepthBuffer(self.graphicsContext)
+
+	-- Hardcoded for now, replace with actual geometry later
+	local vertexPositions = {
+		-- Base of the pyramid
+		0.5,
+		-0.5,
+		-0.3,
+		0.5,
+		-0.5,
+		-0.3,
+		0.5,
+		0.5,
+		-0.3,
+		-0.5,
+		0.5,
+		-0.3,
+
+		-- Tip of the pyramid
+		0.0,
+		0.0,
+		0.5,
+	}
+
+	local vertexColorsRGB = {
+		1.0,
+		1.0,
+		1.0,
+		1.0,
+		1.0,
+		1.0,
+		1.0,
+		1.0,
+		1.0,
+		1.0,
+		1.0,
+		1.0,
+		0.5,
+		0.5,
+		0.5,
+	}
+
+	local triangleIndices = {
+		0,
+		1,
+		2,
+		0,
+		2,
+		3,
+		0,
+		1,
+		4,
+		1,
+		2,
+		4,
+		2,
+		3,
+		4,
+		3,
+		0,
+		4,
+	}
+
+	Renderer:UploadGeometry(self.graphicsContext, vertexPositions, triangleIndices, vertexColorsRGB)
+
 	self:StartRenderLoop()
 end
 
