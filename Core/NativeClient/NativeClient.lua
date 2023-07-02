@@ -16,29 +16,30 @@ function NativeClient:Start()
 
 	-- Hardcoded for now, replace with actual geometry later
 	local vertexPositions = {
-		-- Base of the pyramid
+		-- Base of the pyramid (square)
+		-0.5,
+		-0.5,
+		0.0, -- bottom-left corner
 		0.5,
 		-0.5,
-		-0.3,
-		0.5,
-		-0.5,
-		-0.3,
+		0.0, -- bottom-right corner
 		0.5,
 		0.5,
-		-0.3,
+		0.0, -- top-right corner
 		-0.5,
 		0.5,
-		-0.3,
+		0.0, -- top-left corner
 
 		-- Tip of the pyramid
 		0.0,
 		0.0,
-		0.5,
+		1.0, -- top center
 	}
 
 	local vertexColorsRGB = {
 		1.0,
 		1.0,
+		1.0, -- base color
 		1.0,
 		1.0,
 		1.0,
@@ -48,31 +49,30 @@ function NativeClient:Start()
 		1.0,
 		1.0,
 		1.0,
-		1.0,
-		0.5,
-		0.5,
-		0.5,
+		0.25,
+		0.25,
+		0.25, -- tip color
 	}
 
 	local triangleIndices = {
 		0,
 		1,
-		2,
-		0,
-		2,
-		3,
-		0,
-		1,
-		4,
+		4, -- bottom-right triangle
 		1,
 		2,
-		4,
+		4, -- right triangle
 		2,
 		3,
-		4,
+		4, -- top triangle
 		3,
 		0,
-		4,
+		4, -- left triangle
+		3,
+		1,
+		0, -- base triangle 1
+		3,
+		2,
+		1, -- base triangle 2
 	}
 
 	Renderer:UploadGeometry(self.graphicsContext, vertexPositions, triangleIndices, vertexColorsRGB)
