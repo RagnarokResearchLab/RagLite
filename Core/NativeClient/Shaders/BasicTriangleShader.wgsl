@@ -77,15 +77,20 @@ fn vs_main(in: VertexInput) -> VertexOutput {
 	));
 
 	let focalLength = 2.0;
+	let field_of_view_in_degrees = 45.0; // 20?
 	let near = 0.01;
 	let far = 100.0;
 	// (no need for a scale parameter now that we have focalLength)
 	let divider = 1.0 / (focalLength * (far - near));
+	let aspectRatio = ratio;
+	let fov = 2.0 * atan(tan(pi * field_of_view_in_degrees * 1.0 / 180.0 * 0.5) * aspectRatio);
+	let zRange = near - far;
+
 	let P = transpose(mat4x4<f32>(
-		1.0,  0.0,        0.0,                  0.0,
-		0.0, ratio,       0.0,                  0.0,
-		0.0,  0.0,    far * divider,   -far * near * divider,
-		0.0,  0.0,  1.0 / focalLength,          0.0,
+		1.0 / (aspectRatio * tan(fov / 2.0)), 0.0, 0.0, 0.0,
+		0.0, 1.0 / tan(fov / 2.0), 0.0, 0.0,
+		0.0, 0.0, (-near - far) / zRange, 2.0 * far * near / zRange,
+		0.0, 0.0, 1.0, 0.0
 	));
 
 	var homogeneous_position = vec4<f32>(in.position, 1.0);
