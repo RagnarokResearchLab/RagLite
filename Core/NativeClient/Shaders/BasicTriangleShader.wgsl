@@ -18,32 +18,55 @@ struct VertexOutput {
     @location(0) color: vec3f,
 };
 
-const pi = 3.14159266;
+const MATH_PI = 3.14159266;
+
+fn deg2rad(angleInDegrees: f32) -> f32 {
+    return angleInDegrees * MATH_PI / 180.0;
+}
 
 @vertex
 fn vs_main(in: VertexInput) -> VertexOutput {
-    var out: VertexOutput;
+	let framebufferWidthInPixels = 1920.0;
+	let framebufferHeightInPixels = 1080.0;
+	let aspectRatio = framebufferWidthInPixels / framebufferHeightInPixels;
 
-	let ratio =1920.0 / 1080.0; // The width and height of the target surface
+	let verticalFieldOfViewInDegrees = 15.0;
+	let verticalFieldOfViewInRadians = deg2rad(verticalFieldOfViewInDegrees);
+
+	let zNear = 2.0;
+	let zFar = 300.0;
+	let zRange = zFar - zNear;
+
+	let focalLength = 1.0 / tan(verticalFieldOfViewInRadians / 2.0);
+
+	var P = transpose(mat4x4<f32>(
+		focalLength / aspectRatio, 0.0, 0.0, 0.0,
+		0.0, focalLength, 0.0, 0.0,
+		0.0, 0.0, zFar / zRange, -zNear * zFar / zRange,
+		0.0, 0.0, 1.0, 0.0 // LHS = z direction must be positive! (-1 = negative z = RHS)
+	));
+
 	var position = in.position;
 
 	// Scale the object
+	let scale = vec3f(0.5, 0.5, 0.5);
 	let S = transpose(mat4x4<f32>(
-		0.3,  0.0, 0.0, 0.0,
-		0.0,  0.3, 0.0, 0.0,
-		0.0,  0.0, 0.3, 0.0,
+		scale.x,  0.0, 0.0, 0.0,
+		0.0,  scale.y, 0.0, 0.0,
+		0.0,  0.0, scale.z, 0.0,
 		0.0,  0.0, 0.0, 1.0,
 	));
 
 	// Translate the object
-	let T = transpose(mat4x4<f32>(
-		1.0,  0.0, 0.0, 0.5,
-		0.0,  1.0, 0.0,  0.0,
-		0.0,  0.0, 1.0,  0.0,
+	let translation = vec3f(0.0, 0.0, 0.0);
+	let T1 = transpose(mat4x4<f32>(
+		1.0,  0.0, 0.0, translation.x,
+		0.0,  1.0, 0.0,  translation.y,
+		0.0,  0.0, 1.0,  translation.z,
 		0.0,  0.0, 0.0,  1.0,
 	));
 
-	// Rotate the view point
+	// Rotate the object
 	let angle1 = 5.0 * uPerSceneData.time;
 	let c1 = cos(angle1);
 	let s1 = sin(angle1);
@@ -53,7 +76,9 @@ fn vs_main(in: VertexInput) -> VertexOutput {
 		s1, 0.0, c1, 0.0,
 		0.0, 0.0, 0.0, 1.0,
 	));
-	let angle2 = 3.0 * pi / 4.0;
+
+	// Change the view angle
+	let angle2 = 3.0 * MATH_PI / 4.0;
 	let c2 = cos(angle2);
 	let s2 = sin(angle2);
 	let R2 = transpose(mat4x4<f32>(
@@ -63,11 +88,19 @@ fn vs_main(in: VertexInput) -> VertexOutput {
 		0.0, 0.0, 0.0, 1.0,
 	));
 
-	var position4 = vec4<f32>(position, 1.0);
-	position = (R2 * R1  * S * position4).xyz;
+	// Move the view point
+	let focalPoint = vec3<f32>(0.0, 0.0, -10.0); // Actually, camera position?
+	let T2 = transpose(mat4x4<f32>(
+		1.0,  0.0, 0.0, -focalPoint.x,
+		0.0,  1.0, 0.0, -focalPoint.y,
+		0.0,  0.0, 1.0, -focalPoint.z,
+		0.0,  0.0, 0.0,     1.0,
+	));
 
-	// Project on the XY plane and apply ratio
-	out.position = vec4<f32>(position.x, position.y * ratio, position.z * 0.5 + 0.5, 1.0);
+	var out: VertexOutput;
+	var homogeneous_position = vec4<f32>(in.position, 1.0);
+	out.position = P * T2 * R2 * R1 * T1 * S * homogeneous_position; // perspective
+
 	out.color = in.color;
 	return out;
 }
