@@ -1,4 +1,5 @@
 local glfw = require("glfw")
+local interop = require("interop")
 
 local Renderer = require("Core.NativeClient.Renderer")
 
@@ -119,6 +120,8 @@ function NativeClient:CreateMainWindow()
 	end
 
 	glfw.bindings.glfw_set_window_pos(window, 0, 0)
+	self.deferredEventQueue = interop.bindings.queue_create()
+	glfw.bindings.glfw_register_events(window, self.deferredEventQueue)
 
 	return window
 end
