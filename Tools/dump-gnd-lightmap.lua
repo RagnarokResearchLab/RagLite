@@ -24,7 +24,7 @@ grf:Close()
 console.startTimer("Lightmap Texture Generation")
 
 local textureImageWidth = gnd.gridSizeU * gnd.lightmapFormat.pixelWidth
-local textureImageHeight = gnd.gridSizeU * gnd.lightmapFormat.pixelHeight
+local textureImageHeight = gnd.gridSizeV * gnd.lightmapFormat.pixelHeight
 local shadowmapPixels = ffi.new("stbi_unsigned_char_t[?]", textureImageWidth * textureImageHeight * 4)
 local lightmapPixels = ffi.new("stbi_unsigned_char_t[?]", textureImageWidth * textureImageHeight * 4)
 
