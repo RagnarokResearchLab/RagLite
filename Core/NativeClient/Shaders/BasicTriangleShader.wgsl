@@ -66,8 +66,30 @@ fn vs_main(in: VertexInput) -> VertexOutput {
 	var position4 = vec4<f32>(position, 1.0);
 	position = (R2 * R1  * S * position4).xyz;
 
-	// Project on the XY plane and apply ratio
-	out.position = vec4<f32>(position.x, position.y * ratio, position.z * 0.5 + 0.5, 1.0);
+	// We move the view point so that all Z coordinates are > 0
+	// (this did not make a difference with the orthographic projection
+	// but does now.)
+	let focalPoint = vec3<f32>(0.0, 0.0, -2.0);
+	position = position - focalPoint;
+
+	let near = 0.0;
+	let far = 100.0;
+
+	// A more generic expression of an orthographic projection matrix
+	let scale = 1.0;
+	let P = transpose(mat4x4<f32>(
+		1.0 / scale,      0.0,           0.0,                  0.0,
+			0.0,     ratio / scale,      0.0,                  0.0,
+			0.0,          0.0,      1.0 / (far - near), -near / (far - near),
+			0.0,          0.0,           0.0,                  1.0,
+	));
+
+	out.position = P * vec4<f32>(position, 1.0);
+
+	// We divide by the Z coord
+	position.x /= position.z;
+	position.y /= position.z;
+
 	out.color = in.color;
 	return out;
 }
