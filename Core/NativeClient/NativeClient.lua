@@ -1,10 +1,15 @@
+local ffi = require("ffi")
 local glfw = require("glfw")
+local interop = require("interop")
 
 local Renderer = require("Core.NativeClient.Renderer")
+
+local tonumber = tonumber
 
 local NativeClient = {
 	mainWindow = nil,
 	graphicsContext = nil,
+	deferredEventQueue = nil,
 }
 
 function NativeClient:Start()
@@ -119,6 +124,8 @@ function NativeClient:CreateMainWindow()
 	end
 
 	glfw.bindings.glfw_set_window_pos(window, 0, 0)
+	self.deferredEventQueue = interop.bindings.queue_create()
+	glfw.bindings.glfw_register_events(window, self.deferredEventQueue)
 
 	return window
 end
@@ -126,12 +133,118 @@ end
 function NativeClient:StartRenderLoop()
 	while glfw.bindings.glfw_window_should_close(self.mainWindow) == 0 do
 		glfw.bindings.glfw_poll_events()
+		self:ProcessWindowEvents()
 		Renderer:RenderNextFrame(self.graphicsContext)
 	end
 end
 
 function NativeClient:GetMainWindow()
 	return self.mainWindow
+end
+
+function NativeClient:ProcessWindowEvents()
+	local eventCount
+	repeat
+		eventCount = tonumber(interop.bindings.queue_size(self.deferredEventQueue))
+
+		if eventCount > 0 then
+			printf("Processing %d new window event(s)", eventCount)
+			local eventInfo = interop.bindings.queue_pop_event(self.deferredEventQueue)
+			self:ReplayDeferredEvent(eventInfo)
+		end
+	until eventCount == 0
+end
+
+local glfwEventNames = {
+	[ffi.C.ERROR_EVENT] = "UNKNOWN_WINDOW_EVENT_ENCOUNTERED",
+	[ffi.C.WINDOW_MOVE_EVENT] = "APPLICATION_WINDOW_MOVED",
+	[ffi.C.WINDOW_RESIZE_EVENT] = "APPLICATION_WINDOW_RESIZED",
+	[ffi.C.WINDOW_CLOSE_EVENT] = "APPLICATION_WINDOW_CLOSED",
+	[ffi.C.FRAMEBUFFER_RESIZE_EVENT] = "FRAMEBUFFER_SIZE_CHANGED",
+	[ffi.C.CONTENT_SCALE_EVENT] = "CONTENT_SCALE_CHANGED",
+	[ffi.C.WINDOW_REFRESH_EVENT] = "CONTENT_COMPOSITION_DAMAGED",
+	[ffi.C.WINDOW_FOCUS_EVENT] = "APPLICATION_WINDOW_FOCUS_CHANGED",
+	[ffi.C.WINDOW_ICONIFY_EVENT] = "APPLICATION_WINDOW_ICON_CHANGED",
+	[ffi.C.WINDOW_MAXIMIZE_EVENT] = "APPLICATION_WINDOW_MAXIMIZED",
+	[ffi.C.MOUSE_BUTTON_EVENT] = "MOUSECLICK_STATUS_UPDATED",
+	[ffi.C.CURSOR_MOVE_EVENT] = "CURSOR_MOVED",
+	[ffi.C.CURSOR_ENTER_EVENT] = "MOUSEOVER_STATUS_CHANGED",
+	[ffi.C.SCROLL_EVENT] = "SCROLL_STATUS_CHANGED",
+	[ffi.C.KEYBOARD_EVENT] = "KEYPRESS_STATUS_CHANGED",
+	[ffi.C.CHARACTER_INPUT_EVENT] = "UNICODE_INPUT_RECEIVED",
+}
+
+function NativeClient:ReplayDeferredEvent(eventInfo)
+	local event = ffi.cast("error_event_t*", eventInfo)
+
+	local eventName = glfwEventNames[event.type] or glfwEventNames[ffi.C.ERROR_EVENT]
+	local eventHandler = self[eventName]
+
+	eventHandler(self, eventName, eventInfo)
+end
+
+function NativeClient:UNKNOWN_WINDOW_EVENT_ENCOUNTERED(eventID, payload)
+	print("UNKNOWN_WINDOW_EVENT_ENCOUNTERED")
+end
+
+function NativeClient:APPLICATION_WINDOW_MOVED(eventID, payload)
+	print("APPLICATION_WINDOW_MOVED")
+end
+
+function NativeClient:APPLICATION_WINDOW_RESIZED(eventID, payload)
+	print("APPLICATION_WINDOW_RESIZED")
+end
+
+function NativeClient:APPLICATION_WINDOW_CLOSED(eventID, payload)
+	print("APPLICATION_WINDOW_CLOSED")
+end
+
+function NativeClient:FRAMEBUFFER_SIZE_CHANGED(eventID, payload)
+	print("FRAMEBUFFER_SIZE_CHANGED")
+end
+
+function NativeClient:CONTENT_SCALE_CHANGED(eventID, payload)
+	print("CONTENT_SCALE_CHANGED")
+end
+
+function NativeClient:CONTENT_COMPOSITION_DAMAGED(eventID, payload)
+	print("CONTENT_COMPOSITION_DAMAGED")
+end
+
+function NativeClient:APPLICATION_WINDOW_FOCUS_CHANGED(eventID, payload)
+	print("APPLICATION_WINDOW_FOCUS_CHANGED")
+end
+
+function NativeClient:APPLICATION_WINDOW_ICON_CHANGED(eventID, payload)
+	print("APPLICATION_WINDOW_ICON_CHANGED")
+end
+
+function NativeClient:APPLICATION_WINDOW_MAXIMIZED(eventID, payload)
+	print("APPLICATION_WINDOW_MAXIMIZED")
+end
+
+function NativeClient:MOUSECLICK_STATUS_UPDATED(eventID, payload)
+	print("MOUSECLICK_STATUS_UPDATED")
+end
+
+function NativeClient:CURSOR_MOVED(eventID, payload)
+	print("CURSOR_MOVED")
+end
+
+function NativeClient:MOUSEOVER_STATUS_CHANGED(eventID, payload)
+	print("MOUSEOVER_STATUS_CHANGED")
+end
+
+function NativeClient:SCROLL_STATUS_CHANGED(eventID, payload)
+	print("SCROLL_STATUS_CHANGED")
+end
+
+function NativeClient:KEYPRESS_STATUS_CHANGED(eventID, payload)
+	print("KEYPRESS_STATUS_CHANGED")
+end
+
+function NativeClient:UNICODE_INPUT_RECEIVED(eventID, payload)
+	print("UNICODE_INPUT_RECEIVED")
 end
 
 return NativeClient
