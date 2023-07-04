@@ -20,6 +20,7 @@ function NativeClient:Start()
 	Renderer:EnableDepthBuffer(self.graphicsContext)
 
 	-- Hardcoded for now, replace with actual geometry later
+	local PYRAMID_VERTEX_COUNT = 5
 	local vertexPositions = {
 		-- Base of the pyramid (square)
 		-0.5,
@@ -39,6 +40,48 @@ function NativeClient:Start()
 		0.0,
 		1.0,
 		0.0, -- top center
+
+		-- X-Axis Visualization
+		0.0,
+		0.0,
+		0.0, -- Bottom-left
+		2.0,
+		0.0,
+		0.0, -- Bottom-right
+		2.0,
+		0.05,
+		0.0, -- Top-right
+		0.0,
+		0.05,
+		0.0, -- Top-left
+
+		-- Y-Axis Visualization
+		0.0,
+		0.0,
+		0.0, -- Bottom-left
+		0.05,
+		0.0,
+		0.0, -- Bottom-right
+		0.05,
+		2.0,
+		0.0, -- Top-right
+		0.0,
+		2.0,
+		0.0, -- Top-left
+
+		-- Z-Axis Visualization
+		0.0,
+		0.0,
+		0.0, -- Bottom-left
+		0.0,
+		0.0,
+		2.0, -- Bottom-right
+		0.0,
+		0.05,
+		2.0, -- Top-right
+		0.0,
+		0.05,
+		0.0, -- Top-left
 	}
 
 	local vertexColorsRGB = {
@@ -57,6 +100,48 @@ function NativeClient:Start()
 		0.25,
 		0.25,
 		0.25, -- tip color
+
+		-- X-Axis (Red)
+		1.0,
+		0.0,
+		0.0, -- Bottom-left
+		1.0,
+		0.0,
+		0.0, -- Bottom-right
+		1.0,
+		0.0,
+		0.0, -- Top-right
+		1.0,
+		0.0,
+		0.0, -- Top-left
+
+		-- Y-Axis (Green)
+		0.0,
+		1.0,
+		0.0, -- Bottom-left
+		0.0,
+		1.0,
+		0.0, -- Bottom-right
+		0.0,
+		1.0,
+		0.0, -- Top-right
+		0.0,
+		1.0,
+		0.0, -- Top-left
+
+		-- Z-Axis (Blue)
+		0.0,
+		0.0,
+		1.0, -- Bottom-left
+		0.0,
+		0.0,
+		1.0, -- Bottom-right
+		0.0,
+		0.0,
+		1.0, -- Top-right
+		0.0,
+		0.0,
+		1.0, -- Top-left
 	}
 
 	local triangleIndices = {
@@ -78,6 +163,30 @@ function NativeClient:Start()
 		3,
 		2,
 		1, -- base triangle 2
+
+		-- X Axis
+		PYRAMID_VERTEX_COUNT + 0,
+		PYRAMID_VERTEX_COUNT + 1,
+		PYRAMID_VERTEX_COUNT + 2,
+		PYRAMID_VERTEX_COUNT + 0,
+		PYRAMID_VERTEX_COUNT + 2,
+		PYRAMID_VERTEX_COUNT + 3,
+
+		-- Y Axis
+		PYRAMID_VERTEX_COUNT + 4,
+		PYRAMID_VERTEX_COUNT + 5,
+		PYRAMID_VERTEX_COUNT + 6,
+		PYRAMID_VERTEX_COUNT + 4,
+		PYRAMID_VERTEX_COUNT + 6,
+		PYRAMID_VERTEX_COUNT + 7,
+
+		-- Z Axis
+		PYRAMID_VERTEX_COUNT + 8,
+		PYRAMID_VERTEX_COUNT + 9,
+		PYRAMID_VERTEX_COUNT + 10,
+		PYRAMID_VERTEX_COUNT + 8,
+		PYRAMID_VERTEX_COUNT + 10,
+		PYRAMID_VERTEX_COUNT + 11,
 	}
 
 	Renderer:UploadGeometry(self.graphicsContext, vertexPositions, triangleIndices, vertexColorsRGB)
