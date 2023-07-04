@@ -62,7 +62,7 @@ function gpu.requestLogicalDevice(adapter, options)
 	requiredLimits.limits.maxVertexBufferArrayStride = numComponentsPerVertex * ffi.sizeof("float")
 	requiredLimits.limits.maxBindGroups = 1
 	requiredLimits.limits.maxUniformBuffersPerShaderStage = 1
-	requiredLimits.limits.maxUniformBufferBindingSize = 32 * ffi.sizeof("float")
+	requiredLimits.limits.maxUniformBufferBindingSize = 48 * ffi.sizeof("float")
 
 	requiredLimits.limits.minStorageBufferOffsetAlignment = supportedLimits.limits.minStorageBufferOffsetAlignment
 	requiredLimits.limits.minUniformBufferOffsetAlignment = supportedLimits.limits.minUniformBufferOffsetAlignment

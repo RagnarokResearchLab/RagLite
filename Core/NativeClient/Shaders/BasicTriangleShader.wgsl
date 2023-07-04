@@ -1,4 +1,5 @@
 struct PerSceneData {
+    view: mat4x4f,
     perspectiveProjection: mat4x4f,
     color: vec4f,
     time: f32,
@@ -82,7 +83,8 @@ fn vs_main(in: VertexInput) -> VertexOutput {
 	var homogeneous_position = vec4<f32>(in.position, 1.0);
 
 	let projectionMatrix = transpose(uPerSceneData.perspectiveProjection);
-	out.position = projectionMatrix * T2 * R2 * R1 * T1 * S * homogeneous_position;
+	let viewMatrix = transpose(uPerSceneData.view);
+	out.position = projectionMatrix * viewMatrix * R1 * T1 * S * homogeneous_position;
 
 	out.color = in.color;
 	return out;

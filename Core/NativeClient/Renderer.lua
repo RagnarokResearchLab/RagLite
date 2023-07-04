@@ -8,6 +8,7 @@ local validation = require("validation")
 local gpu = require("Core.NativeClient.gpu")
 
 local _ = require("Core.NativeClient.Matrix4D") -- Only needed for the cdefs right now
+local Vector3D = require("Core.NativeClient.Vector3D")
 local C_Camera = require("Core.NativeClient.C_Camera")
 
 local assert = assert
@@ -21,6 +22,7 @@ local Renderer = {
 	cdefs = [[
 		// Must match the struct defined in the shader
 		typedef struct PerSceneData {
+			Matrix4D view;
 			Matrix4D perspectiveProjection;
 			float color[4];
 			float time;
@@ -473,6 +475,10 @@ function Renderer:CreateUniformBuffer(graphicsContext)
 
 	local currentTime = uv.hrtime() / 10E9
 	local perSceneUniformData = ffi.new("scenewide_uniform_t")
+	local cameraWorldPosition = Vector3D(-5, 5, -5)
+	local targetWorldPosition = Vector3D(0, 0, 0)
+	local upVectorHint = Vector3D(0, 1, 0)
+	perSceneUniformData.view = C_Camera.CreateOrbitalView(cameraWorldPosition, targetWorldPosition, upVectorHint)
 	perSceneUniformData.perspectiveProjection = C_Camera.CreatePerspectiveProjection(
 		self.verticalFieldOfViewInDegrees,
 		aspectRatio,
