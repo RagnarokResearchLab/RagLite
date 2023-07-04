@@ -7,6 +7,9 @@ local validation = require("validation")
 
 local gpu = require("Core.NativeClient.gpu")
 
+local _ = require("Core.NativeClient.Matrix4D") -- Only needed for the cdefs right now
+local C_Camera = require("Core.NativeClient.C_Camera")
+
 local assert = assert
 local ipairs = ipairs
 
@@ -18,6 +21,7 @@ local Renderer = {
 	cdefs = [[
 		// Must match the struct defined in the shader
 		typedef struct PerSceneData {
+			Matrix4D perspectiveProjection;
 			float color[4];
 			float time;
 			// Total struct size must align to 16 byte boundary
@@ -26,6 +30,9 @@ local Renderer = {
 		} scenewide_uniform_t;
 	]],
 	clearColorRGBA = { 0.05, 0.05, 0.05, 1.0 },
+	verticalFieldOfViewInDegrees = 15,
+	nearPlaneDistanceInWorldUnits = 2,
+	farPlaneDistanceInWorldUnits = 300,
 	pipelines = {},
 	sceneObjects = {},
 }
@@ -459,8 +466,19 @@ function Renderer:CreateUniformBuffer(graphicsContext)
 
 	local uniformBuffer = webgpu.bindings.wgpu_device_create_buffer(graphicsContext.device, bufferDescriptor)
 
+	local contentWidthInPixels = ffi.new("int[1]")
+	local contentHeightInPixels = ffi.new("int[1]")
+	glfw.bindings.glfw_get_window_size(graphicsContext.window, contentWidthInPixels, contentHeightInPixels)
+	local aspectRatio = tonumber(contentWidthInPixels[0]) / tonumber(contentHeightInPixels[0])
+
 	local currentTime = uv.hrtime() / 10E9
 	local perSceneUniformData = ffi.new("scenewide_uniform_t")
+	perSceneUniformData.perspectiveProjection = C_Camera.CreatePerspectiveProjection(
+		self.verticalFieldOfViewInDegrees,
+		aspectRatio,
+		self.nearPlaneDistanceInWorldUnits,
+		self.farPlaneDistanceInWorldUnits
+	)
 	perSceneUniformData.time = ffi.new("float", currentTime)
 	perSceneUniformData.color = ffi.new("float[4]", { 1.0, 1.0, 1.0, 1.0 })
 	self.perSceneUniformData = perSceneUniformData
