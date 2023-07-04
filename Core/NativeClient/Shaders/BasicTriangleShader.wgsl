@@ -48,9 +48,9 @@ fn vs_main(in: VertexInput) -> VertexOutput {
 	let c1 = cos(angle1);
 	let s1 = sin(angle1);
 	let R1 = transpose(mat4x4<f32>(
-		 c1,  s1, 0.0, 0.0,
-		-s1,  c1, 0.0, 0.0,
-		0.0, 0.0, 1.0, 0.0,
+		c1, 0.0, -s1, 0.0,
+		0.0, 1.0, 0.0, 0.0,
+		s1, 0.0, c1, 0.0,
 		0.0, 0.0, 0.0, 1.0,
 	));
 	let angle2 = 3.0 * pi / 4.0;

@@ -23,22 +23,22 @@ function NativeClient:Start()
 	local vertexPositions = {
 		-- Base of the pyramid (square)
 		-0.5,
+		0.0,
+		-0.5, -- bottom-left corner
+		0.5,
+		0.0,
+		-0.5, -- bottom-right corner
+		0.5,
+		0.0,
+		0.5, -- top-right corner
 		-0.5,
-		0.0, -- bottom-left corner
-		0.5,
-		-0.5,
-		0.0, -- bottom-right corner
-		0.5,
-		0.5,
-		0.0, -- top-right corner
-		-0.5,
-		0.5,
-		0.0, -- top-left corner
+		0.0,
+		0.5, -- top-left corner
 
 		-- Tip of the pyramid
 		0.0,
-		0.0,
-		1.0, -- top center
+		1.0,
+		0.0, -- top center
 	}
 
 	local vertexColorsRGB = {
