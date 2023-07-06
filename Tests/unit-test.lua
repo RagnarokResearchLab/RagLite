@@ -6,6 +6,7 @@ local specFiles = {
 	"Tests/AssetServer/AssetServer.spec.lua",
 	"Tests/NativeClient/Matrix3D.spec.lua",
 	"Tests/NativeClient/Matrix4D.spec.lua",
+	"Tests/NativeClient/Vector3D.spec.lua",
 	"Tests/WorldServer/C_ServerHealth.spec.lua",
 	"Tests/WorldServer/WorldServer.spec.lua",
 	"Tests/Tools/RagnarokTools.spec.lua",
