@@ -462,7 +462,7 @@ function Renderer:CreateUniformBuffer(graphicsContext)
 	local currentTime = uv.hrtime() / 10E9
 	local perSceneUniformData = ffi.new("scenewide_uniform_t")
 	perSceneUniformData.time = ffi.new("float", currentTime)
-	perSceneUniformData.color = ffi.new("float[4]", { 0.0, 1.0, 0.4, 1.0 })
+	perSceneUniformData.color = ffi.new("float[4]", { 1.0, 1.0, 1.0, 1.0 })
 	self.perSceneUniformData = perSceneUniformData
 
 	webgpu.bindings.wgpu_queue_write_buffer(
