@@ -291,6 +291,8 @@ function Renderer:RenderNextFrame(graphicsContext)
 
 	local renderPass = webgpu.bindings.wgpu_command_encoder_begin_render_pass(commandEncoder, renderPassDescriptor)
 
+	self:UpdateUniformBuffer(graphicsContext)
+
 	for index, pipeline in ipairs(self.pipelines) do
 		webgpu.bindings.wgpu_render_pass_encoder_set_pipeline(renderPass, pipeline)
 
@@ -468,13 +470,34 @@ function Renderer:CreateUniformBuffer(graphicsContext)
 
 	local uniformBuffer = webgpu.bindings.wgpu_device_create_buffer(graphicsContext.device, bufferDescriptor)
 
+	self.perSceneUniformData = ffi.new("scenewide_uniform_t")
+
+	local binding = ffi.new("WGPUBindGroupEntry")
+
+	binding.binding = 0
+	binding.buffer = uniformBuffer
+	binding.offset = 0
+	binding.size = ffi.sizeof(self.perSceneUniformData)
+
+	local bindGroupDesc = ffi.new("WGPUBindGroupDescriptor")
+	bindGroupDesc.layout = self.bindGroupLayout
+	bindGroupDesc.entryCount = self.bindGroupLayoutDesc.entryCount
+	bindGroupDesc.entries = binding
+	local bindGroup = webgpu.bindings.wgpu_device_create_bind_group(graphicsContext.device, bindGroupDesc)
+	self.bindGroup = bindGroup
+
+	self.uniformBuffer = uniformBuffer
+end
+
+function Renderer:UpdateUniformBuffer(graphicsContext)
 	local contentWidthInPixels = ffi.new("int[1]")
 	local contentHeightInPixels = ffi.new("int[1]")
 	glfw.bindings.glfw_get_window_size(graphicsContext.window, contentWidthInPixels, contentHeightInPixels)
 	local aspectRatio = tonumber(contentWidthInPixels[0]) / tonumber(contentHeightInPixels[0])
 
 	local currentTime = uv.hrtime() / 10E9
-	local perSceneUniformData = ffi.new("scenewide_uniform_t")
+	local perSceneUniformData = self.perSceneUniformData
+
 	local cameraWorldPosition = Vector3D(0, 42.43, -42.43)
 	local targetWorldPosition = Vector3D(0, 0, 0)
 	local upVectorHint = Vector3D(0, 1, 0)
@@ -487,31 +510,14 @@ function Renderer:CreateUniformBuffer(graphicsContext)
 	)
 	perSceneUniformData.time = ffi.new("float", currentTime)
 	perSceneUniformData.color = ffi.new("float[4]", { 1.0, 1.0, 1.0, 1.0 })
-	self.perSceneUniformData = perSceneUniformData
 
 	webgpu.bindings.wgpu_queue_write_buffer(
 		webgpu.bindings.wgpu_device_get_queue(graphicsContext.device),
-		uniformBuffer,
+		self.uniformBuffer,
 		0,
 		perSceneUniformData,
 		ffi.sizeof(perSceneUniformData)
 	)
-
-	local binding = ffi.new("WGPUBindGroupEntry")
-
-	binding.binding = 0
-	binding.buffer = uniformBuffer
-	binding.offset = 0
-	binding.size = ffi.sizeof(perSceneUniformData)
-
-	local bindGroupDesc = ffi.new("WGPUBindGroupDescriptor")
-	bindGroupDesc.layout = self.bindGroupLayout
-	bindGroupDesc.entryCount = self.bindGroupLayoutDesc.entryCount
-	bindGroupDesc.entries = binding
-	local bindGroup = webgpu.bindings.wgpu_device_create_bind_group(graphicsContext.device, bindGroupDesc)
-	self.bindGroup = bindGroup
-
-	self.uniformBuffer = uniformBuffer
 end
 
 function Renderer:EnableDepthBuffer(graphicsContext)
