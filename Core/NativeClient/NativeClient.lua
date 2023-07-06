@@ -21,6 +21,7 @@ function NativeClient:Start()
 
 	-- Hardcoded for now, replace with actual geometry later
 	local PYRAMID_VERTEX_COUNT = 5
+	local ARROWHEAD_VERTEX_COUNT = 3
 	local vertexPositions = {
 		-- Base of the pyramid (square)
 		-0.5,
@@ -54,6 +55,15 @@ function NativeClient:Start()
 		0.0,
 		0.05,
 		0.0, -- Top-left
+		2.0,
+		0.1,
+		0, -- Arrowhead.Top
+		2.0,
+		-0.05,
+		0, -- Arrowhead.Bottm
+		2.25,
+		0.05 / 2,
+		0, -- Arrowhead.Tip
 
 		-- Y-Axis Visualization
 		0.0,
@@ -68,6 +78,15 @@ function NativeClient:Start()
 		0.0,
 		2.0,
 		0.0, -- Top-left
+		-0.05,
+		2,
+		0, -- Arrowhead.Top
+		0.1,
+		2,
+		0, -- Arrowhead.Bottom
+		0.05 / 2,
+		2.25,
+		0, -- Arrowhead.Tip
 
 		-- Z-Axis Visualization
 		0.0,
@@ -82,6 +101,15 @@ function NativeClient:Start()
 		0.0,
 		0.05,
 		0.0, -- Top-left
+		0,
+		0.1,
+		2, -- Arrowhead.Top
+		0,
+		-0.05,
+		2, -- Arrowhead.Bottom
+		0,
+		0.05 / 2,
+		2.25, -- Arrowhead.Tip
 	}
 
 	local vertexColorsRGB = {
@@ -114,6 +142,16 @@ function NativeClient:Start()
 		1.0,
 		0.0,
 		0.0, -- Top-left
+		1.0,
+		0,
+		0,
+		1.0,
+		0,
+		0,
+		1.0,
+		0,
+		0,
+		-- Arrowhead
 
 		-- Y-Axis (Green)
 		0.0,
@@ -128,6 +166,16 @@ function NativeClient:Start()
 		0.0,
 		1.0,
 		0.0, -- Top-left
+		0,
+		1.0,
+		0,
+		0,
+		1.0,
+		0,
+		0,
+		1.0,
+		0,
+		-- Arrowhead
 
 		-- Z-Axis (Blue)
 		0.0,
@@ -142,6 +190,15 @@ function NativeClient:Start()
 		0.0,
 		0.0,
 		1.0, -- Top-left
+		0.0,
+		0.0,
+		1.0,
+		0.0,
+		0.0,
+		1.0,
+		0.0,
+		0.0,
+		1.0, -- Arrowhead
 	}
 
 	local triangleIndices = {
@@ -171,22 +228,36 @@ function NativeClient:Start()
 		PYRAMID_VERTEX_COUNT + 0,
 		PYRAMID_VERTEX_COUNT + 2,
 		PYRAMID_VERTEX_COUNT + 3,
+		PYRAMID_VERTEX_COUNT + 3 + 1,
+		PYRAMID_VERTEX_COUNT + 3 + 2,
+		PYRAMID_VERTEX_COUNT + 3 + 3,
 
 		-- Y Axis
-		PYRAMID_VERTEX_COUNT + 4,
-		PYRAMID_VERTEX_COUNT + 5,
-		PYRAMID_VERTEX_COUNT + 6,
-		PYRAMID_VERTEX_COUNT + 4,
-		PYRAMID_VERTEX_COUNT + 6,
-		PYRAMID_VERTEX_COUNT + 7,
+		PYRAMID_VERTEX_COUNT
+			+ 3
+			+ 4,
+		PYRAMID_VERTEX_COUNT + ARROWHEAD_VERTEX_COUNT + 5,
+		PYRAMID_VERTEX_COUNT + ARROWHEAD_VERTEX_COUNT + 6,
+		PYRAMID_VERTEX_COUNT + ARROWHEAD_VERTEX_COUNT + 4,
+		PYRAMID_VERTEX_COUNT + ARROWHEAD_VERTEX_COUNT + 6,
+		PYRAMID_VERTEX_COUNT + ARROWHEAD_VERTEX_COUNT + 7,
+		PYRAMID_VERTEX_COUNT + ARROWHEAD_VERTEX_COUNT + 7 + 1,
+		PYRAMID_VERTEX_COUNT + ARROWHEAD_VERTEX_COUNT + 7 + 2,
+		PYRAMID_VERTEX_COUNT + ARROWHEAD_VERTEX_COUNT + 7 + 3,
 
 		-- Z Axis
-		PYRAMID_VERTEX_COUNT + 8,
-		PYRAMID_VERTEX_COUNT + 9,
-		PYRAMID_VERTEX_COUNT + 10,
-		PYRAMID_VERTEX_COUNT + 8,
-		PYRAMID_VERTEX_COUNT + 10,
-		PYRAMID_VERTEX_COUNT + 11,
+		PYRAMID_VERTEX_COUNT
+			+ 3
+			+ 3
+			+ 8,
+		PYRAMID_VERTEX_COUNT + 2 * ARROWHEAD_VERTEX_COUNT + 9,
+		PYRAMID_VERTEX_COUNT + 2 * ARROWHEAD_VERTEX_COUNT + 10,
+		PYRAMID_VERTEX_COUNT + 2 * ARROWHEAD_VERTEX_COUNT + 8,
+		PYRAMID_VERTEX_COUNT + 2 * ARROWHEAD_VERTEX_COUNT + 10,
+		PYRAMID_VERTEX_COUNT + 2 * ARROWHEAD_VERTEX_COUNT + 11,
+		PYRAMID_VERTEX_COUNT + 2 * ARROWHEAD_VERTEX_COUNT + 12,
+		PYRAMID_VERTEX_COUNT + 2 * ARROWHEAD_VERTEX_COUNT + 13,
+		PYRAMID_VERTEX_COUNT + 2 * ARROWHEAD_VERTEX_COUNT + 14,
 	}
 
 	Renderer:UploadGeometry(self.graphicsContext, vertexPositions, triangleIndices, vertexColorsRGB)
