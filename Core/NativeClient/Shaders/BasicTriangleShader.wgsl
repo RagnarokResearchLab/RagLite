@@ -31,7 +31,7 @@ fn vs_main(in: VertexInput) -> VertexOutput {
 	var position = in.position;
 
 	// Scale the object
-	let scale = vec3f(0.5, 0.5, 0.5);
+	let scale = vec3f(1.0, 1.0, 1.0);
 	let S = transpose(mat4x4<f32>(
 		scale.x,  0.0, 0.0, 0.0,
 		0.0,  scale.y, 0.0, 0.0,
@@ -84,7 +84,7 @@ fn vs_main(in: VertexInput) -> VertexOutput {
 
 	let projectionMatrix = transpose(uPerSceneData.perspectiveProjection);
 	let viewMatrix = transpose(uPerSceneData.view);
-	out.position = projectionMatrix * viewMatrix * R1 * T1 * S * homogeneous_position;
+	out.position = projectionMatrix * viewMatrix * T1 * S * homogeneous_position;
 
 	out.color = in.color;
 	return out;
