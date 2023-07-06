@@ -32,9 +32,6 @@ local Renderer = {
 		} scenewide_uniform_t;
 	]],
 	clearColorRGBA = { 0.05, 0.05, 0.05, 1.0 },
-	verticalFieldOfViewInDegrees = 15,
-	nearPlaneDistanceInWorldUnits = 2,
-	farPlaneDistanceInWorldUnits = 300,
 	pipelines = {},
 	sceneObjects = {},
 }
@@ -501,13 +498,10 @@ function Renderer:UpdateUniformBuffer(graphicsContext)
 	local cameraWorldPosition = Vector3D(0, 42.43, -42.43)
 	local targetWorldPosition = Vector3D(0, 0, 0)
 	local upVectorHint = Vector3D(0, 1, 0)
+	local perspective = C_Camera.GetPerspective()
 	perSceneUniformData.view = C_Camera.CreateOrbitalView(cameraWorldPosition, targetWorldPosition, upVectorHint)
-	perSceneUniformData.perspectiveProjection = C_Camera.CreatePerspectiveProjection(
-		self.verticalFieldOfViewInDegrees,
-		aspectRatio,
-		self.nearPlaneDistanceInWorldUnits,
-		self.farPlaneDistanceInWorldUnits
-	)
+	perSceneUniformData.perspectiveProjection =
+		C_Camera.CreatePerspectiveProjection(perspective.fov, aspectRatio, perspective.nearZ, perspective.farZ)
 	perSceneUniformData.time = ffi.new("float", currentTime)
 	perSceneUniformData.color = ffi.new("float[4]", { 1.0, 1.0, 1.0, 1.0 })
 

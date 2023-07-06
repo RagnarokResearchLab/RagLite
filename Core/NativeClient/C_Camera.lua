@@ -8,7 +8,14 @@ local function deg2rad(angleInDegrees)
 	return angleInDegrees * math.pi / 180
 end
 
-local C_Camera = {}
+local C_Camera = {
+	DEFAULT_FIELD_OF_VIEW = 15,
+	DEFAULT_NEAR_PLANE_DISTANCE = 2,
+	DEFAULT_FAR_PLANE_DISTANCE = 300,
+	verticalFieldOfViewInDegrees = 15,
+	nearPlaneDistanceInWorldUnits = 2,
+	farPlaneDistanceInWorldUnits = 300,
+}
 
 function C_Camera.CreatePerspectiveProjection(verticalFieldOfViewInDegrees, aspectRatio, zNearDistance, zFarDistance)
 	local perspectiveProjectionMatrix = Matrix4D()
@@ -111,6 +118,14 @@ end
 
 function C_Camera.GetViewSpaceOrigin()
 	return Vector3D(0, 0, -1)
+end
+
+function C_Camera.GetPerspective()
+	return {
+		fov = C_Camera.verticalFieldOfViewInDegrees,
+		nearZ = C_Camera.nearPlaneDistanceInWorldUnits,
+		farZ = C_Camera.farPlaneDistanceInWorldUnits,
+	}
 end
 
 return C_Camera
