@@ -1,4 +1,6 @@
 struct PerSceneData {
+    view: mat4x4f,
+    perspectiveProjection: mat4x4f,
     color: vec4f,
     time: f32,
 	padding: f32,
@@ -26,26 +28,6 @@ fn deg2rad(angleInDegrees: f32) -> f32 {
 
 @vertex
 fn vs_main(in: VertexInput) -> VertexOutput {
-	let framebufferWidthInPixels = 1920.0;
-	let framebufferHeightInPixels = 1080.0;
-	let aspectRatio = framebufferWidthInPixels / framebufferHeightInPixels;
-
-	let verticalFieldOfViewInDegrees = 15.0;
-	let verticalFieldOfViewInRadians = deg2rad(verticalFieldOfViewInDegrees);
-
-	let zNear = 2.0;
-	let zFar = 300.0;
-	let zRange = zFar - zNear;
-
-	let focalLength = 1.0 / tan(verticalFieldOfViewInRadians / 2.0);
-
-	var P = transpose(mat4x4<f32>(
-		focalLength / aspectRatio, 0.0, 0.0, 0.0,
-		0.0, focalLength, 0.0, 0.0,
-		0.0, 0.0, zFar / zRange, -zNear * zFar / zRange,
-		0.0, 0.0, 1.0, 0.0 // LHS = z direction must be positive! (-1 = negative z = RHS)
-	));
-
 	var position = in.position;
 
 	// Scale the object
@@ -99,7 +81,10 @@ fn vs_main(in: VertexInput) -> VertexOutput {
 
 	var out: VertexOutput;
 	var homogeneous_position = vec4<f32>(in.position, 1.0);
-	out.position = P * T2 * R2 * R1 * T1 * S * homogeneous_position; // perspective
+
+	let projectionMatrix = transpose(uPerSceneData.perspectiveProjection);
+	let viewMatrix = transpose(uPerSceneData.view);
+	out.position = projectionMatrix * viewMatrix * R1 * T1 * S * homogeneous_position;
 
 	out.color = in.color;
 	return out;
