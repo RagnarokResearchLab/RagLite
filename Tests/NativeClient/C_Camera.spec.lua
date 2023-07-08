@@ -236,4 +236,78 @@ describe("C_Camera", function()
 			assertEquals(defaultCameraPosition.z, -1)
 		end)
 	end)
+
+	describe("GetPerspective", function()
+		it("should return a table containing the default parameters for the projection", function()
+			local perspective = C_Camera.GetPerspective()
+
+			assertEquals(perspective.fov, C_Camera.DEFAULT_FIELD_OF_VIEW)
+			assertEquals(perspective.nearZ, C_Camera.DEFAULT_NEAR_PLANE_DISTANCE)
+			assertEquals(perspective.farZ, C_Camera.DEFAULT_FAR_PLANE_DISTANCE)
+		end)
+	end)
+
+	describe("IsAdjustingView", function()
+		it("should return whether the view is set to being adjusted based on user input", function()
+			assertFalse(C_Camera.IsAdjustingView())
+			C_Camera.StartAdjustingView()
+			assertTrue(C_Camera.IsAdjustingView())
+			C_Camera.StopAdjustingView()
+			assertFalse(C_Camera.IsAdjustingView())
+		end)
+	end)
+
+	describe("GetWorldPosition", function()
+		it("should return the camera's position as a 3D vector given in world coordinates", function()
+			local positionBefore = C_Camera.GetWorldPosition()
+
+			local defaultCameraPosition = C_Camera.ComputeOrbitPositionInLocalSpace(
+				C_Camera.DEFAULT_HORIZONTAL_ROTATION,
+				C_Camera.DEFAULT_VERTICAL_ROTATION,
+				C_Camera.DEFAULT_ORBIT_DISTANCE
+			)
+
+			assertEquals(positionBefore.x, defaultCameraPosition.x)
+			assertEquals(positionBefore.y, defaultCameraPosition.y)
+			assertEquals(positionBefore.z, defaultCameraPosition.z)
+
+			C_Camera.ApplyHorizontalRotation(90)
+			local newCameraPosition = C_Camera.ComputeOrbitPositionInLocalSpace(
+				C_Camera.DEFAULT_HORIZONTAL_ROTATION + 90,
+				C_Camera.DEFAULT_VERTICAL_ROTATION,
+				C_Camera.DEFAULT_ORBIT_DISTANCE
+			)
+
+			local positionAfter = C_Camera.GetWorldPosition()
+			assertEquals(positionAfter.x, newCameraPosition.x)
+			assertEquals(positionAfter.y, newCameraPosition.y)
+			assertEquals(positionAfter.z, newCameraPosition.z)
+
+			C_Camera.ResetView()
+		end)
+	end)
+
+	describe("ApplyHorizontalRotation", function()
+		it("should convert negative rotations to a positive rotation in the opposite direction", function()
+			local rotationBefore = C_Camera.GetHorizontalRotationAngle()
+			C_Camera.ApplyHorizontalRotation(-90)
+			local rotationAfter = C_Camera.GetHorizontalRotationAngle()
+
+			C_Camera.ResetView()
+
+			assertFalse(rotationBefore == rotationAfter)
+			assertEquals(rotationAfter, 270)
+		end)
+
+		it("should clamp the horizontal rotation of the camera to a 360 degree circle", function()
+			local rotationBefore = C_Camera.GetHorizontalRotationAngle()
+			C_Camera.ApplyHorizontalRotation(-360 - 90)
+			local rotationAfter = C_Camera.GetHorizontalRotationAngle()
+
+			C_Camera.ResetView()
+
+			assertFalse(rotationBefore == rotationAfter)
+			assertEquals(rotationAfter, 270)
+		end)
+	end)
 end)
