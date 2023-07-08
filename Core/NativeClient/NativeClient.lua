@@ -2,6 +2,8 @@ local ffi = require("ffi")
 local glfw = require("glfw")
 local interop = require("interop")
 
+local C_Camera = require("Core.NativeClient.C_Camera")
+local C_Cursor = require("Core.NativeClient.C_Cursor")
 local Renderer = require("Core.NativeClient.Renderer")
 
 local tonumber = tonumber
@@ -328,7 +330,6 @@ function NativeClient:ProcessWindowEvents()
 		eventCount = tonumber(interop.bindings.queue_size(self.deferredEventQueue))
 
 		if eventCount > 0 then
-			printf("Processing %d new window event(s)", eventCount)
 			local eventInfo = interop.bindings.queue_pop_event(self.deferredEventQueue)
 			self:ReplayDeferredEvent(eventInfo)
 		end
@@ -404,11 +405,36 @@ function NativeClient:APPLICATION_WINDOW_MAXIMIZED(eventID, payload)
 end
 
 function NativeClient:MOUSECLICK_STATUS_UPDATED(eventID, payload)
-	print("MOUSECLICK_STATUS_UPDATED")
+	local GLFW_MOUSE_BUTTON_RIGHT = glfw.bindings.glfw_find_constant("GLFW_MOUSE_BUTTON_RIGHT")
+	local GLFW_PRESS = glfw.bindings.glfw_find_constant("GLFW_PRESS")
+	local GLFW_MOD_CONTROL = glfw.bindings.glfw_find_constant("GLFW_MOD_CONTROL")
+
+	local isRightButton = (payload.mouse_button_details.button == GLFW_MOUSE_BUTTON_RIGHT)
+	local wasButtonPressed = (payload.mouse_button_details.action == GLFW_PRESS)
+	local wasControlKeyDown = (payload.mouse_button_details.mods == GLFW_MOD_CONTROL)
+
+	-- Should probably use a proper FSM for more complex input sequences, but for now this will do
+	if isRightButton then
+		if wasControlKeyDown and wasButtonPressed then
+			C_Camera.ResetView()
+		end
+
+		if wasButtonPressed then
+			C_Camera.StartAdjustingView()
+		else
+			C_Camera.StopAdjustingView()
+		end
+	end
 end
 
 function NativeClient:CURSOR_MOVED(eventID, payload)
-	print("CURSOR_MOVED")
+	C_Cursor.SetLastKnownPosition(payload.cursor_move_details.x, payload.cursor_move_details.y)
+
+	if not C_Camera.IsAdjustingView() then
+		return
+	end
+
+	C_Camera.ApplyHorizontalRotation(C_Cursor.GetDelta())
 end
 
 function NativeClient:MOUSEOVER_STATUS_CHANGED(eventID, payload)

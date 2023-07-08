@@ -495,7 +495,7 @@ function Renderer:UpdateUniformBuffer(graphicsContext)
 	local currentTime = uv.hrtime() / 10E9
 	local perSceneUniformData = self.perSceneUniformData
 
-	local cameraWorldPosition = Vector3D(0, 42.43, -42.43)
+	local cameraWorldPosition = C_Camera.GetWorldPosition()
 	local targetWorldPosition = Vector3D(0, 0, 0)
 	local upVectorHint = Vector3D(0, 1, 0)
 	local perspective = C_Camera.GetPerspective()

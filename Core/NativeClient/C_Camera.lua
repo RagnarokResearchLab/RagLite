@@ -15,6 +15,13 @@ local C_Camera = {
 	verticalFieldOfViewInDegrees = 15,
 	nearPlaneDistanceInWorldUnits = 2,
 	farPlaneDistanceInWorldUnits = 300,
+	isAdjustingView = false,
+	DEFAULT_HORIZONTAL_ROTATION = 0,
+	DEFAULT_VERTICAL_ROTATION = 45,
+	DEFAULT_ORBIT_DISTANCE = 60,
+	horizontalRotationAngleInDegrees = 0,
+	verticalRotationAngleInDegrees = 45,
+	orbitDistanceInWorldUnits = 60,
 }
 
 function C_Camera.CreatePerspectiveProjection(verticalFieldOfViewInDegrees, aspectRatio, zNearDistance, zFarDistance)
@@ -126,6 +133,38 @@ function C_Camera.GetPerspective()
 		nearZ = C_Camera.nearPlaneDistanceInWorldUnits,
 		farZ = C_Camera.farPlaneDistanceInWorldUnits,
 	}
+end
+
+function C_Camera.IsAdjustingView()
+	return C_Camera.isAdjustingView
+end
+
+function C_Camera.StartAdjustingView()
+	C_Camera.isAdjustingView = true
+end
+
+function C_Camera.StopAdjustingView()
+	C_Camera.isAdjustingView = false
+end
+
+function C_Camera.GetWorldPosition()
+	return C_Camera.ComputeOrbitPositionInLocalSpace(
+		C_Camera.horizontalRotationAngleInDegrees,
+		C_Camera.verticalRotationAngleInDegrees,
+		C_Camera.orbitDistanceInWorldUnits
+	)
+end
+
+function C_Camera.GetHorizontalRotationAngle()
+	return C_Camera.horizontalRotationAngleInDegrees
+end
+
+function C_Camera.ApplyHorizontalRotation(delta)
+	C_Camera.horizontalRotationAngleInDegrees = (C_Camera.horizontalRotationAngleInDegrees + delta) % 360
+end
+
+function C_Camera.ResetView()
+	C_Camera.horizontalRotationAngleInDegrees = C_Camera.DEFAULT_HORIZONTAL_ROTATION
 end
 
 return C_Camera
