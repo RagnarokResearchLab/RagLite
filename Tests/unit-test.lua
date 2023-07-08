@@ -10,6 +10,7 @@ local specFiles = {
 	"Tests/NativeClient/Vector3D.spec.lua",
 	"Tests/WorldServer/C_ServerHealth.spec.lua",
 	"Tests/WorldServer/WorldServer.spec.lua",
+	"Tests/Tools/FileAnalyzer.spec.lua",
 	"Tests/Tools/RagnarokTools.spec.lua",
 }
 
