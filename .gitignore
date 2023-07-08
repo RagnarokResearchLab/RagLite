@@ -1,5 +1,6 @@
 *.log
 data.grf
+*.extracted.grf/*
 *.mp3
 *.bin
 *.exe
