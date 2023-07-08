@@ -8,6 +8,7 @@ local specFiles = {
 	"Tests/NativeClient/C_Cursor.spec.lua",
 	"Tests/NativeClient/Matrix3D.spec.lua",
 	"Tests/NativeClient/Matrix4D.spec.lua",
+	"Tests/NativeClient/NativeClient.spec.lua",
 	"Tests/NativeClient/Vector3D.spec.lua",
 	"Tests/WorldServer/C_ServerHealth.spec.lua",
 	"Tests/WorldServer/WorldServer.spec.lua",
