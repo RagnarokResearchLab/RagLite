@@ -2,6 +2,8 @@ local Matrix3D = require("Core.NativeClient.Matrix3D")
 local Matrix4D = require("Core.NativeClient.Matrix4D")
 local Vector3D = require("Core.NativeClient.Vector3D")
 
+local math_max = math.max
+local math_min = math.min
 local math_tan = math.tan
 
 local function deg2rad(angleInDegrees)
@@ -22,6 +24,9 @@ local C_Camera = {
 	horizontalRotationAngleInDegrees = 0,
 	verticalRotationAngleInDegrees = 45,
 	orbitDistanceInWorldUnits = 60,
+	DEGREES_PER_ZOOM_LEVEL = 5,
+	MIN_ORBIT_DISTANCE = 45,
+	MAX_ORBIT_DISTANCE = 80,
 }
 
 function C_Camera.CreatePerspectiveProjection(verticalFieldOfViewInDegrees, aspectRatio, zNearDistance, zFarDistance)
@@ -165,6 +170,30 @@ end
 
 function C_Camera.ResetView()
 	C_Camera.horizontalRotationAngleInDegrees = C_Camera.DEFAULT_HORIZONTAL_ROTATION
+end
+
+function C_Camera.GetOrbitDistance()
+	return C_Camera.orbitDistanceInWorldUnits
+end
+
+function C_Camera.ZoomIn()
+	local requestedOrbitDistance = C_Camera.orbitDistanceInWorldUnits - C_Camera.DEGREES_PER_ZOOM_LEVEL
+	local newOrbitDistance = math_max(requestedOrbitDistance, C_Camera.MIN_ORBIT_DISTANCE)
+	C_Camera.orbitDistanceInWorldUnits = newOrbitDistance
+end
+
+function C_Camera.ZoomOut()
+	local requestedOrbitDistance = C_Camera.orbitDistanceInWorldUnits + C_Camera.DEGREES_PER_ZOOM_LEVEL
+	local newOrbitDistance = math_min(requestedOrbitDistance, C_Camera.MAX_ORBIT_DISTANCE)
+	C_Camera.orbitDistanceInWorldUnits = newOrbitDistance
+end
+
+function C_Camera.ResetZoom()
+	C_Camera.orbitDistanceInWorldUnits = C_Camera.DEFAULT_ORBIT_DISTANCE
+end
+
+function C_Camera.SetOrbitDistance(distance)
+	C_Camera.orbitDistanceInWorldUnits = distance
 end
 
 return C_Camera

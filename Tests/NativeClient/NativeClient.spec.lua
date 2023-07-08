@@ -176,4 +176,125 @@ describe("NativeClient", function()
 			assertFalse(C_Camera.GetHorizontalRotationAngle() == C_Camera.DEFAULT_HORIZONTAL_ROTATION)
 		end)
 	end)
+
+	describe("SCROLL_STATUS_CHANGED", function()
+		local originalKeyHandler
+		before(function()
+			originalKeyHandler = NativeClient.IsControlKeyDown
+			NativeClient.IsControlKeyDown = function()
+				return false
+			end
+		end)
+
+		after(function()
+			NativeClient.IsControlKeyDown = originalKeyHandler
+			C_Camera.ResetZoom()
+		end)
+
+		it("should not change the zoom level if CTRL is held while scrolling up", function()
+			NativeClient.IsControlKeyDown = function()
+				return true
+			end
+
+			local event = ffi.new("deferred_event_t")
+			event.scroll_details.x = C_Cursor.SCROLL_DIRECTION_NONE
+			event.scroll_details.y = C_Cursor.SCROLL_DIRECTION_UP
+			NativeClient:SCROLL_STATUS_CHANGED("SCROLL_STATUS_CHANGED", event)
+
+			assertEquals(C_Camera.GetOrbitDistance(), C_Camera.DEFAULT_ORBIT_DISTANCE)
+		end)
+
+		it("should not change the zoom level if CTRL is held while scrolling down", function()
+			NativeClient.IsControlKeyDown = function()
+				return true
+			end
+
+			local event = ffi.new("deferred_event_t")
+			event.scroll_details.x = C_Cursor.SCROLL_DIRECTION_NONE
+			event.scroll_details.y = C_Cursor.SCROLL_DIRECTION_DOWN
+			NativeClient:SCROLL_STATUS_CHANGED("SCROLL_STATUS_CHANGED", event)
+
+			assertEquals(C_Camera.GetOrbitDistance(), C_Camera.DEFAULT_ORBIT_DISTANCE)
+		end)
+
+		it(
+			"should zoom in the camera if scrolling down while the orbit radius is above the configured minimum",
+			function()
+				local event = ffi.new("deferred_event_t")
+				event.scroll_details.x = C_Cursor.SCROLL_DIRECTION_NONE
+				event.scroll_details.y = C_Cursor.SCROLL_DIRECTION_DOWN
+				NativeClient:SCROLL_STATUS_CHANGED("SCROLL_STATUS_CHANGED", event)
+
+				assertEquals(
+					C_Camera.GetOrbitDistance(),
+					C_Camera.DEFAULT_ORBIT_DISTANCE - C_Camera.DEGREES_PER_ZOOM_LEVEL
+				)
+			end
+		)
+
+		it("should not zoom in the camera below the configured minimum orbit radius if scrolling down", function()
+			C_Camera.SetOrbitDistance(C_Camera.MIN_ORBIT_DISTANCE + 1)
+
+			local event = ffi.new("deferred_event_t")
+			event.scroll_details.x = C_Cursor.SCROLL_DIRECTION_NONE
+			event.scroll_details.y = C_Cursor.SCROLL_DIRECTION_DOWN
+			NativeClient:SCROLL_STATUS_CHANGED("SCROLL_STATUS_CHANGED", event)
+
+			assertEquals(C_Camera.GetOrbitDistance(), C_Camera.MIN_ORBIT_DISTANCE)
+		end)
+
+		it(
+			"should not change the zoom level if scrolling down while the orbit radius is at the configured minimum",
+			function()
+				C_Camera.SetOrbitDistance(C_Camera.MIN_ORBIT_DISTANCE)
+
+				local event = ffi.new("deferred_event_t")
+				event.scroll_details.x = C_Cursor.SCROLL_DIRECTION_NONE
+				event.scroll_details.y = C_Cursor.SCROLL_DIRECTION_DOWN
+				NativeClient:SCROLL_STATUS_CHANGED("SCROLL_STATUS_CHANGED", event)
+
+				assertEquals(C_Camera.GetOrbitDistance(), C_Camera.MIN_ORBIT_DISTANCE)
+			end
+		)
+
+		it(
+			"should zoom out the camera if scrolling up while the orbit radius is below the configured maximum",
+			function()
+				local event = ffi.new("deferred_event_t")
+				event.scroll_details.x = C_Cursor.SCROLL_DIRECTION_NONE
+				event.scroll_details.y = C_Cursor.SCROLL_DIRECTION_UP
+				NativeClient:SCROLL_STATUS_CHANGED("SCROLL_STATUS_CHANGED", event)
+
+				assertEquals(
+					C_Camera.GetOrbitDistance(),
+					C_Camera.DEFAULT_ORBIT_DISTANCE + C_Camera.DEGREES_PER_ZOOM_LEVEL
+				)
+			end
+		)
+
+		it("should not zoom out the camera beyond the configured maximum orbit radius if scrolling up", function()
+			C_Camera.SetOrbitDistance(C_Camera.MAX_ORBIT_DISTANCE - 1)
+
+			local event = ffi.new("deferred_event_t")
+			event.scroll_details.x = C_Cursor.SCROLL_DIRECTION_NONE
+			event.scroll_details.y = C_Cursor.SCROLL_DIRECTION_UP
+			NativeClient:SCROLL_STATUS_CHANGED("SCROLL_STATUS_CHANGED", event)
+
+			assertEquals(C_Camera.GetOrbitDistance(), C_Camera.MAX_ORBIT_DISTANCE)
+		end)
+
+		it(
+			"should not change the zoom level if scrolling up while the orbit radius is at the configured maximum",
+			function()
+				C_Camera.SetOrbitDistance(C_Camera.MAX_ORBIT_DISTANCE)
+
+				local event = ffi.new("deferred_event_t")
+				event.scroll_details.x = C_Cursor.SCROLL_DIRECTION_NONE
+				event.scroll_details.y = C_Cursor.SCROLL_DIRECTION_UP
+				NativeClient:SCROLL_STATUS_CHANGED("SCROLL_STATUS_CHANGED", event)
+
+				assertEquals(C_Camera.GetOrbitDistance(), C_Camera.MAX_ORBIT_DISTANCE)
+			end
+		)
+	end)
 end)
