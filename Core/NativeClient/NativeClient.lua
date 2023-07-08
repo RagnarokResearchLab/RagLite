@@ -1,6 +1,7 @@
 local ffi = require("ffi")
 local glfw = require("glfw")
 local interop = require("interop")
+local uv = require("uv")
 
 local C_Camera = require("Core.NativeClient.C_Camera")
 local C_Cursor = require("Core.NativeClient.C_Cursor")
@@ -414,8 +415,13 @@ function NativeClient:MOUSECLICK_STATUS_UPDATED(eventID, payload)
 	local wasControlKeyDown = (payload.mouse_button_details.mods == GLFW_MOD_CONTROL)
 
 	-- Should probably use a proper FSM for more complex input sequences, but for now this will do
+	local now = uv.hrtime()
 	if isRightButton then
 		if wasControlKeyDown and wasButtonPressed then
+			C_Camera.ResetView()
+		end
+
+		if wasButtonPressed and C_Cursor.IsWithinDoubleClickInterval(now) then
 			C_Camera.ResetView()
 		end
 
@@ -425,6 +431,8 @@ function NativeClient:MOUSECLICK_STATUS_UPDATED(eventID, payload)
 			C_Camera.StopAdjustingView()
 		end
 	end
+
+	C_Cursor.SetClickTime(now)
 end
 
 function NativeClient:CURSOR_MOVED(eventID, payload)

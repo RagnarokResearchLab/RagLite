@@ -5,6 +5,8 @@ local C_Cursor = {
 		lastX = nil,
 		lastY = nil,
 	},
+	DOUBLE_CLICK_TIME_IN_MILLISECONDS = 400,
+	lastClickTime = 0,
 }
 
 function C_Cursor.GetLastKnownPosition()
@@ -32,6 +34,19 @@ function C_Cursor.GetDelta()
 	local deltaY = C_Cursor.screenSpaceCoordinates.y - C_Cursor.screenSpaceCoordinates.lastY
 
 	return deltaX, deltaY
+end
+
+function C_Cursor.GetLastClickTime()
+	return C_Cursor.lastClickTime
+end
+
+function C_Cursor.IsWithinDoubleClickInterval(now)
+	local millisecondsSinceLastClick = (now - C_Cursor.lastClickTime) / 10E5
+	return millisecondsSinceLastClick < C_Cursor.DOUBLE_CLICK_TIME_IN_MILLISECONDS
+end
+
+function C_Cursor.SetClickTime(now)
+	C_Cursor.lastClickTime = now
 end
 
 return C_Cursor
