@@ -430,9 +430,8 @@ function NativeClient:MOUSECLICK_STATUS_UPDATED(eventID, payload)
 		else
 			C_Camera.StopAdjustingView()
 		end
+		C_Cursor.SetClickTime(now)
 	end
-
-	C_Cursor.SetClickTime(now)
 end
 
 function NativeClient:CURSOR_MOVED(eventID, payload)
