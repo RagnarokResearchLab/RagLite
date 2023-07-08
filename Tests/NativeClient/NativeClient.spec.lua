@@ -99,6 +99,7 @@ describe("NativeClient", function()
 			"should reset the horizontal camera rotation if the right mouse button is pressed while CTRL is active",
 			function()
 				local event = ffi.new("deferred_event_t")
+				C_Cursor.SetClickTime(-2 * C_Cursor.DOUBLE_CLICK_TIME_IN_MILLISECONDS * 10E5)
 				C_Camera.ApplyHorizontalRotation(37) -- Arbitrary non-default rotation
 
 				-- RCLICK received -> should reset camera since SHIFT is still down
@@ -116,5 +117,34 @@ describe("NativeClient", function()
 				NativeClient:MOUSECLICK_STATUS_UPDATED("MOUSECLICK_STATUS_UPDATED", event)
 			end
 		)
+
+		it("should reset the horizontal camera rotation if the right mouse button is double-clicked", function()
+			local event = ffi.new("deferred_event_t")
+			C_Cursor.SetClickTime(-2 * C_Cursor.DOUBLE_CLICK_TIME_IN_MILLISECONDS * 10E5)
+			C_Camera.ApplyHorizontalRotation(37) -- Arbitrary non-default rotation
+
+			-- RCLICK received -> should await second click
+			event.mouse_button_details.button = glfw.bindings.glfw_find_constant("GLFW_MOUSE_BUTTON_RIGHT")
+			event.mouse_button_details.action = glfw.bindings.glfw_find_constant("GLFW_PRESS")
+			NativeClient:MOUSECLICK_STATUS_UPDATED("MOUSECLICK_STATUS_UPDATED", event)
+
+			event.mouse_button_details.button = glfw.bindings.glfw_find_constant("GLFW_MOUSE_BUTTON_RIGHT")
+			event.mouse_button_details.action = glfw.bindings.glfw_find_constant("GLFW_RELEASE")
+			NativeClient:MOUSECLICK_STATUS_UPDATED("MOUSECLICK_STATUS_UPDATED", event)
+
+			assertFalse(C_Camera.GetHorizontalRotationAngle() == C_Camera.DEFAULT_HORIZONTAL_ROTATION)
+
+			-- Another RCLICK received -> should reset angle
+			-- Near-zero delay is inhumanely fast, so it should always be considered a double-click
+			event.mouse_button_details.button = glfw.bindings.glfw_find_constant("GLFW_MOUSE_BUTTON_RIGHT")
+			event.mouse_button_details.action = glfw.bindings.glfw_find_constant("GLFW_PRESS")
+			NativeClient:MOUSECLICK_STATUS_UPDATED("MOUSECLICK_STATUS_UPDATED", event)
+
+			event.mouse_button_details.button = glfw.bindings.glfw_find_constant("GLFW_MOUSE_BUTTON_RIGHT")
+			event.mouse_button_details.action = glfw.bindings.glfw_find_constant("GLFW_RELEASE")
+			NativeClient:MOUSECLICK_STATUS_UPDATED("MOUSECLICK_STATUS_UPDATED", event)
+
+			assertEquals(C_Camera.GetHorizontalRotationAngle(), C_Camera.DEFAULT_HORIZONTAL_ROTATION)
+		end)
 	end)
 end)
