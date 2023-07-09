@@ -7,6 +7,9 @@ local C_Cursor = {
 	},
 	DOUBLE_CLICK_TIME_IN_MILLISECONDS = 400,
 	lastClickTime = 0,
+	SCROLL_DIRECTION_NONE = 0,
+	SCROLL_DIRECTION_UP = 1,
+	SCROLL_DIRECTION_DOWN = -1,
 }
 
 function C_Cursor.GetLastKnownPosition()
