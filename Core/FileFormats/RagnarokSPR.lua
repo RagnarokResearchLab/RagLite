@@ -31,7 +31,7 @@ local RagnarokSPR = {
 		} spr_palette_color_t;
 
 		typedef struct spr_palette {
-			spr_palette_color_t pixels[256];
+			spr_palette_color_t colors[256];
 		} spr_palette_t;
 
 //	typedef struct gnd_lightmap_format {
