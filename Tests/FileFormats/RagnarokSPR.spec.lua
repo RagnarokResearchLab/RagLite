@@ -7,7 +7,7 @@ local RagnarokSPR = require("Core.FileFormats.RagnarokSPR")
 
 describe("RagnarokSPR", function()
 	local gnd = RagnarokSPR()
-	describe("DecodeFileContents", function()
+	-- describe("DecodeFileContents", function()
 		-- it("should be able to decode GND files using version 1.7 of the format", function()
 			-- gnd:DecodeFileContents(GND_WITHOUT_WATER_PLANE)
 
