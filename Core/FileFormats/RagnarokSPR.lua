@@ -104,23 +104,19 @@ function RagnarokSPR:DecompressRunLengthEncodedBuffer(compressedBuffer, decompre
 	printf("Decompressing input buffer: %d bytes", compressedBufferSize)
 
 	local startPointer = compressedBuffer:ref()
-	local bytes = ffi_cast("char*", startPointer)
+	local bytes = ffi_cast("uint8_t*", startPointer)
 
 	local isDecompressingRunOfZeroes = false
 	for byteIndex = 0, compressedBufferSize - 1, 1 do
-		print(bytes[byteIndex])
+		local nextByteToProcess = bytes[byteIndex]
+		-- Add next run
 		if isDecompressingRunOfZeroes then
-			local numZeroesToInsert = bytes[byteIndex]
-			if numZeroesToInsert == 0 then error("Failed to decode RLE-compressed image data (unexpected zero-length run)", 0) end
-			printf("Padding with %d zeroes", numZeroesToInsert)
-			decompressedBuffer:put(string_rep("\000", numZeroesToInsert)) -- TBD perf? (putcdata?)
+			-- Add X zeroes
+			decompressedBuffer:put(string_rep("\0", nextByteToProcess))
 			isDecompressingRunOfZeroes = false
 		else
-			decompressedBuffer:put(bytes[byteIndex])
-		end
-
-		local isZeroByte = tonumber(bytes[byteIndex]) == 0
-		if isZeroByte then
+			-- Just add the current byte
+			decompressedBuffer:put(nextByteToProcess)
 			isDecompressingRunOfZeroes = true
 		end
 	end
