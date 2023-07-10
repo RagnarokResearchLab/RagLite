@@ -106,4 +106,26 @@ describe("RagnarokSPR", function()
 		assertThrows(attemptToDecompressZeroLengthRun, expectedErrorMessage)
 		end)
 	end)
+
+	describe("GetEmbeddedColorPalette", function()
+		it("should return an 8-bit BMP color palette with 256 entries if a regular Lua string is passed", function()
+			local palette = spr:GetEmbeddedColorPalette(SPR_WITH_RLE)
+
+			assertEquals(palette.colors[0].red, 255)
+			assertEquals(palette.colors[0].green, 0)
+			assertEquals(palette.colors[0].blue, 0)
+			assertEquals(palette.colors[0].alpha, 0)
+
+			assertEquals(palette.colors[1].red, 255)
+			assertEquals(palette.colors[1].green, 255)
+			assertEquals(palette.colors[1].blue, 255)
+			assertEquals(palette.colors[1].alpha, 0)
+		end)
+	end)
+
+	describe("ApplyColorPalette", function()
+		it("should replace all palette indices with their respective RGBA colors", function()
+
+		end)
+	end)
 end)
