@@ -1,5 +1,7 @@
 local RagnarokSPR = require("Core.FileFormats.RagnarokSPR")
 
+local miniz = require("miniz")
+
 -- Features: BMP palette appended, BMP and TGA frames, RLE-encoded image data
 -- Assertions: No system palette (ancient versions), works on all files in the kRO GRF, works with old (ArcExe/alpha) files?
 -- Versions: 0.2 Arcturus (bug? crow.spr = 2.0?), 1.1 Arcturus (mariaspr), 1.2 (2.1) default, 2.2 and 2.3 TBD?
@@ -32,6 +34,7 @@ describe("RagnarokSPR", function()
 			assertEquals(spr.bmpImages[0].compressedBufferSize, 990)
 			assertEquals(spr.bmpImages[0].decompressedBufferSize, 1332 * 4)
 			assertEquals(#spr.bmpImages[0].decompressedImageBuffer, 1332)
+			assertEquals(miniz.crc32(0, tostring(spr.bmpImages[0].decompressedImageBuffer)), 1060156735)
 			-- CRC32? or check pixels manually / palette indices
 
 			assertEquals(spr.bmpImages[1].pixelWidth, 39)
@@ -39,6 +42,7 @@ describe("RagnarokSPR", function()
 			assertEquals(spr.bmpImages[1].compressedBufferSize, 997)
 			assertEquals(spr.bmpImages[1].decompressedBufferSize, 1443 * 4)
 			assertEquals(#spr.bmpImages[1].decompressedImageBuffer, 1443)
+			assertEquals(miniz.crc32(0, tostring(spr.bmpImages[1].decompressedImageBuffer)), 335446514)
 
 		end)
 	end)
