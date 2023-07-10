@@ -32,12 +32,13 @@ describe("RagnarokSPR", function()
 			assertEquals(spr.bmpImages[0].compressedBufferSize, 990)
 			assertEquals(spr.bmpImages[0].decompressedBufferSize, 1332 * 4)
 			assertEquals(#spr.bmpImages[0].decompressedImageBuffer, 1332)
-			-- CRC32?
+			-- CRC32? or check pixels manually / palette indices
 
-			assertEquals(spr.bmpImages[40].pixel_width, 37)
-			assertEquals(spr.bmpImages[40].pixel_height, 36)
-			assertEquals(spr.bmpImages[40].compressed_buffer_size, 990)
-			assertEquals(spr.bmpImages[40].decompressed_buffer_size, 1332)
+			assertEquals(spr.bmpImages[1].pixelWidth, 39)
+			assertEquals(spr.bmpImages[1].pixelHeight, 37)
+			assertEquals(spr.bmpImages[1].compressedBufferSize, 997)
+			assertEquals(spr.bmpImages[1].decompressedBufferSize, 1443 * 4)
+			assertEquals(#spr.bmpImages[1].decompressedImageBuffer, 1443)
 
 		end)
 	end)
