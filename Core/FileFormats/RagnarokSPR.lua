@@ -155,7 +155,24 @@ function RagnarokSPR:GetEmbeddedColorPalette(fileContents)
 	return bmpColorPalette
 end
 
-function RagnarokSPR:ApplyColorPalette(decompressedBuffer, pixelBuffer)
+function RagnarokSPR:ApplyColorPalette(indexedColorImageBytes, palette)
+	local rgbaImageBytes = buffer.new(#indexedColorImageBytes * 4)
+
+	local startPointer = indexedColorImageBytes:ref()
+	local bytes = ffi_cast("uint8_t*", startPointer)
+
+	for byteIndex = 0, #indexedColorImageBytes - 1, 1 do
+		local paletteIndex = bytes[byteIndex]
+		if paletteIndex > 255 then
+			-- TODO test
+			-- error("Invalid palette color index %s at index %d", paletteIndex, byteIndex))
+		end
+
+		local paletteColor = palette.colors[paletteIndex]
+		rgbaImageBytes:putcdata(paletteColor, ffi_sizeof(paletteColor))
+	end
+
+	return rgbaImageBytes
 end
 
 function RagnarokSPR:DecodeIndexedColorBitmapsWithRLE()
