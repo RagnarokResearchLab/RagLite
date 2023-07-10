@@ -19,10 +19,12 @@ local C_Camera = {
 	farPlaneDistanceInWorldUnits = 300,
 	isAdjustingView = false,
 	DEFAULT_HORIZONTAL_ROTATION = 0,
-	DEFAULT_VERTICAL_ROTATION = 45,
+	DEFAULT_VERTICAL_ROTATION = 50,
+	MIN_VERTICAL_ROTATION = 50,
+	MAX_VERTICAL_ROTATION = 65,
 	DEFAULT_ORBIT_DISTANCE = 60,
 	horizontalRotationAngleInDegrees = 0,
-	verticalRotationAngleInDegrees = 45,
+	verticalRotationAngleInDegrees = 50,
 	orbitDistanceInWorldUnits = 60,
 	DEGREES_PER_ZOOM_LEVEL = 5,
 	MIN_ORBIT_DISTANCE = 45,
@@ -164,12 +166,23 @@ function C_Camera.GetHorizontalRotationAngle()
 	return C_Camera.horizontalRotationAngleInDegrees
 end
 
+function C_Camera.GetVerticalRotationAngle()
+	return C_Camera.verticalRotationAngleInDegrees
+end
+
 function C_Camera.ApplyHorizontalRotation(delta)
 	C_Camera.horizontalRotationAngleInDegrees = (C_Camera.horizontalRotationAngleInDegrees + delta) % 360
 end
 
+function C_Camera.ApplyVerticalRotation(delta)
+	local requestedAngle = (C_Camera.verticalRotationAngleInDegrees + delta) % 360
+	C_Camera.verticalRotationAngleInDegrees =
+		math_min(math_max(requestedAngle, C_Camera.MIN_VERTICAL_ROTATION), C_Camera.MAX_VERTICAL_ROTATION)
+end
+
 function C_Camera.ResetView()
 	C_Camera.horizontalRotationAngleInDegrees = C_Camera.DEFAULT_HORIZONTAL_ROTATION
+	C_Camera.verticalRotationAngleInDegrees = C_Camera.DEFAULT_VERTICAL_ROTATION
 end
 
 function C_Camera.GetOrbitDistance()

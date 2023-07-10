@@ -455,13 +455,22 @@ function NativeClient:SCROLL_STATUS_CHANGED(eventID, payload)
 
 	local isScrollingUp = (payload.scroll_details.y == C_Cursor.SCROLL_DIRECTION_UP)
 	local isScrollingDown = (payload.scroll_details.y == C_Cursor.SCROLL_DIRECTION_DOWN)
+	local isShiftKeyDown = self:IsShiftKeyDown()
 
-	if isScrollingUp then
+	if isScrollingUp and not isShiftKeyDown then
 		C_Camera.ZoomOut()
 	end
 
-	if isScrollingDown then
+	if isScrollingUp and isShiftKeyDown then
+		C_Camera.ApplyVerticalRotation(-C_Camera.DEGREES_PER_ZOOM_LEVEL)
+	end
+
+	if isScrollingDown and not isShiftKeyDown then
 		C_Camera.ZoomIn()
+	end
+
+	if isScrollingDown and isShiftKeyDown then
+		C_Camera.ApplyVerticalRotation(C_Camera.DEGREES_PER_ZOOM_LEVEL)
 	end
 end
 
@@ -477,6 +486,12 @@ function NativeClient:IsControlKeyDown()
 	local GLFW_PRESS = glfw.bindings.glfw_find_constant("GLFW_PRESS")
 	local GLFW_KEY_LEFT_CONTROL = glfw.bindings.glfw_find_constant("GLFW_KEY_LEFT_CONTROL")
 	return (glfw.bindings.glfw_get_key(self.mainWindow, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
+end
+
+function NativeClient:IsShiftKeyDown()
+	local GLFW_PRESS = glfw.bindings.glfw_find_constant("GLFW_PRESS")
+	local GLFW_KEY_LEFT_SHIFT = glfw.bindings.glfw_find_constant("GLFW_KEY_LEFT_SHIFT")
+	return (glfw.bindings.glfw_get_key(self.mainWindow, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
 end
 
 return NativeClient
