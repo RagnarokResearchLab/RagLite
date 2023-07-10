@@ -1,85 +1,85 @@
 local ffi = require("ffi")
--- local uv = require("uv")
+local uv = require("uv")
 
--- local ffi_cast = ffi.cast
--- local ffi_copy = ffi.copy
--- local ffi_new = ffi.new
--- local ffi_sizeof = ffi.sizeof
--- local ffi_string = ffi.string
--- local tonumber = tonumber
+local ffi_cast = ffi.cast
+local ffi_copy = ffi.copy
+local ffi_new = ffi.new
+local ffi_sizeof = ffi.sizeof
+local ffi_string = ffi.string
+local tonumber = tonumber
 
 local RagnarokSPR = {
-	-- cdefs = [[
-		-- #pragma pack(1)
--- 		typedef struct gnd_header {
--- 			char signature[4];
--- 			uint8_t version_major;
--- 			uint8_t version_minor;
--- 			uint32_t grid_size_u;
--- 			uint32_t grid_size_v;
--- 			float geometry_scale_factor;
--- 			uint32_t texture_count;
--- 			uint32_t texture_path_length;
--- 		} gnd_header_t;
+	cdefs = [[
+		#pragma pack(1)
+		typedef struct spr_header {
+			char signature[2];
+			uint8_t version_major; // TBD reversed order?
+			uint8_t version_minor;
+//		uint32_t grid_size_u;
+//		uint32_t grid_size_v;
+//		float geometry_scale_factor;
+//		uint32_t texture_count;
+//		uint32_t texture_path_length;
+		} spr_header_t;
 
--- 		typedef struct gnd_lightmap_format {
--- 			uint32_t slice_count;
--- 			uint32_t slice_width;
--- 			uint32_t slice_height;
--- 			int32_t pixel_format;
--- 		} gnd_lightmap_format_t;
+//	typedef struct gnd_lightmap_format {
+//		uint32_t slice_count;
+//		uint32_t slice_width;
+//		uint32_t slice_height;
+//		int32_t pixel_format;
+//	} gnd_lightmap_format_t;
 
--- 		typedef struct vertex_color {
--- 			uint8_t blue;
--- 			uint8_t green;
--- 			uint8_t red;
--- 			uint8_t alpha;
--- 		} vertex_color_t;
+//	typedef struct vertex_color {
+//		uint8_t blue;
+//		uint8_t green;
+//		uint8_t red;
+//		uint8_t alpha;
+//	} vertex_color_t;
 
--- 		typedef struct gnd_lightmap_slice {
--- 			// Hardcoded since the format is unlikely to change
--- 			uint8_t ambient_occlusion_texels[64];
--- 			uint8_t baked_lightmap_texels[192];
--- 		} gnd_lightmap_slice_t;
+//	typedef struct gnd_lightmap_slice {
+//		// Hardcoded since the format is unlikely to change
+//		uint8_t ambient_occlusion_texels[64];
+//		uint8_t baked_lightmap_texels[192];
+//	} gnd_lightmap_slice_t;
 
--- 		typedef struct gnd_texture_coords {
--- 			float bottom_left_u;
--- 			float bottom_right_u;
--- 			float top_left_u;
--- 			float top_right_u;
--- 			float bottom_left_v;
--- 			float bottom_right_v;
--- 			float top_left_v;
--- 			float top_right_v;
--- 		} gnd_texture_coords_t;
+//	typedef struct gnd_texture_coords {
+//		float bottom_left_u;
+//		float bottom_right_u;
+//		float top_left_u;
+//		float top_right_u;
+//		float bottom_left_v;
+//		float bottom_right_v;
+//		float top_left_v;
+//		float top_right_v;
+//	} gnd_texture_coords_t;
 
--- 		typedef struct gnd_textured_surface {
--- 			gnd_texture_coords_t uvs;
--- 			int16_t texture_id;
--- 			uint16_t lightmap_slice_id;
--- 			vertex_color_t bottom_left_color;
--- 		} gnd_textured_surface_t;
+//	typedef struct gnd_textured_surface {
+//		gnd_texture_coords_t uvs;
+//		int16_t texture_id;
+//		uint16_t lightmap_slice_id;
+//		vertex_color_t bottom_left_color;
+//	} gnd_textured_surface_t;
 
--- 		typedef struct gnd_groundmesh_cube {
--- 			float southwest_corner_altitude;
--- 			float southeast_corner_altitude;
--- 			float northwest_corner_altitude;
--- 			float northeast_corner_altitude;
--- 			int32_t top_surface_id;
--- 			int32_t north_surface_id;
--- 			int32_t east_surface_id;
--- 		} gnd_groundmesh_cube_t;
+//	typedef struct gnd_groundmesh_cube {
+//		float southwest_corner_altitude;
+//		float southeast_corner_altitude;
+//		float northwest_corner_altitude;
+//		float northeast_corner_altitude;
+//		int32_t top_surface_id;
+//		int32_t north_surface_id;
+//		int32_t east_surface_id;
+//	} gnd_groundmesh_cube_t;
 
--- 		typedef struct gnd_water_plane {
--- 			float level;
--- 			int32_t water_type_id;
--- 			float waveform_amplitude;
--- 			float waveform_phase;
--- 			float surface_curvature_deg;
--- 			int32_t texture_cycling_interval;
--- 		} gnd_water_plane_t;
+//	typedef struct gnd_water_plane {
+//		float level;
+//		int32_t water_type_id;
+//		float waveform_amplitude;
+//		float waveform_phase;
+//		float surface_curvature_deg;
+//		int32_t texture_cycling_interval;
+// 		} gnd_water_plane_t;
 
-	-- ]],
+	]],
 }
 
 function RagnarokSPR:Construct()
@@ -98,32 +98,32 @@ RagnarokSPR.__call = RagnarokSPR.Construct
 setmetatable(RagnarokSPR, RagnarokSPR)
 
 function RagnarokSPR:DecodeFileContents(fileContents)
--- 	local startTime = uv.hrtime()
+	local startTime = uv.hrtime()
 
--- 	self.fileContents = ffi_cast("char*", fileContents)
+	self.fileContents = ffi_cast("char*", fileContents)
 
--- 	self:DecodeHeader()
+	self:DecodeHeader()
 -- 	self:DecodeTexturePaths()
 -- 	self:DecodeLightmapSlices()
 -- 	self:DecodeTexturedSurfaces()
 -- 	self:DecodeCubeGrid()
 -- 	self:DecodeWaterPlanes()
 
--- 	self.fileContents = fileContents -- GC anchor for the cdata used internally
+	self.fileContents = fileContents -- GC anchor for the cdata used internally
 
--- 	local endTime = uv.hrtime()
--- 	local decodingTimeInMilliseconds = (endTime - startTime) / 10E5
--- 	printf("[RagnarokSPR] Finished decoding file contents in %.2f ms", decodingTimeInMilliseconds)
--- end
+	local endTime = uv.hrtime()
+	local decodingTimeInMilliseconds = (endTime - startTime) / 10E5
+	printf("[RagnarokSPR] Finished decoding file contents in %.2f ms", decodingTimeInMilliseconds)
+end
 
--- function RagnarokSPR:DecodeHeader()
--- 	local header = ffi_cast("gnd_header_t*", self.fileContents)
--- 	local headerSize = ffi_sizeof(header.signature)
+function RagnarokSPR:DecodeHeader()
+	local header = ffi_cast("spr_header_t*", self.fileContents)
+	local headerSize = ffi_sizeof(header.signature)
 
--- 	self.signature = ffi_string(header.signature, headerSize)
--- 	if self.signature ~= "GRGN" then
--- 		error("Failed to decode GND header (Signature " .. self.signature .. ' should be "GRGN"', 0)
--- 	end
+	self.signature = ffi_string(header.signature, headerSize)
+	if self.signature ~= "GRGN" then
+		error("Failed to decode SPR header (Signature " .. self.signature .. ' should be "SP"', 0)
+	end
 
 -- 	self.version = header.version_major + header.version_minor / 10
 
@@ -224,6 +224,6 @@ end
 -- 	end
 -- end
 
--- ffi.cdef(RagnarokSPR.cdefs)
+ffi.cdef(RagnarokSPR.cdefs)
 
 return RagnarokSPR
