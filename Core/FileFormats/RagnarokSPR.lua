@@ -30,11 +30,11 @@ local RagnarokSPR = {
 			spr_palette_color_t colors[256];
 		} spr_palette_t;
 
-		typedef struct spr_rle_bitmap {
+		typedef struct spr_rle_header {
 			uint16_t pixel_width;
 			uint16_t pixel_height;
 			uint16_t compressed_buffer_size;
-		} spr_rle_bitmap_t;
+		} spr_rle_header_t;
 	]],
 }
 
@@ -143,15 +143,31 @@ end
 
 function RagnarokSPR:DecodeIndexedColorBitmapsWithRLE()
 
-	-- if version then early exit
+	-- if version does not have RLE then early exit
 
 		for index = 0, self.bmpImagesCount - 1, 1 do
-			local runLengthEncodedImageMetadata = ffi_cast("spr_rle_bitmap_t*", self.fileContents)
-			runLengthEncodedImage.decompressed_buffer_size = 1332 -- TODO
-			-- rle_encoded_pixels = set ptr, zero copy
-			self.bmpImages[index] = runLengthEncodedImage
+			local runLengthEncodedImageMetadata = ffi_cast("spr_rle_header_t*", self.fileContents)
+
+			local compressedBufferSize = tonumber(runLengthEncodedImageMetadata.compressed_buffer_size)
+			local compressedBytes =buffer.new(compressedBufferSize)
+			compressedBytes:putcdata(ffi_new("uint8_t[?]", compressedBufferSize, self.fileContents))
+
+			local imageWidthInPixels = tonumber(runLengthEncodedImageMetadata.pixel_width)
+			local imageHeightInPixels = tonumber(runLengthEncodedImageMetadata.pixel_height)
+			-- Note: We only need width * height * 1 to decompress, but later we'll need to replace the palette colors too
+			local decompressedBufferSize = imageWidthInPixels * imageHeightInPixels * 4 -- RGBA
+			local decompressedBytes = buffer.new(decompressedBufferSize)
+
+			self:DecompressRunLengthEncodedBytes(compressedBytes, decompressedBytes)
+			self.bmpImages[index] = {
+				pixelWidth = imageWidthInPixels,
+				pixelHeight = imageHeightInPixels,
+				compressedBufferSize = compressedBufferSize,
+				decompressedBufferSize = decompressedBufferSize,
+				decompressedImageBuffer = decompressedBytes,
+			}
+			-- 	self.fileContents = self.fileContents + ffi_sizeof("spr_rle_header_t") + compressedBufferSize -- TODO
 		end
--- 	self.fileContents = self.fileContents + ffi_sizeof("gnd_lightmap_format_t")
 
 -- 	self.lightmapSlices = ffi_cast("gnd_lightmap_slice_t*", self.fileContents)
 -- 	self.fileContents = self.fileContents + lightmapFormatInfo.slice_count * ffi_sizeof("gnd_lightmap_slice_t")
