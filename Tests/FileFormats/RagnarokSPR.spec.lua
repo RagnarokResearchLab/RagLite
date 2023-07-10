@@ -127,27 +127,35 @@ describe("RagnarokSPR", function()
 
 	describe("DecodeRunLengthEncodedBuffer", function()
 		it("should return the original pixel data if it didn't contain any runs of zeroes", function()
-			local bytesToDecode = buffer.new(2)
-			bytesToDecode:puts("ABC")
-			local decodedBuffer = spr:DecodeRunLengthEncodedBuffer(bytesToDecode)
-			assertEquals(tostring(decodedBuffer), "ABC")
+			local compressedBuffer = buffer.new(3)
+			local decompressedBuffer = buffer.new(3)
+			compressedBuffer:put("ABC")
+
+			spr:DecodeRunLengthEncodedBuffer(compressedBuffer, decompressedBuffer)
+			assertEquals(tostring(decompressedBuffer), "ABC")
 		end)
 
 		it("should return the decoded pixel data after resolving all existing runs of zeroes", function()
-			local bytesToDecode = buffer.new(9)
-			bytesToDecode:puts("ABC\000\003ASDF")
-			local decodedBuffer = spr:DecodeRunLengthEncodedBuffer(bytesToDecode)
-			assertEquals(tostring(decodedBuffer), "ABC\000\000\000ASDF")
+			local compressedBuffer = buffer.new(9)
+			local decompressedBuffer = buffer.new(8)
+			compressedBuffer:put("ABC\000\003ASDF")
+
+			spr:DecodeRunLengthEncodedBuffer(compressedBuffer, decompressedBuffer)
+			assertEquals(tostring(decompressedBuffer), "ABC\000\000\000ASDF")
 		end)
 
 		it("should throw if the buffer contains a zero-length run", function()
 			-- It probably wasn't RLE-encoded in this case, so fail loudly
-			local bytesToDecode = buffer.new(2)
-			bytesToDecode:puts("\000\000")
-			local function decodeInvalidBuffer()
-				spr:DecodeRunLengthEncodedBuffer(bytesToDecode)
+			local compressedBuffer = buffer.new(2)
+			local decompressedBuffer = buffer.new()
+			compressedBuffer:put("\000\000")
+
+			local function attemptToDecompressInvalidBuffer()
+				spr:DecodeRunLengthEncodedBuffer(compressedBuffer, decompressedBuffer)
 			end
-			assertThrows(decodeInvalidBuffer, "Failed to decode RLE-compressed image data (unexpected zero-length run)")
+
+			local expectedErrorMessage =  "Failed to decode RLE-compressed image data (unexpected zero-length run)"
+			assertThrows(attemptToDecompressInvalidBuffer, expectedErrorMessage)
 		end)
 	end)
 end)
