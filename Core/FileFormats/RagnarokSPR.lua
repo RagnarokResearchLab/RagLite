@@ -93,7 +93,6 @@ function RagnarokSPR:DecodeColorPalette(endOfFileOffset)
 	local paletteStartOffset = endOfFileOffset - ffi_sizeof("spr_palette_t")
 	local numSkippedBytes = ffi_sizeof("spr_header_t")
 	self.palette = ffi_cast("spr_palette_t*", self.fileContents -  numSkippedBytes + paletteStartOffset)
-
 	self.paletteStartOffset = paletteStartOffset
 end
 
@@ -138,6 +137,21 @@ function RagnarokSPR:DecompressRunLengthEncodedBytes(compressedBuffer, decompres
 	printf("Decompressed RLE buffer: %s bytes",#decompressedBuffer)
 
 	C_FileSystem.WriteFile("test.bin", tostring(decompressedBuffer))
+end
+
+function RagnarokSPR:GetEmbeddedColorPalette(fileContents)
+	local endOfFileOffset = #fileContents
+	local paletteStartOffset = endOfFileOffset - ffi_sizeof("spr_palette_t")
+
+	if type(fileContents) == "string" then -- Can't access Lua string as a buffer directly
+		fileContents = buffer.new(#fileContents):put(fileContents)
+	end
+
+	local bufferAreaStartPointer = fileContents:ref()
+	local paletteBytes = ffi_cast("uint8_t*", bufferAreaStartPointer + paletteStartOffset)
+	local bmpColorPalette = ffi_cast("spr_palette_t*", paletteBytes)
+
+	return bmpColorPalette
 end
 
 function RagnarokSPR:ApplyColorPalette(decompressedBuffer, pixelBuffer)
