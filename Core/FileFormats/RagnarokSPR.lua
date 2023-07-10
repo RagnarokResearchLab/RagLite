@@ -100,6 +100,8 @@ end
 local string_rep = string.rep
 local math_max = math.max
 
+local assert = assert
+
 function RagnarokSPR:DecompressRunLengthEncodedBuffer(compressedBuffer, decompressedBuffer)
 	local compressedBufferSize = #compressedBuffer
 	printf("Decompressing input buffer: %d bytes", compressedBufferSize)
@@ -114,6 +116,7 @@ function RagnarokSPR:DecompressRunLengthEncodedBuffer(compressedBuffer, decompre
 		if isDecompressingRunOfZeroes then
 			-- Add X zeroes (X-1 since the previous byte was already a zero that we added)
 			local numZeroesToAdd = math_max(nextByteToProcess -1, 1) -- TBD - 1 here? Then the below won't work, though
+			assert(nextByteToProcess > 0, "Unexpected zero-length run encountered")
 			decompressedBuffer:putcdata(ffi_new("uint8_t[?]", numZeroesToAdd), numZeroesToAdd)
 			isDecompressingRunOfZeroes = false
 		elseif nextByteToProcess == 0 then
