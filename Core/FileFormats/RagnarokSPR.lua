@@ -112,7 +112,7 @@ function RagnarokSPR:DecompressRunLengthEncodedBytes(compressedBuffer, decompres
 	local isDecompressingRunOfZeroes = false
 	for byteIndex = 0, compressedBufferSize - 1, 1 do
 		local nextByteToProcess = bytes[byteIndex]
-		print(byteIndex, nextByteToProcess)
+		-- print(byteIndex, nextByteToProcess)
 		-- Add next run
 		if isDecompressingRunOfZeroes then
 			-- Add X zeroes (X-1 since the previous byte was already a zero that we added, don't add that again)
@@ -147,10 +147,12 @@ function RagnarokSPR:DecodeIndexedColorBitmapsWithRLE()
 
 		for index = 0, self.bmpImagesCount - 1, 1 do
 			local runLengthEncodedImageMetadata = ffi_cast("spr_rle_header_t*", self.fileContents)
+			self.fileContents = self.fileContents + ffi_sizeof("spr_rle_header_t")
 
 			local compressedBufferSize = tonumber(runLengthEncodedImageMetadata.compressed_buffer_size)
 			local compressedBytes =buffer.new(compressedBufferSize)
-			compressedBytes:putcdata(ffi_new("uint8_t[?]", compressedBufferSize, self.fileContents))
+			compressedBytes:putcdata(ffi_cast("uint8_t*", self.fileContents), compressedBufferSize)
+			self.fileContents = self.fileContents +  compressedBufferSize
 
 			local imageWidthInPixels = tonumber(runLengthEncodedImageMetadata.pixel_width)
 			local imageHeightInPixels = tonumber(runLengthEncodedImageMetadata.pixel_height)
@@ -166,7 +168,7 @@ function RagnarokSPR:DecodeIndexedColorBitmapsWithRLE()
 				decompressedBufferSize = decompressedBufferSize,
 				decompressedImageBuffer = decompressedBytes,
 			}
-			-- 	self.fileContents = self.fileContents + ffi_sizeof("spr_rle_header_t") + compressedBufferSize -- TODO
+
 		end
 
 -- 	self.lightmapSlices = ffi_cast("gnd_lightmap_slice_t*", self.fileContents)
