@@ -1,5 +1,8 @@
 local RagnarokSPR = require("Core.FileFormats.RagnarokSPR")
 
+local ffi = require("ffi")
+local stbi = require("stbi")
+
 local sprFilePath = "Tests/Fixtures/v2-1.spr"
 local sprFileContents = C_FileSystem.ReadFile(sprFilePath)
 
@@ -14,6 +17,25 @@ for index=0, 1, 1 do
 	local indexedColorImageBytes = spr.bmpImages[index].decompressedImageBuffer
 	local rgbaImageBytes = spr:ApplyColorPalette(indexedColorImageBytes, palette)
 	C_FileSystem.WriteFile("rgba-frame-" .. index .. ".bin", tostring(rgbaImageBytes))
+
+	-- TODO high-level API for this, it's a PITA
+	local image = ffi.new("stbi_image_t")
+	image.width = spr.bmpImages[index].pixelWidth
+	image.height = spr.bmpImages[index].pixelHeight
+	image.data = rgbaImageBytes
+	image.channels = 4
+
+	local maxFileSize = stbi.max_bitmap_size(image.width, image.height, image.channels)
+	local outputBuffer = buffer.new()
+	local startPointer, length = outputBuffer:reserve(maxFileSize)
+
+	print(length, #rgbaImageBytes)
+
+	local numBytesWritten = stbi.bindings.stbi_encode_bmp(image, startPointer, length)
+
+	outputBuffer:commit(numBytesWritten)
+
+	C_FileSystem.WriteFile("rgba-frame-" .. index .. ".bmp", tostring(outputBuffer))
 end
 
 -- local compressedBuffer = buffer.new(990)
