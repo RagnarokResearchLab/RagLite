@@ -119,10 +119,10 @@ function RagnarokSPR:DecompressRunLengthEncodedBytes(compressedBuffer, decompres
 			local numZeroesToAdd = nextByteToProcess -1
 			if numZeroesToAdd > 0 then
 				decompressedBuffer:putcdata(ffi_new("uint8_t[?]", numZeroesToAdd), numZeroesToAdd)
-			else
+			elseif numZeroesToAdd < 0 then
 				-- Not sure if this can actually happen - so let's wait and see?
-				printf("Warning: Encountered zero-length runs (this may or may not be a problem)")
-				decompressedBuffer:putcdata(ffi_new("uint8_t[1]", 0), 1)
+				error(format("Encountered zero-length run at index %s (not an RLE-encoded image?)", byteIndex), 0)
+				-- decompressedBuffer:putcdata(ffi_new("uint8_t[1]", 0), 1)
 			end
 			isDecompressingRunOfZeroes = false
 		elseif nextByteToProcess == 0 then
@@ -134,6 +134,8 @@ function RagnarokSPR:DecompressRunLengthEncodedBytes(compressedBuffer, decompres
 			decompressedBuffer:putcdata(ffi_new("uint8_t[1]", nextByteToProcess), 1)
 		end
 	end
+
+	printf("Decompressed RLE buffer: %s bytes",#decompressedBuffer)
 
 	C_FileSystem.WriteFile("test.bin", tostring(decompressedBuffer))
 end
