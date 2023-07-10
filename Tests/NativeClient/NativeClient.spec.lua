@@ -178,16 +178,24 @@ describe("NativeClient", function()
 	end)
 
 	describe("SCROLL_STATUS_CHANGED", function()
-		local originalKeyHandler
+		local originalControlKeyHandler, originalShiftKeyHandler
 		before(function()
-			originalKeyHandler = NativeClient.IsControlKeyDown
+			originalControlKeyHandler = NativeClient.IsControlKeyDown
+			originalShiftKeyHandler = NativeClient.IsShiftKeyDown
+
 			NativeClient.IsControlKeyDown = function()
+				return false
+			end
+
+			NativeClient.IsShiftKeyDown = function()
 				return false
 			end
 		end)
 
 		after(function()
-			NativeClient.IsControlKeyDown = originalKeyHandler
+			NativeClient.IsControlKeyDown = originalControlKeyHandler
+			NativeClient.IsShiftKeyDown = originalShiftKeyHandler
+			C_Camera.ResetView()
 			C_Camera.ResetZoom()
 		end)
 
@@ -206,6 +214,32 @@ describe("NativeClient", function()
 
 		it("should not change the zoom level if CTRL is held while scrolling down", function()
 			NativeClient.IsControlKeyDown = function()
+				return true
+			end
+
+			local event = ffi.new("deferred_event_t")
+			event.scroll_details.x = C_Cursor.SCROLL_DIRECTION_NONE
+			event.scroll_details.y = C_Cursor.SCROLL_DIRECTION_DOWN
+			NativeClient:SCROLL_STATUS_CHANGED("SCROLL_STATUS_CHANGED", event)
+
+			assertEquals(C_Camera.GetOrbitDistance(), C_Camera.DEFAULT_ORBIT_DISTANCE)
+		end)
+
+		it("should not change the zoom level if SHIFT is held while scrolling up", function()
+			NativeClient.IsShiftKeyDown = function()
+				return true
+			end
+
+			local event = ffi.new("deferred_event_t")
+			event.scroll_details.x = C_Cursor.SCROLL_DIRECTION_NONE
+			event.scroll_details.y = C_Cursor.SCROLL_DIRECTION_UP
+			NativeClient:SCROLL_STATUS_CHANGED("SCROLL_STATUS_CHANGED", event)
+
+			assertEquals(C_Camera.GetOrbitDistance(), C_Camera.DEFAULT_ORBIT_DISTANCE)
+		end)
+
+		it("should not change the zoom level if SHIFT is held while scrolling down", function()
+			NativeClient.IsShiftKeyDown = function()
 				return true
 			end
 
@@ -294,6 +328,130 @@ describe("NativeClient", function()
 				NativeClient:SCROLL_STATUS_CHANGED("SCROLL_STATUS_CHANGED", event)
 
 				assertEquals(C_Camera.GetOrbitDistance(), C_Camera.MAX_ORBIT_DISTANCE)
+			end
+		)
+
+		it("should not change the vertical rotation angle if SHIFT is not held while scrolling up", function()
+			NativeClient.IsShiftKeyDown = function()
+				return false
+			end
+
+			local event = ffi.new("deferred_event_t")
+			event.scroll_details.x = C_Cursor.SCROLL_DIRECTION_NONE
+			event.scroll_details.y = C_Cursor.SCROLL_DIRECTION_UP
+			NativeClient:SCROLL_STATUS_CHANGED("SCROLL_STATUS_CHANGED", event)
+
+			assertEquals(C_Camera.GetVerticalRotationAngle(), C_Camera.DEFAULT_VERTICAL_ROTATION)
+		end)
+
+		it("should not change the vertical rotation angle if SHIFT is not held while scrolling down", function()
+			NativeClient.IsShiftKeyDown = function()
+				return false
+			end
+
+			local event = ffi.new("deferred_event_t")
+			event.scroll_details.x = C_Cursor.SCROLL_DIRECTION_NONE
+			event.scroll_details.y = C_Cursor.SCROLL_DIRECTION_DOWN
+			NativeClient:SCROLL_STATUS_CHANGED("SCROLL_STATUS_CHANGED", event)
+
+			assertEquals(C_Camera.GetVerticalRotationAngle(), C_Camera.DEFAULT_VERTICAL_ROTATION)
+		end)
+
+		it("should increase the vertical rotation angle if SHIFT is held while scrolling down", function()
+			NativeClient.IsShiftKeyDown = function()
+				return true
+			end
+
+			local event = ffi.new("deferred_event_t")
+			event.scroll_details.x = C_Cursor.SCROLL_DIRECTION_NONE
+			event.scroll_details.y = C_Cursor.SCROLL_DIRECTION_DOWN
+			NativeClient:SCROLL_STATUS_CHANGED("SCROLL_STATUS_CHANGED", event)
+
+			assertEquals(
+				C_Camera.GetVerticalRotationAngle(),
+				C_Camera.DEFAULT_VERTICAL_ROTATION + C_Camera.DEGREES_PER_ZOOM_LEVEL
+			)
+		end)
+
+		it("should decrease the vertical rotation angle if SHIFT is held while scrolling up", function()
+			C_Camera.ApplyVerticalRotation(
+				C_Camera.MAX_VERTICAL_ROTATION - C_Camera.DEFAULT_VERTICAL_ROTATION - C_Camera.DEGREES_PER_ZOOM_LEVEL
+			)
+			NativeClient.IsShiftKeyDown = function()
+				return true
+			end
+
+			local event = ffi.new("deferred_event_t")
+			event.scroll_details.x = C_Cursor.SCROLL_DIRECTION_NONE
+			event.scroll_details.y = C_Cursor.SCROLL_DIRECTION_UP
+			NativeClient:SCROLL_STATUS_CHANGED("SCROLL_STATUS_CHANGED", event)
+
+			assertEquals(
+				C_Camera.GetVerticalRotationAngle(),
+				C_Camera.MAX_VERTICAL_ROTATION - 2 * C_Camera.DEGREES_PER_ZOOM_LEVEL
+			)
+		end)
+
+		it("should cap the vertical rotation angle at the configured maximum when scrolling down", function()
+			C_Camera.ApplyVerticalRotation(C_Camera.MAX_VERTICAL_ROTATION - C_Camera.DEFAULT_VERTICAL_ROTATION - 1)
+
+			NativeClient.IsShiftKeyDown = function()
+				return true
+			end
+
+			local event = ffi.new("deferred_event_t")
+			event.scroll_details.x = C_Cursor.SCROLL_DIRECTION_NONE
+			event.scroll_details.y = C_Cursor.SCROLL_DIRECTION_DOWN
+			NativeClient:SCROLL_STATUS_CHANGED("SCROLL_STATUS_CHANGED", event)
+
+			assertEquals(C_Camera.GetVerticalRotationAngle(), C_Camera.MAX_VERTICAL_ROTATION)
+		end)
+
+		it("should cap the vertical rotation angle at the configured minimum when scrolling up", function()
+			C_Camera.ApplyVerticalRotation(C_Camera.MIN_VERTICAL_ROTATION - C_Camera.DEFAULT_VERTICAL_ROTATION + 1)
+
+			NativeClient.IsShiftKeyDown = function()
+				return true
+			end
+
+			local event = ffi.new("deferred_event_t")
+			event.scroll_details.x = C_Cursor.SCROLL_DIRECTION_NONE
+			event.scroll_details.y = C_Cursor.SCROLL_DIRECTION_UP
+			NativeClient:SCROLL_STATUS_CHANGED("SCROLL_STATUS_CHANGED", event)
+
+			assertEquals(C_Camera.GetVerticalRotationAngle(), C_Camera.MIN_VERTICAL_ROTATION)
+		end)
+
+		it("should not change the rotation angle if it's already at the configured minimum", function()
+			C_Camera.ApplyVerticalRotation(C_Camera.MIN_VERTICAL_ROTATION - C_Camera.DEFAULT_VERTICAL_ROTATION)
+
+			NativeClient.IsShiftKeyDown = function()
+				return true
+			end
+
+			local event = ffi.new("deferred_event_t")
+			event.scroll_details.x = C_Cursor.SCROLL_DIRECTION_NONE
+			event.scroll_details.y = C_Cursor.SCROLL_DIRECTION_UP
+			NativeClient:SCROLL_STATUS_CHANGED("SCROLL_STATUS_CHANGED", event)
+
+			assertEquals(C_Camera.GetVerticalRotationAngle(), C_Camera.MIN_VERTICAL_ROTATION)
+		end)
+
+		it(
+			"should not change the rotation angle if it's already at the configured maximum when scrolling down",
+			function()
+				C_Camera.ApplyVerticalRotation(C_Camera.MAX_VERTICAL_ROTATION - C_Camera.DEFAULT_VERTICAL_ROTATION)
+
+				NativeClient.IsShiftKeyDown = function()
+					return true
+				end
+
+				local event = ffi.new("deferred_event_t")
+				event.scroll_details.x = C_Cursor.SCROLL_DIRECTION_NONE
+				event.scroll_details.y = C_Cursor.SCROLL_DIRECTION_DOWN
+				NativeClient:SCROLL_STATUS_CHANGED("SCROLL_STATUS_CHANGED", event)
+
+				assertEquals(C_Camera.GetVerticalRotationAngle(), C_Camera.MAX_VERTICAL_ROTATION)
 			end
 		)
 	end)
