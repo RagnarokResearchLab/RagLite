@@ -40,6 +40,8 @@ for index=0, 1, 1 do
 	C_FileSystem.WriteFile("spr-export/rgba-frame-" .. index .. ".bmp", tostring(outputBuffer))
 end
 
+-- TODO tga frames also
+
 -- local compressedBuffer = buffer.new(990)
 -- local frameBytes = C_FileSystem.ReadFile("v2-1-goldporing-rle-encoded-frame0.bin")
 -- compressedBuffer:put(frameBytes)
