@@ -13,8 +13,8 @@ local RagnarokSPR = {
 		#pragma pack(1)
 		typedef struct spr_header {
 			char signature[2];
-			uint8_t version_major; // TBD reversed order?
 			uint8_t version_minor;
+			uint8_t version_major;
 //		uint32_t grid_size_u;
 //		uint32_t grid_size_v;
 //		float geometry_scale_factor;
