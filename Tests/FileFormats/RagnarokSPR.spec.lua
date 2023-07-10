@@ -67,7 +67,24 @@ describe("RagnarokSPR", function()
 			assertEquals(tostring(decompressedBuffer), "ABC\0\0\0ASDF")
 		end)
 
-		it("should add single zeroes to the decompressed buffer", function()
+		it("should add single zeroes to the decompressed buffer if a run of length one is encountered", function()
+			local compressedBuffer = buffer.new(2)
+			local decompressedBuffer = buffer.new()
+			compressedBuffer:put("A\0\1B")
+
+			spr:DecompressRunLengthEncodedBytes(compressedBuffer, decompressedBuffer)
+			local ffi = require("ffi")
+			for i = 0, #decompressedBuffer - 1, 1 do
+				local ref= decompressedBuffer:ref()
+				print(i, ffi.string(ffi.new("uint8_t[1]", ref[i])))
+			end
+			assertEquals(tostring(decompressedBuffer), "A\0B")
+		end)
+
+		it("should throw if a zero-length run is encountered", function()
+			-- TODO (00 -_ not valid RLE)
+			-- I don't think this can happen in valid RLE buffers? But if it does, ring the alarm so it can be investigated
+			local function attemptToDecompressZeroLengthRun()
 			local compressedBuffer = buffer.new(2)
 			local decompressedBuffer = buffer.new()
 			compressedBuffer:put("A\0\0B")
@@ -78,7 +95,10 @@ describe("RagnarokSPR", function()
 				local ref= decompressedBuffer:ref()
 				print(i, ffi.string(ffi.new("uint8_t[1]", ref[i])))
 			end
-			assertEquals(tostring(decompressedBuffer), "A\0\0B")
+			-- assertEquals(tostring(decompressedBuffer), "A\0\0B")
+		end
+		local expectedErrorMessage = "Encountered zero-length run at index 2 (not an RLE-encoded image?)"
+		assertThrows(attemptToDecompressZeroLengthRun, expectedErrorMessage)
 		end)
 	end)
 end)
