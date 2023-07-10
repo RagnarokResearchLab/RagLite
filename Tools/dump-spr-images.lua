@@ -1,8 +1,3 @@
-local jit = require("jit")
-jit.off()
-
-collectgarbage("stop")
-
 local RagnarokSPR = require("Core.FileFormats.RagnarokSPR")
 
 local ffi = require("ffi")
