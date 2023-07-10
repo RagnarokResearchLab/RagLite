@@ -115,14 +115,15 @@ function RagnarokSPR:DecompressRunLengthEncodedBuffer(compressedBuffer, decompre
 		print(byteIndex, nextByteToProcess)
 		-- Add next run
 		if isDecompressingRunOfZeroes then
-			-- Add X zeroes (X-1 since the previous byte was already a zero that we added)
+			-- Add X zeroes (X-1 since the previous byte was already a zero that we added, don't add that again)
 			local numZeroesToAdd = nextByteToProcess -1
-			assert(nextByteToProcess > 0, "Unexpected zero-length run encountered")
-			decompressedBuffer:putcdata(ffi_new("uint8_t[?]", numZeroesToAdd), numZeroesToAdd)
+			if numZeroesToAdd > 0 then
+				decompressedBuffer:putcdata(ffi_new("uint8_t[?]", numZeroesToAdd), numZeroesToAdd)
+			end
 			isDecompressingRunOfZeroes = false
 		elseif nextByteToProcess == 0 then
 			-- Just add the current byte and start decompressing a run
-			decompressedBuffer:putcdata(ffi_new("uint8_t[1]", nextByteToProcess), 1)
+			decompressedBuffer:putcdata(ffi_new("uint8_t[1]", nextByteToProcess), 1) -- TODO reuse
 			isDecompressingRunOfZeroes = true
 		else
 			-- Just add the current byte
