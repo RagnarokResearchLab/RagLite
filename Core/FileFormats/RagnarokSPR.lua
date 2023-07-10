@@ -119,6 +119,10 @@ function RagnarokSPR:DecompressRunLengthEncodedBuffer(compressedBuffer, decompre
 			local numZeroesToAdd = nextByteToProcess -1
 			if numZeroesToAdd > 0 then
 				decompressedBuffer:putcdata(ffi_new("uint8_t[?]", numZeroesToAdd), numZeroesToAdd)
+			else
+				-- Not sure if this can actually happen - so let's wait and see?
+				printf("Warning: Encountered zero-length runs (this may or may not be a problem)")
+				decompressedBuffer:putcdata(ffi_new("uint8_t[1]", 0), 1)
 			end
 			isDecompressingRunOfZeroes = false
 		elseif nextByteToProcess == 0 then
