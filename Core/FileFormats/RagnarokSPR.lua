@@ -108,18 +108,22 @@ function RagnarokSPR:DecompressRunLengthEncodedBuffer(compressedBuffer, decompre
 
 	local isDecompressingRunOfZeroes = false
 	for byteIndex = 0, compressedBufferSize - 1, 1 do
-		local nextByteToProcess = bytes[byteIndex]
+		local nextByteToProcess = ffi_new("uint8_t[1]", bytes[byteIndex])
 		-- Add next run
 		if isDecompressingRunOfZeroes then
 			-- Add X zeroes
 			decompressedBuffer:put(string_rep("\0", nextByteToProcess))
 			isDecompressingRunOfZeroes = false
+		elseif nextByteToProcess == 0 then
+			-- Just add the current byte and start decompressing a run
+			decompressedBuffer:putcdata(nextByteToProcess, 1)
+			isDecompressingRunOfZeroes = true
 		else
 			-- Just add the current byte
-			decompressedBuffer:put(nextByteToProcess)
-			isDecompressingRunOfZeroes = true
+			decompressedBuffer:putcdata(nextByteToProcess, 1)
 		end
 	end
+
 end
 
 function RagnarokSPR:DecodeIndexedColorBitmapsWithRLE()
