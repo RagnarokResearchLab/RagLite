@@ -40,7 +40,6 @@ describe("RagnarokSPR", function()
 			assertEquals(spr.bmpImages[0].decompressedBufferSize, 1332 * 4)
 			assertEquals(#spr.bmpImages[0].decompressedImageBuffer, 1332)
 			assertEquals(miniz.crc32(0, tostring(spr.bmpImages[0].decompressedImageBuffer)), 1060156735)
-			-- CRC32? or check pixels manually / palette indices
 
 			assertEquals(spr.bmpImages[1].pixelWidth, 39)
 			assertEquals(spr.bmpImages[1].pixelHeight, 37)
@@ -49,6 +48,12 @@ describe("RagnarokSPR", function()
 			assertEquals(#spr.bmpImages[1].decompressedImageBuffer, 1443)
 			assertEquals(miniz.crc32(0, tostring(spr.bmpImages[1].decompressedImageBuffer)), 335446514)
 
+			-- assertEquals(spr.tgaImages[0].pixelWidth, 37)
+			-- assertEquals(spr.tgaImages[0].pixelHeight, 36)
+			-- assertEquals(spr.tgaImages[0].compressedBufferSize, 990)
+			-- assertEquals(spr.tgaImages[0].decompressedBufferSize, 1332 * 4)
+			-- assertEquals(#spr.tgaImages[0].decompressedImageBuffer, 1332)
+			-- assertEquals(miniz.crc32(0, tostring(spr.tgaImages[0].decompressedImageBuffer)), 1060156735)
 		end)
 	end)
 
@@ -145,7 +150,11 @@ describe("RagnarokSPR", function()
 
 	describe("ApplyColorPalette", function()
 		it("should replace all palette indices with their respective RGBA colors", function()
+			local indexedColorImageData = buffer.new(2):put("\0\1")
+			local palette = spr:GetEmbeddedColorPalette(SPR_WITH_RLE)
+			local rgbaPixelBuffer = RagnarokSPR:ApplyColorPalette(indexedColorImageData, palette)
 
+			assertEquals(tostring(rgbaPixelBuffer), "\255\0\0\0\255\255\255\0")
 		end)
 	end)
 end)
