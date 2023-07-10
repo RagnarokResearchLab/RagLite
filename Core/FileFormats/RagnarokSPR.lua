@@ -33,6 +33,7 @@ local RagnarokSPR = {
 		typedef struct spr_rle_bitmap {
 			uint16_t pixel_width;
 			uint16_t pixel_height;
+			uint16_t compressed_buffer_size;
 			unsigned char* rle_encoded_pixels;
 		} spr_rle_bitmap_t;
 	]],
