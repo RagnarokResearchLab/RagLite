@@ -17,11 +17,7 @@ local RagnarokSPR = {
 			uint8_t version_major;
 			uint16_t bmp_images_count;
 			uint16_t tga_images_count;
-//		float geometry_scale_factor;
-//		uint32_t texture_count;
-//		uint32_t texture_path_length;
 		} spr_header_t;
-
 
 		typedef struct spr_palette_color {
 			uint8_t red;
@@ -34,69 +30,17 @@ local RagnarokSPR = {
 			spr_palette_color_t colors[256];
 		} spr_palette_t;
 
-//	typedef struct gnd_lightmap_format {
-//		uint32_t slice_count;
-//		uint32_t slice_width;
-//		uint32_t slice_height;
-//		int32_t pixel_format;
-//	} gnd_lightmap_format_t;
-
-//	typedef struct vertex_color {
-//		uint8_t blue;
-//		uint8_t green;
-//		uint8_t red;
-//		uint8_t alpha;
-//	} vertex_color_t;
-
-//	typedef struct gnd_lightmap_slice {
-//		// Hardcoded since the format is unlikely to change
-//		uint8_t ambient_occlusion_texels[64];
-//		uint8_t baked_lightmap_texels[192];
-//	} gnd_lightmap_slice_t;
-
-//	typedef struct gnd_texture_coords {
-//		float bottom_left_u;
-//		float bottom_right_u;
-//		float top_left_u;
-//		float top_right_u;
-//		float bottom_left_v;
-//		float bottom_right_v;
-//		float top_left_v;
-//		float top_right_v;
-//	} gnd_texture_coords_t;
-
-//	typedef struct gnd_textured_surface {
-//		gnd_texture_coords_t uvs;
-//		int16_t texture_id;
-//		uint16_t lightmap_slice_id;
-//		vertex_color_t bottom_left_color;
-//	} gnd_textured_surface_t;
-
-//	typedef struct gnd_groundmesh_cube {
-//		float southwest_corner_altitude;
-//		float southeast_corner_altitude;
-//		float northwest_corner_altitude;
-//		float northeast_corner_altitude;
-//		int32_t top_surface_id;
-//		int32_t north_surface_id;
-//		int32_t east_surface_id;
-//	} gnd_groundmesh_cube_t;
-
-//	typedef struct gnd_water_plane {
-//		float level;
-//		int32_t water_type_id;
-//		float waveform_amplitude;
-//		float waveform_phase;
-//		float surface_curvature_deg;
-//		int32_t texture_cycling_interval;
-// 		} gnd_water_plane_t;
-
+		typedef struct spr_rle_bitmap {
+			uint16_t pixel_width;
+			uint16_t pixel_height;
+			unsigned char* rle_encoded_pixels;
+		} spr_rle_bitmap_t;
 	]],
 }
 
 function RagnarokSPR:Construct()
 	local instance = {
--- 		diffuseTexturePaths = {},
+		bmpImages = {},
 -- 		waterPlanes = {},
 	}
 
@@ -116,7 +60,7 @@ function RagnarokSPR:DecodeFileContents(fileContents)
 
 	self:DecodeHeader()
 	self:DecodeColorPalette(#fileContents)
-	-- 	self:DecodeLightmapSlices()
+	self:DecodeIndexedColorBitmapsWithRLE() -- TBD: 2.1 only?
 	-- 	self:DecodeTexturedSurfaces()
 	-- 	self:DecodeCubeGrid()
 	-- 	self:DecodeWaterPlanes()
@@ -147,18 +91,25 @@ function RagnarokSPR:DecodeHeader()
 
 -- 	assert(self.geometryScaleFactor == 10, "Unexpected geometry scale factor")
 
--- 	self.fileContents = self.fileContents + ffi_sizeof("gnd_header_t")
+	self.fileContents = self.fileContents + ffi_sizeof("spr_header_t")
 end
 
 function RagnarokSPR:DecodeColorPalette(endOfFileOffset)
 	local paletteStartOffset = endOfFileOffset - ffi_sizeof("spr_palette_t")
-	self.palette = ffi_cast("spr_palette_t*", self.fileContents + paletteStartOffset)
+	local numSkippedBytes = ffi_sizeof("spr_header_t")
+	self.palette = ffi_cast("spr_palette_t*", self.fileContents -  numSkippedBytes + paletteStartOffset)
 
 	self.paletteStartOffset = paletteStartOffset
 end
 
--- function RagnarokSPR:DecodeLightmapSlices()
--- 	local lightmapFormatInfo = ffi_cast("gnd_lightmap_format_t*", self.fileContents)
+function RagnarokSPR:DecodeIndexedColorBitmapsWithRLE()
+
+	-- if version then early exit
+
+		for index = 0, self.bmpImagesCount - 1, 1 do
+			local runLengthEncodedImage = ffi_cast("spr_rle_bitmap_t*", self.fileContents)
+			self.bmpImages[index] = runLengthEncodedImage
+		end
 -- 	self.fileContents = self.fileContents + ffi_sizeof("gnd_lightmap_format_t")
 
 -- 	self.lightmapSlices = ffi_cast("gnd_lightmap_slice_t*", self.fileContents)
@@ -175,7 +126,7 @@ end
 -- 	assert(self.lightmapFormat.pixelFormatID == 1, "Unexpected lightmap pixel format")
 -- 	assert(self.lightmapFormat.pixelWidth == 8, "Unexpected lightmap pixel size")
 -- 	assert(self.lightmapFormat.pixelHeight == 8, "Unexpected lightmap pixel height")
--- end
+end
 
 -- function RagnarokSPR:DecodeTexturedSurfaces()
 -- 	local numTexturedSurfaces = tonumber(ffi_cast("uint32_t*", self.fileContents)[0])
