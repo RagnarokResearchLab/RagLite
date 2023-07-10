@@ -40,13 +40,13 @@ describe("RagnarokSPR", function()
 		end)
 	end)
 
-	describe("DecompressRunLengthEncodedBuffer", function()
+	describe("DecompressRunLengthEncodedBytes", function()
 		it("should return the original pixel data if it didn't contain any runs of zeroes", function()
 			local compressedBuffer = buffer.new(3)
 			local decompressedBuffer = buffer.new(3)
 			compressedBuffer:put("ABC")
 
-			spr:DecompressRunLengthEncodedBuffer(compressedBuffer, decompressedBuffer)
+			spr:DecompressRunLengthEncodedBytes(compressedBuffer, decompressedBuffer)
 			assertEquals(tostring(decompressedBuffer), "ABC")
 		end)
 
@@ -55,7 +55,7 @@ describe("RagnarokSPR", function()
 			local decompressedBuffer = buffer.new(8)
 			compressedBuffer:put("ABC\0\3ASDF")
 
-			spr:DecompressRunLengthEncodedBuffer(compressedBuffer, decompressedBuffer)
+			spr:DecompressRunLengthEncodedBytes(compressedBuffer, decompressedBuffer)
 			print(tostring(decompressedBuffer))
 			local ffi = require("ffi")
 			for i = 0, #decompressedBuffer - 1, 1 do
@@ -70,7 +70,7 @@ describe("RagnarokSPR", function()
 			local decompressedBuffer = buffer.new()
 			compressedBuffer:put("A\0\0B")
 
-			spr:DecompressRunLengthEncodedBuffer(compressedBuffer, decompressedBuffer)
+			spr:DecompressRunLengthEncodedBytes(compressedBuffer, decompressedBuffer)
 			local ffi = require("ffi")
 			for i = 0, #decompressedBuffer - 1, 1 do
 				local ref= decompressedBuffer:ref()
