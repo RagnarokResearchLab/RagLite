@@ -71,7 +71,11 @@ describe("RagnarokSPR", function()
 			compressedBuffer:put("A\0\0B")
 
 			spr:DecompressRunLengthEncodedBuffer(compressedBuffer, decompressedBuffer)
-
+			local ffi = require("ffi")
+			for i = 0, #decompressedBuffer - 1, 1 do
+				local ref= decompressedBuffer:ref()
+				print(i, ffi.string(ffi.new("uint8_t[1]", ref[i])))
+			end
 			assertEquals(tostring(decompressedBuffer), "A\0\0B")
 		end)
 	end)
