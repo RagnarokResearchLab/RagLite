@@ -27,10 +27,12 @@ describe("RagnarokSPR", function()
 			assertEquals(spr.bmpImagesCount, 41) -- TODO 2
 			assertEquals(spr.tgaImagesCount, 1) -- TODO 2
 
-			assertEquals(spr.bmpImages[0].pixel_width, 37)
-			assertEquals(spr.bmpImages[0].pixel_height, 36)
-			assertEquals(spr.bmpImages[0].compressed_buffer_size, 990)
-			assertEquals(spr.bmpImages[0].decompressed_buffer_size, 1332)
+			assertEquals(spr.bmpImages[0].pixelWidth, 37)
+			assertEquals(spr.bmpImages[0].pixelHeight, 36)
+			assertEquals(spr.bmpImages[0].compressedBufferSize, 990)
+			assertEquals(spr.bmpImages[0].decompressedBufferSize, 1332 * 4)
+			assertEquals(#spr.bmpImages[0].decompressedImageBuffer, 1332)
+			-- CRC32?
 
 			assertEquals(spr.bmpImages[40].pixel_width, 37)
 			assertEquals(spr.bmpImages[40].pixel_height, 36)
