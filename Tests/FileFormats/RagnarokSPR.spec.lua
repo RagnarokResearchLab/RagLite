@@ -17,8 +17,8 @@ describe("RagnarokSPR", function()
 
 			assertEquals(spr.signature, "SP")
 			assertEquals(spr.version, 2.1)
-	-- 		assertEquals(spr.gridSizeU, 1)
-	-- 		assertEquals(spr.gridSizeV, 2)
+			assertEquals(spr.bmpImagesCount, 41) -- TODO 2
+			assertEquals(spr.tgaImagesCount, 1) -- TODO 2
 	-- 		assertEquals(spr.geometryScaleFactor, 10)
 	-- 		assertEquals(spr.diffuseTextureCount, 2)
 	-- 		assertEquals(spr.texturePathLength, 80)
