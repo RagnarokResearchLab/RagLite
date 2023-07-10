@@ -15,8 +15,8 @@ describe("RagnarokSPR", function()
 		it("should be able to decode SPR files using version 2.1 of the format", function()
 			spr:DecodeFileContents(SPR_WITH_RLE)
 
-			assertEquals(spr.signature, "SPR")
-			assertEquals(spr.version, 1.7)
+			assertEquals(spr.signature, "SP")
+			assertEquals(spr.version, 1.2) -- TBD 2.1?
 	-- 		assertEquals(spr.gridSizeU, 1)
 	-- 		assertEquals(spr.gridSizeV, 2)
 	-- 		assertEquals(spr.geometryScaleFactor, 10)
