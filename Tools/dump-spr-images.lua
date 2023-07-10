@@ -1,3 +1,8 @@
+local jit = require("jit")
+jit.off()
+
+collectgarbage("stop")
+
 local RagnarokSPR = require("Core.FileFormats.RagnarokSPR")
 
 local ffi = require("ffi")
@@ -16,8 +21,9 @@ C_FileSystem.WriteFile("spr-export/palette.bin", tostring(buffer.new(1024):putcd
 
 for index=0, spr.bmpImagesCount - 1, 1 do
 -- for index=0, 1, 1 do
-	print(index)
+
 	local indexedColorImageBytes = spr.bmpImages[index].decompressedImageBuffer
+	C_FileSystem.WriteFile("spr-export/indexed-color-frame-" .. index .. ".bin", tostring(indexedColorImageBytes))
 	local rgbaImageBytes = spr:ApplyColorPalette(indexedColorImageBytes, palette)
 	C_FileSystem.WriteFile("spr-export/rgba-frame-" .. index .. ".bin", tostring(rgbaImageBytes))
 
@@ -37,7 +43,7 @@ for index=0, spr.bmpImagesCount - 1, 1 do
 
 
 	local numBytesWritten = stbi.bindings.stbi_encode_bmp(image, startPointer, length)
-	print(tonumber(length), tonumber(numBytesWritten), tonumber(maxFileSize))
+	printf("Finished dumping BMP frame %d (size: %d, written: %d, reserved: %d)", index, tonumber(length), tonumber(numBytesWritten), tonumber(maxFileSize))
 	assert(numBytesWritten <= maxFileSize, "Too many bytes written?")
 	outputBuffer:commit(numBytesWritten)
 

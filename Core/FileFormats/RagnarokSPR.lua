@@ -153,8 +153,11 @@ function RagnarokSPR:GetEmbeddedColorPalette(fileContents)
 
 	-- Must copy to create a GC anchor here before the buffer is collected (probably not a big deal?)
 	local bmpColorPalette = ffi_new("spr_palette_t[1]", paletteBytes[0])
-
-	return bmpColorPalette[0]
+	local newColors = ffi_new("spr_palette_t")
+	-- ffi.copy(newColors, bmpColorPalette[0].colors, ffi_sizeof("spr_palette_color_t") * 256)
+	ffi.copy(newColors, bmpColorPalette[0], ffi_sizeof("spr_palette_t"))
+	-- Update the palette to use the new color array
+	return newColors
 end
 
 function RagnarokSPR:ApplyColorPalette(indexedColorImageBytes, palette)
@@ -165,11 +168,23 @@ function RagnarokSPR:ApplyColorPalette(indexedColorImageBytes, palette)
 	local bytes = ffi_cast("uint8_t*", startPointer)
 
 	for byteIndex = 0, #indexedColorImageBytes - 1, 1 do
-		local paletteIndex = bytes[byteIndex]
+		local paletteIndex = tonumber(bytes[byteIndex])
 		-- print(byteIndex, paletteIndex, palette)
-		local paletteColor = palette.colors[paletteIndex]
-		-- print(paletteColor.red, paletteColor.green, paletteColor.blue, paletteColor.alpha)
-		rgbaImageBytes:putcdata(paletteColor, ffi_sizeof(paletteColor))
+		local paletteColor = palette.colors[tonumber(paletteIndex)]
+		-- paletteColor.alpha = 0 -- TODO unit test, should be handled in the decoding function already
+			-- print(palette.colors[tonumber(paletteIndex)])
+		-- printf("Replacing palette index %d for byte %d with RGBA color (%d, %d, %d, %d) - palette %p - color %s", paletteIndex, byteIndex, tonumber(paletteColor.red), (paletteColor.green), (paletteColor.blue), tonumber(paletteColor.alpha), palette, tostring(palette.colors[tonumber(paletteIndex)]))
+		assert(paletteColor.alpha == 0, "BMP alpha channel not supported")
+		if paletteColor.alpha ~= 0 then
+			local debugColor = ffi_new("spr_palette_color_t")
+			debugColor.red = 0
+			debugColor.green = 255
+			debugColor.blue = 0
+			debugColor.alpha = 0
+			rgbaImageBytes:putcdata(debugColor, ffi_sizeof(debugColor))
+			else
+				rgbaImageBytes:putcdata(paletteColor, ffi_sizeof(paletteColor))
+		end
 	end
 
 	return rgbaImageBytes
