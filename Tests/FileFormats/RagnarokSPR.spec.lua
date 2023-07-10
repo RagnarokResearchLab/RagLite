@@ -26,6 +26,14 @@ describe("RagnarokSPR", function()
 
 			assertEquals(spr.bmpImagesCount, 41) -- TODO 2
 			assertEquals(spr.tgaImagesCount, 1) -- TODO 2
+
+			assertEquals(spr.bmpImages[0].pixel_width, 37)
+			assertEquals(spr.bmpImages[0].pixel_height, 36)
+
+			assertEquals(spr.bmpImages[40].pixel_width, 37)
+			assertEquals(spr.bmpImages[40].pixel_height, 36)
+
+
 	-- 		assertEquals(spr.geometryScaleFactor, 10)
 	-- 		assertEquals(spr.diffuseTextureCount, 2)
 	-- 		assertEquals(spr.texturePathLength, 80)
