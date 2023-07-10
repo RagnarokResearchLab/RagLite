@@ -14,8 +14,9 @@ spr:DecodeFileContents(sprFileContents)
 local palette = spr:GetEmbeddedColorPalette(sprFileContents)
 C_FileSystem.WriteFile("palette.bin", tostring(buffer.new(1024):putcdata(palette, 1024)))
 
--- for index=0, spr.bmpImagesCount - 1, 1 do
-for index=0, 1, 1 do
+for index=0, spr.bmpImagesCount - 1, 1 do
+-- for index=0, 1, 1 do
+	print(index)
 	local indexedColorImageBytes = spr.bmpImages[index].decompressedImageBuffer
 	local rgbaImageBytes = spr:ApplyColorPalette(indexedColorImageBytes, palette)
 	C_FileSystem.WriteFile("spr-export/rgba-frame-" .. index .. ".bin", tostring(rgbaImageBytes))
@@ -31,7 +32,7 @@ for index=0, 1, 1 do
 	local outputBuffer = buffer.new()
 	local startPointer, length = outputBuffer:reserve(maxFileSize)
 
-	print(length, #rgbaImageBytes)
+	-- print(length, #rgbaImageBytes)
 
 	local numBytesWritten = stbi.bindings.stbi_encode_bmp(image, startPointer, length)
 
