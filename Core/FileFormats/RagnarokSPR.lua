@@ -100,6 +100,7 @@ local string_rep = string.rep
 local math_max = math.max
 
 local assert = assert
+local type = type
 
 function RagnarokSPR:DecompressRunLengthEncodedBytes(compressedBuffer, decompressedBuffer)
 	local compressedBufferSize = #compressedBuffer
@@ -143,7 +144,7 @@ function RagnarokSPR:GetEmbeddedColorPalette(fileContents)
 	local endOfFileOffset = #fileContents
 	local paletteStartOffset = endOfFileOffset - ffi_sizeof("spr_palette_t")
 
-	if type(fileContents) == "string" then -- Can't access Lua string as a buffer directly
+	if type(fileContents) == "string" then -- Can't access Lua strings as a buffer directly
 		fileContents = buffer.new(#fileContents):put(fileContents)
 	end
 
