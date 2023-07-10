@@ -16,7 +16,7 @@ describe("RagnarokSPR", function()
 			spr:DecodeFileContents(SPR_WITH_RLE)
 
 			assertEquals(spr.signature, "SP")
-			assertEquals(spr.version, 1.2) -- TBD 2.1?
+			assertEquals(spr.version, 2.1)
 	-- 		assertEquals(spr.gridSizeU, 1)
 	-- 		assertEquals(spr.gridSizeV, 2)
 	-- 		assertEquals(spr.geometryScaleFactor, 10)
