@@ -6,6 +6,8 @@ local stbi = require("stbi")
 local sprFilePath = "Tests/Fixtures/v2-1.spr"
 local sprFileContents = C_FileSystem.ReadFile(sprFilePath)
 
+C_FileSystem.MakeDirectory("spr-export")
+
 local spr = RagnarokSPR()
 spr:DecodeFileContents(sprFileContents)
 
@@ -16,7 +18,7 @@ C_FileSystem.WriteFile("palette.bin", tostring(buffer.new(1024):putcdata(palette
 for index=0, 1, 1 do
 	local indexedColorImageBytes = spr.bmpImages[index].decompressedImageBuffer
 	local rgbaImageBytes = spr:ApplyColorPalette(indexedColorImageBytes, palette)
-	C_FileSystem.WriteFile("rgba-frame-" .. index .. ".bin", tostring(rgbaImageBytes))
+	C_FileSystem.WriteFile("spr-export/rgba-frame-" .. index .. ".bin", tostring(rgbaImageBytes))
 
 	-- TODO high-level API for this, it's a PITA
 	local image = ffi.new("stbi_image_t")
@@ -35,7 +37,7 @@ for index=0, 1, 1 do
 
 	outputBuffer:commit(numBytesWritten)
 
-	C_FileSystem.WriteFile("rgba-frame-" .. index .. ".bmp", tostring(outputBuffer))
+	C_FileSystem.WriteFile("spr-export/rgba-frame-" .. index .. ".bmp", tostring(outputBuffer))
 end
 
 -- local compressedBuffer = buffer.new(990)
