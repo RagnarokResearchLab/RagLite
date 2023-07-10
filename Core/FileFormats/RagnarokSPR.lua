@@ -129,7 +129,10 @@ function RagnarokSPR:DecompressRunLengthEncodedBuffer(compressedBuffer, decompre
 		end
 	end
 
+	C_FileSystem.WriteFile("test.bin", tostring(decompressedBuffer))
+end
 
+function RagnarokSPR:ApplyColorPalette(decompressedBuffer, pixelBuffer)
 end
 
 function RagnarokSPR:DecodeIndexedColorBitmapsWithRLE()
