@@ -138,24 +138,20 @@ describe("RagnarokSPR", function()
 		it("should return the decoded pixel data after resolving all existing runs of zeroes", function()
 			local compressedBuffer = buffer.new(9)
 			local decompressedBuffer = buffer.new(8)
-			compressedBuffer:put("ABC\000\003ASDF")
+			compressedBuffer:put("ABC\0\3ASDF")
 
 			spr:DecompressRunLengthEncodedBuffer(compressedBuffer, decompressedBuffer)
-			assertEquals(tostring(decompressedBuffer), "ABC\000\000\000ASDF")
+			assertEquals(tostring(decompressedBuffer), "ABC\0\0\0ASDF")
 		end)
 
-		it("should throw if the buffer contains a zero-length run", function()
-			-- It probably wasn't RLE-encoded in this case, so fail loudly
+		it("should add single zeroes to the decompressed buffer", function()
 			local compressedBuffer = buffer.new(2)
 			local decompressedBuffer = buffer.new()
-			compressedBuffer:put("\000\000")
+			compressedBuffer:put("A\0\0B")
 
-			local function attemptToDecompressInvalidBuffer()
-				spr:DecompressRunLengthEncodedBuffer(compressedBuffer, decompressedBuffer)
-			end
-
-			local expectedErrorMessage =  "Failed to decode RLE-compressed image data (unexpected zero-length run)"
-			assertThrows(attemptToDecompressInvalidBuffer, expectedErrorMessage)
+			spr:DecompressRunLengthEncodedBuffer(compressedBuffer, decompressedBuffer)
+			print(tostring(decompressedBuffer))
+			assertEquals(tostring(decompressedBuffer), "A\0\0B")
 		end)
 	end)
 end)
