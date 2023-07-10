@@ -17,6 +17,13 @@ describe("RagnarokSPR", function()
 
 			assertEquals(spr.signature, "SP")
 			assertEquals(spr.version, 2.1)
+			assertEquals(spr.paletteStartOffset, 104233)
+
+			assertEquals(spr.palette.pixels[0].red, 255)
+			assertEquals(spr.palette.pixels[0].green, 0)
+			assertEquals(spr.palette.pixels[0].blue, 0)
+			assertEquals(spr.palette.pixels[0].alpha, 0)
+
 			assertEquals(spr.bmpImagesCount, 41) -- TODO 2
 			assertEquals(spr.tgaImagesCount, 1) -- TODO 2
 	-- 		assertEquals(spr.geometryScaleFactor, 10)
