@@ -112,10 +112,11 @@ function RagnarokSPR:DecompressRunLengthEncodedBuffer(compressedBuffer, decompre
 	local isDecompressingRunOfZeroes = false
 	for byteIndex = 0, compressedBufferSize - 1, 1 do
 		local nextByteToProcess = bytes[byteIndex]
+		print(byteIndex, nextByteToProcess)
 		-- Add next run
 		if isDecompressingRunOfZeroes then
 			-- Add X zeroes (X-1 since the previous byte was already a zero that we added)
-			local numZeroesToAdd = math_max(nextByteToProcess -1, 1) -- TBD - 1 here? Then the below won't work, though
+			local numZeroesToAdd = nextByteToProcess -1
 			assert(nextByteToProcess > 0, "Unexpected zero-length run encountered")
 			decompressedBuffer:putcdata(ffi_new("uint8_t[?]", numZeroesToAdd), numZeroesToAdd)
 			isDecompressingRunOfZeroes = false
