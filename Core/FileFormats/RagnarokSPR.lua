@@ -34,6 +34,7 @@ local RagnarokSPR = {
 			uint16_t pixel_width;
 			uint16_t pixel_height;
 			uint16_t compressed_buffer_size;
+			uint16_t decompressed_buffer_size;
 			unsigned char* rle_encoded_pixels;
 		} spr_rle_bitmap_t;
 	]],
@@ -109,6 +110,8 @@ function RagnarokSPR:DecodeIndexedColorBitmapsWithRLE()
 
 		for index = 0, self.bmpImagesCount - 1, 1 do
 			local runLengthEncodedImage = ffi_cast("spr_rle_bitmap_t*", self.fileContents)
+			runLengthEncodedImage.decompressed_buffer_size = 1332 -- TODO
+			-- rle_encoded_pixels = set ptr, zero copy
 			self.bmpImages[index] = runLengthEncodedImage
 		end
 -- 	self.fileContents = self.fileContents + ffi_sizeof("gnd_lightmap_format_t")
