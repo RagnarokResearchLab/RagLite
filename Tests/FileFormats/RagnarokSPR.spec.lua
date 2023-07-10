@@ -26,6 +26,11 @@ describe("RagnarokSPR", function()
 			assertEquals(spr.palette.colors[0].blue, 0)
 			assertEquals(spr.palette.colors[0].alpha, 0)
 
+			assertEquals(spr.palette.colors[1].red, 255)
+			assertEquals(spr.palette.colors[1].green, 255)
+			assertEquals(spr.palette.colors[1].blue, 255)
+			assertEquals(spr.palette.colors[1].alpha, 0)
+
 			assertEquals(spr.bmpImagesCount, 41) -- TODO 2
 			assertEquals(spr.tgaImagesCount, 1) -- TODO 2
 
