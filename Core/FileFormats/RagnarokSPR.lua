@@ -34,8 +34,6 @@ local RagnarokSPR = {
 			uint16_t pixel_width;
 			uint16_t pixel_height;
 			uint16_t compressed_buffer_size;
-			uint16_t decompressed_buffer_size;
-			unsigned char* rle_encoded_pixels;
 		} spr_rle_bitmap_t;
 	]],
 }
@@ -87,11 +85,6 @@ function RagnarokSPR:DecodeHeader()
 
 	self.bmpImagesCount = tonumber(header.bmp_images_count)
 	self.tgaImagesCount = tonumber(header.tga_images_count)
--- 	self.geometryScaleFactor = tonumber(header.geometry_scale_factor)
--- 	self.diffuseTextureCount = tonumber(header.texture_count)
--- 	self.texturePathLength = tonumber(header.texture_path_length)
-
--- 	assert(self.geometryScaleFactor == 10, "Unexpected geometry scale factor")
 
 	self.fileContents = self.fileContents + ffi_sizeof("spr_header_t")
 end
@@ -104,12 +97,16 @@ function RagnarokSPR:DecodeColorPalette(endOfFileOffset)
 	self.paletteStartOffset = paletteStartOffset
 end
 
+function RagnarokSPR:DecodeRunLengthEncodedBuffer(compressedBuffer, decompressedBuffer)
+
+end
+
 function RagnarokSPR:DecodeIndexedColorBitmapsWithRLE()
 
 	-- if version then early exit
 
 		for index = 0, self.bmpImagesCount - 1, 1 do
-			local runLengthEncodedImage = ffi_cast("spr_rle_bitmap_t*", self.fileContents)
+			local runLengthEncodedImageMetadata = ffi_cast("spr_rle_bitmap_t*", self.fileContents)
 			runLengthEncodedImage.decompressed_buffer_size = 1332 -- TODO
 			-- rle_encoded_pixels = set ptr, zero copy
 			self.bmpImages[index] = runLengthEncodedImage
@@ -131,64 +128,6 @@ function RagnarokSPR:DecodeIndexedColorBitmapsWithRLE()
 -- 	assert(self.lightmapFormat.pixelWidth == 8, "Unexpected lightmap pixel size")
 -- 	assert(self.lightmapFormat.pixelHeight == 8, "Unexpected lightmap pixel height")
 end
-
--- function RagnarokSPR:DecodeTexturedSurfaces()
--- 	local numTexturedSurfaces = tonumber(ffi_cast("uint32_t*", self.fileContents)[0])
--- 	self.fileContents = self.fileContents + ffi_sizeof("uint32_t")
-
--- 	self.texturedSurfaces = ffi_cast("gnd_textured_surface_t*", self.fileContents)
--- 	self.fileContents = self.fileContents + numTexturedSurfaces * ffi_sizeof("gnd_textured_surface_t")
-
--- 	self.texturedSurfaceCount = numTexturedSurfaces
--- end
-
--- function RagnarokSPR:DecodeCubeGrid()
--- 	local numGroundMeshCubes = self.gridSizeU * self.gridSizeV
-
--- 	self.cubeGrid = ffi_cast("gnd_groundmesh_cube_t*", self.fileContents)
--- 	self.fileContents = self.fileContents + numGroundMeshCubes * ffi_sizeof("gnd_groundmesh_cube_t")
--- end
-
--- function RagnarokSPR:DecodeWaterPlanes()
--- 	if self.version < 1.8 then
--- 		self.waterPlanesCount = 0
--- 		self.waterGridU = 0
--- 		self.waterGridV = 0
--- 		return
--- 	end
-
--- 	if self.version >= 1.8 then
--- 		self.waterPlaneDefaults = ffi_cast("gnd_water_plane_t*", self.fileContents)
--- 		self.fileContents = self.fileContents + ffi_sizeof("gnd_water_plane_t")
-
--- 		local gridSizeU = tonumber(ffi_cast("uint32_t*", self.fileContents)[0])
--- 		self.fileContents = self.fileContents + ffi_sizeof("uint32_t")
-
--- 		local gridSizeV = tonumber(ffi_cast("uint32_t*", self.fileContents)[0])
--- 		self.fileContents = self.fileContents + ffi_sizeof("uint32_t")
-
--- 		self.waterPlanesCount = gridSizeU * gridSizeV
--- 		self.waterGridU = gridSizeU
--- 		self.waterGridV = gridSizeV
--- 	end
-
--- 	for waterPlaneIndex = 0, self.waterGridU * self.waterGridV - 1, 1 do
--- 		if self.version == 1.8 then
--- 			local waterPlane = ffi_new("gnd_water_plane_t")
--- 			ffi_copy(waterPlane, self.waterPlaneDefaults, ffi_sizeof("gnd_water_plane_t"))
-
--- 			waterPlane.level = tonumber(ffi_cast("float*", self.fileContents)[0])
--- 			self.fileContents = self.fileContents + ffi_sizeof("float")
-
--- 			self.waterPlanes[waterPlaneIndex] = waterPlane
--- 		end
-
--- 		if self.version >= 1.9 then
--- 			self.waterPlanes[waterPlaneIndex] = ffi_cast("gnd_water_plane_t*", self.fileContents)
--- 			self.fileContents = self.fileContents + self.waterPlanesCount * ffi_sizeof("gnd_water_plane_t")
--- 		end
--- 	end
--- end
 
 ffi.cdef(RagnarokSPR.cdefs)
 
