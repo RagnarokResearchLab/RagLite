@@ -97,8 +97,33 @@ function RagnarokSPR:DecodeColorPalette(endOfFileOffset)
 	self.paletteStartOffset = paletteStartOffset
 end
 
-function RagnarokSPR:DecodeRunLengthEncodedBuffer(compressedBuffer, decompressedBuffer)
+local string_rep = string.rep
 
+function RagnarokSPR:DecompressRunLengthEncodedBuffer(compressedBuffer, decompressedBuffer)
+	local compressedBufferSize = #compressedBuffer
+	printf("Decompressing input buffer: %d bytes", compressedBufferSize)
+
+	local startPointer = compressedBuffer:ref()
+	local bytes = ffi_cast("char*", startPointer)
+
+	local isDecompressingRunOfZeroes = false
+	for byteIndex = 0, compressedBufferSize - 1, 1 do
+		print(bytes[byteIndex])
+		if isDecompressingRunOfZeroes then
+			local numZeroesToInsert = bytes[byteIndex]
+			if numZeroesToInsert == 0 then error("Failed to decode RLE-compressed image data (unexpected zero-length run)", 0) end
+			printf("Padding with %d zeroes", numZeroesToInsert)
+			decompressedBuffer:put(string_rep("\000", numZeroesToInsert)) -- TBD perf? (putcdata?)
+			isDecompressingRunOfZeroes = false
+		else
+			decompressedBuffer:put(bytes[byteIndex])
+		end
+
+		local isZeroByte = tonumber(bytes[byteIndex]) == 0
+		if isZeroByte then
+			isDecompressingRunOfZeroes = true
+		end
+	end
 end
 
 function RagnarokSPR:DecodeIndexedColorBitmapsWithRLE()
