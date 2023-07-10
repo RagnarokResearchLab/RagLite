@@ -121,11 +121,11 @@ function RagnarokSPR:DecodeHeader()
 	local headerSize = ffi_sizeof(header.signature)
 
 	self.signature = ffi_string(header.signature, headerSize)
-	if self.signature ~= "GRGN" then
-		error("Failed to decode SPR header (Signature " .. self.signature .. ' should be "SP"', 0)
+	if self.signature ~= "SP" then
+		error("Failed to decode SPR header (Signature " .. self.signature .. ' should be "SP")', 0)
 	end
 
--- 	self.version = header.version_major + header.version_minor / 10
+	self.version = header.version_major + header.version_minor / 10
 
 -- 	self.gridSizeU = tonumber(header.grid_size_u)
 -- 	self.gridSizeV = tonumber(header.grid_size_v)
