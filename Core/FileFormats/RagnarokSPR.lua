@@ -22,6 +22,18 @@ local RagnarokSPR = {
 //		uint32_t texture_path_length;
 		} spr_header_t;
 
+
+		typedef struct spr_palette_color {
+			uint8_t red;
+			uint8_t green;
+			uint8_t blue;
+			uint8_t alpha;
+		} spr_palette_color_t;
+
+		typedef struct spr_palette {
+			spr_palette_color_t pixels[256];
+		} spr_palette_t;
+
 //	typedef struct gnd_lightmap_format {
 //		uint32_t slice_count;
 //		uint32_t slice_width;
@@ -103,11 +115,11 @@ function RagnarokSPR:DecodeFileContents(fileContents)
 	self.fileContents = ffi_cast("char*", fileContents)
 
 	self:DecodeHeader()
--- 	self:DecodeTexturePaths()
--- 	self:DecodeLightmapSlices()
--- 	self:DecodeTexturedSurfaces()
--- 	self:DecodeCubeGrid()
--- 	self:DecodeWaterPlanes()
+	self:DecodeColorPalette(#fileContents)
+	-- 	self:DecodeLightmapSlices()
+	-- 	self:DecodeTexturedSurfaces()
+	-- 	self:DecodeCubeGrid()
+	-- 	self:DecodeWaterPlanes()
 
 	self.fileContents = fileContents -- GC anchor for the cdata used internally
 
@@ -138,13 +150,12 @@ function RagnarokSPR:DecodeHeader()
 -- 	self.fileContents = self.fileContents + ffi_sizeof("gnd_header_t")
 end
 
--- function RagnarokSPR:DecodeTexturePaths()
--- 	for textureIndex = 0, self.diffuseTextureCount - 1, 1 do
--- 		local windowsPathString = ffi_string(self.fileContents)
--- 		self.diffuseTexturePaths[textureIndex] = windowsPathString
--- 		self.fileContents = self.fileContents + self.texturePathLength
--- 	end
--- end
+function RagnarokSPR:DecodeColorPalette(endOfFileOffset)
+	local paletteStartOffset = endOfFileOffset - ffi_sizeof("spr_palette_t")
+	self.palette = ffi_cast("spr_palette_t*", self.fileContents + paletteStartOffset)
+
+	self.paletteStartOffset = paletteStartOffset
+end
 
 -- function RagnarokSPR:DecodeLightmapSlices()
 -- 	local lightmapFormatInfo = ffi_cast("gnd_lightmap_format_t*", self.fileContents)
