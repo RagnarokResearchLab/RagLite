@@ -29,9 +29,11 @@ describe("RagnarokSPR", function()
 
 			assertEquals(spr.bmpImages[0].pixel_width, 37)
 			assertEquals(spr.bmpImages[0].pixel_height, 36)
+			assertEquals(spr.bmpImages[0].compressed_buffer_size, 990)
 
 			assertEquals(spr.bmpImages[40].pixel_width, 37)
 			assertEquals(spr.bmpImages[40].pixel_height, 36)
+			assertEquals(spr.bmpImages[40].compressed_buffer_size, 990)
 
 
 	-- 		assertEquals(spr.geometryScaleFactor, 10)
