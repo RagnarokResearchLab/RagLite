@@ -149,26 +149,21 @@ function RagnarokSPR:GetEmbeddedColorPalette(fileContents)
 	end
 
 	local bufferAreaStartPointer = fileContents:ref()
-	local paletteBytes = ffi_cast("spr_palette_t*", bufferAreaStartPointer + paletteStartOffset)
+	local paletteBytes = ffi_cast("uint8_t*", bufferAreaStartPointer + paletteStartOffset)
+	local bmpColorPalette = ffi_cast("spr_palette_t*", paletteBytes)
 
-	-- Must copy to create a GC anchor here before the buffer is collected (probably not a big deal?)
-	local bmpColorPalette = ffi_new("spr_palette_t[1]", paletteBytes[0])
-
-	return bmpColorPalette[0]
+	return bmpColorPalette
 end
 
 function RagnarokSPR:ApplyColorPalette(indexedColorImageBytes, palette)
 	local rgbaImageBytes = buffer.new(#indexedColorImageBytes * 4)
 
 	local startPointer = indexedColorImageBytes:ref()
-
 	local bytes = ffi_cast("uint8_t*", startPointer)
 
 	for byteIndex = 0, #indexedColorImageBytes - 1, 1 do
 		local paletteIndex = bytes[byteIndex]
-		-- print(byteIndex, paletteIndex, palette)
 		local paletteColor = palette.colors[paletteIndex]
-		-- print(paletteColor.red, paletteColor.green, paletteColor.blue, paletteColor.alpha)
 		rgbaImageBytes:putcdata(paletteColor, ffi_sizeof(paletteColor))
 	end
 
