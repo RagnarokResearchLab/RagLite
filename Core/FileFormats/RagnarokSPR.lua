@@ -15,8 +15,8 @@ local RagnarokSPR = {
 			char signature[2];
 			uint8_t version_minor;
 			uint8_t version_major;
-//		uint32_t grid_size_u;
-//		uint32_t grid_size_v;
+			uint16_t bmp_images_count;
+			uint16_t tga_images_count;
 //		float geometry_scale_factor;
 //		uint32_t texture_count;
 //		uint32_t texture_path_length;
@@ -127,8 +127,8 @@ function RagnarokSPR:DecodeHeader()
 
 	self.version = header.version_major + header.version_minor / 10
 
--- 	self.gridSizeU = tonumber(header.grid_size_u)
--- 	self.gridSizeV = tonumber(header.grid_size_v)
+	self.bmpImagesCount = tonumber(header.bmp_images_count)
+	self.tgaImagesCount = tonumber(header.tga_images_count)
 -- 	self.geometryScaleFactor = tonumber(header.geometry_scale_factor)
 -- 	self.diffuseTextureCount = tonumber(header.texture_count)
 -- 	self.texturePathLength = tonumber(header.texture_path_length)
