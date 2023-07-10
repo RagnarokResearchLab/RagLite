@@ -104,7 +104,7 @@ local type = type
 
 function RagnarokSPR:DecompressRunLengthEncodedBytes(compressedBuffer, decompressedBuffer)
 	local compressedBufferSize = #compressedBuffer
-	printf("Decompressing input buffer: %d bytes", compressedBufferSize)
+	-- printf("Decompressing input buffer: %d bytes", compressedBufferSize)
 
 	local startPointer = compressedBuffer:ref()
 	local bytes = ffi_cast("uint8_t*", startPointer)
@@ -135,9 +135,9 @@ function RagnarokSPR:DecompressRunLengthEncodedBytes(compressedBuffer, decompres
 		end
 	end
 
-	printf("Decompressed RLE buffer: %s bytes",#decompressedBuffer)
+	-- printf("Decompressed RLE buffer: %s bytes",#decompressedBuffer)
 
-	C_FileSystem.WriteFile("test.bin", tostring(decompressedBuffer))
+	-- C_FileSystem.WriteFile("test.bin", tostring(decompressedBuffer))
 end
 
 function RagnarokSPR:GetEmbeddedColorPalette(fileContents)
@@ -154,7 +154,7 @@ function RagnarokSPR:GetEmbeddedColorPalette(fileContents)
 	-- Must copy to create a GC anchor here before the buffer is collected (probably not a big deal?)
 	local bmpColorPalette = ffi_new("spr_palette_t[1]", paletteBytes[0])
 	local newColors = ffi_new("spr_palette_t")
-	-- ffi.copy(newColors, bmpColorPalette[0].colors, ffi_sizeof("spr_palette_color_t") * 256)
+
 	ffi.copy(newColors, bmpColorPalette[0], ffi_sizeof("spr_palette_t"))
 	-- Update the palette to use the new color array
 	return newColors
