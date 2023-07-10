@@ -163,11 +163,6 @@ function RagnarokSPR:ApplyColorPalette(indexedColorImageBytes, palette)
 
 	for byteIndex = 0, #indexedColorImageBytes - 1, 1 do
 		local paletteIndex = bytes[byteIndex]
-		if paletteIndex > 255 then
-			-- TODO test
-			-- error("Invalid palette color index %s at index %d", paletteIndex, byteIndex))
-		end
-
 		local paletteColor = palette.colors[paletteIndex]
 		rgbaImageBytes:putcdata(paletteColor, ffi_sizeof(paletteColor))
 	end
