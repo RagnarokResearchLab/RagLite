@@ -102,7 +102,7 @@ local math_max = math.max
 
 local assert = assert
 
-function RagnarokSPR:DecompressRunLengthEncodedBuffer(compressedBuffer, decompressedBuffer)
+function RagnarokSPR:DecompressRunLengthEncodedBytes(compressedBuffer, decompressedBuffer)
 	local compressedBufferSize = #compressedBuffer
 	printf("Decompressing input buffer: %d bytes", compressedBufferSize)
 
