@@ -121,6 +121,21 @@ describe("RagnarokSPR", function()
 			assertEquals(palette.colors[1].blue, 255)
 			assertEquals(palette.colors[1].alpha, 0)
 		end)
+
+		it("should return an 8-bit BMP color palette with 256 entries if a string buffer is passed", function()
+			local sprFileContents = buffer.new(#SPR_WITH_RLE):put(SPR_WITH_RLE)
+			local palette = spr:GetEmbeddedColorPalette(sprFileContents)
+
+			assertEquals(palette.colors[0].red, 255)
+			assertEquals(palette.colors[0].green, 0)
+			assertEquals(palette.colors[0].blue, 0)
+			assertEquals(palette.colors[0].alpha, 0)
+
+			assertEquals(palette.colors[1].red, 255)
+			assertEquals(palette.colors[1].green, 255)
+			assertEquals(palette.colors[1].blue, 255)
+			assertEquals(palette.colors[1].alpha, 0)
+		end)
 	end)
 
 	describe("ApplyColorPalette", function()
