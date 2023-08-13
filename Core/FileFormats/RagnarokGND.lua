@@ -122,7 +122,7 @@ function RagnarokGND:DecodeHeader()
 
 	self.signature = ffi_string(header.signature, headerSize)
 	if self.signature ~= "GRGN" then
-		error("Failed to decode GND header (Signature " .. self.signature .. ' should be "GRGN"', 0)
+		error("Failed to decode GND header (Signature " .. self.signature .. ' should be "GRGN")', 0)
 	end
 
 	self.version = header.version_major + header.version_minor / 10
