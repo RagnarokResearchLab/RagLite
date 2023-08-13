@@ -134,7 +134,7 @@ function RagnarokTools:ExportLightmapsFromGND(gndFileContents)
 		textureImage.data = pixelBuffer
 		textureImage.channels = 4 -- RGBA
 
-		local maxFileSize = stbi.max_bitmap_size(textureImage.width, textureImage.height, textureImage.channels)
+		local maxFileSize = stbi.bindings.stbi_get_required_bmp_size(textureImage)
 		local fileContents = buffer.new(maxFileSize)
 		local startPointer, length = fileContents:reserve(maxFileSize)
 		local numBytesWritten = stbi.bindings.stbi_encode_png(textureImage, startPointer, length, 0)
