@@ -9,6 +9,7 @@ ignore = {
 globals = {
 	-- Runtime APIs
 	"C_FileSystem",
+	"C_ImageProcessing",
 	"C_Runtime",
 	"C_Timer",
 	"C_WebView",
