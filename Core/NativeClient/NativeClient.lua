@@ -427,10 +427,10 @@ function NativeClient:MOUSECLICK_STATUS_UPDATED(eventID, payload)
 
 		if wasButtonPressed then
 			C_Camera.StartAdjustingView()
+			C_Cursor.SetClickTime(now)
 		else
 			C_Camera.StopAdjustingView()
 		end
-		C_Cursor.SetClickTime(now)
 	end
 end
 
