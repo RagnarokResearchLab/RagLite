@@ -13,6 +13,7 @@ local table_insert = table.insert
 
 local RagnarokGND = require("Core.FileFormats.RagnarokGND")
 local RagnarokGRF = require("Core.FileFormats.RagnarokGRF")
+local RagnarokSPR = require("Core.FileFormats.RagnarokSPR")
 
 function RagnarokTools:GenerateMapListFromGRF(grfFilePath)
 	grfFilePath = grfFilePath or "data.grf"
@@ -149,6 +150,32 @@ function RagnarokTools:ExportLightmapsFromGND(gndFileContents)
 	ExportHumandReadableTextureImageAsPNG(lightmapPixels, "lightmap.png")
 
 	stbi.bindings.stbi_flip_vertically_on_write(false)
+end
+
+function RagnarokTools:ExportImagesFromSPR(sprFileContents, outputDirectory)
+	outputDirectory = outputDirectory or "Exports"
+	C_FileSystem.MakeDirectoryTree(outputDirectory)
+
+	local spr = RagnarokSPR()
+	spr:DecodeFileContents(sprFileContents)
+
+	local palette = spr:GetEmbeddedColorPalette(sprFileContents)
+
+	for index, image in ipairs(spr.bmpImages) do
+		local indexedColorImageBytes = image.pixelBuffer
+		local rgbaImageBytes = RagnarokSPR:ApplyColorPalette(indexedColorImageBytes, palette)
+		local pngFileContents = C_ImageProcessing.EncodePNG(rgbaImageBytes, image.pixelWidth, image.pixelHeight)
+
+		local pngFilePath = path.join(outputDirectory, format("bmp-frame-%d.png", index))
+		C_FileSystem.WriteFile(pngFilePath, tostring(pngFileContents))
+	end
+
+	for index, image in ipairs(spr.tgaImages) do
+		local pngFileContents = C_ImageProcessing.EncodePNG(image.pixelBuffer, image.pixelWidth, image.pixelHeight)
+
+		local pngFilePath = path.join(outputDirectory, format("tga-frame-%d.png", index))
+		C_FileSystem.WriteFile(pngFilePath, tostring(pngFileContents))
+	end
 end
 
 return RagnarokTools
