@@ -175,6 +175,30 @@ describe("NativeClient", function()
 
 			assertFalse(C_Camera.GetHorizontalRotationAngle() == C_Camera.DEFAULT_HORIZONTAL_ROTATION)
 		end)
+
+		it("should not reset the horizontal camera rotation if a right-click follows a release", function()
+			local event = ffi.new("deferred_event_t")
+			C_Cursor.SetClickTime(-2 * C_Cursor.DOUBLE_CLICK_TIME_IN_MILLISECONDS * 10E5)
+			C_Camera.ApplyHorizontalRotation(37) -- Arbitrary non-default rotation
+
+			-- RBUTTON released (here implied: a long time after it was first pressed)
+			event.mouse_button_details.button = glfw.bindings.glfw_find_constant("GLFW_MOUSE_BUTTON_RIGHT")
+			event.mouse_button_details.action = glfw.bindings.glfw_find_constant("GLFW_RELEASE")
+			NativeClient:MOUSECLICK_STATUS_UPDATED("MOUSECLICK_STATUS_UPDATED", event)
+
+			assertFalse(C_Camera.GetHorizontalRotationAngle() == C_Camera.DEFAULT_HORIZONTAL_ROTATION)
+
+			-- Another RCLICK received -> should NOT reset angle since the original GLFW_PRESS no longer counts
+			event.mouse_button_details.button = glfw.bindings.glfw_find_constant("GLFW_MOUSE_BUTTON_RIGHT")
+			event.mouse_button_details.action = glfw.bindings.glfw_find_constant("GLFW_PRESS")
+			NativeClient:MOUSECLICK_STATUS_UPDATED("MOUSECLICK_STATUS_UPDATED", event)
+
+			assertFalse(C_Camera.GetHorizontalRotationAngle() == C_Camera.DEFAULT_HORIZONTAL_ROTATION)
+
+			event.mouse_button_details.button = glfw.bindings.glfw_find_constant("GLFW_MOUSE_BUTTON_RIGHT")
+			event.mouse_button_details.action = glfw.bindings.glfw_find_constant("GLFW_RELEASE")
+			NativeClient:MOUSECLICK_STATUS_UPDATED("MOUSECLICK_STATUS_UPDATED", event)
+		end)
 	end)
 
 	describe("SCROLL_STATUS_CHANGED", function()
