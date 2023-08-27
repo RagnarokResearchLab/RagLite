@@ -1,20 +1,15 @@
 local Buffer = {}
 
+local ALIGNMENT_IN_BYTES = 4
+
 function Buffer.GetAlignedSize(unalignedSize)
-	local size = unalignedSize
-	local paddedSize
-	if size % 4 == 0 then
-		paddedSize = size
+	if unalignedSize <= 0 then
+		return 0
 	end
-	if size % 4 == 1 then
-		paddedSize = size + 3
-	end
-	if size % 4 == 2 then
-		paddedSize = size + 2
-	end
-	if size % 4 == 3 then
-		paddedSize = size + 1
-	end
+
+	local numUnalignedBytes = unalignedSize % ALIGNMENT_IN_BYTES
+	local numRequiredPaddingBytes = (ALIGNMENT_IN_BYTES - numUnalignedBytes) % ALIGNMENT_IN_BYTES
+	local paddedSize = unalignedSize + numRequiredPaddingBytes
 
 	return paddedSize
 end
