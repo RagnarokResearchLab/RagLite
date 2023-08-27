@@ -7,6 +7,8 @@ local validation = require("validation")
 
 local gpu = require("Core.NativeClient.gpu")
 
+local Buffer = require("Core.NativeClient.WebGPU.Buffer")
+
 local _ = require("Core.VectorMath.Matrix4D") -- Only needed for the cdefs right now
 local Vector3D = require("Core.VectorMath.Vector3D")
 local C_Camera = require("Core.NativeClient.C_Camera")
@@ -361,29 +363,11 @@ end
 
 -- local binary_and = bit.band
 -- local binary_negation = bit.bnot
-local function copyDestPadToNextAlignment(size)
-	local paddedSize
-	if size % 4 == 0 then
-		paddedSize = size
-	end
-	if size % 4 == 1 then
-		paddedSize = size + 3
-	end
-	if size % 4 == 2 then
-		paddedSize = size + 2
-	end
-	if size % 4 == 3 then
-		paddedSize = size + 1
-	end
-
-	-- print(size, paddedSize)
-	return paddedSize
-end
 
 function Renderer:UploadGeometry(graphicsContext, vertexArray, triangleIndices, colorsRGB)
 	local nanosecondsBeforeUpload = uv.hrtime()
 
-	local vertexPositionsBufferSize = copyDestPadToNextAlignment(#vertexArray * ffi.sizeof("float"))
+	local vertexPositionsBufferSize = Buffer.GetAlignedSize(#vertexArray * ffi.sizeof("float"))
 	local vertexCount = #vertexArray / 3 -- sizeof(Vector3D)
 	local numVertexColorValues = #colorsRGB / 3
 
@@ -408,7 +392,7 @@ function Renderer:UploadGeometry(graphicsContext, vertexArray, triangleIndices, 
 		vertexPositionsBufferSize
 	)
 
-	local vertexColorsBufferSize = copyDestPadToNextAlignment(#colorsRGB * ffi.sizeof("float")) -- sizeof (ColorRGB)
+	local vertexColorsBufferSize = Buffer.GetAlignedSize(#colorsRGB * ffi.sizeof("float")) -- sizeof (ColorRGB)
 	bufferDescriptor.size = vertexColorsBufferSize
 	local vertexColorsBuffer = webgpu.bindings.wgpu_device_create_buffer(graphicsContext.device, bufferDescriptor)
 	printf(
@@ -428,7 +412,7 @@ function Renderer:UploadGeometry(graphicsContext, vertexArray, triangleIndices, 
 	bufferDescriptor.usage = bit.bor(ffi.C.WGPUBufferUsage_CopyDst, ffi.C.WGPUBufferUsage_Index)
 	local triangleIndicesBuffer = webgpu.bindings.wgpu_device_create_buffer(graphicsContext.device, bufferDescriptor)
 	local triangleIndicesCount = #triangleIndices
-	local triangleIndexBufferSize = copyDestPadToNextAlignment(#triangleIndices * ffi.sizeof("uint16_t"))
+	local triangleIndexBufferSize = Buffer.GetAlignedSize(#triangleIndices * ffi.sizeof("uint16_t"))
 	bufferDescriptor.size = triangleIndexBufferSize
 	printf(
 		"Uploading geometry: %d triangle indices (total buffer size: %s)",
