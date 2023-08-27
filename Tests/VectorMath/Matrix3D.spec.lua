@@ -1,4 +1,4 @@
-local Matrix3D = require("Core.NativeClient.Matrix3D")
+local Matrix3D = require("Core.VectorMath.Matrix3D")
 
 describe("Matrix3D", function()
 	it("should return an empty 3x3 matrix in row-major notation", function()

@@ -7,8 +7,8 @@ local validation = require("validation")
 
 local gpu = require("Core.NativeClient.gpu")
 
-local _ = require("Core.NativeClient.Matrix4D") -- Only needed for the cdefs right now
-local Vector3D = require("Core.NativeClient.Vector3D")
+local _ = require("Core.VectorMath.Matrix4D") -- Only needed for the cdefs right now
+local Vector3D = require("Core.VectorMath.Vector3D")
 local C_Camera = require("Core.NativeClient.C_Camera")
 
 local assert = assert

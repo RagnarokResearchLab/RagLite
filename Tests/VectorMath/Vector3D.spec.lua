@@ -1,5 +1,5 @@
-local Matrix3D = require("Core.NativeClient.Matrix3D")
-local Vector3D = require("Core.NativeClient.Vector3D")
+local Matrix3D = require("Core.VectorMath.Matrix3D")
+local Vector3D = require("Core.VectorMath.Vector3D")
 
 describe("Vector3D", function()
 	it("should return an empty 1x3 matrix in row-major notation if no coordinates were passed", function()
