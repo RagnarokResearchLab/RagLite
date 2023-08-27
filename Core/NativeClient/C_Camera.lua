@@ -1,6 +1,6 @@
-local Matrix3D = require("Core.NativeClient.Matrix3D")
-local Matrix4D = require("Core.NativeClient.Matrix4D")
-local Vector3D = require("Core.NativeClient.Vector3D")
+local Matrix3D = require("Core.VectorMath.Matrix3D")
+local Matrix4D = require("Core.VectorMath.Matrix4D")
+local Vector3D = require("Core.VectorMath.Vector3D")
 
 local math_max = math.max
 local math_min = math.min

@@ -1,4 +1,4 @@
-local Matrix4D = require("Core.NativeClient.Matrix4D")
+local Matrix4D = require("Core.VectorMath.Matrix4D")
 
 describe("Matrix4D", function()
 	it("should return an empty 4x4 matrix in row-major notation", function()

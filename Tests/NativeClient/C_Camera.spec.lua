@@ -1,5 +1,5 @@
 local C_Camera = require("Core.NativeClient.C_Camera")
-local Vector3D = require("Core.NativeClient.Vector3D")
+local Vector3D = require("Core.VectorMath.Vector3D")
 
 describe("C_Camera", function()
 	describe("CreatePerspectiveProjection", function()
