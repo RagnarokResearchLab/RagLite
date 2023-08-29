@@ -2,6 +2,7 @@ local bit = require("bit")
 local ffi = require("ffi")
 local uv = require("uv")
 local zlib = require("zlib")
+require("table.new")
 
 local tonumber = tonumber
 
@@ -142,7 +143,8 @@ function RagnarokGRF:DecodeFileEntries()
 
 	local movingConversionPointer = ffi_cast("char*", decompressedTableBytes)
 
-	local entries = {}
+	local entries = table.new(self.fileCount, 0)
+
 	for index = 0, self.fileCount - 1 do
 		local normalizedCaseInsensitiveFilePath, numProcessedBytesToSkip = self:DecodeFileName(movingConversionPointer)
 		movingConversionPointer = movingConversionPointer + numProcessedBytesToSkip + 1 -- \0 terminator
