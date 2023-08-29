@@ -253,16 +253,14 @@ if ffi.os == "Windows" then
 	local CP949 = 949
 	local CP_UTF8 = 65001
 
+	local maxLen = 1024
+	local unicodeStr = ffi.new("wchar_t[?]", maxLen)
+	local outputStr = ffi.new("char[?]", maxLen)
+
 	function RagnarokGRF:DecodeMultiByteString(input)
-		local unicodeLen = ffi.C.MultiByteToWideChar(CP949, 0, input, -1, nil, 0)
-		local unicodeStr = ffi.new("wchar_t[?]", unicodeLen)
-		ffi.C.MultiByteToWideChar(CP949, 0, input, -1, unicodeStr, unicodeLen)
-
-		local outputLen = ffi.C.WideCharToMultiByte(CP_UTF8, 0, unicodeStr, -1, nil, 0, nil, nil)
-		local outputStr = ffi.new("char[?]", outputLen)
-		ffi.C.WideCharToMultiByte(CP_UTF8, 0, unicodeStr, -1, outputStr, outputLen, nil, nil)
-
-		return ffi.string(outputStr)
+		ffi.C.MultiByteToWideChar(CP949, 0, input, -1, unicodeStr, maxLen)
+		ffi.C.WideCharToMultiByte(CP_UTF8, 0, unicodeStr, -1, outputStr, maxLen, nil, nil)
+		return ffi_string(outputStr)
 	end
 else
 	ffi.cdef([[
