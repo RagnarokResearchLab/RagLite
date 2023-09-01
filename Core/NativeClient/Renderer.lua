@@ -64,7 +64,7 @@ function Renderer:CreateGraphicsContext(nativeWindowHandle)
 	-- In order to support window resizing, we'll need to re-create this on the fly (later)
 	context.swapChain = self:CreateSwapchain(context)
 
-	return context
+	self.context = context
 end
 
 function Renderer:CreateSwapchain(context)
@@ -91,13 +91,14 @@ function Renderer:CreateSwapchain(context)
 	return webgpu.bindings.wgpu_device_create_swapchain(context.device, surface, swapChainDescriptor)
 end
 
-function Renderer:CreatePipelineConfigurations(graphicsContext)
+function Renderer:CreatePipelineConfigurations()
 	-- This is just a placeholder; eventually there should be real pipelines here
-	local examplePipeline = Renderer:CreateBasicTriangleDrawingPipeline(graphicsContext)
+	local examplePipeline = Renderer:CreateBasicTriangleDrawingPipeline()
 	table_insert(self.pipelines, examplePipeline)
 end
 
-function Renderer:CreateBasicTriangleDrawingPipeline(graphicsContext)
+function Renderer:CreateBasicTriangleDrawingPipeline()
+	local graphicsContext = self.context
 	local surface = glfw.bindings.glfw_get_wgpu_surface(graphicsContext.instance, graphicsContext.window)
 	local descriptor = ffi.new("WGPURenderPipelineDescriptor")
 	local pipelineDesc = descriptor
@@ -248,7 +249,8 @@ function Renderer:CreateBasicTriangleDrawingPipeline(graphicsContext)
 	return webgpu.bindings.wgpu_device_create_render_pipeline(graphicsContext.device, descriptor)
 end
 
-function Renderer:RenderNextFrame(graphicsContext)
+function Renderer:RenderNextFrame()
+	local graphicsContext = self.context
 	local logicalDevice = graphicsContext.device
 	local swapChain = graphicsContext.swapChain
 	local nextTextureView = webgpu.bindings.wgpu_swapchain_get_current_texture_view(swapChain)
@@ -290,7 +292,7 @@ function Renderer:RenderNextFrame(graphicsContext)
 
 	local renderPass = webgpu.bindings.wgpu_command_encoder_begin_render_pass(commandEncoder, renderPassDescriptor)
 
-	self:UpdateUniformBuffer(graphicsContext)
+	self:UpdateUniformBuffer()
 
 	for index, pipeline in ipairs(self.pipelines) do
 		webgpu.bindings.wgpu_render_pass_encoder_set_pipeline(renderPass, pipeline)
@@ -364,7 +366,8 @@ end
 -- local binary_and = bit.band
 -- local binary_negation = bit.bnot
 
-function Renderer:UploadGeometry(graphicsContext, vertexArray, triangleIndices, colorsRGB)
+function Renderer:UploadGeometry(vertexArray, triangleIndices, colorsRGB)
+	local graphicsContext = self.context
 	local nanosecondsBeforeUpload = uv.hrtime()
 
 	local vertexPositionsBufferSize = Buffer.GetAlignedSize(#vertexArray * ffi.sizeof("float"))
@@ -443,7 +446,8 @@ function Renderer:UploadGeometry(graphicsContext, vertexArray, triangleIndices, 
 	printf("Geometry upload took %.2f ms", uploadTimeInMilliseconds)
 end
 
-function Renderer:CreateUniformBuffer(graphicsContext)
+function Renderer:CreateUniformBuffer()
+	local graphicsContext = self.context
 	local bufferDescriptor = ffi.new("WGPUBufferDescriptor")
 	bufferDescriptor.size = ffi.sizeof("scenewide_uniform_t")
 	bufferDescriptor.usage = bit.bor(ffi.C.WGPUBufferUsage_CopyDst, ffi.C.WGPUBufferUsage_Uniform)
@@ -470,7 +474,8 @@ function Renderer:CreateUniformBuffer(graphicsContext)
 	self.uniformBuffer = uniformBuffer
 end
 
-function Renderer:UpdateUniformBuffer(graphicsContext)
+function Renderer:UpdateUniformBuffer()
+	local graphicsContext = self.context
 	local contentWidthInPixels = ffi.new("int[1]")
 	local contentHeightInPixels = ffi.new("int[1]")
 	glfw.bindings.glfw_get_window_size(graphicsContext.window, contentWidthInPixels, contentHeightInPixels)
@@ -498,7 +503,8 @@ function Renderer:UpdateUniformBuffer(graphicsContext)
 	)
 end
 
-function Renderer:EnableDepthBuffer(graphicsContext)
+function Renderer:EnableDepthBuffer()
+	local graphicsContext = self.context
 	local contentWidthInPixels = ffi.new("int[1]")
 	local contentHeightInPixels = ffi.new("int[1]")
 	glfw.bindings.glfw_get_window_size(graphicsContext.window, contentWidthInPixels, contentHeightInPixels)
