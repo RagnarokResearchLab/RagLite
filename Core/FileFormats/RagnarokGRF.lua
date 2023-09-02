@@ -168,12 +168,24 @@ function RagnarokGRF:DecodeFileEntries()
 	self.fileTable.entries = entries
 end
 
-function RagnarokGRF:DecodeFileName(pointerToNullTerminatedStringBytes)
-	local fileName = ffi_string(pointerToNullTerminatedStringBytes)
+ffi.cdef[[
+    const char* NormalizeFilePath(const char* input);
+]]
 
-	-- Converting to a standardized format ASAP avoids crossplatform and encoding headaches
-	local normalizedFileName = self:GetNormalizedFilePath(fileName)
-	return normalizedFileName, #fileName
+-- Load the DLL
+local pathLib = ffi.load("grfpath")
+
+
+function RagnarokGRF:DecodeFileName(pointerToNullTerminatedStringBytes)
+	-- local fileName = ffi_string(pointerToNullTerminatedStringBytes)
+
+	-- -- Converting to a standardized format ASAP avoids crossplatform and encoding headaches
+	local normalizedFileName = self:GetNormalizedFilePath(pointerToNullTerminatedStringBytes)
+	return normalizedFileName, #normalizedFileName
+
+	-- local input = "/HELLO/WORLD.TXT"
+	-- local result = ffi_string(pathLib.NormalizeFilePath(pointerToNullTerminatedStringBytes))
+	-- return result, #result
 end
 
 -- To measure (and optimize) the worst-case decompression time, it'll be convenient to find the largest files easily
@@ -299,23 +311,27 @@ end
 
 function RagnarokGRF:GetNormalizedFilePath(fileName)
 	-- Must convert to UTF8 first to avoid operating on codepoints by accident
-	fileName = self:DecodeMultiByteString(fileName)
+	-- fileName = self:DecodeMultiByteString(fileName)
 
-	-- Windows paths are problematic on other platforms
-	fileName = string_lower(fileName)
-	fileName = fileName:gsub("\\", "/")
+	-- -- Windows paths are problematic on other platforms
+	-- fileName = string_lower(fileName)
+	-- fileName = fileName:gsub("\\", "/")
 
-	-- HTTP route handlers may add this (it's unnecessary and not how GRF paths are stored)
-	local firstCharacter = fileName:sub(1, 1)
-	local isAbsolutePosixPath = (firstCharacter == "/")
-	if isAbsolutePosixPath then
-		fileName = fileName:sub(2)
-	end
+	-- -- HTTP route handlers may add this (it's unnecessary and not how GRF paths are stored)
+	-- local firstCharacter = fileName:sub(1, 1)
+	-- local isAbsolutePosixPath = (firstCharacter == "/")
+	-- if isAbsolutePosixPath then
+	-- 	fileName = fileName:sub(2)
+	-- end
 
-	-- Not sure why they're even in there - maybe accidentally used \\\\ to escape twice? Weird.
-	fileName = fileName:gsub("//", "/")
+	-- -- Not sure why they're even in there - maybe accidentally used \\\\ to escape twice? Weird.
+	-- fileName = fileName:gsub("//", "/")
 
-	return fileName
+		local result = ffi_string(pathLib.NormalizeFilePath(fileName))
+
+		-- assert(1 ~= 2, fileName .. " - " .. ffi_string(result))
+
+	return result
 end
 
 ffi.cdef(RagnarokGRF.cdefs)
