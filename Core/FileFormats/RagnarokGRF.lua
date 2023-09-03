@@ -168,65 +168,59 @@ function RagnarokGRF:DecodeFileEntries()
 	self.fileTable.entries = entries
 end
 
-ffi.cdef[[
-  size_t strlen(const char *str);
-  int tolower(int c);
-]]
-
--- TODO inline all subfuncs
-local function toLowerCase(cstr, len)
-
-	for i = 0, len - 1 do
-		cstr[i] = ffi.C.tolower(cstr[i])
-	end
-end
-
-local function normalizePathSeparators(cstr, len)
-	-- local wasLastCharacterWindowsPathSeparator = false
-	for i = 0, len - 1 do
-		if cstr[i] == string.byte("\\") then
-			cstr[i] =string.byte("/")
-			-- wasLastCharacterWindowsPathSeparator = true
-		else
-			-- wasLastCharacterWindowsPathSeparator = false
-		end
-	end
-end
 
 local function DEBUG(...)
 	-- print(...)
 end
 
+ffi.cdef[[
+  size_t strlen(const char *str);
+  int tolower(int c);
+]]
+
+local function toLowerCase(cstr, len)
+    for i = 0, len - 1 do
+        cstr[i] = ffi.C.tolower(cstr[i])
+    end
+end
+
+local function normalizePathSeparators(cstr, len)
+    local writeIndex = 0
+    for readIndex = 0, len - 1 do
+        local c = cstr[readIndex]
+        if c == string.byte("\\") then
+            cstr[writeIndex] = string.byte("/")
+        elseif c ~= string.byte("/") or writeIndex ~= 0 then  -- Skip leading slashes
+            cstr[writeIndex] = c
+        else
+            -- Intentionally leave writeIndex unchanged, effectively skipping this character
+        end
+
+        if writeIndex > 0 or c ~= string.byte("/") then  -- Don't advance writeIndex for leading '/'
+            writeIndex = writeIndex + 1
+        end
+    end
+
+    -- Null-terminate the shortened string
+    cstr[writeIndex] = 0
+end
+
 function RagnarokGRF:DecodeFileName(pointerToNullTerminatedStringBytes)
-	-- Must convert to UTF8 first to avoid operating on codepoints by accident
-	DEBUG("Decoding file name", ffi.string(pointerToNullTerminatedStringBytes))
-	local originalLength = ffi.C.strlen(pointerToNullTerminatedStringBytes)
-	local fileName = self:DecodeMultiByteStringFFI(pointerToNullTerminatedStringBytes)
-	DEBUG("After DecodeMultiByteStringFFI", ffi.string(fileName))
-	local len = tonumber(ffi.C.strlen(fileName))
-
-	-- Windows paths are problematic on other platforms
-	toLowerCase(fileName, len)
-	DEBUG("After toLowerCase", ffi.string(fileName))
-	normalizePathSeparators(fileName, len)
-	DEBUG("After normalizePathSeparators", ffi.string(fileName))
-
-	-- HTTP route handlers may add this (it's unnecessary and not how GRF paths are stored)
-	-- local firstCharacter = fileName:sub(1, 1)
-	-- local isAbsolutePosixPath = (firstCharacter == "/")
-	-- if isAbsolutePosixPath then
-	-- 	fileName = fileName:sub(2)
-	-- end
-
-	-- Not sure why they're even in there - maybe accidentally used \\\\ to escape twice? Weird.
-	-- fileName = fileName:gsub("//", "/")
+    local originalLength = tonumber(ffi.C.strlen(pointerToNullTerminatedStringBytes))
+	-- DEBUG("Decoding file name", ffi_string(pointerToNullTerminatedStringBytes), originalLength)
 
 
-	-- local fileName = ffi_string(pointerToNullTerminatedStringBytes)
+	local decodedFileName = self:DecodeMultiByteStringFFI(pointerToNullTerminatedStringBytes)
+    local decodedLength = tonumber(ffi.C.strlen(decodedFileName))
+	-- DEBUG("Decoded file name", ffi_string(decodedFileName), decodedLength)
 
-	-- Converting to a standardized format ASAP avoids crossplatform and encoding headaches
-	-- local normalizedFileName = self:GetNormalizedFilePath(fileName)
-	return fileName, originalLength
+    toLowerCase(decodedFileName, decodedLength)
+	-- DEBUG("Lower-cased file name", ffi_string(decodedFileName), decodedLength)
+
+    normalizePathSeparators(decodedFileName, decodedLength)
+	-- DEBUG("Normalized file name", ffi_string(decodedFileName), decodedLength)
+
+    return ffi_string(decodedFileName), originalLength
 end
 
 -- To measure (and optimize) the worst-case decompression time, it'll be convenient to find the largest files easily
