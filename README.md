@@ -26,6 +26,16 @@ Work in progress. It's mostly developed in public so that I can use GitHub Actio
 
 If you want to follow the development more closely, check out the [roadmap](https://github.com/orgs/RagnarokResearchLab/projects/2) (includes both my documentation work and tools). To view the implementation status, [milestones](https://github.com/RagnarokResearchLab/RagLite/milestones) are your best bet - although they're necessarily incomplete.
 
+## System Requirements
+
+Not much to say here; hopefully it'll "just work" on most systems:
+
+* Recent versions of Mac OS, Linux, or Windows
+* Any graphics backend supported by WebGPU (DirectX/Metal/Vulkan)
+* CPU Architecture must be supported by the LuaJIT engine
+
+Note: Rendering on Mac OS may not work correctly at this time. Will fix later.
+
 ## Usage
 
 There isn't much to see yet, but if you want to give it a try:
