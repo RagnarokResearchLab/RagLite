@@ -60,3 +60,7 @@ There's a number of things I explicitly don't care about, at least for the time 
 * Security, performance, and other "production quality" metrics ("spaghetti code" still isn't acceptable, though)
 
 I'm just one person, so anything that I can't implement or that exceedingly annoys me likely won't make the cut.
+
+## Contributing
+
+Contributions of all kinds are welcome. There's no process, just open an issue (or pull request) if you like.
