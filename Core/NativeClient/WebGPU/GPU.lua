@@ -2,9 +2,9 @@ local ffi = require("ffi")
 local glfw = require("glfw")
 local webgpu = require("webgpu")
 
-local gpu = {}
+local GPU = {}
 
-function gpu.createInstance()
+function GPU:CreateInstance()
 	local instanceDescriptor = ffi.new("WGPUInstanceDescriptor")
 	local instance = webgpu.bindings.wgpu_create_instance(instanceDescriptor)
 	if not instance then
@@ -14,7 +14,7 @@ function gpu.createInstance()
 	return instance, instanceDescriptor
 end
 
-function gpu.requestAdapter(instance, window)
+function GPU:RequestAdapter(instance, window)
 	local surface = glfw.bindings.glfw_get_wgpu_surface(instance, window)
 
 	local adapterOptions = ffi.new("WGPURequestAdapterOptions")
@@ -33,7 +33,7 @@ function gpu.requestAdapter(instance, window)
 	return requestedAdapter
 end
 
-function gpu.requestLogicalDevice(adapter, options)
+function GPU:RequestLogicalDevice(adapter, options)
 	options = options or {}
 	options.defaultQueue = options.defaultQueue or {}
 
@@ -98,4 +98,4 @@ function gpu.requestLogicalDevice(adapter, options)
 	return requestedDevice, deviceDescriptor
 end
 
-return gpu
+return GPU

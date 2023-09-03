@@ -5,7 +5,7 @@ local webgpu = require("webgpu")
 local uv = require("uv")
 local validation = require("validation")
 
-local gpu = require("Core.NativeClient.WebGPU.GPU")
+local GPU = require("Core.NativeClient.WebGPU.GPU")
 local Buffer = require("Core.NativeClient.WebGPU.Buffer")
 
 local _ = require("Core.VectorMath.Matrix4D") -- Only needed for the cdefs right now
@@ -54,9 +54,9 @@ end
 function Renderer:CreateGraphicsContext(nativeWindowHandle)
 	validation.validateStruct(nativeWindowHandle, "nativeWindowHandle")
 
-	local instance, instanceDescriptor = gpu.createInstance()
-	local adapter = gpu.requestAdapter(instance, nativeWindowHandle)
-	local device, deviceDescriptor = gpu.requestLogicalDevice(adapter)
+	local instance, instanceDescriptor = GPU:CreateInstance()
+	local adapter = GPU:RequestAdapter(instance, nativeWindowHandle)
+	local device, deviceDescriptor = GPU:RequestLogicalDevice(adapter)
 
 	-- GC anchors for cdata (must be kept alive for the entire lifetime of the app)
 	self.wgpuInstance = instance
