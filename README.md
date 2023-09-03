@@ -2,23 +2,27 @@
 
 Standalone client with built-in backend server that allows running a persistent world simulation on your computer.
 
-## Roadmap
+## Roadmap & Features
 
-* Integrated tooling to analyze and work with various binary file formats
-* A web-based 3D rendering engine is built in (uses TypeScript/Babylon.js)
+This project is built on a few core technologies:
+
+* A [WebGPU](https://github.com/gpuweb/gpuweb)-based 3D rendering engine is built in (uses [wgpu-native](https://github.com/gfx-rs/wgpu-native))
 * Simple networking layer based on the HTTP and WebSockets protocols
-* Native C++ runtime with a focus on Lua scripting (powered by LuaJIT)
-* Asynchronous libuv-based event loop running in the host application
+* Native C++ runtime with a focus on Lua scripting (powered by [LuaJIT](https://luajit.org/))
+* Asynchronous [libuv](https://github.com/libuv/libuv)-based event loop running in the host application
+* Integrated tooling to analyze and work with various binary file formats
 
-## Status
-
-Work in progress. It's mostly developed in public so that I can use GitHub Actions for automated testing.
-
-Note: This is a developer tool and not very advanced. Don't expect too much or you'll be disappointed.
+Lua is the primary language, augmented with C/C++ libraries and glue code.
 
 ## Why does it exist?
 
 I've developed many different tools to help with my research over the years. This is just the latest iteration, but fully integrated to make my life easier. Some people have expressed interest in seeing the code, so here you go?
+
+The previous iterations were written in JavaScript and TypeScript, with [BabylonJS](https://www.babylonjs.com/) as the rendering engine and [Electron](https://www.electronjs.org/) as the runtime. This version is powered by native technologies instead, mainly because I wanted more control.
+
+## Status
+
+Work in progress. It's mostly developed in public so that I can use GitHub Actions for automated testing. Note: This is a developer tool and not very advanced. Don't expect too much or you'll be disappointed. I haven't ported over most features from older versions, and likely won't unless someone specifically asks.
 
 ## Goals
 
