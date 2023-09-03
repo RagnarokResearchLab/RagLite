@@ -63,15 +63,15 @@ function Renderer:CreateGraphicsContext(nativeWindowHandle)
 	self.context = context
 
 	-- Updates to the backing window should be pushed via events, so only store the result here
+	self:CreateSwapchain(nativeWindowHandle)
+end
+
+function Renderer:CreateSwapchain(nativeWindowHandle)
+	local context = self.context
+
 	self.wgpuSurface = glfw.bindings.glfw_get_wgpu_surface(context.instance, nativeWindowHandle)
 	self.viewportWidth, self.viewportHeight = self:GetViewportSize(nativeWindowHandle)
 
-	-- In order to support window resizing, we'll need to re-create this on the fly (later)
-	self:CreateSwapchain()
-end
-
-function Renderer:CreateSwapchain()
-	local context = self.context
 	local swapChainDescriptor = ffi.new("WGPUSwapChainDescriptor")
 
 	-- The underlying framebuffer may be different if DPI scaling is applied, but let's ignore that for now

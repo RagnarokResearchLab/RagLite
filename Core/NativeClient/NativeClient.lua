@@ -297,15 +297,18 @@ function NativeClient:CreateMainWindow()
 
 	-- Resizing the window means recreating a whole bunch of stuff (swap chain, buffers, ...) - let's sidestep all that for now
 	local GLFW_RESIZABLE = glfw.bindings.glfw_find_constant("GLFW_RESIZABLE")
+	local GLFW_DECORATED = glfw.bindings.glfw_find_constant("GLFW_DECORATED")
 	local GLFW_FALSE = glfw.bindings.glfw_find_constant("GLFW_FALSE")
-	glfw.bindings.glfw_window_hint(GLFW_RESIZABLE, GLFW_FALSE)
+	local GLFW_TRUE = glfw.bindings.glfw_find_constant("GLFW_TRUE")
+	glfw.bindings.glfw_window_hint(GLFW_RESIZABLE, GLFW_TRUE)
+	glfw.bindings.glfw_window_hint(GLFW_DECORATED, GLFW_TRUE)
 
 	local window = glfw.bindings.glfw_create_window(videoMode.width, videoMode.height, "RagLite", nil, nil)
 	if not window then
 		error("Failed to create application window")
 	end
 
-	glfw.bindings.glfw_set_window_pos(window, 0, 0)
+	glfw.bindings.glfw_set_window_pos(window, 100, 100)
 	self.deferredEventQueue = interop.bindings.queue_create()
 	glfw.bindings.glfw_register_events(window, self.deferredEventQueue)
 
@@ -382,6 +385,7 @@ end
 
 function NativeClient:FRAMEBUFFER_SIZE_CHANGED(eventID, payload)
 	print("FRAMEBUFFER_SIZE_CHANGED")
+	Renderer:CreateSwapchain(self.mainWindow)
 end
 
 function NativeClient:CONTENT_SCALE_CHANGED(eventID, payload)
