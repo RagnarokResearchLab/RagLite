@@ -184,19 +184,21 @@ local function toLowerCase(cstr, len)
     end
 end
 
+local string_byte = string.byte
+
 local function normalizePathSeparators(cstr, len)
     local writeIndex = 0
     for readIndex = 0, len - 1 do
         local c = cstr[readIndex]
-        if c == string.byte("\\") then
-            cstr[writeIndex] = string.byte("/")
-        elseif c ~= string.byte("/") or writeIndex ~= 0 then  -- Skip leading slashes
+        if c == string_byte("\\") then
+            cstr[writeIndex] = string_byte("/")
+        elseif c ~= string_byte("/") or writeIndex ~= 0 then  -- Skip leading slashes
             cstr[writeIndex] = c
         else
             -- Intentionally leave writeIndex unchanged, effectively skipping this character
         end
 
-        if writeIndex > 0 or c ~= string.byte("/") then  -- Don't advance writeIndex for leading '/'
+        if writeIndex > 0 or c ~= string_byte("/") then  -- Don't advance writeIndex for leading '/'
             writeIndex = writeIndex + 1
         end
     end
