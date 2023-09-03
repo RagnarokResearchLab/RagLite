@@ -24,6 +24,21 @@ The previous iterations were written in JavaScript and TypeScript, with [Babylon
 
 Work in progress. It's mostly developed in public so that I can use GitHub Actions for automated testing. Note: This is a developer tool and not very advanced. Don't expect too much or you'll be disappointed. I haven't ported over most features from older versions, and likely won't unless someone specifically asks.
 
+## Usage
+
+There isn't much to see yet, but if you want to give it a try:
+
+1. Clone this repository (obviously requires [git](https://git-scm.com/))
+1. Download a relase of the Lua runtime for your platform
+	* Run ``./download-runtime.sh``, or download from [GitHub Releases](https://github.com/evo-lua/evo-runtime/releases)
+	* The required version is usually the latest, but check the above script
+	* You can also build it from source (see [docs](https://evo-lua.github.io/docs/how-to-guides/building-from-source) here; for advanced users)
+1. Copy (or better yet, [symlink](https://en.wikipedia.org/wiki/Symbolic_link)) in a suitable asset container, e.g., `data.grf`
+1. Now you can start one of the core apps, e.g., via `./evo start-client.lua`
+1. Datamining or debugging tools can be run via `./evo Tools/<script>.lua`
+
+A window should pop up with a basic 3D scene being visible. Tools are CLI only.
+
 ## Goals
 
 I'm building this software with the following guidelines in mind:
