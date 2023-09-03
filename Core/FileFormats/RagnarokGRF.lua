@@ -168,12 +168,65 @@ function RagnarokGRF:DecodeFileEntries()
 	self.fileTable.entries = entries
 end
 
+ffi.cdef[[
+  size_t strlen(const char *str);
+  int tolower(int c);
+]]
+
+-- TODO inline all subfuncs
+local function toLowerCase(cstr, len)
+
+	for i = 0, len - 1 do
+		cstr[i] = ffi.C.tolower(cstr[i])
+	end
+end
+
+local function normalizePathSeparators(cstr, len)
+	-- local wasLastCharacterWindowsPathSeparator = false
+	for i = 0, len - 1 do
+		if cstr[i] == string.byte("\\") then
+			cstr[i] =string.byte("/")
+			-- wasLastCharacterWindowsPathSeparator = true
+		else
+			-- wasLastCharacterWindowsPathSeparator = false
+		end
+	end
+end
+
+local function DEBUG(...)
+	-- print(...)
+end
+
 function RagnarokGRF:DecodeFileName(pointerToNullTerminatedStringBytes)
-	local fileName = ffi_string(pointerToNullTerminatedStringBytes)
+	-- Must convert to UTF8 first to avoid operating on codepoints by accident
+	DEBUG("Decoding file name", ffi.string(pointerToNullTerminatedStringBytes))
+	local originalLength = ffi.C.strlen(pointerToNullTerminatedStringBytes)
+	local fileName = self:DecodeMultiByteStringFFI(pointerToNullTerminatedStringBytes)
+	DEBUG("After DecodeMultiByteStringFFI", ffi.string(fileName))
+	local len = tonumber(ffi.C.strlen(fileName))
+
+	-- Windows paths are problematic on other platforms
+	toLowerCase(fileName, len)
+	DEBUG("After toLowerCase", ffi.string(fileName))
+	normalizePathSeparators(fileName, len)
+	DEBUG("After normalizePathSeparators", ffi.string(fileName))
+
+	-- HTTP route handlers may add this (it's unnecessary and not how GRF paths are stored)
+	-- local firstCharacter = fileName:sub(1, 1)
+	-- local isAbsolutePosixPath = (firstCharacter == "/")
+	-- if isAbsolutePosixPath then
+	-- 	fileName = fileName:sub(2)
+	-- end
+
+	-- Not sure why they're even in there - maybe accidentally used \\\\ to escape twice? Weird.
+	-- fileName = fileName:gsub("//", "/")
+
+
+	-- local fileName = ffi_string(pointerToNullTerminatedStringBytes)
 
 	-- Converting to a standardized format ASAP avoids crossplatform and encoding headaches
-	local normalizedFileName = self:GetNormalizedFilePath(fileName)
-	return normalizedFileName, #fileName
+	-- local normalizedFileName = self:GetNormalizedFilePath(fileName)
+	return fileName, originalLength
 end
 
 -- To measure (and optimize) the worst-case decompression time, it'll be convenient to find the largest files easily
@@ -263,6 +316,13 @@ if ffi.os == "Windows" then
 		ffi.C.MultiByteToWideChar(CP949, 0, input, -1, unicodeStr, maxLen)
 		ffi.C.WideCharToMultiByte(CP_UTF8, 0, unicodeStr, -1, outputStr, maxLen, nil, nil)
 		return ffi_string(outputStr)
+	end
+
+	function RagnarokGRF:DecodeMultiByteStringFFI(input)
+		ffi.C.MultiByteToWideChar(CP949, 0, input, -1, unicodeStr, maxLen)
+		ffi.C.WideCharToMultiByte(CP_UTF8, 0, unicodeStr, -1, outputStr, maxLen, nil, nil)
+		-- return ffi_string(outputStr)
+		return outputStr
 	end
 else
 	ffi.cdef([[
