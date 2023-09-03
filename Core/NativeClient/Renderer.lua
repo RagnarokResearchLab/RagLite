@@ -211,9 +211,6 @@ function Renderer:RenderNextFrame()
 	webgpu.bindings.wgpu_swapchain_present(self.wgpuSwapchain)
 end
 
--- local binary_and = bit.band
--- local binary_negation = bit.bnot
-
 function Renderer:UploadGeometry(vertexArray, triangleIndices, colorsRGB)
 	local nanosecondsBeforeUpload = uv.hrtime()
 
