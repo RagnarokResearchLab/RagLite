@@ -17,6 +17,7 @@ local assert = assert
 local ipairs = ipairs
 
 local ffi_new = ffi.new
+local filesize = string.filesize
 
 local Renderer = {
 	cdefs = [[
@@ -33,7 +34,7 @@ local Renderer = {
 	]],
 	clearColorRGBA = { 0.05, 0.05, 0.05, 1.0 },
 	renderPipelines = {},
-	sceneObjects = {},
+	meshes = {},
 }
 
 ffi.cdef(Renderer.cdefs)
@@ -114,8 +115,8 @@ function Renderer:RenderNextFrame()
 	for wgpuRenderPipeline, pipelineConfiguration in pairs(self.renderPipelines) do
 		webgpu.bindings.wgpu_render_pass_encoder_set_pipeline(renderPass, wgpuRenderPipeline)
 
-		for _, bufferInfo in ipairs(self.sceneObjects) do
-			self:DrawSceneObject(renderPass, bufferInfo)
+		for _, mesh in ipairs(self.meshes) do
+			self:DrawMesh(renderPass, mesh)
 		end
 	end
 
@@ -157,30 +158,21 @@ function Renderer:BeginRenderPass(commandEncoder, nextTextureView)
 	return webgpu.bindings.wgpu_command_encoder_begin_render_pass(commandEncoder, renderPassDescriptor)
 end
 
-function Renderer:DrawSceneObject(renderPass, bufferInfo)
-	webgpu.bindings.wgpu_render_pass_encoder_set_vertex_buffer(
-		renderPass,
-		0,
-		bufferInfo.vertexPositionsBuffer,
-		0,
-		bufferInfo.vertexPositionsBufferSize
-	)
-	webgpu.bindings.wgpu_render_pass_encoder_set_vertex_buffer(
-		renderPass,
-		1,
-		bufferInfo.vertexColorsBuffer,
-		0,
-		bufferInfo.vertexColorsBufferSize
-	)
+function Renderer:DrawMesh(renderPass, mesh)
+	local vertexBufferSize = #mesh.vertexPositions * ffi.sizeof("float")
+	local colorBufferSize = #mesh.vertexColors * ffi.sizeof("float")
+	local indexBufferSize = #mesh.triangleConnections * ffi.sizeof("uint16_t")
+
+	webgpu.bindings.wgpu_render_pass_encoder_set_vertex_buffer(renderPass, 0, mesh.vertexBuffer, 0, vertexBufferSize)
+	webgpu.bindings.wgpu_render_pass_encoder_set_vertex_buffer(renderPass, 1, mesh.colorBuffer, 0, colorBufferSize)
 	webgpu.bindings.wgpu_render_pass_encoder_set_index_buffer(
 		renderPass,
-		bufferInfo.triangleIndicesBuffer,
+		mesh.indexBuffer,
 		ffi.C.WGPUIndexFormat_Uint16,
 		0,
-		bufferInfo.triangleIndexBufferSize
+		indexBufferSize
 	)
 
-	-- TBD Only update the fields that have actually changed (i.e., time but not color)?
 	local currentTime = uv.hrtime() / 10E9
 	self.perSceneUniformData.time = currentTime
 	webgpu.bindings.wgpu_queue_write_buffer(
@@ -191,7 +183,6 @@ function Renderer:DrawSceneObject(renderPass, bufferInfo)
 		ffi.sizeof(self.perSceneUniformData)
 	)
 
-	-- webgpu.bindings.wgpu_queue_write_buffer(webgpu.bindings.wgpu_device_get_queue(self.wgpuDevice), self.uniformBuffer, 0, globalClockSeconds, ffi.sizeof("float"))
 	webgpu.bindings.wgpu_render_pass_encoder_set_bind_group(renderPass, 0, self.bindGroup, 0, nil)
 
 	local instanceCount = 1
@@ -200,7 +191,7 @@ function Renderer:DrawSceneObject(renderPass, bufferInfo)
 	local indexBufferOffset = 0
 	webgpu.bindings.wgpu_render_pass_encoder_draw_indexed(
 		renderPass,
-		bufferInfo.triangleIndicesCount,
+		#mesh.triangleConnections,
 		instanceCount,
 		firstVertexIndex,
 		firstInstanceIndex,
@@ -218,79 +209,36 @@ function Renderer:SubmitCommandBuffer(commandEncoder)
 	webgpu.bindings.wgpu_queue_submit(queue, 1, commandBuffers)
 end
 
-function Renderer:UploadGeometry(vertexArray, triangleIndices, colorsRGB)
+function Renderer:UploadMeshGeometry(mesh)
+	local positions = mesh.vertexPositions
+	local colors = mesh.vertexColors
+	local indices = mesh.triangleConnections
+
 	local nanosecondsBeforeUpload = uv.hrtime()
 
-	local vertexPositionsBufferSize = Buffer.GetAlignedSize(#vertexArray * ffi.sizeof("float"))
-	local vertexCount = #vertexArray / 3 -- sizeof(Vector3D)
-	local numVertexColorValues = #colorsRGB / 3
+	local vertexCount = #positions / 3
+	local triangleIndicesCount = #indices
+	local numVertexColors = #colors / 3
+	assert(vertexCount == numVertexColors, "Cannot upload geometry with missing or incomplete vertex colors")
+	assert(triangleIndicesCount % 3 == 0, "Cannot upload geometry with incomplete triangles")
 
-	assert(vertexCount == numVertexColorValues, "Cannot upload geometry with missing or incomplete vertex colors")
+	local vertexBufferSize = #positions * ffi.sizeof("float")
+	printf("Uploading geometry: %d vertex positions (%s)", vertexCount, filesize(vertexBufferSize))
+	local vertexBuffer = Buffer:CreateVertexBuffer(self.wgpuDevice, positions)
 
-	local bufferDescriptor = ffi.new("WGPUBufferDescriptor")
-	bufferDescriptor.size = vertexPositionsBufferSize
-	bufferDescriptor.usage = bit.bor(ffi.C.WGPUBufferUsage_CopyDst, ffi.C.WGPUBufferUsage_Vertex)
-	bufferDescriptor.mappedAtCreation = false
+	local vertexColorsBufferSize = #colors * ffi.sizeof("float")
+	printf("Uploading geometry: %d vertex colors (%s)", numVertexColors, filesize(vertexColorsBufferSize))
+	local vertexColorsBuffer = Buffer:CreateVertexBuffer(self.wgpuDevice, colors)
 
-	local vertexPositionsBuffer = webgpu.bindings.wgpu_device_create_buffer(self.wgpuDevice, bufferDescriptor)
-	printf(
-		"Uploading geometry: %d vertex positions (total buffer size: %s)",
-		vertexCount,
-		string.filesize(vertexPositionsBufferSize)
-	)
-	webgpu.bindings.wgpu_queue_write_buffer(
-		webgpu.bindings.wgpu_device_get_queue(self.wgpuDevice),
-		vertexPositionsBuffer,
-		0,
-		ffi.new("float[?]", vertexPositionsBufferSize, vertexArray),
-		vertexPositionsBufferSize
-	)
+	local triangleIndexBufferSize = #indices * ffi.sizeof("uint16_t")
+	printf("Uploading geometry: %d triangle indices (%s)", triangleIndicesCount, filesize(triangleIndexBufferSize))
+	local triangleIndicesBuffer = Buffer:CreateIndexBuffer(self.wgpuDevice, indices)
 
-	local vertexColorsBufferSize = Buffer.GetAlignedSize(#colorsRGB * ffi.sizeof("float")) -- sizeof (ColorRGB)
-	bufferDescriptor.size = vertexColorsBufferSize
-	local vertexColorsBuffer = webgpu.bindings.wgpu_device_create_buffer(self.wgpuDevice, bufferDescriptor)
-	printf(
-		"Uploading geometry: %d vertex colors (total buffer size: %s)",
-		numVertexColorValues,
-		string.filesize(vertexColorsBufferSize)
-	)
-	webgpu.bindings.wgpu_queue_write_buffer(
-		webgpu.bindings.wgpu_device_get_queue(self.wgpuDevice),
-		vertexColorsBuffer,
-		0,
-		ffi.new("float[?]", vertexColorsBufferSize, colorsRGB),
-		vertexColorsBufferSize
-	)
+	mesh.vertexBuffer = vertexBuffer
+	mesh.colorBuffer = vertexColorsBuffer
+	mesh.indexBuffer = triangleIndicesBuffer
 
-	-- TODO A writeBuffer operation must copy a number of bytes that is a multiple of 4. To ensure so we can switch bufferDesc.size for (bufferDesc.size + 3) & ~4.
-	bufferDescriptor.usage = bit.bor(ffi.C.WGPUBufferUsage_CopyDst, ffi.C.WGPUBufferUsage_Index)
-	local triangleIndicesBuffer = webgpu.bindings.wgpu_device_create_buffer(self.wgpuDevice, bufferDescriptor)
-	local triangleIndicesCount = #triangleIndices
-	local triangleIndexBufferSize = Buffer.GetAlignedSize(#triangleIndices * ffi.sizeof("uint16_t"))
-	bufferDescriptor.size = triangleIndexBufferSize
-	printf(
-		"Uploading geometry: %d triangle indices (total buffer size: %s)",
-		triangleIndicesCount,
-		string.filesize(triangleIndexBufferSize)
-	)
-	webgpu.bindings.wgpu_queue_write_buffer(
-		webgpu.bindings.wgpu_device_get_queue(self.wgpuDevice),
-		triangleIndicesBuffer,
-		0,
-		ffi.new("uint16_t[?]", triangleIndexBufferSize, triangleIndices),
-		triangleIndexBufferSize
-	)
-
-	table.insert(self.sceneObjects, {
-		vertexPositionsBuffer = vertexPositionsBuffer,
-		vertexPositionsBufferSize = vertexPositionsBufferSize,
-		vertexCount = vertexCount, -- Obsolete if using draw_indexed?
-		vertexColorsBuffer = vertexColorsBuffer,
-		vertexColorsBufferSize = vertexColorsBufferSize,
-		triangleIndicesBuffer = triangleIndicesBuffer,
-		triangleIndexBufferSize = triangleIndexBufferSize,
-		triangleIndicesCount = triangleIndicesCount,
-	})
+	table.insert(self.meshes, mesh)
 
 	local nanosecondsAfterUpload = uv.hrtime()
 	local uploadTimeInMilliseconds = (nanosecondsAfterUpload - nanosecondsBeforeUpload) / 10E5
