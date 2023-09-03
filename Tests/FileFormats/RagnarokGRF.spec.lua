@@ -263,4 +263,31 @@ describe("RagnarokGRF", function()
 			assertEquals(RagnarokGRF:GetNormalizedFilePath("hello\\\\world.txt"), "hello/world.txt")
 		end)
 	end)
+
+	describe("DecodeFileName", function()
+		local grf = RagnarokGRF()
+		it("should convert EUC-KR names to UTF8", function()
+			assertEquals(
+				grf:DecodeFileName("\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA.txt"),
+				"유저인터페이스.txt"
+			)
+		end)
+
+		it("should convert upper-case to lower-case characters", function()
+			assertEquals(grf:DecodeFileName("TEST.BMP"), "test.bmp")
+		end)
+
+		it("should remove leading path separators", function()
+			-- These are added by the HTTP route handler, but they're useless for path lookups
+			assertEquals(grf:DecodeFileName("/hello/world.txt"), "hello/world.txt")
+		end)
+
+		it("should replace Windows path separators with POSIX ones", function()
+			assertEquals(grf:DecodeFileName("hello\\world.txt"), "hello/world.txt")
+		end)
+
+		it("should remove duplicate path separators", function()
+			assertEquals(grf:DecodeFileName("hello\\\\world.txt"), "hello/world.txt")
+		end)
+	end)
 end)
