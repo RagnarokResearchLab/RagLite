@@ -50,42 +50,42 @@ function Renderer:CreateGraphicsContext(nativeWindowHandle)
 
 	local instance, instanceDescriptor = gpu.createInstance()
 	local adapter = gpu.requestAdapter(instance, nativeWindowHandle)
-	local logicalDevice, deviceDescriptor = gpu.requestLogicalDevice(adapter)
+	local device, deviceDescriptor = gpu.requestLogicalDevice(adapter)
 
-	local context = {
-		instance = instance,
-		instanceDescriptor = instanceDescriptor,
-		adapter = adapter,
-		device = logicalDevice,
-		deviceDescriptor = deviceDescriptor,
-	}
-	self.context = context
+	-- GC anchors for cdata (must be kept alive for the entire lifetime of the app)
+	self.wgpuInstance = instance
+	self.wgpuInstanceDescriptor = instanceDescriptor
+	self.wgpuAdapter = adapter
+	self.wgpuDevice = device
+	self.wgpuDeviceDescriptor = deviceDescriptor
 
 	-- Updates to the backing window should be pushed via events, so only store the result here
-	self.wgpuSurface = glfw.bindings.glfw_get_wgpu_surface(context.instance, nativeWindowHandle)
+	self.wgpuSurface = glfw.bindings.glfw_get_wgpu_surface(instance, nativeWindowHandle)
 	self.viewportWidth, self.viewportHeight = self:GetViewportSize(nativeWindowHandle)
 
 	-- In order to support window resizing, we'll need to re-create this on the fly (later)
-	context.swapChain = self:CreateSwapchain(context)
+	self:CreateSwapchain()
 end
 
-function Renderer:CreateSwapchain(context)
+function Renderer:CreateSwapchain()
 	local swapChainDescriptor = ffi.new("WGPUSwapChainDescriptor")
 
 	-- The underlying framebuffer may be different if DPI scaling is applied, but let's ignore that for now
 	swapChainDescriptor.width = self.viewportWidth
 	swapChainDescriptor.height = self.viewportHeight
 
-	local textureFormat = webgpu.bindings.wgpu_surface_get_preferred_format(self.wgpuSurface, context.adapter)
+	local textureFormat = webgpu.bindings.wgpu_surface_get_preferred_format(self.wgpuSurface, self.wgpuAdapter)
 
-	print("Using preferred swap chain texture format:", tonumber(textureFormat))
+	printf("Creating swap chain with preferred texture format: %d", tonumber(textureFormat))
 	assert(textureFormat == ffi.C.WGPUTextureFormat_BGRA8UnormSrgb, "Only sRGB texture formats are currently supported")
 
 	swapChainDescriptor.format = textureFormat
 	swapChainDescriptor.usage = ffi.C.WGPUTextureUsage_RenderAttachment
 	swapChainDescriptor.presentMode = ffi.C.WGPUPresentMode_Fifo
 
-	return webgpu.bindings.wgpu_device_create_swapchain(context.device, self.wgpuSurface, swapChainDescriptor)
+	self.wgpuSwapchain =
+		webgpu.bindings.wgpu_device_create_swapchain(self.wgpuDevice, self.wgpuSurface, swapChainDescriptor)
+	self.wgpuSwapchainDescriptor = swapChainDescriptor
 end
 
 function Renderer:CreatePipelineConfigurations()
@@ -95,7 +95,6 @@ function Renderer:CreatePipelineConfigurations()
 end
 
 function Renderer:CreateBasicTriangleDrawingPipeline()
-	local graphicsContext = self.context
 	local descriptor = ffi.new("WGPURenderPipelineDescriptor")
 	local pipelineDesc = descriptor
 
@@ -109,7 +108,7 @@ function Renderer:CreateBasicTriangleDrawingPipeline()
 	shaderCodeDesc.code = shaderSource
 
 	-- timer.start("Compiling shaders")
-	local shaderModule = webgpu.bindings.wgpu_device_create_shader_module(graphicsContext.device, shaderDesc)
+	local shaderModule = webgpu.bindings.wgpu_device_create_shader_module(self.wgpuDevice, shaderDesc)
 	-- timer.stop("Compiling shaders")
 
 	-- Configure vertex processing pipeline (vertex fetch/vertex shader stages)
@@ -157,7 +156,7 @@ function Renderer:CreateBasicTriangleDrawingPipeline()
 	-- Configure alpha blending pipeline (blending stage)
 	local blendState = ffi.new("WGPUBlendState")
 	local colorTarget = ffi.new("WGPUColorTargetState")
-	colorTarget.format = webgpu.bindings.wgpu_surface_get_preferred_format(self.wgpuSurface, graphicsContext.adapter)
+	colorTarget.format = webgpu.bindings.wgpu_surface_get_preferred_format(self.wgpuSurface, self.wgpuAdapter)
 	colorTarget.blend = blendState
 	colorTarget.writeMask = ffi.C.WGPUColorWriteMask_All
 
@@ -205,8 +204,7 @@ function Renderer:CreateBasicTriangleDrawingPipeline()
 	-- bindGroupLayoutDesc.nextInChain = nullptr
 	bindGroupLayoutDesc.entryCount = 1
 	bindGroupLayoutDesc.entries = bindingLayout
-	local bindGroupLayout =
-		webgpu.bindings.wgpu_device_create_bind_group_layout(graphicsContext.device, bindGroupLayoutDesc)
+	local bindGroupLayout = webgpu.bindings.wgpu_device_create_bind_group_layout(self.wgpuDevice, bindGroupLayoutDesc)
 	self.bindGroupLayoutDesc = bindGroupLayoutDesc
 
 	local layoutDesc = ffi.new("WGPUPipelineLayoutDescriptor")
@@ -215,7 +213,7 @@ function Renderer:CreateBasicTriangleDrawingPipeline()
 	local bindGroupLayouts = ffi.new("WGPUBindGroupLayout[?]", 1)
 	bindGroupLayouts[0] = bindGroupLayout
 	layoutDesc.bindGroupLayouts = bindGroupLayouts
-	local layout = webgpu.bindings.wgpu_device_create_pipeline_layout(graphicsContext.device, layoutDesc)
+	local layout = webgpu.bindings.wgpu_device_create_pipeline_layout(self.wgpuDevice, layoutDesc)
 	pipelineDesc.layout = layout
 
 	self.bindGroupLayout = bindGroupLayout
@@ -242,20 +240,17 @@ function Renderer:CreateBasicTriangleDrawingPipeline()
 	depthStencilState.stencilBack.passOp = ffi.C.WGPUStencilOperation_Keep
 	pipelineDesc.depthStencil = depthStencilState
 
-	return webgpu.bindings.wgpu_device_create_render_pipeline(graphicsContext.device, descriptor)
+	return webgpu.bindings.wgpu_device_create_render_pipeline(self.wgpuDevice, descriptor)
 end
 
 function Renderer:RenderNextFrame()
-	local graphicsContext = self.context
-	local logicalDevice = graphicsContext.device
-	local swapChain = graphicsContext.swapChain
-	local nextTextureView = webgpu.bindings.wgpu_swapchain_get_current_texture_view(swapChain)
+	local nextTextureView = webgpu.bindings.wgpu_swapchain_get_current_texture_view(self.wgpuSwapchain)
 
 	-- Since resizing isn't yet supported, fail loudly if somehow that is actually done (i.e., not prevented by GLFW)
 	assert(nextTextureView, "Cannot acquire next swap chain texture (window surface has changed?)")
 
 	local commandEncoderDescriptor = ffi_new("WGPUCommandEncoderDescriptor")
-	local commandEncoder = webgpu.bindings.wgpu_device_create_command_encoder(logicalDevice, commandEncoderDescriptor)
+	local commandEncoder = webgpu.bindings.wgpu_device_create_command_encoder(self.wgpuDevice, commandEncoderDescriptor)
 
 	local renderPassDescriptor = ffi_new("WGPURenderPassDescriptor")
 
@@ -320,14 +315,14 @@ function Renderer:RenderNextFrame()
 			local currentTime = uv.hrtime() / 10E9
 			self.perSceneUniformData.time = currentTime
 			webgpu.bindings.wgpu_queue_write_buffer(
-				webgpu.bindings.wgpu_device_get_queue(graphicsContext.device),
+				webgpu.bindings.wgpu_device_get_queue(self.wgpuDevice),
 				self.uniformBuffer,
 				0,
 				self.perSceneUniformData,
 				ffi.sizeof(self.perSceneUniformData)
 			)
 
-			-- webgpu.bindings.wgpu_queue_write_buffer(webgpu.bindings.wgpu_device_get_queue(graphicsContext.device), self.uniformBuffer, 0, globalClockSeconds, ffi.sizeof("float"))
+			-- webgpu.bindings.wgpu_queue_write_buffer(webgpu.bindings.wgpu_device_get_queue(self.wgpuDevice), self.uniformBuffer, 0, globalClockSeconds, ffi.sizeof("float"))
 			webgpu.bindings.wgpu_render_pass_encoder_set_bind_group(renderPass, 0, self.bindGroup, 0, nil)
 
 			local instanceCount = 1
@@ -350,20 +345,19 @@ function Renderer:RenderNextFrame()
 	local commandBufferDescriptor = ffi_new("WGPUCommandBufferDescriptor")
 	local commandBuffer = webgpu.bindings.wgpu_command_encoder_finish(commandEncoder, commandBufferDescriptor)
 
-	local queue = webgpu.bindings.wgpu_device_get_queue(logicalDevice)
+	local queue = webgpu.bindings.wgpu_device_get_queue(self.wgpuDevice)
 
 	-- The WebGPU API expects an array here, but currently this renderer only supports a single buffer (to keep things simple)
 	local commandBuffers = ffi_new("WGPUCommandBuffer[1]", commandBuffer)
 	webgpu.bindings.wgpu_queue_submit(queue, 1, commandBuffers)
 
-	webgpu.bindings.wgpu_swapchain_present(swapChain)
+	webgpu.bindings.wgpu_swapchain_present(self.wgpuSwapchain)
 end
 
 -- local binary_and = bit.band
 -- local binary_negation = bit.bnot
 
 function Renderer:UploadGeometry(vertexArray, triangleIndices, colorsRGB)
-	local graphicsContext = self.context
 	local nanosecondsBeforeUpload = uv.hrtime()
 
 	local vertexPositionsBufferSize = Buffer.GetAlignedSize(#vertexArray * ffi.sizeof("float"))
@@ -377,14 +371,14 @@ function Renderer:UploadGeometry(vertexArray, triangleIndices, colorsRGB)
 	bufferDescriptor.usage = bit.bor(ffi.C.WGPUBufferUsage_CopyDst, ffi.C.WGPUBufferUsage_Vertex)
 	bufferDescriptor.mappedAtCreation = false
 
-	local vertexPositionsBuffer = webgpu.bindings.wgpu_device_create_buffer(graphicsContext.device, bufferDescriptor)
+	local vertexPositionsBuffer = webgpu.bindings.wgpu_device_create_buffer(self.wgpuDevice, bufferDescriptor)
 	printf(
 		"Uploading geometry: %d vertex positions (total buffer size: %s)",
 		vertexCount,
 		string.filesize(vertexPositionsBufferSize)
 	)
 	webgpu.bindings.wgpu_queue_write_buffer(
-		webgpu.bindings.wgpu_device_get_queue(graphicsContext.device),
+		webgpu.bindings.wgpu_device_get_queue(self.wgpuDevice),
 		vertexPositionsBuffer,
 		0,
 		ffi.new("float[?]", vertexPositionsBufferSize, vertexArray),
@@ -393,14 +387,14 @@ function Renderer:UploadGeometry(vertexArray, triangleIndices, colorsRGB)
 
 	local vertexColorsBufferSize = Buffer.GetAlignedSize(#colorsRGB * ffi.sizeof("float")) -- sizeof (ColorRGB)
 	bufferDescriptor.size = vertexColorsBufferSize
-	local vertexColorsBuffer = webgpu.bindings.wgpu_device_create_buffer(graphicsContext.device, bufferDescriptor)
+	local vertexColorsBuffer = webgpu.bindings.wgpu_device_create_buffer(self.wgpuDevice, bufferDescriptor)
 	printf(
 		"Uploading geometry: %d vertex colors (total buffer size: %s)",
 		numVertexColorValues,
 		string.filesize(vertexColorsBufferSize)
 	)
 	webgpu.bindings.wgpu_queue_write_buffer(
-		webgpu.bindings.wgpu_device_get_queue(graphicsContext.device),
+		webgpu.bindings.wgpu_device_get_queue(self.wgpuDevice),
 		vertexColorsBuffer,
 		0,
 		ffi.new("float[?]", vertexColorsBufferSize, colorsRGB),
@@ -409,7 +403,7 @@ function Renderer:UploadGeometry(vertexArray, triangleIndices, colorsRGB)
 
 	-- TODO A writeBuffer operation must copy a number of bytes that is a multiple of 4. To ensure so we can switch bufferDesc.size for (bufferDesc.size + 3) & ~4.
 	bufferDescriptor.usage = bit.bor(ffi.C.WGPUBufferUsage_CopyDst, ffi.C.WGPUBufferUsage_Index)
-	local triangleIndicesBuffer = webgpu.bindings.wgpu_device_create_buffer(graphicsContext.device, bufferDescriptor)
+	local triangleIndicesBuffer = webgpu.bindings.wgpu_device_create_buffer(self.wgpuDevice, bufferDescriptor)
 	local triangleIndicesCount = #triangleIndices
 	local triangleIndexBufferSize = Buffer.GetAlignedSize(#triangleIndices * ffi.sizeof("uint16_t"))
 	bufferDescriptor.size = triangleIndexBufferSize
@@ -419,7 +413,7 @@ function Renderer:UploadGeometry(vertexArray, triangleIndices, colorsRGB)
 		string.filesize(triangleIndexBufferSize)
 	)
 	webgpu.bindings.wgpu_queue_write_buffer(
-		webgpu.bindings.wgpu_device_get_queue(graphicsContext.device),
+		webgpu.bindings.wgpu_device_get_queue(self.wgpuDevice),
 		triangleIndicesBuffer,
 		0,
 		ffi.new("uint16_t[?]", triangleIndexBufferSize, triangleIndices),
@@ -443,13 +437,12 @@ function Renderer:UploadGeometry(vertexArray, triangleIndices, colorsRGB)
 end
 
 function Renderer:CreateUniformBuffer()
-	local graphicsContext = self.context
 	local bufferDescriptor = ffi.new("WGPUBufferDescriptor")
 	bufferDescriptor.size = ffi.sizeof("scenewide_uniform_t")
 	bufferDescriptor.usage = bit.bor(ffi.C.WGPUBufferUsage_CopyDst, ffi.C.WGPUBufferUsage_Uniform)
 	bufferDescriptor.mappedAtCreation = false
 
-	local uniformBuffer = webgpu.bindings.wgpu_device_create_buffer(graphicsContext.device, bufferDescriptor)
+	local uniformBuffer = webgpu.bindings.wgpu_device_create_buffer(self.wgpuDevice, bufferDescriptor)
 
 	self.perSceneUniformData = ffi.new("scenewide_uniform_t")
 
@@ -464,14 +457,13 @@ function Renderer:CreateUniformBuffer()
 	bindGroupDesc.layout = self.bindGroupLayout
 	bindGroupDesc.entryCount = self.bindGroupLayoutDesc.entryCount
 	bindGroupDesc.entries = binding
-	local bindGroup = webgpu.bindings.wgpu_device_create_bind_group(graphicsContext.device, bindGroupDesc)
+	local bindGroup = webgpu.bindings.wgpu_device_create_bind_group(self.wgpuDevice, bindGroupDesc)
 	self.bindGroup = bindGroup
 
 	self.uniformBuffer = uniformBuffer
 end
 
 function Renderer:UpdateUniformBuffer()
-	local graphicsContext = self.context
 	local aspectRatio = self.viewportWidth / self.viewportHeight
 
 	local currentTime = uv.hrtime() / 10E9
@@ -488,7 +480,7 @@ function Renderer:UpdateUniformBuffer()
 	perSceneUniformData.color = ffi.new("float[4]", { 1.0, 1.0, 1.0, 1.0 })
 
 	webgpu.bindings.wgpu_queue_write_buffer(
-		webgpu.bindings.wgpu_device_get_queue(graphicsContext.device),
+		webgpu.bindings.wgpu_device_get_queue(self.wgpuDevice),
 		self.uniformBuffer,
 		0,
 		perSceneUniformData,
@@ -497,8 +489,6 @@ function Renderer:UpdateUniformBuffer()
 end
 
 function Renderer:EnableDepthBuffer()
-	local graphicsContext = self.context
-
 	-- Create the depth texture
 	local depthTextureDesc = ffi.new("WGPUTextureDescriptor")
 	depthTextureDesc.dimension = ffi.C.WGPUTextureDimension_2D
@@ -513,7 +503,7 @@ function Renderer:EnableDepthBuffer()
 	depthTextureDesc.usage = ffi.C.WGPUTextureUsage_RenderAttachment
 	depthTextureDesc.viewFormatCount = 1
 	depthTextureDesc.viewFormats = ffi.new("WGPUTextureFormat[1]", ffi.C.WGPUTextureFormat_Depth24Plus)
-	local depthTexture = webgpu.bindings.wgpu_device_create_texture(graphicsContext.device, depthTextureDesc)
+	local depthTexture = webgpu.bindings.wgpu_device_create_texture(self.wgpuDevice, depthTextureDesc)
 
 	-- Create the view of the depth texture manipulated by the rasterizer
 	local depthTextureViewDesc = ffi.new("WGPUTextureViewDescriptor")
