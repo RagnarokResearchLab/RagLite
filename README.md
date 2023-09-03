@@ -22,7 +22,9 @@ The previous iterations were written in JavaScript and TypeScript, with [Babylon
 
 ## Status
 
-Work in progress. It's mostly developed in public so that I can use GitHub Actions for automated testing. Note: This is a developer tool and not very advanced. Don't expect too much or you'll be disappointed. I haven't ported over most features from older versions, and likely won't unless someone specifically asks.
+Work in progress. It's mostly developed in public so that I can use GitHub Actions for automated testing. Note: This is a developer tool and not very advanced. Don't expect too much or you'll be disappointed. I haven't ported over most features from older versions, and likely won't add things I no longer need unless someone specifically asks.
+
+If you want to follow the development more closely, check out the [roadmap](https://github.com/orgs/RagnarokResearchLab/projects/2) (includes both my documentation work and tools). To view the implementation status, [milestones](https://github.com/RagnarokResearchLab/RagLite/milestones) are your best bet - although they're necessarily incomplete.
 
 ## Usage
 
