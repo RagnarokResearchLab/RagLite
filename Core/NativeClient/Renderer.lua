@@ -101,14 +101,30 @@ function Renderer:CreatePipelineConfigurations()
 end
 
 function Renderer:RenderNextFrame()
-	local nextTextureView = webgpu.bindings.wgpu_swapchain_get_current_texture_view(self.wgpuSwapchain)
-
 	-- Since resizing isn't yet supported, fail loudly if somehow that is actually done (i.e., not prevented by GLFW)
+	local nextTextureView = webgpu.bindings.wgpu_swapchain_get_current_texture_view(self.wgpuSwapchain)
 	assert(nextTextureView, "Cannot acquire next swap chain texture (window surface has changed?)")
 
 	local commandEncoderDescriptor = ffi_new("WGPUCommandEncoderDescriptor")
 	local commandEncoder = webgpu.bindings.wgpu_device_create_command_encoder(self.wgpuDevice, commandEncoderDescriptor)
+	local renderPass = self:BeginRenderPass(commandEncoder, nextTextureView)
 
+	self:UpdateUniformBuffer()
+
+	for wgpuRenderPipeline, pipelineConfiguration in pairs(self.renderPipelines) do
+		webgpu.bindings.wgpu_render_pass_encoder_set_pipeline(renderPass, wgpuRenderPipeline)
+
+		for _, bufferInfo in ipairs(self.sceneObjects) do
+			self:DrawSceneObject(renderPass, bufferInfo)
+		end
+	end
+
+	webgpu.bindings.wgpu_render_pass_encoder_end(renderPass)
+	self:SubmitCommandBuffer(commandEncoder)
+	webgpu.bindings.wgpu_swapchain_present(self.wgpuSwapchain)
+end
+
+function Renderer:BeginRenderPass(commandEncoder, nextTextureView)
 	local renderPassDescriptor = ffi_new("WGPURenderPassDescriptor")
 
 	-- Clearing is a built-in mechanism of the render pass
@@ -138,77 +154,68 @@ function Renderer:RenderNextFrame()
 
 	renderPassDescriptor.depthStencilAttachment = depthStencilAttachment
 
-	local renderPass = webgpu.bindings.wgpu_command_encoder_begin_render_pass(commandEncoder, renderPassDescriptor)
+	return webgpu.bindings.wgpu_command_encoder_begin_render_pass(commandEncoder, renderPassDescriptor)
+end
 
-	self:UpdateUniformBuffer()
+function Renderer:DrawSceneObject(renderPass, bufferInfo)
+	webgpu.bindings.wgpu_render_pass_encoder_set_vertex_buffer(
+		renderPass,
+		0,
+		bufferInfo.vertexPositionsBuffer,
+		0,
+		bufferInfo.vertexPositionsBufferSize
+	)
+	webgpu.bindings.wgpu_render_pass_encoder_set_vertex_buffer(
+		renderPass,
+		1,
+		bufferInfo.vertexColorsBuffer,
+		0,
+		bufferInfo.vertexColorsBufferSize
+	)
+	webgpu.bindings.wgpu_render_pass_encoder_set_index_buffer(
+		renderPass,
+		bufferInfo.triangleIndicesBuffer,
+		ffi.C.WGPUIndexFormat_Uint16,
+		0,
+		bufferInfo.triangleIndexBufferSize
+	)
 
-	for wgpuRenderPipeline, pipelineConfiguration in pairs(self.renderPipelines) do
-		webgpu.bindings.wgpu_render_pass_encoder_set_pipeline(renderPass, wgpuRenderPipeline)
+	-- TBD Only update the fields that have actually changed (i.e., time but not color)?
+	local currentTime = uv.hrtime() / 10E9
+	self.perSceneUniformData.time = currentTime
+	webgpu.bindings.wgpu_queue_write_buffer(
+		webgpu.bindings.wgpu_device_get_queue(self.wgpuDevice),
+		self.uniformBuffer,
+		0,
+		self.perSceneUniformData,
+		ffi.sizeof(self.perSceneUniformData)
+	)
 
-		for _, bufferInfo in ipairs(self.sceneObjects) do
-			webgpu.bindings.wgpu_render_pass_encoder_set_vertex_buffer(
-				renderPass,
-				0,
-				bufferInfo.vertexPositionsBuffer,
-				0,
-				bufferInfo.vertexPositionsBufferSize
-			)
-			webgpu.bindings.wgpu_render_pass_encoder_set_vertex_buffer(
-				renderPass,
-				1,
-				bufferInfo.vertexColorsBuffer,
-				0,
-				bufferInfo.vertexColorsBufferSize
-			)
-			webgpu.bindings.wgpu_render_pass_encoder_set_index_buffer(
-				renderPass,
-				bufferInfo.triangleIndicesBuffer,
-				ffi.C.WGPUIndexFormat_Uint16,
-				0,
-				bufferInfo.triangleIndexBufferSize
-			)
+	-- webgpu.bindings.wgpu_queue_write_buffer(webgpu.bindings.wgpu_device_get_queue(self.wgpuDevice), self.uniformBuffer, 0, globalClockSeconds, ffi.sizeof("float"))
+	webgpu.bindings.wgpu_render_pass_encoder_set_bind_group(renderPass, 0, self.bindGroup, 0, nil)
 
-			-- TBD Only update the fields that have actually changed (i.e., time but not color)?
-			local currentTime = uv.hrtime() / 10E9
-			self.perSceneUniformData.time = currentTime
-			webgpu.bindings.wgpu_queue_write_buffer(
-				webgpu.bindings.wgpu_device_get_queue(self.wgpuDevice),
-				self.uniformBuffer,
-				0,
-				self.perSceneUniformData,
-				ffi.sizeof(self.perSceneUniformData)
-			)
+	local instanceCount = 1
+	local firstVertexIndex = 0
+	local firstInstanceIndex = 0
+	local indexBufferOffset = 0
+	webgpu.bindings.wgpu_render_pass_encoder_draw_indexed(
+		renderPass,
+		bufferInfo.triangleIndicesCount,
+		instanceCount,
+		firstVertexIndex,
+		firstInstanceIndex,
+		indexBufferOffset
+	)
+end
 
-			-- webgpu.bindings.wgpu_queue_write_buffer(webgpu.bindings.wgpu_device_get_queue(self.wgpuDevice), self.uniformBuffer, 0, globalClockSeconds, ffi.sizeof("float"))
-			webgpu.bindings.wgpu_render_pass_encoder_set_bind_group(renderPass, 0, self.bindGroup, 0, nil)
-
-			local instanceCount = 1
-			local firstVertexIndex = 0
-			local firstInstanceIndex = 0
-			local indexBufferOffset = 0
-			webgpu.bindings.wgpu_render_pass_encoder_draw_indexed(
-				renderPass,
-				bufferInfo.triangleIndicesCount,
-				instanceCount,
-				firstVertexIndex,
-				firstInstanceIndex,
-				indexBufferOffset
-			)
-		end
-	end
-
-	webgpu.bindings.wgpu_render_pass_encoder_end(renderPass)
-
+function Renderer:SubmitCommandBuffer(commandEncoder)
 	local commandBufferDescriptor = ffi_new("WGPUCommandBufferDescriptor")
 	local commandBuffer = webgpu.bindings.wgpu_command_encoder_finish(commandEncoder, commandBufferDescriptor)
 
-	local queue = webgpu.bindings.wgpu_device_get_queue(self.wgpuDevice)
-
 	-- The WebGPU API expects an array here, but currently this renderer only supports a single buffer (to keep things simple)
+	local queue = webgpu.bindings.wgpu_device_get_queue(self.wgpuDevice)
 	local commandBuffers = ffi_new("WGPUCommandBuffer[1]", commandBuffer)
 	webgpu.bindings.wgpu_queue_submit(queue, 1, commandBuffers)
-
-	webgpu.bindings.wgpu_swapchain_present(self.wgpuSwapchain)
 end
 
 function Renderer:UploadGeometry(vertexArray, triangleIndices, colorsRGB)
