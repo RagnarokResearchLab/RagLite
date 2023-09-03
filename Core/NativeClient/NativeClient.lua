@@ -11,16 +11,12 @@ local tonumber = tonumber
 
 local NativeClient = {
 	mainWindow = nil,
-	graphicsContext = nil,
 	deferredEventQueue = nil,
 }
 
 function NativeClient:Start()
 	self.mainWindow = self:CreateMainWindow()
-	self.graphicsContext = Renderer:CreateGraphicsContext(self.mainWindow)
-	Renderer:CreatePipelineConfigurations(self.graphicsContext)
-	Renderer:CreateUniformBuffer(self.graphicsContext)
-	Renderer:EnableDepthBuffer(self.graphicsContext)
+	Renderer:InitializeWithGLFW(self.mainWindow)
 
 	-- Hardcoded for now, replace with actual geometry later
 	local PYRAMID_VERTEX_COUNT = 5
@@ -263,7 +259,7 @@ function NativeClient:Start()
 		PYRAMID_VERTEX_COUNT + 2 * ARROWHEAD_VERTEX_COUNT + 14,
 	}
 
-	Renderer:UploadGeometry(self.graphicsContext, vertexPositions, triangleIndices, vertexColorsRGB)
+	Renderer:UploadGeometry(vertexPositions, triangleIndices, vertexColorsRGB)
 
 	self:StartRenderLoop()
 end
@@ -317,7 +313,7 @@ function NativeClient:StartRenderLoop()
 	while glfw.bindings.glfw_window_should_close(self.mainWindow) == 0 do
 		glfw.bindings.glfw_poll_events()
 		self:ProcessWindowEvents()
-		Renderer:RenderNextFrame(self.graphicsContext)
+		Renderer:RenderNextFrame()
 	end
 end
 
