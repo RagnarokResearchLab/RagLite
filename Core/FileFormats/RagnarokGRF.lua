@@ -222,13 +222,13 @@ function RagnarokGRF:DecodeFileName(pointerToNullTerminatedStringBytes)
 	iconvConversionBuffer:commit(numBytesWritten)
 
 	-- local decodedFileName = tostring(iconvConversionBuffer)
-    -- local decodedLength = #iconvConversionBuffer
+    ptr, len = iconvConversionBuffer:ref()
 	-- DEBUG("Decoded file name", ffi_string(decodedFileName), decodedLength)
 
-    -- toLowerCase(iconvConversionBuffer, decodedLength)
+    toLowerCase(ptr, len)
 	-- DEBUG("Lower-cased file name", ffi_string(decodedFileName), decodedLength)
 
-    -- normalizePathSeparators(decodedFileName, decodedLength)
+    normalizePathSeparators(ptr, len)
 	-- DEBUG("Normalized file name", ffi_string(decodedFileName), decodedLength)
 
     return tostring(iconvConversionBuffer), originalLength
