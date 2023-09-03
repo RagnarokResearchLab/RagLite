@@ -222,8 +222,7 @@ function RagnarokGRF:DecodeFileName(pointerToNullTerminatedStringBytes)
     normalizePathSeparators(decodedFileName, decodedLength)
 	-- DEBUG("Normalized file name", ffi_string(decodedFileName), decodedLength)
 
-    -- return ffi_string(decodedFileName), originalLength
-	return decodedFileName, originalLength
+    return ffi_string(decodedFileName), originalLength
 end
 
 -- To measure (and optimize) the worst-case decompression time, it'll be convenient to find the largest files easily
