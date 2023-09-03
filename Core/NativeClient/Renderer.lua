@@ -63,7 +63,7 @@ function Renderer:CreateGraphicsContext(nativeWindowHandle)
 
 	-- Updates to the backing window should be pushed via events, so only store the result here
 	self.wgpuSurface = glfw.bindings.glfw_get_wgpu_surface(context.instance, nativeWindowHandle)
-	self.viewportWidth, self.viewportHeight = self:GetSurfaceDimensions(nativeWindowHandle)
+	self.viewportWidth, self.viewportHeight = self:GetViewportSize(nativeWindowHandle)
 
 	-- In order to support window resizing, we'll need to re-create this on the fly (later)
 	context.swapChain = self:CreateSwapchain(context)
@@ -529,7 +529,7 @@ function Renderer:EnableDepthBuffer()
 	self.depthTextureView = depthTextureView
 end
 
-function Renderer:GetSurfaceDimensions(nativeWindowHandle)
+function Renderer:GetViewportSize(nativeWindowHandle)
 	-- Should probably differentiate between window and frame buffer here for high-DPI (later)
 	local contentWidthInPixels = ffi.new("int[1]")
 	local contentHeightInPixels = ffi.new("int[1]")
