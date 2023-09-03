@@ -52,6 +52,7 @@ function Renderer:CreateGraphicsContext(nativeWindowHandle)
 	local adapter = gpu.requestAdapter(instance, nativeWindowHandle)
 	local logicalDevice, deviceDescriptor = gpu.requestLogicalDevice(adapter)
 
+	-- GC anchors for cdata (must be kept alive for the entire lifetime of the app)
 	local context = {
 		instance = instance,
 		instanceDescriptor = instanceDescriptor,
@@ -66,10 +67,11 @@ function Renderer:CreateGraphicsContext(nativeWindowHandle)
 	self.viewportWidth, self.viewportHeight = self:GetViewportSize(nativeWindowHandle)
 
 	-- In order to support window resizing, we'll need to re-create this on the fly (later)
-	context.swapChain = self:CreateSwapchain(context)
+	self:CreateSwapchain()
 end
 
-function Renderer:CreateSwapchain(context)
+function Renderer:CreateSwapchain()
+	local context = self.context
 	local swapChainDescriptor = ffi.new("WGPUSwapChainDescriptor")
 
 	-- The underlying framebuffer may be different if DPI scaling is applied, but let's ignore that for now
@@ -78,14 +80,15 @@ function Renderer:CreateSwapchain(context)
 
 	local textureFormat = webgpu.bindings.wgpu_surface_get_preferred_format(self.wgpuSurface, context.adapter)
 
-	print("Using preferred swap chain texture format:", tonumber(textureFormat))
+	printf("Creating swap chain with preferred texture format: %d", tonumber(textureFormat))
 	assert(textureFormat == ffi.C.WGPUTextureFormat_BGRA8UnormSrgb, "Only sRGB texture formats are currently supported")
 
 	swapChainDescriptor.format = textureFormat
 	swapChainDescriptor.usage = ffi.C.WGPUTextureUsage_RenderAttachment
 	swapChainDescriptor.presentMode = ffi.C.WGPUPresentMode_Fifo
 
-	return webgpu.bindings.wgpu_device_create_swapchain(context.device, self.wgpuSurface, swapChainDescriptor)
+	self.swapChain = webgpu.bindings.wgpu_device_create_swapchain(context.device, self.wgpuSurface, swapChainDescriptor)
+	self.swapChainDescriptor = swapChainDescriptor
 end
 
 function Renderer:CreatePipelineConfigurations()
@@ -248,8 +251,8 @@ end
 function Renderer:RenderNextFrame()
 	local graphicsContext = self.context
 	local logicalDevice = graphicsContext.device
-	local swapChain = graphicsContext.swapChain
-	local nextTextureView = webgpu.bindings.wgpu_swapchain_get_current_texture_view(swapChain)
+
+	local nextTextureView = webgpu.bindings.wgpu_swapchain_get_current_texture_view(self.swapChain)
 
 	-- Since resizing isn't yet supported, fail loudly if somehow that is actually done (i.e., not prevented by GLFW)
 	assert(nextTextureView, "Cannot acquire next swap chain texture (window surface has changed?)")
@@ -356,7 +359,7 @@ function Renderer:RenderNextFrame()
 	local commandBuffers = ffi_new("WGPUCommandBuffer[1]", commandBuffer)
 	webgpu.bindings.wgpu_queue_submit(queue, 1, commandBuffers)
 
-	webgpu.bindings.wgpu_swapchain_present(swapChain)
+	webgpu.bindings.wgpu_swapchain_present(self.swapChain)
 end
 
 -- local binary_and = bit.band
