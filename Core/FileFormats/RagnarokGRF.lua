@@ -208,30 +208,22 @@ local function normalizePathSeparators(cstr, len)
     cstr[writeIndex] = 0
 end
 
-local iconv = require("iconv")
-local iconvConversionBuffer = buffer.new(1024)
-
-
 function RagnarokGRF:DecodeFileName(pointerToNullTerminatedStringBytes)
     local originalLength = tonumber(ffi.C.strlen(pointerToNullTerminatedStringBytes))
 	-- DEBUG("Decoding file name", ffi_string(pointerToNullTerminatedStringBytes), originalLength)
 
-	iconvConversionBuffer:reset()
-	local ptr, len = iconvConversionBuffer:reserve(originalLength * 4) -- Worst case for UTF-8 encoded multibyte strings
-	local numBytesWritten = iconv.bindings.decode_multibyte_string(pointerToNullTerminatedStringBytes, "CP949", "UTF-8", ptr, len)
-	iconvConversionBuffer:commit(numBytesWritten)
 
-	-- local decodedFileName = tostring(iconvConversionBuffer)
-    -- local decodedLength = #iconvConversionBuffer
+	local decodedFileName = self:DecodeMultiByteStringFFI(pointerToNullTerminatedStringBytes)
+    local decodedLength = tonumber(ffi.C.strlen(decodedFileName))
 	-- DEBUG("Decoded file name", ffi_string(decodedFileName), decodedLength)
 
-    -- toLowerCase(iconvConversionBuffer, decodedLength)
+    toLowerCase(decodedFileName, decodedLength)
 	-- DEBUG("Lower-cased file name", ffi_string(decodedFileName), decodedLength)
 
-    -- normalizePathSeparators(decodedFileName, decodedLength)
+    normalizePathSeparators(decodedFileName, decodedLength)
 	-- DEBUG("Normalized file name", ffi_string(decodedFileName), decodedLength)
 
-    return tostring(iconvConversionBuffer), originalLength
+    return ffi_string(decodedFileName), originalLength
 end
 
 -- To measure (and optimize) the worst-case decompression time, it'll be convenient to find the largest files easily
