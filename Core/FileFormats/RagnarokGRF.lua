@@ -1,3 +1,5 @@
+local cstring = require("Core.RuntimeExtensions.cstring")
+
 local bit = require("bit")
 local ffi = require("ffi")
 local uv = require("uv")
@@ -146,6 +148,7 @@ function RagnarokGRF:DecodeFileEntries()
 	local entries = table.new(self.fileCount, 0)
 
 	for index = 0, self.fileCount - 1 do
+		-- Converting to a standardized format ASAP avoids crossplatform and encoding headaches
 		local normalizedCaseInsensitiveFilePath, numProcessedBytesToSkip = self:DecodeFileName(movingConversionPointer)
 		movingConversionPointer = movingConversionPointer + numProcessedBytesToSkip + 1 -- \0 terminator
 
@@ -169,11 +172,15 @@ function RagnarokGRF:DecodeFileEntries()
 end
 
 function RagnarokGRF:DecodeFileName(pointerToNullTerminatedStringBytes)
-	local fileName = ffi_string(pointerToNullTerminatedStringBytes)
+	local originalLength = cstring.size(pointerToNullTerminatedStringBytes)
 
-	-- Converting to a standardized format ASAP avoids crossplatform and encoding headaches
-	local normalizedFileName = self:GetNormalizedFilePath(fileName)
-	return normalizedFileName, #fileName
+	local decodedFileName = self:DecodeMultiByteStringFFI(pointerToNullTerminatedStringBytes)
+	local decodedLength = cstring.size(decodedFileName)
+
+	cstring.tolower(decodedFileName, decodedLength)
+	cstring.normalize(decodedFileName, decodedLength)
+
+	return ffi_string(decodedFileName), originalLength
 end
 
 -- To measure (and optimize) the worst-case decompression time, it'll be convenient to find the largest files easily
@@ -264,6 +271,12 @@ if ffi.os == "Windows" then
 		ffi.C.WideCharToMultiByte(CP_UTF8, 0, unicodeStr, -1, outputStr, maxLen, nil, nil)
 		return ffi_string(outputStr)
 	end
+
+	function RagnarokGRF:DecodeMultiByteStringFFI(input)
+		ffi.C.MultiByteToWideChar(CP949, 0, input, -1, unicodeStr, maxLen)
+		ffi.C.WideCharToMultiByte(CP_UTF8, 0, unicodeStr, -1, outputStr, maxLen, nil, nil)
+		return outputStr
+	end
 else
 	ffi.cdef([[
 		typedef void* iconv_t;
@@ -272,28 +285,39 @@ else
 		int iconv_close(iconv_t cd);
 	]])
 
+	local ICONV_ERROR = ffi.cast("iconv_t", -1)
+
 	function RagnarokGRF:DecodeMultiByteString(input)
-		local fromEncoding = "CP949"
-		local toEncoding = "UTF-8"
-		local cd = ffi.C.iconv_open(toEncoding, fromEncoding)
-		if cd == ffi.cast("iconv_t", -1) then
+		local inbuf = ffi.cast("char*", ffi.new("char[?]", #input + 1, input))
+		local outbufStorage = self:DecodeMultiByteStringFFI(inbuf)
+		return ffi_string(outbufStorage)
+	end
+
+	function RagnarokGRF:DecodeMultiByteStringFFI(input)
+		input = ffi_string(input) -- Wasteful, but this needs a rework anyway
+		local inputSize = cstring.size(input)
+
+		local sourceEncoding = "CP949"
+		local targetEncoding = "UTF-8"
+		local conversionDescriptor = ffi.C.iconv_open(targetEncoding, sourceEncoding)
+		if conversionDescriptor == ICONV_ERROR then
 			error("iconv_open failed: " .. ffi.string(ffi.C.strerror(ffi.errno())))
 		end
 
-		local inbuf = ffi.new("char*[1]", ffi.new("char[?]", #input + 1, input))
-		local inbytesleft = ffi.new("size_t[1]", #input)
-		local outbufSize = #input * 4 -- Worst case scenario for UTF-8
-		local outbufStorage = ffi.new("char[?]", outbufSize) -- Storage for the output buffer
-		local outbuf = ffi.new("char*[1]", outbufStorage) -- Pointer to the output buffer
+		local inbuf = ffi.new("char*[1]", ffi.new("char[?]", inputSize, input))
+		local inbytesleft = ffi.new("size_t[1]", inputSize)
+		local outbufSize = inputSize * 4 -- Worst case scenario for UTF-8
+		local outbufStorage = ffi.new("char[?]", outbufSize)
+		local outbuf = ffi.new("char*[1]", outbufStorage)
 		local outbytesleft = ffi.new("size_t[1]", outbufSize)
 
-		if ffi.C.iconv(cd, inbuf, inbytesleft, outbuf, outbytesleft) == -1 then
-			ffi.C.iconv_close(cd)
+		if ffi.C.iconv(conversionDescriptor, inbuf, inbytesleft, outbuf, outbytesleft) == -1 then
+			ffi.C.iconv_close(conversionDescriptor)
 			error("iconv failed: " .. ffi.string(ffi.C.strerror(ffi.errno())))
 		end
 
-		ffi.C.iconv_close(cd)
-		return ffi.string(outbufStorage) -- Construct the string from the start of the output buffer
+		ffi.C.iconv_close(conversionDescriptor)
+		return outbufStorage
 	end
 end
 
