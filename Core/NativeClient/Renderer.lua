@@ -60,23 +60,19 @@ function Renderer:CreateGraphicsContext(nativeWindowHandle)
 		device = logicalDevice,
 		deviceDescriptor = deviceDescriptor,
 	}
+	self.context = context
 
 	-- In order to support window resizing, we'll need to re-create this on the fly (later)
 	context.swapChain = self:CreateSwapchain(context)
-
-	self.context = context
 end
 
 function Renderer:CreateSwapchain(context)
 	local swapChainDescriptor = ffi.new("WGPUSwapChainDescriptor")
 
 	-- The underlying framebuffer may be different if DPI scaling is applied, but let's ignore that for now
-	local contentWidthInPixels = ffi.new("int[1]")
-	local contentHeightInPixels = ffi.new("int[1]")
-	glfw.bindings.glfw_get_window_size(context.window, contentWidthInPixels, contentHeightInPixels)
-
-	swapChainDescriptor.width = contentWidthInPixels[0]
-	swapChainDescriptor.height = contentHeightInPixels[0]
+	local surfaceWidth, surfaceHeight = self:GetSurfaceDimensions()
+	swapChainDescriptor.width = surfaceWidth
+	swapChainDescriptor.height = surfaceHeight
 
 	local surface = glfw.bindings.glfw_get_wgpu_surface(context.instance, context.window)
 	local textureFormat = webgpu.bindings.wgpu_surface_get_preferred_format(surface, context.adapter)
@@ -476,10 +472,8 @@ end
 
 function Renderer:UpdateUniformBuffer()
 	local graphicsContext = self.context
-	local contentWidthInPixels = ffi.new("int[1]")
-	local contentHeightInPixels = ffi.new("int[1]")
-	glfw.bindings.glfw_get_window_size(graphicsContext.window, contentWidthInPixels, contentHeightInPixels)
-	local aspectRatio = tonumber(contentWidthInPixels[0]) / tonumber(contentHeightInPixels[0])
+	local surfaceWidth, surfaceHeight = self:GetSurfaceDimensions()
+	local aspectRatio = surfaceWidth / surfaceHeight
 
 	local currentTime = uv.hrtime() / 10E9
 	local perSceneUniformData = self.perSceneUniformData
@@ -505,9 +499,7 @@ end
 
 function Renderer:EnableDepthBuffer()
 	local graphicsContext = self.context
-	local contentWidthInPixels = ffi.new("int[1]")
-	local contentHeightInPixels = ffi.new("int[1]")
-	glfw.bindings.glfw_get_window_size(graphicsContext.window, contentWidthInPixels, contentHeightInPixels)
+	local surfaceWidth, surfaceHeight = self:GetSurfaceDimensions()
 
 	-- Create the depth texture
 	local depthTextureDesc = ffi.new("WGPUTextureDescriptor")
@@ -516,8 +508,8 @@ function Renderer:EnableDepthBuffer()
 	depthTextureDesc.mipLevelCount = 1
 	depthTextureDesc.sampleCount = 1
 	depthTextureDesc.size = {
-		ffi.cast("unsigned int", tonumber(contentWidthInPixels[0])),
-		ffi.cast("unsigned int", tonumber(contentHeightInPixels[0])),
+		ffi.cast("unsigned int", surfaceWidth),
+		ffi.cast("unsigned int", surfaceHeight),
 		1,
 	}
 	depthTextureDesc.usage = ffi.C.WGPUTextureUsage_RenderAttachment
@@ -537,6 +529,15 @@ function Renderer:EnableDepthBuffer()
 	local depthTextureView = webgpu.bindings.wgpu_texture_create_view(depthTexture, depthTextureViewDesc)
 
 	self.depthTextureView = depthTextureView
+end
+
+function Renderer:GetSurfaceDimensions()
+	-- Should probably differentiate between window and frame buffer here for high-DPI (later)
+	local contentWidthInPixels = ffi.new("int[1]")
+	local contentHeightInPixels = ffi.new("int[1]")
+	glfw.bindings.glfw_get_window_size(self.context.window, contentWidthInPixels, contentHeightInPixels)
+
+	return tonumber(contentWidthInPixels[0]), tonumber(contentHeightInPixels[0])
 end
 
 return Renderer
