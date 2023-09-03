@@ -16,10 +16,7 @@ local NativeClient = {
 
 function NativeClient:Start()
 	self.mainWindow = self:CreateMainWindow()
-	Renderer:CreateGraphicsContext(self.mainWindow)
-	Renderer:CreatePipelineConfigurations()
-	Renderer:CreateUniformBuffer()
-	Renderer:EnableDepthBuffer()
+	Renderer:InitializeWithGLFW(self.mainWindow)
 
 	-- Hardcoded for now, replace with actual geometry later
 	local PYRAMID_VERTEX_COUNT = 5

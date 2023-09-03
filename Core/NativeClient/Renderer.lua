@@ -45,6 +45,13 @@ assert(
 	"Structs in uniform address space must be aligned to a 16 byte boundary (as per the WebGPU specification)"
 )
 
+function Renderer:InitializeWithGLFW(nativeWindowHandle)
+	Renderer:CreateGraphicsContext(nativeWindowHandle)
+	Renderer:CreatePipelineConfigurations()
+	Renderer:CreateUniformBuffer()
+	Renderer:EnableDepthBuffer()
+end
+
 function Renderer:CreateGraphicsContext(nativeWindowHandle)
 	validation.validateStruct(nativeWindowHandle, "nativeWindowHandle")
 
