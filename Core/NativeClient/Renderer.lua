@@ -61,6 +61,7 @@ function Renderer:CreateGraphicsContext(nativeWindowHandle)
 		deviceDescriptor = deviceDescriptor,
 	}
 	self.context = context
+	self.wgpuSurface = glfw.bindings.glfw_get_wgpu_surface(context.instance, context.window)
 
 	-- In order to support window resizing, we'll need to re-create this on the fly (later)
 	context.swapChain = self:CreateSwapchain(context)
@@ -74,8 +75,7 @@ function Renderer:CreateSwapchain(context)
 	swapChainDescriptor.width = surfaceWidth
 	swapChainDescriptor.height = surfaceHeight
 
-	local surface = glfw.bindings.glfw_get_wgpu_surface(context.instance, context.window)
-	local textureFormat = webgpu.bindings.wgpu_surface_get_preferred_format(surface, context.adapter)
+	local textureFormat = webgpu.bindings.wgpu_surface_get_preferred_format(self.wgpuSurface, context.adapter)
 
 	print("Using preferred swap chain texture format:", tonumber(textureFormat))
 	assert(textureFormat == ffi.C.WGPUTextureFormat_BGRA8UnormSrgb, "Only sRGB texture formats are currently supported")
@@ -84,7 +84,7 @@ function Renderer:CreateSwapchain(context)
 	swapChainDescriptor.usage = ffi.C.WGPUTextureUsage_RenderAttachment
 	swapChainDescriptor.presentMode = ffi.C.WGPUPresentMode_Fifo
 
-	return webgpu.bindings.wgpu_device_create_swapchain(context.device, surface, swapChainDescriptor)
+	return webgpu.bindings.wgpu_device_create_swapchain(context.device, self.wgpuSurface, swapChainDescriptor)
 end
 
 function Renderer:CreatePipelineConfigurations()
@@ -95,7 +95,6 @@ end
 
 function Renderer:CreateBasicTriangleDrawingPipeline()
 	local graphicsContext = self.context
-	local surface = glfw.bindings.glfw_get_wgpu_surface(graphicsContext.instance, graphicsContext.window)
 	local descriptor = ffi.new("WGPURenderPipelineDescriptor")
 	local pipelineDesc = descriptor
 
@@ -157,7 +156,7 @@ function Renderer:CreateBasicTriangleDrawingPipeline()
 	-- Configure alpha blending pipeline (blending stage)
 	local blendState = ffi.new("WGPUBlendState")
 	local colorTarget = ffi.new("WGPUColorTargetState")
-	colorTarget.format = webgpu.bindings.wgpu_surface_get_preferred_format(surface, graphicsContext.adapter)
+	colorTarget.format = webgpu.bindings.wgpu_surface_get_preferred_format(self.wgpuSurface, graphicsContext.adapter)
 	colorTarget.blend = blendState
 	colorTarget.writeMask = ffi.C.WGPUColorWriteMask_All
 
