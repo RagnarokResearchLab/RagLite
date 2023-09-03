@@ -5,8 +5,7 @@ local webgpu = require("webgpu")
 local uv = require("uv")
 local validation = require("validation")
 
-local gpu = require("Core.NativeClient.gpu")
-
+local gpu = require("Core.NativeClient.WebGPU.GPU")
 local Buffer = require("Core.NativeClient.WebGPU.Buffer")
 
 local _ = require("Core.VectorMath.Matrix4D") -- Only needed for the cdefs right now
