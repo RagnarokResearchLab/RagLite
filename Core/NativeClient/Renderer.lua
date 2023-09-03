@@ -5,9 +5,9 @@ local webgpu = require("webgpu")
 local uv = require("uv")
 local validation = require("validation")
 
-local gpu = require("Core.NativeClient.gpu")
-
+local GPU = require("Core.NativeClient.WebGPU.GPU")
 local Buffer = require("Core.NativeClient.WebGPU.Buffer")
+local BasicTriangleDrawingPipeline = require("Core.NativeClient.WebGPU.BasicTriangleDrawingPipeline")
 
 local _ = require("Core.VectorMath.Matrix4D") -- Only needed for the cdefs right now
 local Vector3D = require("Core.VectorMath.Vector3D")
@@ -16,9 +16,8 @@ local C_Camera = require("Core.NativeClient.C_Camera")
 local assert = assert
 local ipairs = ipairs
 
-local binary_not = bit.bnot
 local ffi_new = ffi.new
-local table_insert = table.insert
+local filesize = string.filesize
 
 local Renderer = {
 	cdefs = [[
@@ -34,8 +33,8 @@ local Renderer = {
 		} scenewide_uniform_t;
 	]],
 	clearColorRGBA = { 0.05, 0.05, 0.05, 1.0 },
-	pipelines = {},
-	sceneObjects = {},
+	renderPipelines = {},
+	meshes = {},
 }
 
 ffi.cdef(Renderer.cdefs)
@@ -55,9 +54,9 @@ end
 function Renderer:CreateGraphicsContext(nativeWindowHandle)
 	validation.validateStruct(nativeWindowHandle, "nativeWindowHandle")
 
-	local instance, instanceDescriptor = gpu.createInstance()
-	local adapter = gpu.requestAdapter(instance, nativeWindowHandle)
-	local device, deviceDescriptor = gpu.requestLogicalDevice(adapter)
+	local instance, instanceDescriptor = GPU:CreateInstance()
+	local adapter = GPU:RequestAdapter(instance, nativeWindowHandle)
+	local device, deviceDescriptor = GPU:RequestLogicalDevice(adapter)
 
 	-- GC anchors for cdata (must be kept alive for the entire lifetime of the app)
 	self.wgpuInstance = instance
@@ -82,8 +81,9 @@ function Renderer:CreateSwapchain()
 	swapChainDescriptor.height = self.viewportHeight
 
 	local textureFormat = webgpu.bindings.wgpu_surface_get_preferred_format(self.wgpuSurface, self.wgpuAdapter)
+	self.swapChainTextureFormatID = tonumber(textureFormat)
 
-	printf("Creating swap chain with preferred texture format: %d", tonumber(textureFormat))
+	printf("Creating swap chain with preferred texture format: %d", self.swapChainTextureFormatID)
 	assert(textureFormat == ffi.C.WGPUTextureFormat_BGRA8UnormSrgb, "Only sRGB texture formats are currently supported")
 
 	swapChainDescriptor.format = textureFormat
@@ -97,168 +97,35 @@ end
 
 function Renderer:CreatePipelineConfigurations()
 	-- This is just a placeholder; eventually there should be real pipelines here
-	local examplePipeline = Renderer:CreateBasicTriangleDrawingPipeline()
-	table_insert(self.pipelines, examplePipeline)
-end
-
-function Renderer:CreateBasicTriangleDrawingPipeline()
-	local descriptor = ffi.new("WGPURenderPipelineDescriptor")
-	local pipelineDesc = descriptor
-
-	-- Setup basic example shaders (will be replaced later with more useful ones)
-	local shaderSource = C_FileSystem.ReadFile("Core/NativeClient/Shaders/BasicTriangleShader.wgsl")
-
-	local shaderDesc = ffi.new("WGPUShaderModuleDescriptor")
-	local shaderCodeDesc = ffi.new("WGPUShaderModuleWGSLDescriptor")
-	shaderCodeDesc.chain.sType = ffi.C.WGPUSType_ShaderModuleWGSLDescriptor
-	shaderDesc.nextInChain = shaderCodeDesc.chain
-	shaderCodeDesc.code = shaderSource
-
-	-- timer.start("Compiling shaders")
-	local shaderModule = webgpu.bindings.wgpu_device_create_shader_module(self.wgpuDevice, shaderDesc)
-	-- timer.stop("Compiling shaders")
-
-	-- Configure vertex processing pipeline (vertex fetch/vertex shader stages)
-	local positionAttrib = ffi.new("WGPUVertexAttribute")
-	positionAttrib.shaderLocation = 0 -- Pass as first argument
-	positionAttrib.format = ffi.C.WGPUVertexFormat_Float32x3 -- Vector3D (float)
-	positionAttrib.offset = 0
-
-	local vertexBufferLayout = ffi.new("WGPUVertexBufferLayout[?]", 2) -- Positions, colors
-	vertexBufferLayout[0].attributeCount = 1 -- Position
-	vertexBufferLayout[0].attributes = positionAttrib
-	vertexBufferLayout[0].arrayStride = 3 * ffi.sizeof("float") -- sizeof(Vector3D) = position
-	vertexBufferLayout[0].stepMode = ffi.C.WGPUVertexStepMode_Vertex
-
-	local colorAttrib = ffi.new("WGPUVertexAttribute")
-	colorAttrib.shaderLocation = 1 -- Pass as second argument
-	colorAttrib.format = ffi.C.WGPUVertexFormat_Float32x3 -- Vector3D (float) = RGB color
-	colorAttrib.offset = 0
-
-	vertexBufferLayout[1].attributeCount = 1 -- Color
-	vertexBufferLayout[1].attributes = colorAttrib
-	vertexBufferLayout[1].arrayStride = 3 * ffi.sizeof("float") -- sizeof(Vector23) = color
-	vertexBufferLayout[1].stepMode = ffi.C.WGPUVertexStepMode_Vertex
-
-	pipelineDesc.vertex.bufferCount = 2 -- positions, colors
-	pipelineDesc.vertex.module = shaderModule
-	pipelineDesc.vertex.entryPoint = "vs_main"
-	pipelineDesc.vertex.constantCount = 0
-	pipelineDesc.vertex.buffers = vertexBufferLayout
-
-	-- Configure primitive generation pipeline (primitive assembly/rasterization stages)
-	pipelineDesc.primitive.topology = ffi.C.WGPUPrimitiveTopology_TriangleList
-	pipelineDesc.primitive.stripIndexFormat = ffi.C.WGPUIndexFormat_Undefined
-	pipelineDesc.primitive.frontFace = ffi.C.WGPUFrontFace_CCW
-	pipelineDesc.primitive.cullMode = ffi.C.WGPUCullMode_None
-
-	-- Configure pixel generation pipeline (fragment shader stage)
-	local fragmentState = ffi.new("WGPUFragmentState")
-	fragmentState.module = shaderModule
-	fragmentState.entryPoint = "fs_main"
-	fragmentState.constantCount = 0
-
-	pipelineDesc.fragment = fragmentState
-
-	-- Configure alpha blending pipeline (blending stage)
-	local blendState = ffi.new("WGPUBlendState")
-	local colorTarget = ffi.new("WGPUColorTargetState")
-	colorTarget.format = webgpu.bindings.wgpu_surface_get_preferred_format(self.wgpuSurface, self.wgpuAdapter)
-	colorTarget.blend = blendState
-	colorTarget.writeMask = ffi.C.WGPUColorWriteMask_All
-
-	fragmentState.targetCount = 1
-	fragmentState.targets = colorTarget
-
-	blendState.color.srcFactor = ffi.C.WGPUBlendFactor_SrcAlpha
-	blendState.color.dstFactor = ffi.C.WGPUBlendFactor_OneMinusSrcAlpha
-	blendState.color.operation = ffi.C.WGPUBlendOperation_Add
-
-	-- Configure multisampling (here: disabled - we don't map fragments to more than one sample)
-	local samplesPerPixel = 1
-	local bitmaskAllBitsEnabled = binary_not(0)
-	pipelineDesc.multisample.count = samplesPerPixel
-	pipelineDesc.multisample.mask = bitmaskAllBitsEnabled
-	pipelineDesc.multisample.alphaToCoverageEnabled = false
-
-	-- Configure resource layout for the vertex shader (global clock, provided as uniform)
-	local bindingLayout = ffi.new("WGPUBindGroupLayoutEntry")
-
-	-- bindingLayout.buffer.nextInChain = nullptr
-	bindingLayout.buffer.type = ffi.C.WGPUBufferBindingType_Undefined
-	bindingLayout.buffer.hasDynamicOffset = false
-
-	-- bindingLayout.sampler.nextInChain = nullptr
-	bindingLayout.sampler.type = ffi.C.WGPUSamplerBindingType_Undefined
-
-	-- bindingLayout.storageTexture.nextInChain = nullptr
-	bindingLayout.storageTexture.access = ffi.C.WGPUStorageTextureAccess_Undefined
-	bindingLayout.storageTexture.format = ffi.C.WGPUTextureFormat_Undefined
-	bindingLayout.storageTexture.viewDimension = ffi.C.WGPUTextureViewDimension_Undefined
-
-	-- bindingLayout.texture.nextInChain = nullptr
-	bindingLayout.texture.multisampled = false
-	bindingLayout.texture.sampleType = ffi.C.WGPUTextureSampleType_Undefined
-	bindingLayout.texture.viewDimension = ffi.C.WGPUTextureViewDimension_Undefined
-
-	bindingLayout.binding = 0
-	bindingLayout.visibility = bit.bor(ffi.C.WGPUShaderStage_Vertex, ffi.C.WGPUShaderStage_Fragment)
-
-	bindingLayout.buffer.type = ffi.C.WGPUBufferBindingType_Uniform
-	bindingLayout.buffer.minBindingSize = ffi.sizeof("scenewide_uniform_t")
-
-	local bindGroupLayoutDesc = ffi.new("WGPUBindGroupLayoutDescriptor")
-	-- bindGroupLayoutDesc.nextInChain = nullptr
-	bindGroupLayoutDesc.entryCount = 1
-	bindGroupLayoutDesc.entries = bindingLayout
-	local bindGroupLayout = webgpu.bindings.wgpu_device_create_bind_group_layout(self.wgpuDevice, bindGroupLayoutDesc)
-	self.bindGroupLayoutDesc = bindGroupLayoutDesc
-
-	local layoutDesc = ffi.new("WGPUPipelineLayoutDescriptor")
-	-- layoutDesc.nextInChain = nullptr
-	layoutDesc.bindGroupLayoutCount = 1
-	local bindGroupLayouts = ffi.new("WGPUBindGroupLayout[?]", 1)
-	bindGroupLayouts[0] = bindGroupLayout
-	layoutDesc.bindGroupLayouts = bindGroupLayouts
-	local layout = webgpu.bindings.wgpu_device_create_pipeline_layout(self.wgpuDevice, layoutDesc)
-	pipelineDesc.layout = layout
-
-	self.bindGroupLayout = bindGroupLayout
-
-	-- Configure depth testing (Z buffer)
-	local depthStencilState = ffi.new("WGPUDepthStencilState")
-	depthStencilState.format = ffi.C.WGPUTextureFormat_Depth24Plus
-	depthStencilState.depthWriteEnabled = true
-	depthStencilState.depthCompare = ffi.C.WGPUCompareFunction_Less
-	depthStencilState.stencilReadMask = 0
-	depthStencilState.stencilWriteMask = 0
-	depthStencilState.depthBias = 0
-	depthStencilState.depthBiasSlopeScale = 0
-	depthStencilState.depthBiasClamp = 0
-
-	depthStencilState.stencilFront.compare = ffi.C.WGPUCompareFunction_Always
-	depthStencilState.stencilFront.failOp = ffi.C.WGPUStencilOperation_Keep
-	depthStencilState.stencilFront.depthFailOp = ffi.C.WGPUStencilOperation_Keep
-	depthStencilState.stencilFront.passOp = ffi.C.WGPUStencilOperation_Keep
-
-	depthStencilState.stencilBack.compare = ffi.C.WGPUCompareFunction_Always
-	depthStencilState.stencilBack.failOp = ffi.C.WGPUStencilOperation_Keep
-	depthStencilState.stencilBack.depthFailOp = ffi.C.WGPUStencilOperation_Keep
-	depthStencilState.stencilBack.passOp = ffi.C.WGPUStencilOperation_Keep
-	pipelineDesc.depthStencil = depthStencilState
-
-	return webgpu.bindings.wgpu_device_create_render_pipeline(self.wgpuDevice, descriptor)
+	local pipeline = BasicTriangleDrawingPipeline(self.wgpuDevice, self.swapChainTextureFormatID)
+	self.renderPipelines[pipeline] = BasicTriangleDrawingPipeline
 end
 
 function Renderer:RenderNextFrame()
-	local nextTextureView = webgpu.bindings.wgpu_swapchain_get_current_texture_view(self.wgpuSwapchain)
-
 	-- Since resizing isn't yet supported, fail loudly if somehow that is actually done (i.e., not prevented by GLFW)
+	local nextTextureView = webgpu.bindings.wgpu_swapchain_get_current_texture_view(self.wgpuSwapchain)
 	assert(nextTextureView, "Cannot acquire next swap chain texture (window surface has changed?)")
 
 	local commandEncoderDescriptor = ffi_new("WGPUCommandEncoderDescriptor")
 	local commandEncoder = webgpu.bindings.wgpu_device_create_command_encoder(self.wgpuDevice, commandEncoderDescriptor)
+	local renderPass = self:BeginRenderPass(commandEncoder, nextTextureView)
 
+	self:UpdateUniformBuffer()
+
+	for wgpuRenderPipeline, pipelineConfiguration in pairs(self.renderPipelines) do
+		webgpu.bindings.wgpu_render_pass_encoder_set_pipeline(renderPass, wgpuRenderPipeline)
+
+		for _, mesh in ipairs(self.meshes) do
+			self:DrawMesh(renderPass, mesh)
+		end
+	end
+
+	webgpu.bindings.wgpu_render_pass_encoder_end(renderPass)
+	self:SubmitCommandBuffer(commandEncoder)
+	webgpu.bindings.wgpu_swapchain_present(self.wgpuSwapchain)
+end
+
+function Renderer:BeginRenderPass(commandEncoder, nextTextureView)
 	local renderPassDescriptor = ffi_new("WGPURenderPassDescriptor")
 
 	-- Clearing is a built-in mechanism of the render pass
@@ -288,155 +155,90 @@ function Renderer:RenderNextFrame()
 
 	renderPassDescriptor.depthStencilAttachment = depthStencilAttachment
 
-	local renderPass = webgpu.bindings.wgpu_command_encoder_begin_render_pass(commandEncoder, renderPassDescriptor)
+	return webgpu.bindings.wgpu_command_encoder_begin_render_pass(commandEncoder, renderPassDescriptor)
+end
 
-	self:UpdateUniformBuffer()
+function Renderer:DrawMesh(renderPass, mesh)
+	local vertexBufferSize = #mesh.vertexPositions * ffi.sizeof("float")
+	local colorBufferSize = #mesh.vertexColors * ffi.sizeof("float")
+	local indexBufferSize = #mesh.triangleConnections * ffi.sizeof("uint16_t")
 
-	for index, pipeline in ipairs(self.pipelines) do
-		webgpu.bindings.wgpu_render_pass_encoder_set_pipeline(renderPass, pipeline)
+	webgpu.bindings.wgpu_render_pass_encoder_set_vertex_buffer(renderPass, 0, mesh.vertexBuffer, 0, vertexBufferSize)
+	webgpu.bindings.wgpu_render_pass_encoder_set_vertex_buffer(renderPass, 1, mesh.colorBuffer, 0, colorBufferSize)
+	webgpu.bindings.wgpu_render_pass_encoder_set_index_buffer(
+		renderPass,
+		mesh.indexBuffer,
+		ffi.C.WGPUIndexFormat_Uint16,
+		0,
+		indexBufferSize
+	)
 
-		for _, bufferInfo in ipairs(self.sceneObjects) do
-			webgpu.bindings.wgpu_render_pass_encoder_set_vertex_buffer(
-				renderPass,
-				0,
-				bufferInfo.vertexPositionsBuffer,
-				0,
-				bufferInfo.vertexPositionsBufferSize
-			)
-			webgpu.bindings.wgpu_render_pass_encoder_set_vertex_buffer(
-				renderPass,
-				1,
-				bufferInfo.vertexColorsBuffer,
-				0,
-				bufferInfo.vertexColorsBufferSize
-			)
-			webgpu.bindings.wgpu_render_pass_encoder_set_index_buffer(
-				renderPass,
-				bufferInfo.triangleIndicesBuffer,
-				ffi.C.WGPUIndexFormat_Uint16,
-				0,
-				bufferInfo.triangleIndexBufferSize
-			)
+	local currentTime = uv.hrtime() / 10E9
+	self.perSceneUniformData.time = currentTime
+	webgpu.bindings.wgpu_queue_write_buffer(
+		webgpu.bindings.wgpu_device_get_queue(self.wgpuDevice),
+		self.uniformBuffer,
+		0,
+		self.perSceneUniformData,
+		ffi.sizeof(self.perSceneUniformData)
+	)
 
-			-- TBD Only update the fields that have actually changed (i.e., time but not color)?
-			local currentTime = uv.hrtime() / 10E9
-			self.perSceneUniformData.time = currentTime
-			webgpu.bindings.wgpu_queue_write_buffer(
-				webgpu.bindings.wgpu_device_get_queue(self.wgpuDevice),
-				self.uniformBuffer,
-				0,
-				self.perSceneUniformData,
-				ffi.sizeof(self.perSceneUniformData)
-			)
+	webgpu.bindings.wgpu_render_pass_encoder_set_bind_group(renderPass, 0, self.bindGroup, 0, nil)
 
-			-- webgpu.bindings.wgpu_queue_write_buffer(webgpu.bindings.wgpu_device_get_queue(self.wgpuDevice), self.uniformBuffer, 0, globalClockSeconds, ffi.sizeof("float"))
-			webgpu.bindings.wgpu_render_pass_encoder_set_bind_group(renderPass, 0, self.bindGroup, 0, nil)
+	local instanceCount = 1
+	local firstVertexIndex = 0
+	local firstInstanceIndex = 0
+	local indexBufferOffset = 0
+	webgpu.bindings.wgpu_render_pass_encoder_draw_indexed(
+		renderPass,
+		#mesh.triangleConnections,
+		instanceCount,
+		firstVertexIndex,
+		firstInstanceIndex,
+		indexBufferOffset
+	)
+end
 
-			local instanceCount = 1
-			local firstVertexIndex = 0
-			local firstInstanceIndex = 0
-			local indexBufferOffset = 0
-			webgpu.bindings.wgpu_render_pass_encoder_draw_indexed(
-				renderPass,
-				bufferInfo.triangleIndicesCount,
-				instanceCount,
-				firstVertexIndex,
-				firstInstanceIndex,
-				indexBufferOffset
-			)
-		end
-	end
-
-	webgpu.bindings.wgpu_render_pass_encoder_end(renderPass)
-
+function Renderer:SubmitCommandBuffer(commandEncoder)
 	local commandBufferDescriptor = ffi_new("WGPUCommandBufferDescriptor")
 	local commandBuffer = webgpu.bindings.wgpu_command_encoder_finish(commandEncoder, commandBufferDescriptor)
 
-	local queue = webgpu.bindings.wgpu_device_get_queue(self.wgpuDevice)
-
 	-- The WebGPU API expects an array here, but currently this renderer only supports a single buffer (to keep things simple)
+	local queue = webgpu.bindings.wgpu_device_get_queue(self.wgpuDevice)
 	local commandBuffers = ffi_new("WGPUCommandBuffer[1]", commandBuffer)
 	webgpu.bindings.wgpu_queue_submit(queue, 1, commandBuffers)
-
-	webgpu.bindings.wgpu_swapchain_present(self.wgpuSwapchain)
 end
 
--- local binary_and = bit.band
--- local binary_negation = bit.bnot
+function Renderer:UploadMeshGeometry(mesh)
+	local positions = mesh.vertexPositions
+	local colors = mesh.vertexColors
+	local indices = mesh.triangleConnections
 
-function Renderer:UploadGeometry(vertexArray, triangleIndices, colorsRGB)
 	local nanosecondsBeforeUpload = uv.hrtime()
 
-	local vertexPositionsBufferSize = Buffer.GetAlignedSize(#vertexArray * ffi.sizeof("float"))
-	local vertexCount = #vertexArray / 3 -- sizeof(Vector3D)
-	local numVertexColorValues = #colorsRGB / 3
+	local vertexCount = #positions / 3
+	local triangleIndicesCount = #indices
+	local numVertexColors = #colors / 3
+	assert(vertexCount == numVertexColors, "Cannot upload geometry with missing or incomplete vertex colors")
+	assert(triangleIndicesCount % 3 == 0, "Cannot upload geometry with incomplete triangles")
 
-	assert(vertexCount == numVertexColorValues, "Cannot upload geometry with missing or incomplete vertex colors")
+	local vertexBufferSize = #positions * ffi.sizeof("float")
+	printf("Uploading geometry: %d vertex positions (%s)", vertexCount, filesize(vertexBufferSize))
+	local vertexBuffer = Buffer:CreateVertexBuffer(self.wgpuDevice, positions)
 
-	local bufferDescriptor = ffi.new("WGPUBufferDescriptor")
-	bufferDescriptor.size = vertexPositionsBufferSize
-	bufferDescriptor.usage = bit.bor(ffi.C.WGPUBufferUsage_CopyDst, ffi.C.WGPUBufferUsage_Vertex)
-	bufferDescriptor.mappedAtCreation = false
+	local vertexColorsBufferSize = #colors * ffi.sizeof("float")
+	printf("Uploading geometry: %d vertex colors (%s)", numVertexColors, filesize(vertexColorsBufferSize))
+	local vertexColorsBuffer = Buffer:CreateVertexBuffer(self.wgpuDevice, colors)
 
-	local vertexPositionsBuffer = webgpu.bindings.wgpu_device_create_buffer(self.wgpuDevice, bufferDescriptor)
-	printf(
-		"Uploading geometry: %d vertex positions (total buffer size: %s)",
-		vertexCount,
-		string.filesize(vertexPositionsBufferSize)
-	)
-	webgpu.bindings.wgpu_queue_write_buffer(
-		webgpu.bindings.wgpu_device_get_queue(self.wgpuDevice),
-		vertexPositionsBuffer,
-		0,
-		ffi.new("float[?]", vertexPositionsBufferSize, vertexArray),
-		vertexPositionsBufferSize
-	)
+	local triangleIndexBufferSize = #indices * ffi.sizeof("uint16_t")
+	printf("Uploading geometry: %d triangle indices (%s)", triangleIndicesCount, filesize(triangleIndexBufferSize))
+	local triangleIndicesBuffer = Buffer:CreateIndexBuffer(self.wgpuDevice, indices)
 
-	local vertexColorsBufferSize = Buffer.GetAlignedSize(#colorsRGB * ffi.sizeof("float")) -- sizeof (ColorRGB)
-	bufferDescriptor.size = vertexColorsBufferSize
-	local vertexColorsBuffer = webgpu.bindings.wgpu_device_create_buffer(self.wgpuDevice, bufferDescriptor)
-	printf(
-		"Uploading geometry: %d vertex colors (total buffer size: %s)",
-		numVertexColorValues,
-		string.filesize(vertexColorsBufferSize)
-	)
-	webgpu.bindings.wgpu_queue_write_buffer(
-		webgpu.bindings.wgpu_device_get_queue(self.wgpuDevice),
-		vertexColorsBuffer,
-		0,
-		ffi.new("float[?]", vertexColorsBufferSize, colorsRGB),
-		vertexColorsBufferSize
-	)
+	mesh.vertexBuffer = vertexBuffer
+	mesh.colorBuffer = vertexColorsBuffer
+	mesh.indexBuffer = triangleIndicesBuffer
 
-	-- TODO A writeBuffer operation must copy a number of bytes that is a multiple of 4. To ensure so we can switch bufferDesc.size for (bufferDesc.size + 3) & ~4.
-	bufferDescriptor.usage = bit.bor(ffi.C.WGPUBufferUsage_CopyDst, ffi.C.WGPUBufferUsage_Index)
-	local triangleIndicesBuffer = webgpu.bindings.wgpu_device_create_buffer(self.wgpuDevice, bufferDescriptor)
-	local triangleIndicesCount = #triangleIndices
-	local triangleIndexBufferSize = Buffer.GetAlignedSize(#triangleIndices * ffi.sizeof("uint16_t"))
-	bufferDescriptor.size = triangleIndexBufferSize
-	printf(
-		"Uploading geometry: %d triangle indices (total buffer size: %s)",
-		triangleIndicesCount,
-		string.filesize(triangleIndexBufferSize)
-	)
-	webgpu.bindings.wgpu_queue_write_buffer(
-		webgpu.bindings.wgpu_device_get_queue(self.wgpuDevice),
-		triangleIndicesBuffer,
-		0,
-		ffi.new("uint16_t[?]", triangleIndexBufferSize, triangleIndices),
-		triangleIndexBufferSize
-	)
-
-	table.insert(self.sceneObjects, {
-		vertexPositionsBuffer = vertexPositionsBuffer,
-		vertexPositionsBufferSize = vertexPositionsBufferSize,
-		vertexCount = vertexCount, -- Obsolete if using draw_indexed?
-		vertexColorsBuffer = vertexColorsBuffer,
-		vertexColorsBufferSize = vertexColorsBufferSize,
-		triangleIndicesBuffer = triangleIndicesBuffer,
-		triangleIndexBufferSize = triangleIndexBufferSize,
-		triangleIndicesCount = triangleIndicesCount,
-	})
+	table.insert(self.meshes, mesh)
 
 	local nanosecondsAfterUpload = uv.hrtime()
 	local uploadTimeInMilliseconds = (nanosecondsAfterUpload - nanosecondsBeforeUpload) / 10E5
@@ -461,8 +263,8 @@ function Renderer:CreateUniformBuffer()
 	binding.size = ffi.sizeof(self.perSceneUniformData)
 
 	local bindGroupDesc = ffi.new("WGPUBindGroupDescriptor")
-	bindGroupDesc.layout = self.bindGroupLayout
-	bindGroupDesc.entryCount = self.bindGroupLayoutDesc.entryCount
+	bindGroupDesc.layout = BasicTriangleDrawingPipeline.wgpuBindGroupLayout
+	bindGroupDesc.entryCount = BasicTriangleDrawingPipeline.wgpuBindGroupLayoutDescriptor.entryCount
 	bindGroupDesc.entries = binding
 	local bindGroup = webgpu.bindings.wgpu_device_create_bind_group(self.wgpuDevice, bindGroupDesc)
 	self.bindGroup = bindGroup

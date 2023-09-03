@@ -259,7 +259,12 @@ function NativeClient:Start()
 		PYRAMID_VERTEX_COUNT + 2 * ARROWHEAD_VERTEX_COUNT + 14,
 	}
 
-	Renderer:UploadGeometry(vertexPositions, triangleIndices, vertexColorsRGB)
+	local mesh = {
+		vertexPositions = vertexPositions,
+		triangleConnections = triangleIndices,
+		vertexColors = vertexColorsRGB,
+	}
+	Renderer:UploadMeshGeometry(mesh)
 
 	self:StartRenderLoop()
 end
