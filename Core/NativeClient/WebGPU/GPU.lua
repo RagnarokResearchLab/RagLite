@@ -19,6 +19,7 @@ function GPU:RequestAdapter(instance, window)
 
 	local adapterOptions = ffi.new("WGPURequestAdapterOptions")
 	adapterOptions.compatibleSurface = surface
+	adapterOptions.powerPreference = ffi.C.WGPUPowerPreference_HighPerformance
 
 	local requestedAdapter
 	local function onAdapterRequested(status, adapter, message, userdata)
