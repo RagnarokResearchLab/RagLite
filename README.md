@@ -32,7 +32,7 @@ Not much to say here; hopefully it'll "just work" on most systems:
 
 * Recent versions of Mac OS, Linux, or Windows
 * Any graphics backend supported by WebGPU (DirectX/Metal/Vulkan)
-* CPU Architecture must be supported by the LuaJIT engine
+* CPU architecture must be supported by the LuaJIT engine
 
 Note: Rendering on Mac OS may not work correctly at this time. Will fix later.
 
