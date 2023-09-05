@@ -41,7 +41,7 @@ Note: Rendering on Mac OS may not work correctly at this time. Will fix later.
 There isn't much to see yet, but if you want to give it a try:
 
 1. Clone this repository (obviously requires [git](https://git-scm.com/))
-1. Download a relase of the Lua runtime for your platform
+1. Download a release of the Lua runtime for your platform
 	* Run ``./download-runtime.sh``, or download from [GitHub Releases](https://github.com/evo-lua/evo-runtime/releases)
 	* The required version is usually the latest, but check the above script
 	* You can also build it from source (see [docs](https://evo-lua.github.io/docs/how-to-guides/building-from-source) here; for advanced users)
