@@ -3,6 +3,7 @@ package.path = "?.lua"
 local specFiles = {
 	"Tests/FileFormats/RagnarokGND.spec.lua",
 	"Tests/FileFormats/RagnarokGRF.spec.lua",
+	"Tests/FileFormats/RagnarokPAL.spec.lua",
 	"Tests/FileFormats/RagnarokSPR.spec.lua",
 	"Tests/VectorMath/Matrix3D.spec.lua",
 	"Tests/VectorMath/Matrix4D.spec.lua",
