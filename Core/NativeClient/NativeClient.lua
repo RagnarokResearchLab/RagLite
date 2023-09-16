@@ -7,6 +7,13 @@ local C_Camera = require("Core.NativeClient.C_Camera")
 local C_Cursor = require("Core.NativeClient.C_Cursor")
 local Renderer = require("Core.NativeClient.Renderer")
 
+local Box = require("Core.NativeClient.DebugDraw.Box")
+local Cone = require("Core.NativeClient.DebugDraw.Cone")
+local Cylinder = require("Core.NativeClient.DebugDraw.Cylinder")
+local Plane = require("Core.NativeClient.DebugDraw.Plane")
+local Pyramid = require("Core.NativeClient.DebugDraw.Pyramid")
+local Sphere = require("Core.NativeClient.DebugDraw.Sphere")
+
 local tonumber = tonumber
 
 local NativeClient = {
@@ -259,12 +266,28 @@ function NativeClient:Start()
 		PYRAMID_VERTEX_COUNT + 2 * ARROWHEAD_VERTEX_COUNT + 14,
 	}
 
-	local mesh = {
+	local oldPyramidMesh = {
 		vertexPositions = vertexPositions,
 		triangleConnections = triangleIndices,
 		vertexColors = vertexColorsRGB,
 	}
-	Renderer:UploadMeshGeometry(mesh)
+
+	local sphereMesh = Sphere({ resolution = 100, translation = { x = 5, y = 0, z = -5 } })
+	local cubeMesh = Box({ translation = { x = -5, y = 0, z = -5 } })
+	local cylinderMesh = Cylinder({ resolution = 100, translation = { x = -5, y = 0, z = 5 } })
+	local coneMesh = Cone({ resolution = 100, translation = { x = 5, y = 0, z = 5 } })
+	local pyramidMesh = Pyramid({ dimensions = { x = 1, y = 2, z = 1 }, translation = { x = -7.5, y = 0, z = 0 } })
+	local boxMesh = Box({ dimensions = { x = 1, y = 2, z = 1 }, translation = { x = 7.5, y = 0, z = 0 } })
+	local groundMesh = Plane({ dimensions = { x = 20, z = 20 }, translation = { x = 0, y = -2, z = 0 } })
+
+	Renderer:UploadMeshGeometry(oldPyramidMesh)
+	Renderer:UploadMeshGeometry(pyramidMesh)
+	Renderer:UploadMeshGeometry(groundMesh)
+	Renderer:UploadMeshGeometry(sphereMesh)
+	Renderer:UploadMeshGeometry(cubeMesh)
+	Renderer:UploadMeshGeometry(boxMesh)
+	Renderer:UploadMeshGeometry(cylinderMesh)
+	Renderer:UploadMeshGeometry(coneMesh)
 
 	self:StartRenderLoop()
 end
