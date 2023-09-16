@@ -26,28 +26,9 @@ function NativeClient:Start()
 	Renderer:InitializeWithGLFW(self.mainWindow)
 
 	-- Hardcoded for now, replace with actual geometry later
-	local PYRAMID_VERTEX_COUNT = 5
+	local PYRAMID_VERTEX_COUNT = 0
 	local ARROWHEAD_VERTEX_COUNT = 3
 	local vertexPositions = {
-		-- Base of the pyramid (square)
-		-0.5,
-		0.0,
-		-0.5, -- bottom-left corner
-		0.5,
-		0.0,
-		-0.5, -- bottom-right corner
-		0.5,
-		0.0,
-		0.5, -- top-right corner
-		-0.5,
-		0.0,
-		0.5, -- top-left corner
-
-		-- Tip of the pyramid
-		0.0,
-		1.0,
-		0.0, -- top center
-
 		-- X-Axis Visualization
 		0.0,
 		0.0,
@@ -119,22 +100,6 @@ function NativeClient:Start()
 	}
 
 	local vertexColorsRGB = {
-		1.0,
-		1.0,
-		1.0, -- base color
-		1.0,
-		1.0,
-		1.0,
-		1.0,
-		1.0,
-		1.0,
-		1.0,
-		1.0,
-		1.0,
-		0.25,
-		0.25,
-		0.25, -- tip color
-
 		-- X-Axis (Red)
 		1.0,
 		0.0,
@@ -208,25 +173,6 @@ function NativeClient:Start()
 	}
 
 	local triangleIndices = {
-		0,
-		1,
-		4, -- bottom-right triangle
-		1,
-		2,
-		4, -- right triangle
-		2,
-		3,
-		4, -- top triangle
-		3,
-		0,
-		4, -- left triangle
-		3,
-		1,
-		0, -- base triangle 1
-		3,
-		2,
-		1, -- base triangle 2
-
 		-- X Axis
 		PYRAMID_VERTEX_COUNT + 0,
 		PYRAMID_VERTEX_COUNT + 1,
@@ -266,7 +212,8 @@ function NativeClient:Start()
 		PYRAMID_VERTEX_COUNT + 2 * ARROWHEAD_VERTEX_COUNT + 14,
 	}
 
-	local oldPyramidMesh = {
+	local oldPyramidMesh = Pyramid()
+	local worldAxesVisualizationMesh = {
 		vertexPositions = vertexPositions,
 		triangleConnections = triangleIndices,
 		vertexColors = vertexColorsRGB,
@@ -280,6 +227,7 @@ function NativeClient:Start()
 	local boxMesh = Box({ dimensions = { x = 1, y = 2, z = 1 }, translation = { x = 7.5, y = 0, z = 0 } })
 	local groundMesh = Plane({ dimensions = { x = 20, z = 20 }, translation = { x = 0, y = -2, z = 0 } })
 
+	Renderer:UploadMeshGeometry(worldAxesVisualizationMesh)
 	Renderer:UploadMeshGeometry(oldPyramidMesh)
 	Renderer:UploadMeshGeometry(pyramidMesh)
 	Renderer:UploadMeshGeometry(groundMesh)
