@@ -21,9 +21,7 @@ function BasicTriangleDrawingPipeline:Construct(wgpuDeviceHandle, textureFormatI
 	shaderDesc.nextInChain = shaderCodeDesc.chain
 	shaderCodeDesc.code = shaderSource
 
-	-- timer.start("Compiling shaders")
 	local shaderModule = webgpu.bindings.wgpu_device_create_shader_module(wgpuDeviceHandle, shaderDesc)
-	-- timer.stop("Compiling shaders")
 
 	-- Configure vertex processing pipeline (vertex fetch/vertex shader stages)
 	local positionAttrib = ffi.new("WGPUVertexAttribute")
@@ -88,22 +86,18 @@ function BasicTriangleDrawingPipeline:Construct(wgpuDeviceHandle, textureFormatI
 	pipelineDesc.multisample.mask = bitmaskAllBitsEnabled
 	pipelineDesc.multisample.alphaToCoverageEnabled = false
 
-	-- Configure resource layout for the vertex shader (global clock, provided as uniform)
+	-- Configure resource layout for the vertex shader
 	local bindingLayout = ffi.new("WGPUBindGroupLayoutEntry")
 
-	-- bindingLayout.buffer.nextInChain = nullptr
 	bindingLayout.buffer.type = ffi.C.WGPUBufferBindingType_Undefined
 	bindingLayout.buffer.hasDynamicOffset = false
 
-	-- bindingLayout.sampler.nextInChain = nullptr
 	bindingLayout.sampler.type = ffi.C.WGPUSamplerBindingType_Undefined
 
-	-- bindingLayout.storageTexture.nextInChain = nullptr
 	bindingLayout.storageTexture.access = ffi.C.WGPUStorageTextureAccess_Undefined
 	bindingLayout.storageTexture.format = ffi.C.WGPUTextureFormat_Undefined
 	bindingLayout.storageTexture.viewDimension = ffi.C.WGPUTextureViewDimension_Undefined
 
-	-- bindingLayout.texture.nextInChain = nullptr
 	bindingLayout.texture.multisampled = false
 	bindingLayout.texture.sampleType = ffi.C.WGPUTextureSampleType_Undefined
 	bindingLayout.texture.viewDimension = ffi.C.WGPUTextureViewDimension_Undefined
@@ -115,14 +109,12 @@ function BasicTriangleDrawingPipeline:Construct(wgpuDeviceHandle, textureFormatI
 	bindingLayout.buffer.minBindingSize = ffi.sizeof("scenewide_uniform_t")
 
 	local bindGroupLayoutDesc = ffi.new("WGPUBindGroupLayoutDescriptor")
-	-- bindGroupLayoutDesc.nextInChain = nullptr
 	bindGroupLayoutDesc.entryCount = 1
 	bindGroupLayoutDesc.entries = bindingLayout
 	local bindGroupLayout = webgpu.bindings.wgpu_device_create_bind_group_layout(wgpuDeviceHandle, bindGroupLayoutDesc)
 	self.wgpuBindGroupLayoutDescriptor = bindGroupLayoutDesc
 
 	local layoutDesc = ffi.new("WGPUPipelineLayoutDescriptor")
-	-- layoutDesc.nextInChain = nullptr
 	layoutDesc.bindGroupLayoutCount = 1
 	local bindGroupLayouts = ffi.new("WGPUBindGroupLayout[?]", 1)
 	bindGroupLayouts[0] = bindGroupLayout
