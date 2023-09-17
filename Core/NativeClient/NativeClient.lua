@@ -7,6 +7,14 @@ local C_Camera = require("Core.NativeClient.C_Camera")
 local C_Cursor = require("Core.NativeClient.C_Cursor")
 local Renderer = require("Core.NativeClient.Renderer")
 
+local Box = require("Core.NativeClient.DebugDraw.Box")
+local Cone = require("Core.NativeClient.DebugDraw.Cone")
+local Cylinder = require("Core.NativeClient.DebugDraw.Cylinder")
+local Plane = require("Core.NativeClient.DebugDraw.Plane")
+local Pyramid = require("Core.NativeClient.DebugDraw.Pyramid")
+local Sphere = require("Core.NativeClient.DebugDraw.Sphere")
+local WorldAxis = require("Core.NativeClient.DebugDraw.WorldAxis")
+
 local tonumber = tonumber
 
 local NativeClient = {
@@ -18,253 +26,26 @@ function NativeClient:Start()
 	self.mainWindow = self:CreateMainWindow()
 	Renderer:InitializeWithGLFW(self.mainWindow)
 
-	-- Hardcoded for now, replace with actual geometry later
-	local PYRAMID_VERTEX_COUNT = 5
-	local ARROWHEAD_VERTEX_COUNT = 3
-	local vertexPositions = {
-		-- Base of the pyramid (square)
-		-0.5,
-		0.0,
-		-0.5, -- bottom-left corner
-		0.5,
-		0.0,
-		-0.5, -- bottom-right corner
-		0.5,
-		0.0,
-		0.5, -- top-right corner
-		-0.5,
-		0.0,
-		0.5, -- top-left corner
+	local oldPyramidMesh = Pyramid()
+	local worldAxesVisualizationMesh = WorldAxis()
 
-		-- Tip of the pyramid
-		0.0,
-		1.0,
-		0.0, -- top center
+	local sphereMesh = Sphere({ resolution = 100, translation = { x = 5, y = 0, z = -5 } })
+	local cubeMesh = Box({ translation = { x = -5, y = 0, z = -5 } })
+	local cylinderMesh = Cylinder({ resolution = 100, translation = { x = -5, y = 0, z = 5 } })
+	local coneMesh = Cone({ resolution = 100, translation = { x = 5, y = 0, z = 5 } })
+	local pyramidMesh = Pyramid({ dimensions = { x = 1, y = 2, z = 1 }, translation = { x = -7.5, y = 0, z = 0 } })
+	local boxMesh = Box({ dimensions = { x = 1, y = 2, z = 1 }, translation = { x = 7.5, y = 0, z = 0 } })
+	local groundMesh = Plane({ dimensions = { x = 20, z = 20 }, translation = { x = 0, y = -2, z = 0 } })
 
-		-- X-Axis Visualization
-		0.0,
-		0.0,
-		0.0, -- Bottom-left
-		2.0,
-		0.0,
-		0.0, -- Bottom-right
-		2.0,
-		0.05,
-		0.0, -- Top-right
-		0.0,
-		0.05,
-		0.0, -- Top-left
-		2.0,
-		0.1,
-		0, -- Arrowhead.Top
-		2.0,
-		-0.05,
-		0, -- Arrowhead.Bottm
-		2.25,
-		0.05 / 2,
-		0, -- Arrowhead.Tip
-
-		-- Y-Axis Visualization
-		0.0,
-		0.0,
-		0.0, -- Bottom-left
-		0.05,
-		0.0,
-		0.0, -- Bottom-right
-		0.05,
-		2.0,
-		0.0, -- Top-right
-		0.0,
-		2.0,
-		0.0, -- Top-left
-		-0.05,
-		2,
-		0, -- Arrowhead.Top
-		0.1,
-		2,
-		0, -- Arrowhead.Bottom
-		0.05 / 2,
-		2.25,
-		0, -- Arrowhead.Tip
-
-		-- Z-Axis Visualization
-		0.0,
-		0.0,
-		0.0, -- Bottom-left
-		0.0,
-		0.0,
-		2.0, -- Bottom-right
-		0.0,
-		0.05,
-		2.0, -- Top-right
-		0.0,
-		0.05,
-		0.0, -- Top-left
-		0,
-		0.1,
-		2, -- Arrowhead.Top
-		0,
-		-0.05,
-		2, -- Arrowhead.Bottom
-		0,
-		0.05 / 2,
-		2.25, -- Arrowhead.Tip
-	}
-
-	local vertexColorsRGB = {
-		1.0,
-		1.0,
-		1.0, -- base color
-		1.0,
-		1.0,
-		1.0,
-		1.0,
-		1.0,
-		1.0,
-		1.0,
-		1.0,
-		1.0,
-		0.25,
-		0.25,
-		0.25, -- tip color
-
-		-- X-Axis (Red)
-		1.0,
-		0.0,
-		0.0, -- Bottom-left
-		1.0,
-		0.0,
-		0.0, -- Bottom-right
-		1.0,
-		0.0,
-		0.0, -- Top-right
-		1.0,
-		0.0,
-		0.0, -- Top-left
-		1.0,
-		0,
-		0,
-		1.0,
-		0,
-		0,
-		1.0,
-		0,
-		0,
-		-- Arrowhead
-
-		-- Y-Axis (Green)
-		0.0,
-		1.0,
-		0.0, -- Bottom-left
-		0.0,
-		1.0,
-		0.0, -- Bottom-right
-		0.0,
-		1.0,
-		0.0, -- Top-right
-		0.0,
-		1.0,
-		0.0, -- Top-left
-		0,
-		1.0,
-		0,
-		0,
-		1.0,
-		0,
-		0,
-		1.0,
-		0,
-		-- Arrowhead
-
-		-- Z-Axis (Blue)
-		0.0,
-		0.0,
-		1.0, -- Bottom-left
-		0.0,
-		0.0,
-		1.0, -- Bottom-right
-		0.0,
-		0.0,
-		1.0, -- Top-right
-		0.0,
-		0.0,
-		1.0, -- Top-left
-		0.0,
-		0.0,
-		1.0,
-		0.0,
-		0.0,
-		1.0,
-		0.0,
-		0.0,
-		1.0, -- Arrowhead
-	}
-
-	local triangleIndices = {
-		0,
-		1,
-		4, -- bottom-right triangle
-		1,
-		2,
-		4, -- right triangle
-		2,
-		3,
-		4, -- top triangle
-		3,
-		0,
-		4, -- left triangle
-		3,
-		1,
-		0, -- base triangle 1
-		3,
-		2,
-		1, -- base triangle 2
-
-		-- X Axis
-		PYRAMID_VERTEX_COUNT + 0,
-		PYRAMID_VERTEX_COUNT + 1,
-		PYRAMID_VERTEX_COUNT + 2,
-		PYRAMID_VERTEX_COUNT + 0,
-		PYRAMID_VERTEX_COUNT + 2,
-		PYRAMID_VERTEX_COUNT + 3,
-		PYRAMID_VERTEX_COUNT + 3 + 1,
-		PYRAMID_VERTEX_COUNT + 3 + 2,
-		PYRAMID_VERTEX_COUNT + 3 + 3,
-
-		-- Y Axis
-		PYRAMID_VERTEX_COUNT
-			+ 3
-			+ 4,
-		PYRAMID_VERTEX_COUNT + ARROWHEAD_VERTEX_COUNT + 5,
-		PYRAMID_VERTEX_COUNT + ARROWHEAD_VERTEX_COUNT + 6,
-		PYRAMID_VERTEX_COUNT + ARROWHEAD_VERTEX_COUNT + 4,
-		PYRAMID_VERTEX_COUNT + ARROWHEAD_VERTEX_COUNT + 6,
-		PYRAMID_VERTEX_COUNT + ARROWHEAD_VERTEX_COUNT + 7,
-		PYRAMID_VERTEX_COUNT + ARROWHEAD_VERTEX_COUNT + 7 + 1,
-		PYRAMID_VERTEX_COUNT + ARROWHEAD_VERTEX_COUNT + 7 + 2,
-		PYRAMID_VERTEX_COUNT + ARROWHEAD_VERTEX_COUNT + 7 + 3,
-
-		-- Z Axis
-		PYRAMID_VERTEX_COUNT
-			+ 3
-			+ 3
-			+ 8,
-		PYRAMID_VERTEX_COUNT + 2 * ARROWHEAD_VERTEX_COUNT + 9,
-		PYRAMID_VERTEX_COUNT + 2 * ARROWHEAD_VERTEX_COUNT + 10,
-		PYRAMID_VERTEX_COUNT + 2 * ARROWHEAD_VERTEX_COUNT + 8,
-		PYRAMID_VERTEX_COUNT + 2 * ARROWHEAD_VERTEX_COUNT + 10,
-		PYRAMID_VERTEX_COUNT + 2 * ARROWHEAD_VERTEX_COUNT + 11,
-		PYRAMID_VERTEX_COUNT + 2 * ARROWHEAD_VERTEX_COUNT + 12,
-		PYRAMID_VERTEX_COUNT + 2 * ARROWHEAD_VERTEX_COUNT + 13,
-		PYRAMID_VERTEX_COUNT + 2 * ARROWHEAD_VERTEX_COUNT + 14,
-	}
-
-	local mesh = {
-		vertexPositions = vertexPositions,
-		triangleConnections = triangleIndices,
-		vertexColors = vertexColorsRGB,
-	}
-	Renderer:UploadMeshGeometry(mesh)
+	Renderer:UploadMeshGeometry(worldAxesVisualizationMesh)
+	Renderer:UploadMeshGeometry(oldPyramidMesh)
+	Renderer:UploadMeshGeometry(pyramidMesh)
+	Renderer:UploadMeshGeometry(groundMesh)
+	Renderer:UploadMeshGeometry(sphereMesh)
+	Renderer:UploadMeshGeometry(cubeMesh)
+	Renderer:UploadMeshGeometry(boxMesh)
+	Renderer:UploadMeshGeometry(cylinderMesh)
+	Renderer:UploadMeshGeometry(coneMesh)
 
 	self:StartRenderLoop()
 end
