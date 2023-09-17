@@ -214,8 +214,6 @@ function Renderer:UploadMeshGeometry(mesh)
 	local colors = mesh.vertexColors
 	local indices = mesh.triangleConnections
 
-	local nanosecondsBeforeUpload = uv.hrtime()
-
 	local vertexCount = #positions / 3
 	local triangleIndicesCount = #indices
 	local numVertexColors = #colors / 3
@@ -239,10 +237,6 @@ function Renderer:UploadMeshGeometry(mesh)
 	mesh.indexBuffer = triangleIndicesBuffer
 
 	table.insert(self.meshes, mesh)
-
-	local nanosecondsAfterUpload = uv.hrtime()
-	local uploadTimeInMilliseconds = (nanosecondsAfterUpload - nanosecondsBeforeUpload) / 10E5
-	printf("Geometry upload took %.2f ms", uploadTimeInMilliseconds)
 end
 
 function Renderer:CreateUniformBuffer()
