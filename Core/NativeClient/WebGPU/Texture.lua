@@ -37,12 +37,29 @@ function Texture:Construct(wgpuDevice, rgbaImageBytes, textureWidthInPixels, tex
 	textureViewDescriptor.format = textureDescriptor.format
 	local textureView = webgpu.bindings.wgpu_texture_create_view(textureHandle, textureViewDescriptor)
 
+	-- Creating one sampler per texture is wasteful, but gives the most flexibility (revisit later, if needed)
+	local samplerDescriptor = ffi.new("WGPUSamplerDescriptor")
+	samplerDescriptor.label = "SharedTextureSampler"
+	samplerDescriptor.addressModeU = ffi.C.WGPUAddressMode_Repeat
+	samplerDescriptor.addressModeV = ffi.C.WGPUAddressMode_Repeat
+	samplerDescriptor.addressModeW = ffi.C.WGPUAddressMode_Repeat
+	samplerDescriptor.magFilter = ffi.C.WGPUFilterMode_Linear
+	samplerDescriptor.minFilter = ffi.C.WGPUFilterMode_Linear
+	samplerDescriptor.mipmapFilter = ffi.C.WGPUFilterMode_Linear
+	samplerDescriptor.lodMinClamp = 0.0
+	samplerDescriptor.lodMaxClamp = math.huge
+	samplerDescriptor.compare = ffi.C.WGPUCompareFunction_Undefined -- Irrelevant (not a depth texture)
+	samplerDescriptor.maxAnisotropy = 1 -- Might want to use clamped addressing with anisotropic filtering here?
+	local textureSampler = webgpu.bindings.wgpu_device_create_sampler(wgpuDevice, samplerDescriptor)
+
 	local instance = {
 		wgpuDevice = wgpuDevice,
 		wgpuTextureDescriptor = textureDescriptor,
 		wgpuTexture = textureHandle,
 		wgpuTextureView = textureView,
 		wgpuTextureViewDescriptor = textureViewDescriptor,
+		wgpuTextureSampler = textureSampler,
+		wgpuSamplerDescriptor = samplerDescriptor,
 		width = textureWidthInPixels,
 		height = textureHeightInPixels,
 		rgbaImageBytes = rgbaImageBytes,
