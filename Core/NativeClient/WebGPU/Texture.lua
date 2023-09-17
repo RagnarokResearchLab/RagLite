@@ -24,12 +24,25 @@ function Texture:Construct(wgpuDevice, rgbaImageBytes, textureWidthInPixels, tex
 
 	textureDescriptor.viewFormatCount = 0 -- No texture view (for now)
 
-	local wgpuTextureHandle = webgpu.bindings.wgpu_device_create_texture(wgpuDevice, textureDescriptor)
+	local textureHandle = webgpu.bindings.wgpu_device_create_texture(wgpuDevice, textureDescriptor)
+
+	-- Create readonly view that should be accessed by a sampler
+	local textureViewDescriptor = ffi.new("WGPUTextureViewDescriptor")
+	textureViewDescriptor.aspect = ffi.C.WGPUTextureAspect_All
+	textureViewDescriptor.baseArrayLayer = 0
+	textureViewDescriptor.arrayLayerCount = 1
+	textureViewDescriptor.baseMipLevel = 0
+	textureViewDescriptor.mipLevelCount = 1
+	textureViewDescriptor.dimension = ffi.C.WGPUTextureViewDimension_2D
+	textureViewDescriptor.format = textureDescriptor.format
+	local textureView = webgpu.bindings.wgpu_texture_create_view(textureHandle, textureViewDescriptor)
 
 	local instance = {
 		wgpuDevice = wgpuDevice,
 		wgpuTextureDescriptor = textureDescriptor,
-		wgpuTexture = wgpuTextureHandle,
+		wgpuTexture = textureHandle,
+		wgpuTextureView = textureView,
+		wgpuTextureViewDescriptor = textureViewDescriptor,
 		width = textureWidthInPixels,
 		height = textureHeightInPixels,
 		rgbaImageBytes = rgbaImageBytes,
