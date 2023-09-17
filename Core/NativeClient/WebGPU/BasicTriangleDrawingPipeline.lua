@@ -88,13 +88,18 @@ function BasicTriangleDrawingPipeline:Construct(wgpuDeviceHandle, textureFormatI
 
 	-- Configure resource layout for the vertex shader
 	local cameraBindGroupLayout, cameraBindGroupLayoutDescriptor = self:CreateCameraBindGroupLayout(wgpuDeviceHandle)
+	local materialBindGroupLayout, materialBindGroupLayoutDescriptor =
+		self:CreateMaterialBindGroupLayout(wgpuDeviceHandle)
 	self.wgpuCameraBindGroupLayout = cameraBindGroupLayout
 	self.wgpuCameraBindGroupLayoutDescriptor = cameraBindGroupLayoutDescriptor
+	self.wgpuMaterialBindGroupLayout = materialBindGroupLayout
+	self.wgpuMaterialBindGroupLayoutDescriptor = materialBindGroupLayoutDescriptor
 
 	local layoutDesc = ffi.new("WGPUPipelineLayoutDescriptor")
-	layoutDesc.bindGroupLayoutCount = 1
-	local bindGroupLayouts = ffi.new("WGPUBindGroupLayout[?]", 1)
+	layoutDesc.bindGroupLayoutCount = 2
+	local bindGroupLayouts = ffi.new("WGPUBindGroupLayout[?]", 2)
 	bindGroupLayouts[0] = cameraBindGroupLayout
+	bindGroupLayouts[1] = materialBindGroupLayout
 	layoutDesc.bindGroupLayouts = bindGroupLayouts
 	local layout = webgpu.bindings.wgpu_device_create_pipeline_layout(wgpuDeviceHandle, layoutDesc)
 	pipelineDesc.layout = layout
@@ -149,6 +154,33 @@ function BasicTriangleDrawingPipeline:CreateCameraBindGroupLayout(wgpuDeviceHand
 	local bindGroupLayoutDescriptor = ffi.new("WGPUBindGroupLayoutDescriptor")
 	bindGroupLayoutDescriptor.entryCount = 1
 	bindGroupLayoutDescriptor.entries = bindGroupLayoutEntry
+	local bindGroupLayout =
+		webgpu.bindings.wgpu_device_create_bind_group_layout(wgpuDeviceHandle, bindGroupLayoutDescriptor)
+
+	return bindGroupLayout, bindGroupLayoutDescriptor
+end
+
+function BasicTriangleDrawingPipeline:CreateMaterialBindGroupLayout(wgpuDeviceHandle)
+	local textureBindGroupLayoutEntry = ffi.new("WGPUBindGroupLayoutEntry")
+	textureBindGroupLayoutEntry.binding = 0
+	textureBindGroupLayoutEntry.visibility = ffi.C.WGPUShaderStage_Fragment
+
+	textureBindGroupLayoutEntry.texture.sampleType = ffi.C.WGPUTextureSampleType_Float
+	textureBindGroupLayoutEntry.texture.viewDimension = ffi.C.WGPUTextureViewDimension_2D
+	textureBindGroupLayoutEntry.texture.multisampled = false
+
+	local samplerBindGroupLayoutEntry = ffi.new("WGPUBindGroupLayoutEntry")
+	samplerBindGroupLayoutEntry.binding = 1
+	samplerBindGroupLayoutEntry.visibility = ffi.C.WGPUShaderStage_Fragment
+	samplerBindGroupLayoutEntry.sampler.type = ffi.C.WGPUSamplerBindingType_Filtering
+
+	local bindGroupLayoutEntries = ffi.new("WGPUBindGroupLayoutEntry[?]", 2)
+	bindGroupLayoutEntries[0] = textureBindGroupLayoutEntry
+	bindGroupLayoutEntries[1] = samplerBindGroupLayoutEntry
+
+	local bindGroupLayoutDescriptor = ffi.new("WGPUBindGroupLayoutDescriptor")
+	bindGroupLayoutDescriptor.entryCount = 2
+	bindGroupLayoutDescriptor.entries = bindGroupLayoutEntries
 	local bindGroupLayout =
 		webgpu.bindings.wgpu_device_create_bind_group_layout(wgpuDeviceHandle, bindGroupLayoutDescriptor)
 
