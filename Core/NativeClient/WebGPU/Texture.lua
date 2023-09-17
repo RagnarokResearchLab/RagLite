@@ -1,3 +1,5 @@
+local BasicTriangleDrawingPipeline = require("Core.NativeClient.WebGPU.BasicTriangleDrawingPipeline")
+
 local bit = require("bit")
 local ffi = require("ffi")
 local webgpu = require("webgpu")
@@ -52,6 +54,28 @@ function Texture:Construct(wgpuDevice, rgbaImageBytes, textureWidthInPixels, tex
 	samplerDescriptor.maxAnisotropy = 1 -- Might want to use clamped addressing with anisotropic filtering here?
 	local textureSampler = webgpu.bindings.wgpu_device_create_sampler(wgpuDevice, samplerDescriptor)
 
+	-- Assign texture view and sampler so that they can be bound to the pipeline (in the render loop)
+	local textureViewBindGroupEntry = ffi.new("WGPUBindGroupEntry")
+	textureViewBindGroupEntry.binding = 0
+	textureViewBindGroupEntry.textureView = textureView
+
+	local samplerBindGroupEntry = ffi.new("WGPUBindGroupEntry")
+	samplerBindGroupEntry.binding = 1
+	samplerBindGroupEntry.sampler = textureSampler
+
+	local bindGroupEntries = ffi.new("WGPUBindGroupEntry[?]", 2)
+	bindGroupEntries[0] = textureViewBindGroupEntry
+	bindGroupEntries[1] = samplerBindGroupEntry
+
+	-- Depending on the pipeline to be initialized here is unfortunate, but I guess there's no other way?
+	local textureBindGroupDescriptor = ffi.new("WGPUBindGroupDescriptor")
+	textureBindGroupDescriptor.layout = BasicTriangleDrawingPipeline.wgpuMaterialBindGroupLayout
+	textureBindGroupDescriptor.entryCount =
+		BasicTriangleDrawingPipeline.wgpuMaterialBindGroupLayoutDescriptor.entryCount
+	textureBindGroupDescriptor.entries = bindGroupEntries
+
+	local bindGroup = webgpu.bindings.wgpu_device_create_bind_group(wgpuDevice, textureBindGroupDescriptor)
+
 	local instance = {
 		wgpuDevice = wgpuDevice,
 		wgpuTextureDescriptor = textureDescriptor,
@@ -60,6 +84,8 @@ function Texture:Construct(wgpuDevice, rgbaImageBytes, textureWidthInPixels, tex
 		wgpuTextureViewDescriptor = textureViewDescriptor,
 		wgpuTextureSampler = textureSampler,
 		wgpuSamplerDescriptor = samplerDescriptor,
+		wgpuBindGroup = bindGroup,
+		wgpuBindGroupDescriptor = textureBindGroupDescriptor,
 		width = textureWidthInPixels,
 		height = textureHeightInPixels,
 		rgbaImageBytes = rgbaImageBytes,
