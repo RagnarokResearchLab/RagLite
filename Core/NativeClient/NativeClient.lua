@@ -37,6 +37,9 @@ function NativeClient:Start()
 	local boxMesh = Box({ dimensions = { x = 1, y = 2, z = 1 }, translation = { x = 7.5, y = 0, z = 0 } })
 	local groundMesh = Plane({ dimensions = { x = 20, z = 20 }, translation = { x = 0, y = -2, z = 0 } })
 
+	local checkeredDebugTexture = Renderer:CreateDebugTexture()
+	groundMesh.texture = checkeredDebugTexture -- Should probably use materials here?
+
 	Renderer:UploadMeshGeometry(worldAxesVisualizationMesh)
 	Renderer:UploadMeshGeometry(oldPyramidMesh)
 	Renderer:UploadMeshGeometry(pyramidMesh)

@@ -8,6 +8,7 @@ local validation = require("validation")
 local GPU = require("Core.NativeClient.WebGPU.GPU")
 local Buffer = require("Core.NativeClient.WebGPU.Buffer")
 local BasicTriangleDrawingPipeline = require("Core.NativeClient.WebGPU.BasicTriangleDrawingPipeline")
+local Texture = require("Core.NativeClient.WebGPU.Texture")
 
 local _ = require("Core.VectorMath.Matrix4D") -- Only needed for the cdefs right now
 local Vector3D = require("Core.VectorMath.Vector3D")
@@ -329,6 +330,14 @@ function Renderer:GetViewportSize(nativeWindowHandle)
 	glfw.bindings.glfw_get_window_size(nativeWindowHandle, contentWidthInPixels, contentHeightInPixels)
 
 	return tonumber(contentWidthInPixels[0]), tonumber(contentHeightInPixels[0])
+end
+
+function Renderer:CreateDebugTexture()
+	local debugTexture = Texture(self.wgpuDevice)
+
+	debugTexture.rgbaImageBytes = Texture:GenerateSimpleGradientImage() -- GC anchor
+
+	return debugTexture
 end
 
 return Renderer
