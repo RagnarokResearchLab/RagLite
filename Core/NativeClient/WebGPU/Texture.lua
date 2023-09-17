@@ -8,7 +8,9 @@ local Texture = {}
 
 local DEFAULT_TEXTURE_SIZE = 256
 
-function Texture:Construct(wgpuDevice, textureWidthInPixels, textureHeightInPixels)
+function Texture:Construct(wgpuDevice, rgbaImageBytes, textureWidthInPixels, textureHeightInPixels)
+	assert(rgbaImageBytes, "Failed to create 2D texture (no image data was provided)")
+
 	textureWidthInPixels = textureWidthInPixels or DEFAULT_TEXTURE_SIZE
 	textureHeightInPixels = textureHeightInPixels or DEFAULT_TEXTURE_SIZE
 
@@ -17,20 +19,53 @@ function Texture:Construct(wgpuDevice, textureWidthInPixels, textureHeightInPixe
 	textureDescriptor.size = { textureWidthInPixels, textureHeightInPixels, 1 }
 	textureDescriptor.mipLevelCount = 1 -- No need for mip-maps (deferred)
 	textureDescriptor.sampleCount = 1 -- MSAA isn't currently supported)
-	textureDescriptor.format = ffi.C.WGPUTextureFormat_RGBA8Unorm
-	textureDescriptor.usage = bit.bor(ffi.C.WGPUBufferUsage_CopyDst, ffi.C.WGPUTextureUsage_TextureBinding)
+	textureDescriptor.format = ffi.C.WGPUTextureFormat_RGBA8Unorm -- TBD: WGPUTextureFormat_BGRA8UnormSrgb ?
+	textureDescriptor.usage = bit.bor(ffi.C.WGPUTextureUsage_CopyDst, ffi.C.WGPUTextureUsage_TextureBinding)
 
 	textureDescriptor.viewFormatCount = 0 -- No texture view (for now)
 
-	webgpu.bindings.wgpu_device_create_texture(wgpuDevice, textureDescriptor)
+	local wgpuTextureHandle = webgpu.bindings.wgpu_device_create_texture(wgpuDevice, textureDescriptor)
 
 	local instance = {
+		wgpuDevice = wgpuDevice,
 		wgpuTextureDescriptor = textureDescriptor,
+		wgpuTexture = wgpuTextureHandle,
+		width = textureWidthInPixels,
+		height = textureHeightInPixels,
+		rgbaImageBytes = rgbaImageBytes,
 	}
 
 	setmetatable(instance, self)
 
 	return instance
+end
+
+function Texture:CopyImageBytesToGPU()
+	local textureBufferSize = self.width * self.height * 4 -- Assuming RGBA
+	printf("Uploading 2D texture: %d x %d (%s)", self.width, self.height, string.filesize(textureBufferSize))
+
+	local destination = ffi.new("WGPUImageCopyTexture")
+	destination.texture = self.wgpuTexture
+	destination.mipLevel = 0 -- Should update all mip levels automatically here (later)
+	destination.origin = { 0, 0, 0 } -- No offsets needed as this isn't an atlas/subresource
+	destination.aspect = ffi.C.WGPUTextureAspect_All -- Irrelevant (not a depth/stencil texture)
+
+	local source = ffi.new("WGPUTextureDataLayout")
+	source.offset = 0 -- Read everything from the start (no fancy optimizations here...)
+	source.bytesPerRow = 4 * self.width -- Might be different for textures loaded from disk?
+
+	assert(source.bytesPerRow >= 256, "Cannot copy texture image (bytesPerRow must be at least 256)")
+
+	source.rowsPerImage = self.height
+
+	webgpu.bindings.wgpu_queue_write_texture(
+		webgpu.bindings.wgpu_device_get_queue(self.wgpuDevice),
+		destination,
+		self.rgbaImageBytes,
+		textureBufferSize,
+		source,
+		self.wgpuTextureDescriptor.size
+	)
 end
 
 local RGBA_OFFSET_RED = 0
@@ -60,6 +95,7 @@ function Texture:GenerateSimpleGradientImage(textureWidthInPixels, textureHeight
 end
 
 Texture.__call = Texture.Construct
+Texture.__index = Texture
 setmetatable(Texture, Texture)
 
 return Texture

@@ -240,6 +240,14 @@ function Renderer:UploadMeshGeometry(mesh)
 	table.insert(self.meshes, mesh)
 end
 
+function Renderer:UploadTextureImage(mesh)
+	if not mesh.texture then
+		return
+	end
+
+	mesh.texture:CopyImageBytesToGPU(mesh.texture.rgbaImageBytes)
+end
+
 function Renderer:CreateUniformBuffer()
 	local bufferDescriptor = ffi.new("WGPUBufferDescriptor")
 	bufferDescriptor.size = ffi.sizeof("scenewide_uniform_t")
@@ -333,9 +341,8 @@ function Renderer:GetViewportSize(nativeWindowHandle)
 end
 
 function Renderer:CreateDebugTexture()
-	local debugTexture = Texture(self.wgpuDevice)
-
-	debugTexture.rgbaImageBytes = Texture:GenerateSimpleGradientImage() -- GC anchor
+	local rgbaImageBytes = Texture:GenerateSimpleGradientImage() -- GC anchor
+	local debugTexture = Texture(self.wgpuDevice, rgbaImageBytes, 256, 256)
 
 	return debugTexture
 end
