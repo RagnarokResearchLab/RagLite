@@ -150,6 +150,27 @@ function Texture:GenerateSimpleGradientImage(textureWidthInPixels, textureHeight
 	return pixels
 end
 
+function Texture:GenerateBlankImage(textureWidthInPixels, textureHeightInPixels)
+	textureWidthInPixels = textureWidthInPixels or DEFAULT_TEXTURE_SIZE
+	textureHeightInPixels = textureHeightInPixels or DEFAULT_TEXTURE_SIZE
+
+	local pixelCount = textureWidthInPixels * textureHeightInPixels
+	local pixels = ffi.new("uint8_t[?]", 4 * pixelCount)
+
+	for u = 0, textureWidthInPixels - 1 do
+		for v = 0, textureHeightInPixels - 1 do
+			local index = 4 * (v * textureWidthInPixels + u)
+
+			pixels[index + RGBA_OFFSET_RED] = ffi_cast("uint8_t", 255)
+			pixels[index + RGBA_OFFSET_GREEN] = ffi_cast("uint8_t", 255)
+			pixels[index + RGBA_OFFSET_BLUE] = ffi_cast("uint8_t", 255)
+			pixels[index + RGBA_OFFSET_ALPHA] = ffi_cast("uint8_t", 255)
+		end
+	end
+
+	return pixels
+end
+
 Texture.__call = Texture.Construct
 Texture.__index = Texture
 setmetatable(Texture, Texture)

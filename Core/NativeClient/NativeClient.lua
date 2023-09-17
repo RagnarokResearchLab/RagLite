@@ -39,7 +39,7 @@ function NativeClient:Start()
 
 	local checkeredDebugTexture = Renderer:CreateDebugTexture()
 	groundMesh.texture = checkeredDebugTexture -- Should probably use materials here?
-	Renderer:UploadTextureImage(groundMesh)
+	Renderer:UploadTextureImage(checkeredDebugTexture)
 
 	Renderer:UploadMeshGeometry(worldAxesVisualizationMesh)
 	Renderer:UploadMeshGeometry(oldPyramidMesh)

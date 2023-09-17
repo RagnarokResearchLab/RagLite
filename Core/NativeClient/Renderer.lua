@@ -50,6 +50,9 @@ function Renderer:InitializeWithGLFW(nativeWindowHandle)
 	Renderer:CreatePipelineConfigurations()
 	Renderer:CreateUniformBuffer()
 	Renderer:EnableDepthBuffer()
+
+	-- Default texture that is multiplicatively neutral (use with untextured geometry to keep things simple)
+	Renderer:CreateDummyTexture()
 end
 
 function Renderer:CreateGraphicsContext(nativeWindowHandle)
@@ -186,6 +189,13 @@ function Renderer:DrawMesh(renderPass, mesh)
 
 	webgpu.bindings.wgpu_render_pass_encoder_set_bind_group(renderPass, 0, self.bindGroup, 0, nil)
 
+	if not mesh.texture then
+		-- The pipeline layout is kept identical (for simplicity's sake... ironic, considering how complicated this already is)
+		webgpu.bindings.wgpu_render_pass_encoder_set_bind_group(renderPass, 1, self.dummyTexture.wgpuBindGroup, 0, nil)
+	else
+		webgpu.bindings.wgpu_render_pass_encoder_set_bind_group(renderPass, 1, mesh.texture.wgpuBindGroup, 0, nil)
+	end
+
 	local instanceCount = 1
 	local firstVertexIndex = 0
 	local firstInstanceIndex = 0
@@ -240,12 +250,12 @@ function Renderer:UploadMeshGeometry(mesh)
 	table.insert(self.meshes, mesh)
 end
 
-function Renderer:UploadTextureImage(mesh)
-	if not mesh.texture then
+function Renderer:UploadTextureImage(texture)
+	if not texture then
 		return
 	end
 
-	mesh.texture:CopyImageBytesToGPU(mesh.texture.rgbaImageBytes)
+	texture:CopyImageBytesToGPU(texture.rgbaImageBytes)
 end
 
 function Renderer:CreateUniformBuffer()
@@ -345,6 +355,20 @@ function Renderer:CreateDebugTexture()
 	local debugTexture = Texture(self.wgpuDevice, rgbaImageBytes, 256, 256)
 
 	return debugTexture
+end
+
+function Renderer:CreateBlankTexture()
+	local rgbaImageBytes = Texture:GenerateBlankImage() -- GC anchor
+	local blankTexture = Texture(self.wgpuDevice, rgbaImageBytes, 256, 256)
+
+	return blankTexture
+end
+
+function Renderer:CreateDummyTexture()
+	-- 1x1 white so the pipeline layout doesn't need to be modified (ugly hack, but it's probably the simplest approach)
+	local blankTexture = Renderer:CreateBlankTexture()
+	self.dummyTexture = blankTexture -- Should probably use materials here?
+	Renderer:UploadTextureImage(blankTexture)
 end
 
 return Renderer
