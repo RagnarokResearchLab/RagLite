@@ -265,11 +265,11 @@ function Renderer:CreateUniformBuffer()
 	binding.offset = 0
 	binding.size = ffi.sizeof(self.perSceneUniformData)
 
-	local bindGroupDesc = ffi.new("WGPUBindGroupDescriptor")
-	bindGroupDesc.layout = BasicTriangleDrawingPipeline.wgpuBindGroupLayout
-	bindGroupDesc.entryCount = BasicTriangleDrawingPipeline.wgpuBindGroupLayoutDescriptor.entryCount
-	bindGroupDesc.entries = binding
-	local bindGroup = webgpu.bindings.wgpu_device_create_bind_group(self.wgpuDevice, bindGroupDesc)
+	local cameraBindGroupDescriptor = ffi.new("WGPUBindGroupDescriptor")
+	cameraBindGroupDescriptor.layout = BasicTriangleDrawingPipeline.wgpuCameraBindGroupLayout
+	cameraBindGroupDescriptor.entryCount = BasicTriangleDrawingPipeline.wgpuCameraBindGroupLayoutDescriptor.entryCount
+	cameraBindGroupDescriptor.entries = binding
+	local bindGroup = webgpu.bindings.wgpu_device_create_bind_group(self.wgpuDevice, cameraBindGroupDescriptor)
 	self.bindGroup = bindGroup
 
 	self.uniformBuffer = uniformBuffer

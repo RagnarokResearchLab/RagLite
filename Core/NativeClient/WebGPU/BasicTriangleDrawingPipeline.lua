@@ -87,42 +87,17 @@ function BasicTriangleDrawingPipeline:Construct(wgpuDeviceHandle, textureFormatI
 	pipelineDesc.multisample.alphaToCoverageEnabled = false
 
 	-- Configure resource layout for the vertex shader
-	local bindingLayout = ffi.new("WGPUBindGroupLayoutEntry")
-
-	bindingLayout.buffer.type = ffi.C.WGPUBufferBindingType_Undefined
-	bindingLayout.buffer.hasDynamicOffset = false
-
-	bindingLayout.sampler.type = ffi.C.WGPUSamplerBindingType_Undefined
-
-	bindingLayout.storageTexture.access = ffi.C.WGPUStorageTextureAccess_Undefined
-	bindingLayout.storageTexture.format = ffi.C.WGPUTextureFormat_Undefined
-	bindingLayout.storageTexture.viewDimension = ffi.C.WGPUTextureViewDimension_Undefined
-
-	bindingLayout.texture.multisampled = false
-	bindingLayout.texture.sampleType = ffi.C.WGPUTextureSampleType_Undefined
-	bindingLayout.texture.viewDimension = ffi.C.WGPUTextureViewDimension_Undefined
-
-	bindingLayout.binding = 0
-	bindingLayout.visibility = bit.bor(ffi.C.WGPUShaderStage_Vertex, ffi.C.WGPUShaderStage_Fragment)
-
-	bindingLayout.buffer.type = ffi.C.WGPUBufferBindingType_Uniform
-	bindingLayout.buffer.minBindingSize = ffi.sizeof("scenewide_uniform_t")
-
-	local bindGroupLayoutDesc = ffi.new("WGPUBindGroupLayoutDescriptor")
-	bindGroupLayoutDesc.entryCount = 1
-	bindGroupLayoutDesc.entries = bindingLayout
-	local bindGroupLayout = webgpu.bindings.wgpu_device_create_bind_group_layout(wgpuDeviceHandle, bindGroupLayoutDesc)
-	self.wgpuBindGroupLayoutDescriptor = bindGroupLayoutDesc
+	local cameraBindGroupLayout, cameraBindGroupLayoutDescriptor = self:CreateCameraBindGroupLayout(wgpuDeviceHandle)
+	self.wgpuCameraBindGroupLayout = cameraBindGroupLayout
+	self.wgpuCameraBindGroupLayoutDescriptor = cameraBindGroupLayoutDescriptor
 
 	local layoutDesc = ffi.new("WGPUPipelineLayoutDescriptor")
 	layoutDesc.bindGroupLayoutCount = 1
 	local bindGroupLayouts = ffi.new("WGPUBindGroupLayout[?]", 1)
-	bindGroupLayouts[0] = bindGroupLayout
+	bindGroupLayouts[0] = cameraBindGroupLayout
 	layoutDesc.bindGroupLayouts = bindGroupLayouts
 	local layout = webgpu.bindings.wgpu_device_create_pipeline_layout(wgpuDeviceHandle, layoutDesc)
 	pipelineDesc.layout = layout
-
-	self.wgpuBindGroupLayout = bindGroupLayout
 
 	-- Configure depth testing (Z buffer)
 	local depthStencilState = ffi.new("WGPUDepthStencilState")
@@ -147,6 +122,37 @@ function BasicTriangleDrawingPipeline:Construct(wgpuDeviceHandle, textureFormatI
 	pipelineDesc.depthStencil = depthStencilState
 
 	return webgpu.bindings.wgpu_device_create_render_pipeline(wgpuDeviceHandle, descriptor)
+end
+
+function BasicTriangleDrawingPipeline:CreateCameraBindGroupLayout(wgpuDeviceHandle)
+	local bindGroupLayoutEntry = ffi.new("WGPUBindGroupLayoutEntry")
+
+	bindGroupLayoutEntry.buffer.type = ffi.C.WGPUBufferBindingType_Undefined
+	bindGroupLayoutEntry.buffer.hasDynamicOffset = false
+
+	bindGroupLayoutEntry.sampler.type = ffi.C.WGPUSamplerBindingType_Undefined
+
+	bindGroupLayoutEntry.storageTexture.access = ffi.C.WGPUStorageTextureAccess_Undefined
+	bindGroupLayoutEntry.storageTexture.format = ffi.C.WGPUTextureFormat_Undefined
+	bindGroupLayoutEntry.storageTexture.viewDimension = ffi.C.WGPUTextureViewDimension_Undefined
+
+	bindGroupLayoutEntry.texture.multisampled = false
+	bindGroupLayoutEntry.texture.sampleType = ffi.C.WGPUTextureSampleType_Undefined
+	bindGroupLayoutEntry.texture.viewDimension = ffi.C.WGPUTextureViewDimension_Undefined
+
+	bindGroupLayoutEntry.binding = 0
+	bindGroupLayoutEntry.visibility = bit.bor(ffi.C.WGPUShaderStage_Vertex, ffi.C.WGPUShaderStage_Fragment)
+
+	bindGroupLayoutEntry.buffer.type = ffi.C.WGPUBufferBindingType_Uniform
+	bindGroupLayoutEntry.buffer.minBindingSize = ffi.sizeof("scenewide_uniform_t")
+
+	local bindGroupLayoutDescriptor = ffi.new("WGPUBindGroupLayoutDescriptor")
+	bindGroupLayoutDescriptor.entryCount = 1
+	bindGroupLayoutDescriptor.entries = bindGroupLayoutEntry
+	local bindGroupLayout =
+		webgpu.bindings.wgpu_device_create_bind_group_layout(wgpuDeviceHandle, bindGroupLayoutDescriptor)
+
+	return bindGroupLayout, bindGroupLayoutDescriptor
 end
 
 BasicTriangleDrawingPipeline.__call = BasicTriangleDrawingPipeline.Construct
