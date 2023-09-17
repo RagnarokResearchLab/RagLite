@@ -61,8 +61,10 @@ function GPU:RequestLogicalDevice(adapter, options)
 	local numComponentsPerVertex = 3 -- sizeof(Vertex3D) = positions (x, y, z)
 	requiredLimits.limits.maxBufferSize = numVertices * numComponentsPerVertex * ffi.sizeof("float")
 	requiredLimits.limits.maxVertexBufferArrayStride = numComponentsPerVertex * ffi.sizeof("float")
-	requiredLimits.limits.maxBindGroups = 1
-	requiredLimits.limits.maxUniformBuffersPerShaderStage = 1
+	requiredLimits.limits.maxBindGroups = 2 -- Camera, material (increase for model transforms, later?)
+	requiredLimits.limits.maxUniformBuffersPerShaderStage = 1 -- Camera properties (increase for material, soon?)
+	requiredLimits.limits.maxSampledTexturesPerShaderStage = 1 -- Diffuse texture (increase for lightmaps, later?)
+	requiredLimits.limits.maxSamplersPerShaderStage = 1 -- Diffuse texture sampler (increase for lightmaps, later?)
 	requiredLimits.limits.maxUniformBufferBindingSize = 48 * ffi.sizeof("float")
 
 	requiredLimits.limits.minStorageBufferOffsetAlignment = supportedLimits.limits.minStorageBufferOffsetAlignment

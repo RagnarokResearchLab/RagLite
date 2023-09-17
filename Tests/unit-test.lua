@@ -19,6 +19,7 @@ local specFiles = {
 	"Tests/NativeClient/DebugDraw/Plane.spec.lua",
 	"Tests/NativeClient/DebugDraw/Pyramid.spec.lua",
 	"Tests/NativeClient/DebugDraw/Sphere.spec.lua",
+	"Tests/NativeClient/WebGPU/Texture.spec.lua",
 	"Tests/WorldServer/C_ServerHealth.spec.lua",
 	"Tests/WorldServer/WorldServer.spec.lua",
 	"Tests/Tools/FileAnalyzer.spec.lua",

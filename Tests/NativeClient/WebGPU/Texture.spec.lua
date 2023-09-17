@@ -1,0 +1,15 @@
+local ffi = require("ffi")
+
+local Texture = require("Core.NativeClient.WebGPU.Texture")
+
+describe("Texture", function()
+	describe("GenerateSimpleGradientImage", function()
+		it("should return the RGBA pixel data for a linear rainbow gradient", function()
+			local rgbaImageBytes = Texture:GenerateSimpleGradientImage()
+			local gradientImagePath = path.join("Tests", "Fixtures", "gradient-texture.png")
+			local pngImageBytes = C_FileSystem.ReadFile(gradientImagePath)
+			local expectedPixelData = C_ImageProcessing.DecodeFileContents(pngImageBytes)
+			assertEquals(ffi.string(rgbaImageBytes, 256 * 256 * 4), expectedPixelData)
+		end)
+	end)
+end)

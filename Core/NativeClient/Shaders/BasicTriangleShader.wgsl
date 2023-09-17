@@ -10,6 +10,9 @@ struct PerSceneData {
 
 @group(0) @binding(0) var<uniform> uPerSceneData: PerSceneData;
 
+@group(1) @binding(0) var diffuseTexture: texture_2d<f32>;
+@group(1) @binding(1) var diffuseTextureSampler: sampler;
+
 struct VertexInput {
     @location(0) position: vec3f,
     @location(1) color: vec3f,
@@ -92,10 +95,14 @@ fn vs_main(in: VertexInput) -> VertexOutput {
 
 @fragment
 fn fs_main(in: VertexOutput) -> @location(0) vec4f {
+    // Hardcoded for now (need to update the pipeline in order to pass uvs in)
+    let textureCoords = vec2f(0.5, 0.5);
+    let diffuseTextureColor = textureSample(diffuseTexture, diffuseTextureSampler, textureCoords);
+    let finalColor = in.color * diffuseTextureColor.rgb * uPerSceneData.color.rgb;
+
     // WebGPU assumes that the colors output by the fragment shader are given in linear space
     // When setting the surface format to BGRA8UnormSrgb it performs a linear to sRGB conversion.
-    let color = in.color * uPerSceneData.color.rgb;
     // Gamma-correction
-    let corrected_color = pow(color, vec3f(2.2));
+    let corrected_color = pow(finalColor.rgb, vec3f(2.2));
     return vec4f(corrected_color, uPerSceneData.color.a);
 }

@@ -8,6 +8,7 @@ local validation = require("validation")
 local GPU = require("Core.NativeClient.WebGPU.GPU")
 local Buffer = require("Core.NativeClient.WebGPU.Buffer")
 local BasicTriangleDrawingPipeline = require("Core.NativeClient.WebGPU.BasicTriangleDrawingPipeline")
+local Texture = require("Core.NativeClient.WebGPU.Texture")
 
 local _ = require("Core.VectorMath.Matrix4D") -- Only needed for the cdefs right now
 local Vector3D = require("Core.VectorMath.Vector3D")
@@ -49,6 +50,9 @@ function Renderer:InitializeWithGLFW(nativeWindowHandle)
 	Renderer:CreatePipelineConfigurations()
 	Renderer:CreateUniformBuffer()
 	Renderer:EnableDepthBuffer()
+
+	-- Default texture that is multiplicatively neutral (use with untextured geometry to keep things simple)
+	Renderer:CreateDummyTexture()
 end
 
 function Renderer:CreateGraphicsContext(nativeWindowHandle)
@@ -185,6 +189,13 @@ function Renderer:DrawMesh(renderPass, mesh)
 
 	webgpu.bindings.wgpu_render_pass_encoder_set_bind_group(renderPass, 0, self.bindGroup, 0, nil)
 
+	if not mesh.texture then
+		-- The pipeline layout is kept identical (for simplicity's sake... ironic, considering how complicated this already is)
+		webgpu.bindings.wgpu_render_pass_encoder_set_bind_group(renderPass, 1, self.dummyTexture.wgpuBindGroup, 0, nil)
+	else
+		webgpu.bindings.wgpu_render_pass_encoder_set_bind_group(renderPass, 1, mesh.texture.wgpuBindGroup, 0, nil)
+	end
+
 	local instanceCount = 1
 	local firstVertexIndex = 0
 	local firstInstanceIndex = 0
@@ -239,6 +250,14 @@ function Renderer:UploadMeshGeometry(mesh)
 	table.insert(self.meshes, mesh)
 end
 
+function Renderer:UploadTextureImage(texture)
+	if not texture then
+		return
+	end
+
+	texture:CopyImageBytesToGPU(texture.rgbaImageBytes)
+end
+
 function Renderer:CreateUniformBuffer()
 	local bufferDescriptor = ffi.new("WGPUBufferDescriptor")
 	bufferDescriptor.size = ffi.sizeof("scenewide_uniform_t")
@@ -256,11 +275,11 @@ function Renderer:CreateUniformBuffer()
 	binding.offset = 0
 	binding.size = ffi.sizeof(self.perSceneUniformData)
 
-	local bindGroupDesc = ffi.new("WGPUBindGroupDescriptor")
-	bindGroupDesc.layout = BasicTriangleDrawingPipeline.wgpuBindGroupLayout
-	bindGroupDesc.entryCount = BasicTriangleDrawingPipeline.wgpuBindGroupLayoutDescriptor.entryCount
-	bindGroupDesc.entries = binding
-	local bindGroup = webgpu.bindings.wgpu_device_create_bind_group(self.wgpuDevice, bindGroupDesc)
+	local cameraBindGroupDescriptor = ffi.new("WGPUBindGroupDescriptor")
+	cameraBindGroupDescriptor.layout = BasicTriangleDrawingPipeline.wgpuCameraBindGroupLayout
+	cameraBindGroupDescriptor.entryCount = BasicTriangleDrawingPipeline.wgpuCameraBindGroupLayoutDescriptor.entryCount
+	cameraBindGroupDescriptor.entries = binding
+	local bindGroup = webgpu.bindings.wgpu_device_create_bind_group(self.wgpuDevice, cameraBindGroupDescriptor)
 	self.bindGroup = bindGroup
 
 	self.uniformBuffer = uniformBuffer
@@ -329,6 +348,27 @@ function Renderer:GetViewportSize(nativeWindowHandle)
 	glfw.bindings.glfw_get_window_size(nativeWindowHandle, contentWidthInPixels, contentHeightInPixels)
 
 	return tonumber(contentWidthInPixels[0]), tonumber(contentHeightInPixels[0])
+end
+
+function Renderer:CreateDebugTexture()
+	local rgbaImageBytes = Texture:GenerateSimpleGradientImage() -- GC anchor
+	local debugTexture = Texture(self.wgpuDevice, rgbaImageBytes, 256, 256)
+
+	return debugTexture
+end
+
+function Renderer:CreateBlankTexture()
+	local rgbaImageBytes = Texture:GenerateBlankImage() -- GC anchor
+	local blankTexture = Texture(self.wgpuDevice, rgbaImageBytes, 256, 256)
+
+	return blankTexture
+end
+
+function Renderer:CreateDummyTexture()
+	-- 1x1 white so the pipeline layout doesn't need to be modified (ugly hack, but it's probably the simplest approach)
+	local blankTexture = Renderer:CreateBlankTexture()
+	self.dummyTexture = blankTexture -- Should probably use materials here?
+	Renderer:UploadTextureImage(blankTexture)
 end
 
 return Renderer
