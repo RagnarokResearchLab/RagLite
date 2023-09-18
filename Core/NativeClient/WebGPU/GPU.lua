@@ -58,7 +58,7 @@ function GPU:RequestLogicalDevice(adapter, options)
 	requiredLimits.limits.maxTextureArrayLayers = 1 -- For the depth/stencil texture
 	requiredLimits.limits.maxVertexAttributes = 3 -- Vertex positions, vertex colors, diffuse texture UVs
 	requiredLimits.limits.maxVertexBuffers = 3 -- Vertex positions, vertex colors, diffuse texture UVs
-	requiredLimits.limits.maxInterStageShaderComponents = 4 -- Vertex index, position, color, diffuse texture UVs
+	requiredLimits.limits.maxInterStageShaderComponents = 5 -- sizeof(VertexOutput\{#@builtins}) = #(vec3f color, vec2f diffuseTextureCoords)
 	local numComponentsPerVertex = 3 -- sizeof(Vertex3D) = positions (x, y, z)
 	requiredLimits.limits.maxBufferSize = self.MAX_VERTEX_COUNT * numComponentsPerVertex * ffi.sizeof("float")
 	requiredLimits.limits.maxVertexBufferArrayStride = numComponentsPerVertex * ffi.sizeof("float")

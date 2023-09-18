@@ -16,11 +16,13 @@ struct PerSceneData {
 struct VertexInput {
     @location(0) position: vec3f,
     @location(1) color: vec3f,
+    @location(2) diffuseTextureCoords: vec2f,
 };
 
 struct VertexOutput {
     @builtin(position) position: vec4f,
     @location(0) color: vec3f,
+    @location(1) diffuseTextureCoords: vec2f,
 };
 
 const MATH_PI = 3.14159266;
@@ -90,13 +92,14 @@ fn vs_main(in: VertexInput) -> VertexOutput {
 	out.position = projectionMatrix * viewMatrix * T1 * S * homogeneous_position;
 
 	out.color = in.color;
+	out.diffuseTextureCoords = in.diffuseTextureCoords;
 	return out;
 }
 
 @fragment
 fn fs_main(in: VertexOutput) -> @location(0) vec4f {
     // Hardcoded for now (need to update the pipeline in order to pass uvs in)
-    let textureCoords = vec2f(0.5, 0.5);
+    let textureCoords = in.diffuseTextureCoords;
     let diffuseTextureColor = textureSample(diffuseTexture, diffuseTextureSampler, textureCoords);
     let finalColor = in.color * diffuseTextureColor.rgb * uPerSceneData.color.rgb;
 
