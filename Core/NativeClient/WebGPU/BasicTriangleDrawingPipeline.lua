@@ -29,7 +29,7 @@ function BasicTriangleDrawingPipeline:Construct(wgpuDeviceHandle, textureFormatI
 	positionAttrib.format = ffi.C.WGPUVertexFormat_Float32x3 -- Vector3D (float)
 	positionAttrib.offset = 0
 
-	local vertexBufferLayout = ffi.new("WGPUVertexBufferLayout[?]", 2) -- Positions, colors
+	local vertexBufferLayout = ffi.new("WGPUVertexBufferLayout[?]", 3) -- Positions, colors, diffuse UVs
 	vertexBufferLayout[0].attributeCount = 1 -- Position
 	vertexBufferLayout[0].attributes = positionAttrib
 	vertexBufferLayout[0].arrayStride = 3 * ffi.sizeof("float") -- sizeof(Vector3D) = position
@@ -42,10 +42,20 @@ function BasicTriangleDrawingPipeline:Construct(wgpuDeviceHandle, textureFormatI
 
 	vertexBufferLayout[1].attributeCount = 1 -- Color
 	vertexBufferLayout[1].attributes = colorAttrib
-	vertexBufferLayout[1].arrayStride = 3 * ffi.sizeof("float") -- sizeof(Vector23) = color
+	vertexBufferLayout[1].arrayStride = 3 * ffi.sizeof("float") -- sizeof(Vector3D) = color
 	vertexBufferLayout[1].stepMode = ffi.C.WGPUVertexStepMode_Vertex
 
-	pipelineDesc.vertex.bufferCount = 2 -- positions, colors
+	local diffuseTextureCoordinatesAttribute = ffi.new("WGPUVertexAttribute")
+	diffuseTextureCoordinatesAttribute.shaderLocation = 2 -- Pass as third argument
+	diffuseTextureCoordinatesAttribute.format = ffi.C.WGPUVertexFormat_Float32x2 -- Vector2D (float) = UV coords
+	diffuseTextureCoordinatesAttribute.offset = 0
+
+	vertexBufferLayout[2].attributeCount = 1 -- UV
+	vertexBufferLayout[2].attributes = diffuseTextureCoordinatesAttribute
+	vertexBufferLayout[2].arrayStride = 2 * ffi.sizeof("float") -- sizeof(Vector2D) = uv
+	vertexBufferLayout[2].stepMode = ffi.C.WGPUVertexStepMode_Vertex
+
+	pipelineDesc.vertex.bufferCount = 3 -- positions, colors, uvs
 	pipelineDesc.vertex.module = shaderModule
 	pipelineDesc.vertex.entryPoint = "vs_main"
 	pipelineDesc.vertex.constantCount = 0

@@ -5,10 +5,12 @@ local ffi = require("ffi")
 local webgpu = require("webgpu")
 
 local ffi_cast = ffi.cast
+local math_floor = math.floor
 
 local Texture = {}
 
 local DEFAULT_TEXTURE_SIZE = 256
+local GRID_CELL_SIZE = 64
 
 function Texture:Construct(wgpuDevice, rgbaImageBytes, textureWidthInPixels, textureHeightInPixels)
 	assert(rgbaImageBytes, "Failed to create 2D texture (no image data was provided)")
@@ -165,6 +167,33 @@ function Texture:GenerateBlankImage(textureWidthInPixels, textureHeightInPixels)
 			pixels[index + RGBA_OFFSET_GREEN] = ffi_cast("uint8_t", 255)
 			pixels[index + RGBA_OFFSET_BLUE] = ffi_cast("uint8_t", 255)
 			pixels[index + RGBA_OFFSET_ALPHA] = ffi_cast("uint8_t", 255)
+		end
+	end
+
+	return pixels
+end
+
+function Texture:GenerateCheckeredGridImage(firstColor, secondColor)
+	firstColor = firstColor or { red = 1, blue = 1, green = 1 }
+	secondColor = secondColor or { red = 0, blue = 0, green = 0 }
+
+	local textureWidthInPixels = DEFAULT_TEXTURE_SIZE
+	local textureHeightInPixels = DEFAULT_TEXTURE_SIZE
+
+	local pixelCount = textureWidthInPixels * textureHeightInPixels
+	local pixels = ffi.new("uint8_t[?]", 4 * pixelCount)
+
+	for u = 0, textureWidthInPixels - 1 do
+		for v = 0, textureHeightInPixels - 1 do
+			local index = 4 * (v * textureWidthInPixels + u)
+
+			local useAlternateColor = math_floor(u / GRID_CELL_SIZE) % 2 == math_floor(v / GRID_CELL_SIZE) % 2
+			local cellColor = useAlternateColor and firstColor or secondColor
+
+			pixels[index + RGBA_OFFSET_RED] = ffi.cast("uint8_t", cellColor.red * 255)
+			pixels[index + RGBA_OFFSET_GREEN] = ffi.cast("uint8_t", cellColor.green * 255)
+			pixels[index + RGBA_OFFSET_BLUE] = ffi.cast("uint8_t", cellColor.blue * 255)
+			pixels[index + RGBA_OFFSET_ALPHA] = ffi.cast("uint8_t", 255)
 		end
 	end
 
