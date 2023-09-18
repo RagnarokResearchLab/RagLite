@@ -44,9 +44,9 @@ function Texture:Construct(wgpuDevice, rgbaImageBytes, textureWidthInPixels, tex
 	-- Creating one sampler per texture is wasteful, but gives the most flexibility (revisit later, if needed)
 	local samplerDescriptor = ffi.new("WGPUSamplerDescriptor")
 	samplerDescriptor.label = "SharedTextureSampler"
-	samplerDescriptor.addressModeU = ffi.C.WGPUAddressMode_Repeat
-	samplerDescriptor.addressModeV = ffi.C.WGPUAddressMode_Repeat
-	samplerDescriptor.addressModeW = ffi.C.WGPUAddressMode_Repeat
+	samplerDescriptor.addressModeU = ffi.C.WGPUAddressMode_ClampToEdge
+	samplerDescriptor.addressModeV = ffi.C.WGPUAddressMode_ClampToEdge
+	samplerDescriptor.addressModeW = ffi.C.WGPUAddressMode_ClampToEdge
 	samplerDescriptor.magFilter = ffi.C.WGPUFilterMode_Linear
 	samplerDescriptor.minFilter = ffi.C.WGPUFilterMode_Linear
 	samplerDescriptor.mipmapFilter = ffi.C.WGPUFilterMode_Linear
