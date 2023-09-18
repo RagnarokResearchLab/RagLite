@@ -2,7 +2,9 @@ local ffi = require("ffi")
 local glfw = require("glfw")
 local webgpu = require("webgpu")
 
-local GPU = {}
+local GPU = {
+	MAX_VERTEX_COUNT = 65536, -- Should be configurable (later)
+}
 
 function GPU:CreateInstance()
 	local instanceDescriptor = ffi.new("WGPUInstanceDescriptor")
@@ -57,9 +59,8 @@ function GPU:RequestLogicalDevice(adapter, options)
 	requiredLimits.limits.maxVertexAttributes = 3 -- Vertex positions, vertex colors, diffuse texture UVs
 	requiredLimits.limits.maxVertexBuffers = 3 -- Vertex positions, vertex colors, diffuse texture UVs
 	requiredLimits.limits.maxInterStageShaderComponents = 4 -- Vertex index, position, color, diffuse texture UVs
-	local numVertices = 65536 -- Should be configurable (later)
 	local numComponentsPerVertex = 3 -- sizeof(Vertex3D) = positions (x, y, z)
-	requiredLimits.limits.maxBufferSize = numVertices * numComponentsPerVertex * ffi.sizeof("float")
+	requiredLimits.limits.maxBufferSize = self.MAX_VERTEX_COUNT * numComponentsPerVertex * ffi.sizeof("float")
 	requiredLimits.limits.maxVertexBufferArrayStride = numComponentsPerVertex * ffi.sizeof("float")
 	requiredLimits.limits.maxBindGroups = 2 -- Camera, material (increase for model transforms, later?)
 	requiredLimits.limits.maxUniformBuffersPerShaderStage = 1 -- Camera properties (increase for material, soon?)

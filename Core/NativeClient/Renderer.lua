@@ -53,6 +53,8 @@ function Renderer:InitializeWithGLFW(nativeWindowHandle)
 
 	-- Default texture that is multiplicatively neutral (use with untextured geometry to keep things simple)
 	Renderer:CreateDummyTexture()
+	-- Untextured geometry still needs to bind a UV buffer since we only have a single pipeline (hacky...)
+	Renderer:CreateDummyTextureCoordinatesBuffer()
 end
 
 function Renderer:CreateGraphicsContext(nativeWindowHandle)
@@ -243,6 +245,14 @@ function Renderer:UploadMeshGeometry(mesh)
 	printf("Uploading geometry: %d triangle indices (%s)", triangleIndicesCount, filesize(triangleIndexBufferSize))
 	local triangleIndicesBuffer = Buffer:CreateIndexBuffer(self.wgpuDevice, indices)
 
+	local hasDiffuseTextureCoords = (mesh.diffuseTextureCoords ~= nil and #mesh.diffuseTextureCoords > 0)
+	if hasDiffuseTextureCoords then
+		error("Diffuse texture coords are NYI")
+		-- TODO assert UV count matches number of vertices
+	else -- Bit of a hack, but oh well...
+		mesh.diffuseTexCoordsBuffer = self.dummyTexCoordsBuffer
+	end
+
 	mesh.vertexBuffer = vertexBuffer
 	mesh.colorBuffer = vertexColorsBuffer
 	mesh.indexBuffer = triangleIndicesBuffer
@@ -369,6 +379,18 @@ function Renderer:CreateDummyTexture()
 	local blankTexture = Renderer:CreateBlankTexture()
 	self.dummyTexture = blankTexture -- Should probably use materials here?
 	Renderer:UploadTextureImage(blankTexture)
+end
+
+require("table.new")
+
+function Renderer:CreateDummyTextureCoordinatesBuffer()
+	local maxAllowedVerticesPerMesh = GPU.MAX_VERTEX_COUNT -- A bit wasteful, but it's a one-of anyway...
+	local bufferSize = maxAllowedVerticesPerMesh * ffi.sizeof("float") * 2 -- One UV set per vertex
+	printf("Creating default UV buffer with %d entries (%s)", maxAllowedVerticesPerMesh, string.filesize(bufferSize))
+	-- local dummyCoords = ffi.new("float[?]", maxAllowedVerticesPerMesh * 2) -- All zeroes because it doesn't matter
+	local dummyCoords = table.new(maxAllowedVerticesPerMesh, 0)
+	local buffer = Buffer:CreateVertexBuffer(self.wgpuDevice, dummyCoords)
+	self.dummyTexCoordsBuffer = buffer
 end
 
 return Renderer

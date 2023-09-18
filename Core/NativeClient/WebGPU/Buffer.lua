@@ -18,8 +18,8 @@ function Buffer.GetAlignedSize(unalignedSize)
 	return paddedSize
 end
 
-function Buffer:CreateVertexBuffer(wgpuDevice, positions)
-	local rawBufferSizeInBytes = #positions * ffi.sizeof("float") -- Assumes both 3D positions and colors are given as floats
+function Buffer:CreateVertexBuffer(wgpuDevice, entries)
+	local rawBufferSizeInBytes = #entries * ffi.sizeof("float") -- Assumes 3D positions, texture coords, or colors
 	local alignedBufferSizeInBytes = Buffer.GetAlignedSize(rawBufferSizeInBytes)
 
 	local bufferDescriptor = ffi.new("WGPUBufferDescriptor")
@@ -32,7 +32,7 @@ function Buffer:CreateVertexBuffer(wgpuDevice, positions)
 		webgpu.bindings.wgpu_device_get_queue(wgpuDevice),
 		buffer,
 		0,
-		ffi.new("float[?]", alignedBufferSizeInBytes, positions),
+		ffi.new("float[?]", alignedBufferSizeInBytes, entries),
 		alignedBufferSizeInBytes
 	)
 
