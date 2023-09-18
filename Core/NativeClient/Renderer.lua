@@ -254,17 +254,27 @@ function Renderer:UploadMeshGeometry(mesh)
 	printf("Uploading geometry: %d triangle indices (%s)", triangleIndicesCount, filesize(triangleIndexBufferSize))
 	local triangleIndicesBuffer = Buffer:CreateIndexBuffer(self.wgpuDevice, indices)
 
-	local hasDiffuseTextureCoords = (mesh.diffuseTextureCoords ~= nil and #mesh.diffuseTextureCoords > 0)
-	if hasDiffuseTextureCoords then
-		error("Diffuse texture coords are NYI")
-		-- TODO assert UV count matches number of vertices
-	else -- Bit of a hack, but oh well...
-		mesh.diffuseTexCoordsBuffer = self.dummyTexCoordsBuffer
+	local diffuseTextureCoordinatesBuffer = self.dummyTexCoordsBuffer
+	if mesh.diffuseTextureCoords then
+		local diffuseTextureCoordsCount = #mesh.diffuseTextureCoords
+		assert(
+			diffuseTextureCoordsCount == vertexCount * 2,
+			"Cannot upload geometry with incomplete diffuse texture coords"
+		)
+
+		local diffuseTextureCoordsBufferSize = #mesh.diffuseTextureCoords * ffi.sizeof("float")
+		printf(
+			"Uploading geometry: %d diffuse UVs (%s)",
+			diffuseTextureCoordsCount,
+			filesize(diffuseTextureCoordsBufferSize)
+		)
+		diffuseTextureCoordinatesBuffer = Buffer:CreateVertexBuffer(self.wgpuDevice, mesh.diffuseTextureCoords)
 	end
 
 	mesh.vertexBuffer = vertexBuffer
 	mesh.colorBuffer = vertexColorsBuffer
 	mesh.indexBuffer = triangleIndicesBuffer
+	mesh.diffuseTexCoordsBuffer = diffuseTextureCoordinatesBuffer
 
 	table.insert(self.meshes, mesh)
 end
@@ -396,7 +406,7 @@ function Renderer:CreateDummyTextureCoordinatesBuffer()
 	local maxAllowedVerticesPerMesh = GPU.MAX_VERTEX_COUNT -- A bit wasteful, but it's a one-of anyway...
 	local bufferSize = maxAllowedVerticesPerMesh * ffi.sizeof("float") * 2 -- One UV set per vertex
 	printf("Creating default UV buffer with %d entries (%s)", maxAllowedVerticesPerMesh, string.filesize(bufferSize))
-	-- local dummyCoords = ffi.new("float[?]", maxAllowedVerticesPerMesh * 2) -- All zeroes because it doesn't matter
+
 	local dummyCoords = table.new(maxAllowedVerticesPerMesh, 0)
 	local buffer = Buffer:CreateVertexBuffer(self.wgpuDevice, dummyCoords)
 	self.dummyTexCoordsBuffer = buffer
