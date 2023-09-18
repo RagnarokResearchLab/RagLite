@@ -168,9 +168,18 @@ function Renderer:DrawMesh(renderPass, mesh)
 	local vertexBufferSize = #mesh.vertexPositions * ffi.sizeof("float")
 	local colorBufferSize = #mesh.vertexColors * ffi.sizeof("float")
 	local indexBufferSize = #mesh.triangleConnections * ffi.sizeof("uint16_t")
+	local diffuseTexCoordsBufferSize = mesh.diffuseTextureCoords and (#mesh.diffuseTextureCoords * ffi.sizeof("float"))
+		or GPU.MAX_VERTEX_COUNT
 
 	webgpu.bindings.wgpu_render_pass_encoder_set_vertex_buffer(renderPass, 0, mesh.vertexBuffer, 0, vertexBufferSize)
 	webgpu.bindings.wgpu_render_pass_encoder_set_vertex_buffer(renderPass, 1, mesh.colorBuffer, 0, colorBufferSize)
+	webgpu.bindings.wgpu_render_pass_encoder_set_vertex_buffer(
+		renderPass,
+		2,
+		mesh.diffuseTexCoordsBuffer,
+		0,
+		diffuseTexCoordsBufferSize
+	)
 	webgpu.bindings.wgpu_render_pass_encoder_set_index_buffer(
 		renderPass,
 		mesh.indexBuffer,
