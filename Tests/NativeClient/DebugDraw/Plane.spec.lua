@@ -25,5 +25,11 @@ describe("Plane", function()
 			assertEquals(planeGeometry.vertexPositions, { 0.5, 2, 2.5, 1.5, 2, 2.5, 1.5, 2, 3.5, 0.5, 2, 3.5 })
 			assertEquals(planeGeometry.triangleConnections, { 0, 1, 2, 2, 3, 0 })
 		end)
+
+		it("should generate a set of diffuse texture coordinates", function()
+			local planeGeometry = Plane()
+			local expectedTextureCoords = { 0, 1, 1, 1, 1, 0, 0, 0 }
+			assertEquals(planeGeometry.diffuseTextureCoords, expectedTextureCoords)
+		end)
 	end)
 end)

@@ -20,13 +20,21 @@ function Plane:Construct(creationOptions)
 		Vector3D(-halfWidth + translation.x, 0 + translation.y, halfDepth + translation.z),
 	}
 
+	local normalizedDiffuseTextureCoords = {
+		{ 0, 0 }, -- Bottom-left
+		{ 1, 0 }, -- Bottom-right
+		{ 1, 1 }, -- Top-right
+		{ 0, 1 }, -- Top-left
+	}
+
 	local faceColor = { red = 0.5, green = 0.5, blue = 0.5 }
 
 	local vertexPositions = {}
 	local vertexColors = {}
 	local vertexIndices = {}
+	local diffuseTextureCoords = {}
 
-	for _, vertex in ipairs(cornerVertices) do
+	for index, vertex in ipairs(cornerVertices) do
 		tinsert(vertexPositions, vertex.x)
 		tinsert(vertexPositions, vertex.y)
 		tinsert(vertexPositions, vertex.z)
@@ -34,6 +42,14 @@ function Plane:Construct(creationOptions)
 		tinsert(vertexColors, faceColor.red)
 		tinsert(vertexColors, faceColor.green)
 		tinsert(vertexColors, faceColor.blue)
+
+		-- WebGPU coordinates start at the top left, but I'd rather use normalized Uvs for everything
+		local wgpuTextureCoordinate = {
+			u = normalizedDiffuseTextureCoords[index][1],
+			v = 1 - normalizedDiffuseTextureCoords[index][2],
+		}
+		tinsert(diffuseTextureCoords, wgpuTextureCoordinate.u)
+		tinsert(diffuseTextureCoords, wgpuTextureCoordinate.v)
 	end
 
 	tinsert(vertexIndices, 0)
@@ -48,6 +64,7 @@ function Plane:Construct(creationOptions)
 		vertexPositions = vertexPositions,
 		vertexColors = vertexColors,
 		triangleConnections = vertexIndices,
+		diffuseTextureCoords = diffuseTextureCoords,
 	}
 
 	return mesh
