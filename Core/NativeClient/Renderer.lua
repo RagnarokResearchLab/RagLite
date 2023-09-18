@@ -380,7 +380,7 @@ function Renderer:GetViewportSize(nativeWindowHandle)
 end
 
 function Renderer:CreateDebugTexture()
-	local rgbaImageBytes = Texture:GenerateSimpleGradientImage() -- GC anchor
+	local rgbaImageBytes = Texture:GenerateCheckeredGridImage()
 	local debugTexture = Texture(self.wgpuDevice, rgbaImageBytes, 256, 256)
 
 	return debugTexture
