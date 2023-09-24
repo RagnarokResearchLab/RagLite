@@ -1,0 +1,161 @@
+local ffi = require("ffi")
+
+local ffi_cast = ffi.cast
+local ffi_sizeof = ffi.sizeof
+local ffi_string = ffi.string
+local type = type
+
+local BinaryReader = {
+	ERROR_UNEXPECTED_EOF = "No more input bytes available (EOF reached)",
+	ERROR_SEEKING_INVALID_OFFSET = "Cannot move file pointer outside the buffered range",
+}
+
+function BinaryReader:Construct(readOnlyBuffer)
+	if type(readOnlyBuffer) == "string" then
+		readOnlyBuffer = buffer.new(#readOnlyBuffer):set(readOnlyBuffer)
+	end
+
+	if type(readOnlyBuffer) ~= "userdata" then
+		error("Cannot initialize BinaryReader (no input buffer provided)", 0)
+	end
+
+	local instance = {
+		readOnlyBuffer = readOnlyBuffer,
+		virtualFilePointer = 0,
+		endOfFilePointer = #readOnlyBuffer,
+	}
+
+	setmetatable(instance, self)
+
+	return instance
+end
+
+function BinaryReader:Forward(numBytes)
+	self.virtualFilePointer = self.virtualFilePointer + numBytes
+	if self.virtualFilePointer > self.endOfFilePointer then
+		self.virtualFilePointer = self.endOfFilePointer
+		error(self.ERROR_SEEKING_INVALID_OFFSET, 0)
+	end
+end
+
+function BinaryReader:Rewind(numBytes)
+	self.virtualFilePointer = self.virtualFilePointer - numBytes
+	if self.virtualFilePointer < 0 then
+		self.virtualFilePointer = 0
+		error(self.ERROR_SEEKING_INVALID_OFFSET, 0)
+	end
+end
+
+function BinaryReader:Seek(offset)
+	if offset < 0 or offset > self.endOfFilePointer then
+		error(self.ERROR_SEEKING_INVALID_OFFSET, 0)
+	end
+	self.virtualFilePointer = offset
+end
+
+function BinaryReader:Reset()
+	self.virtualFilePointer = 0
+end
+
+function BinaryReader:HasReachedEOF()
+	return (self.virtualFilePointer == self.endOfFilePointer)
+end
+
+-- Unsafe in the sense that it read-faults off the end of the scanned range, but not the buffer
+function BinaryReader:GetUnsafePointer(numBytesToRead)
+	if (self.virtualFilePointer + numBytesToRead) > self.endOfFilePointer then
+		error(self.ERROR_UNEXPECTED_EOF, 0)
+	end
+
+	local cdataPointer = ffi_cast("uint8_t*", self.readOnlyBuffer) + self.virtualFilePointer
+	self.virtualFilePointer = self.virtualFilePointer + numBytesToRead
+
+	return cdataPointer
+end
+
+function BinaryReader:GetTypedArray(cTypeName, numElements)
+	numElements = numElements or 1
+	local cdataPointer = self:GetUnsafePointer(ffi_sizeof(cTypeName) * numElements)
+	return ffi_cast(cTypeName .. "*", cdataPointer) -- Slightly inefficient (GC), but oh well
+end
+
+function BinaryReader:GetChar()
+	local cdataPointer = ffi_cast("char*", self:GetUnsafePointer(1))
+	return tonumber(cdataPointer[0])
+end
+
+function BinaryReader:GetNullTerminatedString(numBytesToRead)
+	local bytes = self:GetUnsafePointer(numBytesToRead)
+
+	-- It's possible there just isn't any \0 in the requested range
+	local actualLength = numBytesToRead
+	for i = 0, numBytesToRead - 1 do
+		if bytes[i] == 0 then
+			actualLength = i
+			break
+		end
+	end
+
+	return ffi_string(bytes, actualLength)
+end
+
+function BinaryReader:GetCountedString(numBytesToRead)
+	local bytes = self:GetUnsafePointer(numBytesToRead)
+	return ffi_string(bytes, numBytesToRead)
+end
+
+function BinaryReader:GetFloat()
+	local cdataPointer = ffi_cast("float*", self:GetUnsafePointer(4))
+	return tonumber(cdataPointer[0])
+end
+
+function BinaryReader:GetDouble()
+	local cdataPointer = ffi_cast("double*", self:GetUnsafePointer(8))
+	return tonumber(cdataPointer[0])
+end
+
+function BinaryReader:GetInt64()
+	local cdataPointer = ffi_cast("int64_t*", self:GetUnsafePointer(8))
+	return tonumber(cdataPointer[0])
+end
+
+function BinaryReader:GetUnsignedInt64()
+	local cdataPointer = ffi_cast("uint64_t*", self:GetUnsafePointer(8))
+	return tonumber(cdataPointer[0])
+end
+
+function BinaryReader:GetInt32()
+	local cdataPointer = ffi_cast("int32_t*", self:GetUnsafePointer(4))
+	return tonumber(cdataPointer[0])
+end
+
+function BinaryReader:GetUnsignedInt32()
+	local cdataPointer = ffi_cast("uint32_t*", self:GetUnsafePointer(4))
+	return tonumber(cdataPointer[0])
+end
+
+function BinaryReader:GetInt16()
+	local cdataPointer = ffi_cast("int16_t*", self:GetUnsafePointer(2))
+	return tonumber(cdataPointer[0])
+end
+
+function BinaryReader:GetUnsignedInt16()
+	local cdataPointer = ffi_cast("uint16_t*", self:GetUnsafePointer(2))
+	return tonumber(cdataPointer[0])
+end
+
+function BinaryReader:GetInt8()
+	local cdataPointer = ffi_cast("int8_t*", self:GetUnsafePointer(1))
+	return tonumber(cdataPointer[0])
+end
+
+function BinaryReader:GetUnsignedInt8()
+	local cdataPointer = ffi_cast("uint8_t*", self:GetUnsafePointer(1))
+	return tonumber(cdataPointer[0])
+end
+
+BinaryReader.__index = BinaryReader
+BinaryReader.__call = BinaryReader.Construct
+setmetatable(BinaryReader, BinaryReader)
+
+return BinaryReader

@@ -1,6 +1,7 @@
 package.path = "?.lua"
 
 local specFiles = {
+	"Tests/FileFormats/BinaryReader.spec.lua",
 	"Tests/FileFormats/RagnarokGND.spec.lua",
 	"Tests/FileFormats/RagnarokGRF.spec.lua",
 	"Tests/FileFormats/RagnarokPAL.spec.lua",
