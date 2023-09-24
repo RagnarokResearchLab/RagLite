@@ -1,11 +1,11 @@
+local BinaryReader = require("Core.FileFormats.BinaryReader")
+
 local ffi = require("ffi")
 local uv = require("uv")
 
-local ffi_cast = ffi.cast
 local ffi_copy = ffi.copy
 local ffi_new = ffi.new
 local ffi_sizeof = ffi.sizeof
-local ffi_string = ffi.string
 local tonumber = tonumber
 
 local RagnarokGND = {
@@ -100,7 +100,7 @@ setmetatable(RagnarokGND, RagnarokGND)
 function RagnarokGND:DecodeFileContents(fileContents)
 	local startTime = uv.hrtime()
 
-	self.fileContents = ffi_cast("char*", fileContents)
+	self.reader = BinaryReader(fileContents)
 
 	self:DecodeHeader()
 	self:DecodeTexturePaths()
@@ -109,49 +109,42 @@ function RagnarokGND:DecodeFileContents(fileContents)
 	self:DecodeCubeGrid()
 	self:DecodeWaterPlanes()
 
-	self.fileContents = fileContents -- GC anchor for the cdata used internally
-
 	local endTime = uv.hrtime()
 	local decodingTimeInMilliseconds = (endTime - startTime) / 10E5
 	printf("[RagnarokGND] Finished decoding file contents in %.2f ms", decodingTimeInMilliseconds)
 end
 
 function RagnarokGND:DecodeHeader()
-	local header = ffi_cast("gnd_header_t*", self.fileContents)
-	local headerSize = ffi_sizeof(header.signature)
+	local reader = self.reader
 
-	self.signature = ffi_string(header.signature, headerSize)
+	self.signature = reader:GetCountedString(4)
 	if self.signature ~= "GRGN" then
 		error("Failed to decode GND header (Signature " .. self.signature .. ' should be "GRGN")', 0)
 	end
 
-	self.version = header.version_major + header.version_minor / 10
+	local majorVersion = reader:GetUnsignedInt8()
+	local minorVersion = reader:GetUnsignedInt8()
+	self.version = majorVersion + minorVersion / 10
 
-	self.gridSizeU = tonumber(header.grid_size_u)
-	self.gridSizeV = tonumber(header.grid_size_v)
-	self.geometryScaleFactor = tonumber(header.geometry_scale_factor)
-	self.diffuseTextureCount = tonumber(header.texture_count)
-	self.texturePathLength = tonumber(header.texture_path_length)
+	self.gridSizeU = reader:GetUnsignedInt32()
+	self.gridSizeV = reader:GetUnsignedInt32()
+	self.geometryScaleFactor = reader:GetFloat()
+	self.diffuseTextureCount = reader:GetUnsignedInt32()
+	self.texturePathLength = reader:GetUnsignedInt32()
 
 	assert(self.geometryScaleFactor == 10, "Unexpected geometry scale factor")
-
-	self.fileContents = self.fileContents + ffi_sizeof("gnd_header_t")
 end
 
 function RagnarokGND:DecodeTexturePaths()
 	for textureIndex = 0, self.diffuseTextureCount - 1, 1 do
-		local windowsPathString = ffi_string(self.fileContents)
+		local windowsPathString = self.reader:GetNullTerminatedString(self.texturePathLength)
 		self.diffuseTexturePaths[textureIndex] = windowsPathString
-		self.fileContents = self.fileContents + self.texturePathLength
 	end
 end
 
 function RagnarokGND:DecodeLightmapSlices()
-	local lightmapFormatInfo = ffi_cast("gnd_lightmap_format_t*", self.fileContents)
-	self.fileContents = self.fileContents + ffi_sizeof("gnd_lightmap_format_t")
-
-	self.lightmapSlices = ffi_cast("gnd_lightmap_slice_t*", self.fileContents)
-	self.fileContents = self.fileContents + lightmapFormatInfo.slice_count * ffi_sizeof("gnd_lightmap_slice_t")
+	local lightmapFormatInfo = self.reader:GetTypedArray("gnd_lightmap_format_t")
+	self.lightmapSlices = self.reader:GetTypedArray("gnd_lightmap_slice_t", lightmapFormatInfo.slice_count)
 
 	self.lightmapFormat = {
 		numSlices = tonumber(lightmapFormatInfo.slice_count),
@@ -167,20 +160,16 @@ function RagnarokGND:DecodeLightmapSlices()
 end
 
 function RagnarokGND:DecodeTexturedSurfaces()
-	local numTexturedSurfaces = tonumber(ffi_cast("uint32_t*", self.fileContents)[0])
-	self.fileContents = self.fileContents + ffi_sizeof("uint32_t")
-
-	self.texturedSurfaces = ffi_cast("gnd_textured_surface_t*", self.fileContents)
-	self.fileContents = self.fileContents + numTexturedSurfaces * ffi_sizeof("gnd_textured_surface_t")
-
+	local reader = self.reader
+	local numTexturedSurfaces = reader:GetUnsignedInt32()
 	self.texturedSurfaceCount = numTexturedSurfaces
+
+	self.texturedSurfaces = reader:GetTypedArray("gnd_textured_surface_t", numTexturedSurfaces)
 end
 
 function RagnarokGND:DecodeCubeGrid()
 	local numGroundMeshCubes = self.gridSizeU * self.gridSizeV
-
-	self.cubeGrid = ffi_cast("gnd_groundmesh_cube_t*", self.fileContents)
-	self.fileContents = self.fileContents + numGroundMeshCubes * ffi_sizeof("gnd_groundmesh_cube_t")
+	self.cubeGrid = self.reader:GetTypedArray("gnd_groundmesh_cube_t", numGroundMeshCubes)
 end
 
 function RagnarokGND:DecodeWaterPlanes()
@@ -191,15 +180,13 @@ function RagnarokGND:DecodeWaterPlanes()
 		return
 	end
 
+	local reader = self.reader
+
 	if self.version >= 1.8 then
-		self.waterPlaneDefaults = ffi_cast("gnd_water_plane_t*", self.fileContents)
-		self.fileContents = self.fileContents + ffi_sizeof("gnd_water_plane_t")
+		self.waterPlaneDefaults = reader:GetTypedArray("gnd_water_plane_t")
 
-		local gridSizeU = tonumber(ffi_cast("uint32_t*", self.fileContents)[0])
-		self.fileContents = self.fileContents + ffi_sizeof("uint32_t")
-
-		local gridSizeV = tonumber(ffi_cast("uint32_t*", self.fileContents)[0])
-		self.fileContents = self.fileContents + ffi_sizeof("uint32_t")
+		local gridSizeU = reader:GetUnsignedInt32()
+		local gridSizeV = reader:GetUnsignedInt32()
 
 		self.waterPlanesCount = gridSizeU * gridSizeV
 		self.waterGridU = gridSizeU
@@ -210,16 +197,13 @@ function RagnarokGND:DecodeWaterPlanes()
 		if self.version == 1.8 then
 			local waterPlane = ffi_new("gnd_water_plane_t")
 			ffi_copy(waterPlane, self.waterPlaneDefaults, ffi_sizeof("gnd_water_plane_t"))
-
-			waterPlane.level = tonumber(ffi_cast("float*", self.fileContents)[0])
-			self.fileContents = self.fileContents + ffi_sizeof("float")
-
 			self.waterPlanes[waterPlaneIndex] = waterPlane
+
+			waterPlane.level = reader:GetFloat()
 		end
 
 		if self.version >= 1.9 then
-			self.waterPlanes[waterPlaneIndex] = ffi_cast("gnd_water_plane_t*", self.fileContents)
-			self.fileContents = self.fileContents + self.waterPlanesCount * ffi_sizeof("gnd_water_plane_t")
+			self.waterPlanes[waterPlaneIndex] = reader:GetTypedArray("gnd_water_plane_t")
 		end
 	end
 end
