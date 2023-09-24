@@ -1,6 +1,6 @@
 local C_Cursor = require("Core.NativeClient.C_Cursor")
 
-describe("C_Cusor", function()
+describe("C_Cursor", function()
 	describe("GetLastKnownPosition", function()
 		it("should return nil if no cursor events have been received yet", function()
 			local x, y = C_Cursor.GetLastKnownPosition()
