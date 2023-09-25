@@ -2,6 +2,15 @@ local BinaryReader = require("Core.FileFormats.BinaryReader")
 
 local ffi = require("ffi")
 
+local function getExpectedReadFaultError(numBytesRead, offset, numBytesAvailable)
+	return format(
+		"Failed to read %s bytes starting at offset %s (%s additional bytes are available)",
+		numBytesRead,
+		offset,
+		numBytesAvailable
+	)
+end
+
 describe("BinaryReader", function()
 	describe("Construct", function()
 		it("should anchor the provided buffer to avoid it being garbage collected", function()
@@ -145,7 +154,7 @@ describe("BinaryReader", function()
 				reader:GetCountedString(2)
 			end
 
-			local expectedErrorMessage = BinaryReader.ERROR_UNEXPECTED_EOF
+			local expectedErrorMessage = getExpectedReadFaultError(2, 0, 0)
 			assertThrows(attemptToReadBeyondEOF, expectedErrorMessage)
 		end)
 
@@ -156,7 +165,7 @@ describe("BinaryReader", function()
 				reader:GetCountedString(42)
 			end
 
-			local expectedErrorMessage = BinaryReader.ERROR_UNEXPECTED_EOF
+			local expectedErrorMessage = getExpectedReadFaultError(42, 0, 9)
 			assertThrows(attemptToReadBeyondEOF, expectedErrorMessage)
 		end)
 
@@ -180,7 +189,7 @@ describe("BinaryReader", function()
 				reader:GetNullTerminatedString(4)
 			end
 
-			local expectedErrorMessage = BinaryReader.ERROR_UNEXPECTED_EOF
+			local expectedErrorMessage = getExpectedReadFaultError(4, 0, 0)
 			assertThrows(attemptToReadBeyondEOF, expectedErrorMessage)
 		end)
 
@@ -191,7 +200,7 @@ describe("BinaryReader", function()
 				reader:GetNullTerminatedString(777)
 			end
 
-			local expectedErrorMessage = BinaryReader.ERROR_UNEXPECTED_EOF
+			local expectedErrorMessage = getExpectedReadFaultError(777, 0, 9)
 			assertThrows(attemptToReadBeyondEOF, expectedErrorMessage)
 		end)
 
@@ -256,7 +265,7 @@ describe("BinaryReader", function()
 				reader:GetChar()
 			end
 
-			local expectedErrorMessage = BinaryReader.ERROR_UNEXPECTED_EOF
+			local expectedErrorMessage = getExpectedReadFaultError(1, 0, 0)
 			assertThrows(attemptToReadBeyondEOF, expectedErrorMessage)
 		end)
 	end)
@@ -269,7 +278,7 @@ describe("BinaryReader", function()
 				reader:GetUnsafePointer(42)
 			end
 
-			local expectedErrorMessage = BinaryReader.ERROR_UNEXPECTED_EOF
+			local expectedErrorMessage = getExpectedReadFaultError(42, 0, 5)
 			assertThrows(attemptToReadBeyondEOF, expectedErrorMessage)
 		end)
 
@@ -314,7 +323,7 @@ describe("BinaryReader", function()
 				reader:GetTypedArray(randomizedTypeName)
 			end
 
-			local expectedErrorMessage = BinaryReader.ERROR_UNEXPECTED_EOF
+			local expectedErrorMessage = getExpectedReadFaultError(8, 0, 3)
 			assertThrows(attemptToReadBeyondEOF, expectedErrorMessage)
 		end)
 	end)
@@ -334,7 +343,7 @@ describe("BinaryReader", function()
 				reader:GetFloat()
 			end
 
-			local expectedErrorMessage = BinaryReader.ERROR_UNEXPECTED_EOF
+			local expectedErrorMessage = getExpectedReadFaultError(4, 0, 0)
 			assertThrows(attemptToReadBeyondEOF, expectedErrorMessage)
 		end)
 	end)
@@ -354,7 +363,7 @@ describe("BinaryReader", function()
 				reader:GetDouble()
 			end
 
-			local expectedErrorMessage = BinaryReader.ERROR_UNEXPECTED_EOF
+			local expectedErrorMessage = getExpectedReadFaultError(8, 0, 0)
 			assertThrows(attemptToReadBeyondEOF, expectedErrorMessage)
 		end)
 	end)
@@ -374,7 +383,7 @@ describe("BinaryReader", function()
 				reader:GetInt64()
 			end
 
-			local expectedErrorMessage = BinaryReader.ERROR_UNEXPECTED_EOF
+			local expectedErrorMessage = getExpectedReadFaultError(8, 0, 0)
 			assertThrows(attemptToReadBeyondEOF, expectedErrorMessage)
 		end)
 	end)
@@ -394,7 +403,7 @@ describe("BinaryReader", function()
 				reader:GetUnsignedInt64()
 			end
 
-			local expectedErrorMessage = BinaryReader.ERROR_UNEXPECTED_EOF
+			local expectedErrorMessage = getExpectedReadFaultError(8, 0, 0)
 			assertThrows(attemptToReadBeyondEOF, expectedErrorMessage)
 		end)
 	end)
@@ -414,7 +423,7 @@ describe("BinaryReader", function()
 				reader:GetInt32()
 			end
 
-			local expectedErrorMessage = BinaryReader.ERROR_UNEXPECTED_EOF
+			local expectedErrorMessage = getExpectedReadFaultError(4, 0, 0)
 			assertThrows(attemptToReadBeyondEOF, expectedErrorMessage)
 		end)
 	end)
@@ -434,7 +443,7 @@ describe("BinaryReader", function()
 				reader:GetUnsignedInt32()
 			end
 
-			local expectedErrorMessage = BinaryReader.ERROR_UNEXPECTED_EOF
+			local expectedErrorMessage = getExpectedReadFaultError(4, 0, 0)
 			assertThrows(attemptToReadBeyondEOF, expectedErrorMessage)
 		end)
 	end)
@@ -454,7 +463,7 @@ describe("BinaryReader", function()
 				reader:GetInt16()
 			end
 
-			local expectedErrorMessage = BinaryReader.ERROR_UNEXPECTED_EOF
+			local expectedErrorMessage = getExpectedReadFaultError(2, 0, 0)
 			assertThrows(attemptToReadBeyondEOF, expectedErrorMessage)
 		end)
 	end)
@@ -474,7 +483,7 @@ describe("BinaryReader", function()
 				reader:GetUnsignedInt16()
 			end
 
-			local expectedErrorMessage = BinaryReader.ERROR_UNEXPECTED_EOF
+			local expectedErrorMessage = getExpectedReadFaultError(2, 0, 0)
 			assertThrows(attemptToReadBeyondEOF, expectedErrorMessage)
 		end)
 	end)
@@ -494,7 +503,7 @@ describe("BinaryReader", function()
 				reader:GetInt8()
 			end
 
-			local expectedErrorMessage = BinaryReader.ERROR_UNEXPECTED_EOF
+			local expectedErrorMessage = getExpectedReadFaultError(1, 0, 0)
 			assertThrows(attemptToReadBeyondEOF, expectedErrorMessage)
 		end)
 	end)
@@ -514,7 +523,7 @@ describe("BinaryReader", function()
 				reader:GetUnsignedInt8()
 			end
 
-			local expectedErrorMessage = BinaryReader.ERROR_UNEXPECTED_EOF
+			local expectedErrorMessage = getExpectedReadFaultError(1, 0, 0)
 			assertThrows(attemptToReadBeyondEOF, expectedErrorMessage)
 		end)
 	end)
