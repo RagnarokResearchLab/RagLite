@@ -6,7 +6,6 @@ local ffi_string = ffi.string
 local type = type
 
 local BinaryReader = {
-	ERROR_UNEXPECTED_EOF = "No more input bytes available (EOF reached)",
 	ERROR_SEEKING_INVALID_OFFSET = "Cannot move file pointer outside the buffered range",
 }
 
@@ -63,8 +62,15 @@ end
 
 -- Unsafe in the sense that it read-faults off the end of the scanned range, but not the buffer
 function BinaryReader:GetUnsafePointer(numBytesToRead)
-	if (self.virtualFilePointer + numBytesToRead) > self.endOfFilePointer then
-		error(self.ERROR_UNEXPECTED_EOF, 0)
+	local numAvailableBytes = self.endOfFilePointer - self.virtualFilePointer
+	if numBytesToRead > numAvailableBytes then
+		local errorMessage = format(
+			"Failed to read %d bytes starting at offset %d (%d additional bytes are available)",
+			numBytesToRead,
+			self.virtualFilePointer,
+			numAvailableBytes
+		)
+		error(errorMessage, 0)
 	end
 
 	local cdataPointer = ffi_cast("uint8_t*", self.readOnlyBuffer) + self.virtualFilePointer
