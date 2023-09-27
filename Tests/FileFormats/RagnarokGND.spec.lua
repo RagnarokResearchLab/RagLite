@@ -6,9 +6,33 @@ local GND_WITH_MULTIPLE_WATER_PLANES =
 	C_FileSystem.ReadFile(path.join("Tests", "Fixtures", "multiple-water-planes.gnd"))
 
 describe("RagnarokGND", function()
-	local gnd = RagnarokGND()
 	describe("DecodeFileContents", function()
+		it("should throw if the geometry scale factor has changed", function()
+			-- A lot of assumptions are based on this being effectively a constant, so let's hope it never does change
+			local gnd = RagnarokGND()
+			local gndBytes =
+				"GRGN\001\007\001\001\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000"
+			local function decodeUnexpectedGeometryScaleGND()
+				gnd:DecodeFileContents(gndBytes)
+			end
+
+			local expectedErrorMessage = "Unexpected geometry scale factor 0 (should be 10)"
+			assertThrows(decodeUnexpectedGeometryScaleGND, expectedErrorMessage)
+		end)
+
+		it("should throw if the GND version is not supported", function()
+			local gnd = RagnarokGND()
+			local gndBytes = "GRGN\001\000"
+			local function decodeUnexpectedVersionGND()
+				gnd:DecodeFileContents(gndBytes)
+			end
+
+			local expectedErrorMessage = "Unsupported GND version 1.0"
+			assertThrows(decodeUnexpectedVersionGND, expectedErrorMessage)
+		end)
+
 		it("should be able to decode GND files using version 1.7 of the format", function()
+			local gnd = RagnarokGND()
 			gnd:DecodeFileContents(GND_WITHOUT_WATER_PLANE)
 
 			assertEquals(gnd.signature, "GRGN")
@@ -59,6 +83,7 @@ describe("RagnarokGND", function()
 		end)
 
 		it("should be able to decode GND files using version 1.8 of the format", function()
+			local gnd = RagnarokGND()
 			gnd:DecodeFileContents(GND_WITH_SINGLE_WATER_PLANE)
 
 			assertEquals(gnd.waterPlanesCount, 1)
@@ -81,6 +106,7 @@ describe("RagnarokGND", function()
 		end)
 
 		it("should be able to decode GND files using version 1.9 of the format", function()
+			local gnd = RagnarokGND()
 			gnd:DecodeFileContents(GND_WITH_MULTIPLE_WATER_PLANES)
 			assertEquals(gnd.waterPlanesCount, 2)
 			assertEquals(gnd.waterGridU, 1)
