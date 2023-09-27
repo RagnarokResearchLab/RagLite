@@ -20,6 +20,17 @@ describe("RagnarokGND", function()
 			assertThrows(decodeUnexpectedGeometryScaleGND, expectedErrorMessage)
 		end)
 
+		it("should throw if the GND version is not supported", function()
+			local gnd = RagnarokGND()
+			local gndBytes = "GRGN\001\000"
+			local function decodeUnexpectedVersionGND()
+				gnd:DecodeFileContents(gndBytes)
+			end
+
+			local expectedErrorMessage = "Unsupported GND version 1.0"
+			assertThrows(decodeUnexpectedVersionGND, expectedErrorMessage)
+		end)
+
 		it("should be able to decode GND files using version 1.7 of the format", function()
 			local gnd = RagnarokGND()
 			gnd:DecodeFileContents(GND_WITHOUT_WATER_PLANE)
