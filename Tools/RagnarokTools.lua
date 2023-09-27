@@ -128,28 +128,33 @@ function RagnarokTools:ExportLightmapsFromGND(gndFileContents)
 
 	stbi.bindings.stbi_flip_vertically_on_write(true)
 
-	local function ExportHumandReadableTextureImageAsPNG(pixelBuffer, outputFileName)
-		local textureImage = ffi.new("stbi_image_t")
-		textureImage.width = textureImageWidth
-		textureImage.height = textureImageHeight
-		textureImage.data = pixelBuffer
-		textureImage.channels = 4 -- RGBA
-
-		local maxFileSize = stbi.bindings.stbi_get_required_bmp_size(textureImage)
-		local fileContents = buffer.new(maxFileSize)
-		local startPointer, length = fileContents:reserve(maxFileSize)
-		local numBytesWritten = stbi.bindings.stbi_encode_png(textureImage, startPointer, length, 0)
-
-		assert(numBytesWritten > 0, "Failed to encode PNG contents")
-
-		fileContents:commit(numBytesWritten)
-		C_FileSystem.WriteFile(outputFileName, tostring(fileContents))
-	end
-
-	ExportHumandReadableTextureImageAsPNG(shadowmapPixels, "shadowmap.png")
-	ExportHumandReadableTextureImageAsPNG(lightmapPixels, "lightmap.png")
+	self:ExportHumandReadableTextureImageAsPNG(shadowmapPixels, textureImageWidth, textureImageHeight, "shadowmap.png")
+	self:ExportHumandReadableTextureImageAsPNG(lightmapPixels, textureImageWidth, textureImageHeight, "lightmap.png")
 
 	stbi.bindings.stbi_flip_vertically_on_write(false)
+end
+
+function RagnarokTools:ExportHumandReadableTextureImageAsPNG(
+	pixelBuffer,
+	textureImageWidth,
+	textureImageHeight,
+	outputFileName
+)
+	local textureImage = ffi.new("stbi_image_t")
+	textureImage.width = textureImageWidth
+	textureImage.height = textureImageHeight
+	textureImage.data = pixelBuffer
+	textureImage.channels = 4 -- RGBA
+
+	local maxFileSize = stbi.bindings.stbi_get_required_bmp_size(textureImage)
+	local fileContents = buffer.new(maxFileSize)
+	local startPointer, length = fileContents:reserve(maxFileSize)
+	local numBytesWritten = stbi.bindings.stbi_encode_png(textureImage, startPointer, length, 0)
+
+	assert(numBytesWritten > 0, "Failed to encode PNG contents")
+
+	fileContents:commit(numBytesWritten)
+	C_FileSystem.WriteFile(outputFileName, tostring(fileContents))
 end
 
 function RagnarokTools:ExportImagesFromSPR(sprFileContents, outputDirectory)
