@@ -7,6 +7,19 @@ local GND_WITH_MULTIPLE_WATER_PLANES =
 
 describe("RagnarokGND", function()
 	describe("DecodeFileContents", function()
+		it("should throw if the geometry scale factor has changed", function()
+			-- A lot of assumptions are based on this being effectively a constant, so let's hope it never does change
+			local gnd = RagnarokGND()
+			local gndBytes =
+				"GRGN\001\007\001\001\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000"
+			local function decodeUnexpectedGeometryScaleGND()
+				gnd:DecodeFileContents(gndBytes)
+			end
+
+			local expectedErrorMessage = "Unexpected geometry scale factor 0 (should be 10)"
+			assertThrows(decodeUnexpectedGeometryScaleGND, expectedErrorMessage)
+		end)
+
 		it("should be able to decode GND files using version 1.7 of the format", function()
 			local gnd = RagnarokGND()
 			gnd:DecodeFileContents(GND_WITHOUT_WATER_PLANE)
