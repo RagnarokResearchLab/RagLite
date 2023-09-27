@@ -9,6 +9,8 @@ local ffi_sizeof = ffi.sizeof
 local tonumber = tonumber
 
 local RagnarokGND = {
+	DEFAULT_GEOMETRY_SCALE_FACTOR = 10,
+	NORMALIZING_SCALE_FACTOR = 1 / (10 / 2), -- 1/(geometryScale / numTilesPerSurface)
 	cdefs = [[
 		#pragma pack(1)
 		typedef struct gnd_header {
@@ -132,7 +134,7 @@ function RagnarokGND:DecodeHeader()
 	self.diffuseTextureCount = reader:GetUnsignedInt32()
 	self.texturePathLength = reader:GetUnsignedInt32()
 
-	assert(self.geometryScaleFactor == 10, "Unexpected geometry scale factor")
+	assert(self.geometryScaleFactor == self.DEFAULT_GEOMETRY_SCALE_FACTOR, "Unexpected geometry scale factor")
 end
 
 function RagnarokGND:DecodeTexturePaths()
