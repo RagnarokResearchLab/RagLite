@@ -6,9 +6,9 @@ local GND_WITH_MULTIPLE_WATER_PLANES =
 	C_FileSystem.ReadFile(path.join("Tests", "Fixtures", "multiple-water-planes.gnd"))
 
 describe("RagnarokGND", function()
-	local gnd = RagnarokGND()
 	describe("DecodeFileContents", function()
 		it("should be able to decode GND files using version 1.7 of the format", function()
+			local gnd = RagnarokGND()
 			gnd:DecodeFileContents(GND_WITHOUT_WATER_PLANE)
 
 			assertEquals(gnd.signature, "GRGN")
@@ -59,6 +59,7 @@ describe("RagnarokGND", function()
 		end)
 
 		it("should be able to decode GND files using version 1.8 of the format", function()
+			local gnd = RagnarokGND()
 			gnd:DecodeFileContents(GND_WITH_SINGLE_WATER_PLANE)
 
 			assertEquals(gnd.waterPlanesCount, 1)
@@ -81,6 +82,7 @@ describe("RagnarokGND", function()
 		end)
 
 		it("should be able to decode GND files using version 1.9 of the format", function()
+			local gnd = RagnarokGND()
 			gnd:DecodeFileContents(GND_WITH_MULTIPLE_WATER_PLANES)
 			assertEquals(gnd.waterPlanesCount, 2)
 			assertEquals(gnd.waterGridU, 1)
