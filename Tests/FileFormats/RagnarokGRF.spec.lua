@@ -239,13 +239,6 @@ describe("RagnarokGRF", function()
 	end)
 
 	describe("GetNormalizedFilePath", function()
-		it("should convert EUC-KR names to UTF8", function()
-			assertEquals(
-				RagnarokGRF:GetNormalizedFilePath("\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA.txt"),
-				"유저인터페이스.txt"
-			)
-		end)
-
 		it("should convert upper-case to lower-case characters", function()
 			assertEquals(RagnarokGRF:GetNormalizedFilePath("TEST.BMP"), "test.bmp")
 		end)
@@ -271,23 +264,48 @@ describe("RagnarokGRF", function()
 				grf:DecodeFileName("\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA.txt"),
 				"유저인터페이스.txt"
 			)
+
+			local inputString = "\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA.txt\0"
+			local inputBuffer = buffer.new():put(inputString)
+			local pointerToNullTerminatedStringBytes = inputBuffer:ref()
+			assertEquals(grf:DecodeFileName(pointerToNullTerminatedStringBytes), "유저인터페이스.txt")
 		end)
 
 		it("should convert upper-case to lower-case characters", function()
 			assertEquals(grf:DecodeFileName("TEST.BMP"), "test.bmp")
+
+			local inputString = "TEST.BMP\0"
+			local inputBuffer = buffer.new():put(inputString)
+			local pointerToNullTerminatedStringBytes = inputBuffer:ref()
+			assertEquals(grf:DecodeFileName(pointerToNullTerminatedStringBytes), "test.bmp")
 		end)
 
 		it("should remove leading path separators", function()
 			-- These are added by the HTTP route handler, but they're useless for path lookups
 			assertEquals(grf:DecodeFileName("/hello/world.txt"), "hello/world.txt")
+
+			local inputString = "/hello/world.txt\0"
+			local inputBuffer = buffer.new():put(inputString)
+			local pointerToNullTerminatedStringBytes = inputBuffer:ref()
+			assertEquals(grf:DecodeFileName(pointerToNullTerminatedStringBytes), "hello/world.txt")
 		end)
 
 		it("should replace Windows path separators with POSIX ones", function()
 			assertEquals(grf:DecodeFileName("hello\\world.txt"), "hello/world.txt")
+
+			local inputString = "hello\\world.txt\0"
+			local inputBuffer = buffer.new():put(inputString)
+			local pointerToNullTerminatedStringBytes = inputBuffer:ref()
+			assertEquals(grf:DecodeFileName(pointerToNullTerminatedStringBytes), "hello/world.txt")
 		end)
 
 		it("should remove duplicate path separators", function()
 			assertEquals(grf:DecodeFileName("hello\\\\world.txt"), "hello/world.txt")
+
+			local inputString = "hello\\\\world.txt\0"
+			local inputBuffer = buffer.new():put(inputString)
+			local pointerToNullTerminatedStringBytes = inputBuffer:ref()
+			assertEquals(grf:DecodeFileName(pointerToNullTerminatedStringBytes), "hello/world.txt")
 		end)
 	end)
 end)

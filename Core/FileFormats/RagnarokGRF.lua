@@ -2,6 +2,7 @@ local cstring = require("Core.RuntimeExtensions.cstring")
 
 local bit = require("bit")
 local ffi = require("ffi")
+local iconv = require("iconv")
 local uv = require("uv")
 local zlib = require("zlib")
 require("table.new")
@@ -52,6 +53,7 @@ function RagnarokGRF:Construct()
 	local instance = {
 		pathToGRF = "",
 		fileTable = {},
+		preallocatedConversionBuffer = buffer.new(1024),
 	}
 
 	setmetatable(instance, self)
@@ -171,11 +173,25 @@ function RagnarokGRF:DecodeFileEntries()
 	self.fileTable.entries = entries
 end
 
-function RagnarokGRF:DecodeFileName(pointerToNullTerminatedStringBytes)
-	local originalLength = cstring.size(pointerToNullTerminatedStringBytes)
+function RagnarokGRF:DecodeFileName(input)
+	-- This should likely be moved since it won't happen at decoding time, only on demand (in other decoders)
+	if type(input) == "string" then
+		local unicodeFilePath = iconv.convert(input, "CP949", "UTF-8")
+		return self:GetNormalizedFilePath(unicodeFilePath)
+	end
 
-	local decodedFileName = self:DecodeMultiByteStringFFI(pointerToNullTerminatedStringBytes)
-	local decodedLength = cstring.size(decodedFileName)
+	-- Equivalent, but avoids some redundant copies that would be required to use the higher-level API
+	local pointerToNullTerminatedStringBytes = input
+
+	local originalLength = cstring.size(pointerToNullTerminatedStringBytes)
+	self.preallocatedConversionBuffer:reset()
+	local ptr, len = self.preallocatedConversionBuffer:reserve(originalLength * 3) -- Worst case (no 4-byte chars exist for EUC-KR)
+	local numBytesWritten =
+		iconv.bindings.iconv_convert(pointerToNullTerminatedStringBytes, originalLength, "CP949", "UTF-8", ptr, len)
+	self.preallocatedConversionBuffer:commit(numBytesWritten)
+	local decodedFileName, decodedLength = self.preallocatedConversionBuffer:ref()
+
+	assert(decodedLength > 0, "Failed to decode file name (no bytes written while translating from CP949 to UTF-8)")
 
 	cstring.tolower(decodedFileName, decodedLength)
 	cstring.normalize(decodedFileName, decodedLength)
@@ -252,79 +268,7 @@ function RagnarokGRF:GetFileList()
 	return self.fileTable.entries
 end
 
--- This probably should be moved elsewhere (later)
-if ffi.os == "Windows" then
-	ffi.cdef([[
-		int MultiByteToWideChar(unsigned int CodePage, unsigned long dwFlags, const char* lpMultiByteStr, int cbMultiByte, wchar_t* lpWideCharStr, int cchWideChar);
-		int WideCharToMultiByte(unsigned int CodePage, unsigned long dwFlags, const wchar_t* lpWideCharStr, int cchWideChar, char* lpMultiByteStr, int cbMultiByte, const char* lpDefaultChar, int* lpUsedDefaultChar);
-	]])
-
-	local CP949 = 949
-	local CP_UTF8 = 65001
-
-	local maxLen = 1024
-	local unicodeStr = ffi.new("wchar_t[?]", maxLen)
-	local outputStr = ffi.new("char[?]", maxLen)
-
-	function RagnarokGRF:DecodeMultiByteString(input)
-		ffi.C.MultiByteToWideChar(CP949, 0, input, -1, unicodeStr, maxLen)
-		ffi.C.WideCharToMultiByte(CP_UTF8, 0, unicodeStr, -1, outputStr, maxLen, nil, nil)
-		return ffi_string(outputStr)
-	end
-
-	function RagnarokGRF:DecodeMultiByteStringFFI(input)
-		ffi.C.MultiByteToWideChar(CP949, 0, input, -1, unicodeStr, maxLen)
-		ffi.C.WideCharToMultiByte(CP_UTF8, 0, unicodeStr, -1, outputStr, maxLen, nil, nil)
-		return outputStr
-	end
-else
-	ffi.cdef([[
-		typedef void* iconv_t;
-		iconv_t iconv_open(const char* tocode, const char* fromcode);
-		size_t iconv(iconv_t cd, char** inbuf, size_t* inbytesleft, char** outbuf, size_t* outbytesleft);
-		int iconv_close(iconv_t cd);
-	]])
-
-	local ICONV_ERROR = ffi.cast("iconv_t", -1)
-
-	function RagnarokGRF:DecodeMultiByteString(input)
-		local inbuf = ffi.cast("char*", ffi.new("char[?]", #input + 1, input))
-		local outbufStorage = self:DecodeMultiByteStringFFI(inbuf)
-		return ffi_string(outbufStorage)
-	end
-
-	function RagnarokGRF:DecodeMultiByteStringFFI(input)
-		input = ffi_string(input) -- Wasteful, but this needs a rework anyway
-		local inputSize = cstring.size(input)
-
-		local sourceEncoding = "CP949"
-		local targetEncoding = "UTF-8"
-		local conversionDescriptor = ffi.C.iconv_open(targetEncoding, sourceEncoding)
-		if conversionDescriptor == ICONV_ERROR then
-			error("iconv_open failed: " .. ffi.string(ffi.C.strerror(ffi.errno())))
-		end
-
-		local inbuf = ffi.new("char*[1]", ffi.new("char[?]", inputSize, input))
-		local inbytesleft = ffi.new("size_t[1]", inputSize)
-		local outbufSize = inputSize * 4 -- Worst case scenario for UTF-8
-		local outbufStorage = ffi.new("char[?]", outbufSize)
-		local outbuf = ffi.new("char*[1]", outbufStorage)
-		local outbytesleft = ffi.new("size_t[1]", outbufSize)
-
-		if ffi.C.iconv(conversionDescriptor, inbuf, inbytesleft, outbuf, outbytesleft) == -1 then
-			ffi.C.iconv_close(conversionDescriptor)
-			error("iconv failed: " .. ffi.string(ffi.C.strerror(ffi.errno())))
-		end
-
-		ffi.C.iconv_close(conversionDescriptor)
-		return outbufStorage
-	end
-end
-
 function RagnarokGRF:GetNormalizedFilePath(fileName)
-	-- Must convert to UTF8 first to avoid operating on codepoints by accident
-	fileName = self:DecodeMultiByteString(fileName)
-
 	-- Windows paths are problematic on other platforms
 	fileName = string_lower(fileName)
 	fileName = fileName:gsub("\\", "/")

@@ -15,7 +15,7 @@ console.startTimer("Extracting SPR files")
 local fileList = grf:GetFileList()
 local gndFiles = {}
 for index, fileEntry in ipairs(fileList) do
-	local filePath = grf:GetNormalizedFilePath(fileEntry.name)
+	local filePath = fileEntry.name
 	local isSPR = (path.extname(filePath) == ".spr")
 
 	if isSPR then
