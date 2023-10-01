@@ -1,4 +1,5 @@
 local RagnarokGND = require("Core.FileFormats.RagnarokGND")
+local RagnarokRSW = require("Core.FileFormats.RagnarokRSW")
 local RagnarokSPR = require("Core.FileFormats.RagnarokSPR")
 
 local FileAnalyzer = {}
@@ -69,6 +70,90 @@ function FileAnalyzer:AnalyzeSPR(sprFiles)
 			+ 1
 		analysisResult.fields.tgaImagesCount[spr.tgaImagesCount] = analysisResult.fields.tgaImagesCount[spr.tgaImagesCount]
 			+ 1
+
+		analysisResult.numFilesAnalyzed = analysisResult.numFilesAnalyzed + 1
+	end
+
+	return analysisResult
+end
+
+function FileAnalyzer:AnalyzeRSW(rswFiles)
+	local analysisResult = {
+		numFilesAnalyzed = 0,
+		fields = {
+			version = {},
+			buildNumber = {},
+			unknownRenderFlag = {},
+			iniFile = {},
+			scrFile = {},
+			numSceneObjects = {},
+			numAnimatedProps = {},
+			numDynamicLightSources = {},
+			numSpatialAudioSources = {},
+			numParticleEffectEmitters = {},
+			unknownRenewalPropFlag = {},
+			isSolid = {},
+		},
+	}
+
+	for index, filePath in ipairs(rswFiles) do
+		printf("Analyzing file: %s", filePath)
+
+		local rswFileContents = C_FileSystem.ReadFile(filePath)
+		local rsw = RagnarokRSW()
+		rsw:DecodeFileContents(rswFileContents)
+
+		analysisResult.fields.version[rsw.version] = analysisResult.fields.version[rsw.version] or 0
+		analysisResult.fields.version[rsw.version] = analysisResult.fields.version[rsw.version] + 1
+
+		analysisResult.fields.buildNumber[rsw.buildNumber] = analysisResult.fields.buildNumber[rsw.buildNumber] or 0
+		analysisResult.fields.buildNumber[rsw.buildNumber] = analysisResult.fields.buildNumber[rsw.buildNumber] + 1
+
+		analysisResult.fields.unknownRenderFlag[rsw.unknownRenderFlag] = analysisResult.fields.unknownRenderFlag[rsw.unknownRenderFlag]
+			or 0
+		analysisResult.fields.unknownRenderFlag[rsw.unknownRenderFlag] = analysisResult.fields.unknownRenderFlag[rsw.unknownRenderFlag]
+			+ 1
+
+		analysisResult.fields.iniFile[rsw.iniFile] = analysisResult.fields.iniFile[rsw.iniFile] or 0
+		analysisResult.fields.iniFile[rsw.iniFile] = analysisResult.fields.iniFile[rsw.iniFile] + 1
+
+		analysisResult.fields.scrFile[rsw.scrFile] = analysisResult.fields.scrFile[rsw.scrFile] or 0
+		analysisResult.fields.scrFile[rsw.scrFile] = analysisResult.fields.scrFile[rsw.scrFile] + 1
+
+		analysisResult.fields.numSceneObjects[rsw.numSceneObjects] = analysisResult.fields.numSceneObjects[rsw.numSceneObjects]
+			or 0
+		analysisResult.fields.numSceneObjects[rsw.numSceneObjects] = analysisResult.fields.numSceneObjects[rsw.numSceneObjects]
+			+ 1
+
+		analysisResult.fields.numAnimatedProps[#rsw.animatedProps] = analysisResult.fields.numAnimatedProps[#rsw.animatedProps]
+			or 0
+		analysisResult.fields.numAnimatedProps[#rsw.animatedProps] = analysisResult.fields.numAnimatedProps[#rsw.animatedProps]
+			+ 1
+
+		analysisResult.fields.numDynamicLightSources[#rsw.dynamicLightSources] = analysisResult.fields.numDynamicLightSources[#rsw.dynamicLightSources]
+			or 0
+		analysisResult.fields.numDynamicLightSources[#rsw.dynamicLightSources] = analysisResult.fields.numDynamicLightSources[#rsw.dynamicLightSources]
+			+ 1
+
+		analysisResult.fields.numSpatialAudioSources[#rsw.spatialAudioSources] = analysisResult.fields.numSpatialAudioSources[#rsw.spatialAudioSources]
+			or 0
+		analysisResult.fields.numSpatialAudioSources[#rsw.spatialAudioSources] = analysisResult.fields.numSpatialAudioSources[#rsw.spatialAudioSources]
+			+ 1
+
+		analysisResult.fields.numParticleEffectEmitters[#rsw.particleEffectEmitters] = analysisResult.fields.numParticleEffectEmitters[#rsw.particleEffectEmitters]
+			or 0
+		analysisResult.fields.numParticleEffectEmitters[#rsw.particleEffectEmitters] = analysisResult.fields.numParticleEffectEmitters[#rsw.particleEffectEmitters]
+			+ 1
+
+		for i, doodad in ipairs(rsw.animatedProps) do
+			analysisResult.fields.unknownRenewalPropFlag[doodad.unknownMysteryByte] = analysisResult.fields.unknownRenewalPropFlag[doodad.unknownMysteryByte]
+				or 0
+			analysisResult.fields.unknownRenewalPropFlag[doodad.unknownMysteryByte] = analysisResult.fields.unknownRenewalPropFlag[doodad.unknownMysteryByte]
+				+ 1
+
+			analysisResult.fields.isSolid[doodad.isSolid] = analysisResult.fields.isSolid[doodad.isSolid] or 0
+			analysisResult.fields.isSolid[doodad.isSolid] = analysisResult.fields.isSolid[doodad.isSolid] + 1
+		end
 
 		analysisResult.numFilesAnalyzed = analysisResult.numFilesAnalyzed + 1
 	end

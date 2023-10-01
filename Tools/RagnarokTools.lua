@@ -11,9 +11,12 @@ local path_basename = path.basename
 local path_extname = path.extname
 local table_insert = table.insert
 
+local BinaryReader = require("Core.FileFormats.BinaryReader")
 local RagnarokGND = require("Core.FileFormats.RagnarokGND")
 local RagnarokGRF = require("Core.FileFormats.RagnarokGRF")
 local RagnarokSPR = require("Core.FileFormats.RagnarokSPR")
+
+local QuadTreeRange = require("Core.FileFormats.RSW.QuadTreeRange")
 
 function RagnarokTools:GenerateMapListFromGRF(grfFilePath)
 	grfFilePath = grfFilePath or "data.grf"
@@ -181,6 +184,40 @@ function RagnarokTools:ExportImagesFromSPR(sprFileContents, outputDirectory)
 		local pngFilePath = path.join(outputDirectory, format("tga-frame-%d.png", index))
 		C_FileSystem.WriteFile(pngFilePath, tostring(pngFileContents))
 	end
+end
+
+function RagnarokTools:ExportSceneGraphFromRSW(rswFileContents, outputDirectory)
+	outputDirectory = outputDirectory or "Exports"
+	local outputFilePath = path.posix.join(outputDirectory, "rsw-quadtree.bin")
+	C_FileSystem.MakeDirectoryTree(outputDirectory)
+
+	local reader = BinaryReader(rswFileContents)
+	local quadTreeSize = QuadTreeRange:GetBinaryStorageSize()
+	local offsetFromStartOfFile = #rswFileContents - quadTreeSize
+	reader:Seek(offsetFromStartOfFile)
+	local sceneGraph = QuadTreeRange(reader)
+
+	local outputBufferSize = quadTreeSize
+	local outputBuffer = buffer.new(outputBufferSize)
+	printf(
+		"[RagnarokTools] Reserved %s bytes (%s) of buffer space for quad tree ranges",
+		outputBufferSize,
+		string.filesize(outputBufferSize)
+	)
+
+	console.startTimer("Serializing bounding boxes")
+	sceneGraph:RecursivelySerializeBoundingBoxes(outputBuffer)
+	console.stopTimer("Serializing bounding boxes")
+
+	printf("Writing %s bytes to %s ...", outputBufferSize, outputFilePath)
+	C_FileSystem.WriteFile(outputFilePath, tostring(outputBuffer))
+
+	-- Cairo can't render large images, but for a quick visual inspection this should be enough
+	local dotFileContents = sceneGraph:ToGraphVizDot(2)
+	C_FileSystem.WriteFile(outputFilePath .. ".dot", dotFileContents)
+	printf("Generated GraphViz dot file: %s", outputFilePath .. ".dot")
+	printf("To turn this into an actual diagram, install graphviz and then run the following command:")
+	printf("dot -Tpng -o quadtree.png %s.dot", outputFilePath)
 end
 
 return RagnarokTools

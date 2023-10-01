@@ -1,6 +1,8 @@
 local json = require("json")
 local openssl = require("openssl")
+local uv = require("uv")
 
+local QuadTreeRange = require("Core.FileFormats.RSW.QuadTreeRange")
 local RagnarokTools = require("Tools.RagnarokTools")
 
 describe("RagnarokTools", function()
@@ -62,6 +64,24 @@ describe("RagnarokTools", function()
 
 			C_FileSystem.Delete("lightmap.png")
 			C_FileSystem.Delete("shadowmap.png")
+		end)
+	end)
+
+	describe("ExportSceneGraphFromRSW", function()
+		after(function()
+			C_FileSystem.Delete("rsw-quadtree.bin")
+			C_FileSystem.Delete("rsw-quadtree.bin.dot")
+		end)
+
+		it("should export the quad tree ranges after re-encoding them if a valid RSW buffer is passed", function()
+			-- Simply copying bytes directly would be easier, but the point is to test the (de)serialization logic
+			local rawQuadTreeBytes = QuadTreeRange:CreateDebugTree() -- As would be present in the RSW file itself
+			local normalizedQuadTreeBytes = QuadTreeRange:CreateNormalizedDebugTree() -- Normalized when stored in memory
+			RagnarokTools:ExportSceneGraphFromRSW(rawQuadTreeBytes, uv.cwd()) -- "Empty" RSW file, valid here
+			local reEncodedQuadTreeBytes = C_FileSystem.ReadFile(path.join(uv.cwd(), "rsw-quadtree.bin"))
+
+			assertEquals(#reEncodedQuadTreeBytes, #normalizedQuadTreeBytes)
+			assertEquals(reEncodedQuadTreeBytes, normalizedQuadTreeBytes)
 		end)
 	end)
 end)
