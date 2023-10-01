@@ -10,17 +10,17 @@ C_FileSystem.MakeDirectory(TEMP_DIR)
 local grf = RagnarokGRF()
 grf:Open("data.grf")
 
-console.startTimer("Extracting SPR files")
+console.startTimer("Extracting ACT files")
 
 local fileList = grf:GetFileList()
-local sprFiles = {}
+local actFiles = {}
 for index, fileEntry in ipairs(fileList) do
 	local filePath = fileEntry.name
-	local isSPR = (path.extname(filePath) == ".spr")
+	local isACT = (path.extname(filePath) == ".act")
 
-	if isSPR then
+	if isACT then
 		local tempFilePath = path.join(TEMP_DIR, fileEntry.name)
-		table.insert(sprFiles, tempFilePath)
+		table.insert(actFiles, tempFilePath)
 		if not C_FileSystem.Exists(tempFilePath) then
 			local tempDirectory = path.dirname(tempFilePath)
 			C_FileSystem.MakeDirectoryTree(tempDirectory)
@@ -32,7 +32,7 @@ end
 
 grf:Close()
 
-local analysisResult = FileAnalyzer:AnalyzeSPR(sprFiles)
+local analysisResult = FileAnalyzer:AnalyzeACT(actFiles)
 dump(analysisResult)
 
-console.stopTimer("Extracting SPR files")
+console.stopTimer("Extracting ACT files")

@@ -1,3 +1,4 @@
+local RagnarokACT = require("Core.FileFormats.RagnarokACT")
 local RagnarokGND = require("Core.FileFormats.RagnarokGND")
 local RagnarokRSW = require("Core.FileFormats.RagnarokRSW")
 local RagnarokSPR = require("Core.FileFormats.RagnarokSPR")
@@ -154,6 +155,54 @@ function FileAnalyzer:AnalyzeRSW(rswFiles)
 			analysisResult.fields.isSolid[doodad.isSolid] = analysisResult.fields.isSolid[doodad.isSolid] or 0
 			analysisResult.fields.isSolid[doodad.isSolid] = analysisResult.fields.isSolid[doodad.isSolid] + 1
 		end
+
+		analysisResult.numFilesAnalyzed = analysisResult.numFilesAnalyzed + 1
+	end
+
+	return analysisResult
+end
+
+function FileAnalyzer:AnalyzeACT(actFiles)
+	local analysisResult = {
+		numFilesAnalyzed = 0,
+		fields = {
+			version = {},
+			numAnimationClips = {},
+			unknownHeaderField = {},
+		},
+	}
+
+	for index, filePath in ipairs(actFiles) do
+		printf("Analyzing file: %s", filePath)
+
+		local actFileContents = C_FileSystem.ReadFile(filePath)
+		local act = RagnarokACT()
+		act:DecodeFileContents(actFileContents)
+
+		for fieldName, numOccurencesPerValue in pairs(analysisResult.fields) do
+		end
+
+		analysisResult.fields.version[act.version] = analysisResult.fields.version[act.version] or 0
+		analysisResult.fields.version[act.version] = analysisResult.fields.version[act.version] + 1
+
+		analysisResult.fields.numAnimationClips[act.numAnimationClips] = analysisResult.fields.numAnimationClips[act.numAnimationClips]
+			or 0
+		analysisResult.fields.numAnimationClips[act.numAnimationClips] = analysisResult.fields.numAnimationClips[act.numAnimationClips]
+			+ 1
+
+		analysisResult.fields.unknownHeaderField[act.unknownHeaderField] = analysisResult.fields.unknownHeaderField[act.unknownHeaderField]
+			or 0
+		analysisResult.fields.unknownHeaderField[act.unknownHeaderField] = analysisResult.fields.unknownHeaderField[act.unknownHeaderField]
+			+ 1
+
+		-- analysisResult.fields.bmpImagesCount[spr.bmpImagesCount] = analysisResult.fields.bmpImagesCount[spr.bmpImagesCount]
+		-- 	or 0
+		-- analysisResult.fields.tgaImagesCount[spr.tgaImagesCount] = analysisResult.fields.tgaImagesCount[spr.tgaImagesCount]
+		-- 	or 0
+		-- analysisResult.fields.bmpImagesCount[spr.bmpImagesCount] = analysisResult.fields.bmpImagesCount[spr.bmpImagesCount]
+		-- 	+ 1
+		-- analysisResult.fields.tgaImagesCount[spr.tgaImagesCount] = analysisResult.fields.tgaImagesCount[spr.tgaImagesCount]
+		-- 	+ 1
 
 		analysisResult.numFilesAnalyzed = analysisResult.numFilesAnalyzed + 1
 	end
