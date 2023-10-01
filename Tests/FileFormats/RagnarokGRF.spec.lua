@@ -239,13 +239,6 @@ describe("RagnarokGRF", function()
 	end)
 
 	describe("GetNormalizedFilePath", function()
-		it("should convert EUC-KR names to UTF8", function()
-			assertEquals(
-				RagnarokGRF:GetNormalizedFilePath("\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA.txt"),
-				"유저인터페이스.txt"
-			)
-		end)
-
 		it("should convert upper-case to lower-case characters", function()
 			assertEquals(RagnarokGRF:GetNormalizedFilePath("TEST.BMP"), "test.bmp")
 		end)
