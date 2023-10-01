@@ -159,7 +159,7 @@ function RagnarokGRF:DecodeFileEntries()
 		local fileEntry = {
 			name = normalizedCaseInsensitiveFilePath,
 			compressedSizeInBytes = tonumber(entry.compressed_size),
-			byteAlignedSizeInBytes = tonumber(entry.byte_aligned_size),
+			alignedSizeInBytes = tonumber(entry.byte_aligned_size),
 			decompressedSizeInBytes = tonumber(entry.decompressed_size),
 			typeID = tonumber(entry.node_type),
 			offsetRelativeToHeader = tonumber(entry.offset),
@@ -233,7 +233,7 @@ function RagnarokGRF:ExtractFileInMemory(fileName)
 
 	self.fileHandle:seek("set", entry.offsetRelativeToHeader + RagnarokGRF.HEADER_SIZE_IN_BYTES)
 
-	local buffer = self.fileHandle:read(entry.byteAlignedSizeInBytes) -- Padding is discarded by decompressor
+	local buffer = self.fileHandle:read(entry.alignedSizeInBytes) -- Padding is discarded by decompressor
 	if entry.typeID == RagnarokGRF.RAW_FILE_ENTRY_TYPE then
 		return buffer
 	end
@@ -249,7 +249,7 @@ function RagnarokGRF:ExtractFileInMemory(fileName)
 	printf(
 		"[RagnarokGRF] Blocking read for %.2f ms; decompressed %s in %.2f ms",
 		timeToRead,
-		string_filesize(entry.byteAlignedSizeInBytes),
+		string_filesize(entry.alignedSizeInBytes),
 		timeToDecompress
 	)
 
