@@ -37,19 +37,19 @@ describe("RagnarokGRF", function()
 			assertEquals(#grf.fileTable.entries, grf.fileCount)
 
 			assertEquals(grf.fileTable.entries["subdirectory/hello.txt"].compressedSizeInBytes, 82)
-			assertEquals(grf.fileTable.entries["subdirectory/hello.txt"].byteAlignedSizeInBytes, 88)
+			assertEquals(grf.fileTable.entries["subdirectory/hello.txt"].alignedSizeInBytes, 88)
 			assertEquals(grf.fileTable.entries["subdirectory/hello.txt"].decompressedSizeInBytes, 78) -- Not a bug; the text file is tiny
 			assertEquals(grf.fileTable.entries["subdirectory/hello.txt"].typeID, RagnarokGRF.COMPRESSED_FILE_ENTRY_TYPE)
 			assertEquals(grf.fileTable.entries["subdirectory/hello.txt"].offsetRelativeToHeader, 0)
 
 			assertEquals(grf.fileTable.entries["hello-grf.txt"].compressedSizeInBytes, 67)
-			assertEquals(grf.fileTable.entries["hello-grf.txt"].byteAlignedSizeInBytes, 72)
+			assertEquals(grf.fileTable.entries["hello-grf.txt"].alignedSizeInBytes, 72)
 			assertEquals(grf.fileTable.entries["hello-grf.txt"].decompressedSizeInBytes, 62) -- Not a bug; the text file is tiny
 			assertEquals(grf.fileTable.entries["hello-grf.txt"].typeID, RagnarokGRF.COMPRESSED_FILE_ENTRY_TYPE)
 			assertEquals(grf.fileTable.entries["hello-grf.txt"].offsetRelativeToHeader, 88)
 
 			assertEquals(grf.fileTable.entries["uppercase.png"].compressedSizeInBytes, 185) -- Should be normalized/lowercased in RAM
-			assertEquals(grf.fileTable.entries["uppercase.png"].byteAlignedSizeInBytes, 192)
+			assertEquals(grf.fileTable.entries["uppercase.png"].alignedSizeInBytes, 192)
 			assertEquals(grf.fileTable.entries["uppercase.png"].decompressedSizeInBytes, 189)
 			assertEquals(grf.fileTable.entries["uppercase.png"].typeID, RagnarokGRF.COMPRESSED_FILE_ENTRY_TYPE)
 			assertEquals(grf.fileTable.entries["uppercase.png"].offsetRelativeToHeader, 160)
@@ -66,7 +66,7 @@ describe("RagnarokGRF", function()
 
 			assertEquals(fileEntry.name, "uppercase.png")
 			assertEquals(fileEntry.compressedSizeInBytes, 185)
-			assertEquals(fileEntry.byteAlignedSizeInBytes, 192)
+			assertEquals(fileEntry.alignedSizeInBytes, 192)
 			assertEquals(fileEntry.decompressedSizeInBytes, 189)
 			assertEquals(fileEntry.typeID, RagnarokGRF.COMPRESSED_FILE_ENTRY_TYPE)
 			assertEquals(fileEntry.offsetRelativeToHeader, 160)
