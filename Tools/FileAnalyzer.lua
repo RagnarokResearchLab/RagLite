@@ -14,11 +14,11 @@ function FileAnalyzer:AnalyzeGND(gndFiles)
 		},
 	}
 
-	local gnd = RagnarokGND()
 	for index, filePath in ipairs(gndFiles) do
 		printf("Analyzing file: %s", filePath)
 
 		local gndFileContents = C_FileSystem.ReadFile(filePath)
+		local gnd = RagnarokGND()
 		gnd:DecodeFileContents(gndFileContents)
 
 		analysisResult.fields.version[gnd.version] = analysisResult.fields.version[gnd.version] or 0
@@ -51,11 +51,11 @@ function FileAnalyzer:AnalyzeSPR(sprFiles)
 		},
 	}
 
-	local spr = RagnarokSPR()
 	for index, filePath in ipairs(sprFiles) do
 		printf("Analyzing file: %s", filePath)
 
 		local sprFileContents = C_FileSystem.ReadFile(filePath)
+		local spr = RagnarokSPR()
 		spr:DecodeFileContents(sprFileContents)
 
 		analysisResult.fields.version[spr.version] = analysisResult.fields.version[spr.version] or 0
