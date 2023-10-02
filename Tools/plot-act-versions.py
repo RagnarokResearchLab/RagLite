@@ -16,6 +16,7 @@ counts = list(versions.values())
 
 # Flag to determine if the y-axis should be in logarithmic scale
 use_log_scale = True
+add_date_annotation = True
 
 # Create a bar plot
 plt.bar(version_nums, counts, color='blue')
@@ -31,8 +32,9 @@ if use_log_scale:
     plt.yscale('log')
 
 # Annotate with the current date
-current_date = datetime.now().strftime('%Y-%m-%d')
-plt.annotate(f"Snapshot: {current_date}",
+if add_date_annotation:
+	current_date = datetime.now().strftime('%Y-%m-%d')
+	plt.annotate(f"Snapshot: {current_date}",
              xy=(0.05, 0.95),
              xycoords='axes fraction',
              fontsize=10,
