@@ -3,8 +3,19 @@ import matplotlib.pyplot as plt
 from datetime import datetime
 import os
 
+import sys
+
+# Check if a filename is provided
+if len(sys.argv) < 2:
+    print("Please provide a JSON filename as an argument.")
+    sys.exit(1)
+
+filename = sys.argv[1]
+
 # Construct the path to the JSON file
-file_path = os.path.join("Exports", "act-versions.json")
+file_path = os.path.join("Exports", filename) + "-versions.json"
+
+print("Loading data set from " + file_path)
 
 # Load data from the JSON file
 with open(file_path, 'r') as file:
@@ -25,9 +36,11 @@ add_date_annotation = True
 plt.bar(version_nums, counts, color='blue')
 
 # Title and labels
-plt.title('Distribution of Versions')
+plot_title = 'Distribution of ' + filename.upper() + ' versions'
+print("Generating plot: " + plot_title)
+plt.title(plot_title)
 plt.xlabel('Version Number')
-plt.ylabel('Count (Log Scale)' if use_log_scale else 'Count')
+plt.ylabel('Count (Log Scale)' if use_log_scale else 'Number of Files')
 plt.xticks(version_nums)  # ensures that each version number is shown on the x-axis
 
 # If the flag is set, change the y-axis to logarithmic scale
@@ -44,5 +57,7 @@ if add_date_annotation:
              fontweight='bold')
 
 # Save the plot to a file
+output_file_name = os.path.join("Exports", filename) + "-versions.png"
+print("Saving plot as " + output_file_name)
 plt.tight_layout()
-plt.savefig('version_distribution.png', dpi=300)
+plt.savefig(output_file_name, dpi=300)
