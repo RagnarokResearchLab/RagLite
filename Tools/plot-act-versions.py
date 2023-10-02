@@ -49,6 +49,10 @@ if use_log_scale:
 
 # Annotate with the current date
 if add_date_annotation:
+	# Adjust y-axis limits to add padding at the top
+	ymax = max(counts) * 1.1  # This adds 10% padding at the top
+	plt.ylim(0, ymax)
+
 	current_date = datetime.now().strftime('%Y-%m-%d')
 	plt.annotate(f"Snapshot: {current_date}",
              xy=(0.05, 0.95),
