@@ -36,3 +36,8 @@ local analysisResult = FileAnalyzer:AnalyzeACT(actFiles)
 dump(analysisResult)
 
 console.stopTimer("Extracting ACT files")
+
+local json = require("json")
+local jsonString = json.prettier(analysisResult.fields.version)
+local outputFilePath = path.join("Exports", "act-versions.json")
+C_FileSystem.WriteFile(outputFilePath, jsonString)

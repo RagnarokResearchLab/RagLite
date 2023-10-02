@@ -36,3 +36,8 @@ local analysisResult = FileAnalyzer:AnalyzeGND(gndFiles)
 dump(analysisResult)
 
 console.stopTimer("Extracting GND files")
+
+local json = require("json")
+local jsonString = json.prettier(analysisResult.fields.version)
+local outputFilePath = path.join("Exports", "gnd-versions.json")
+C_FileSystem.WriteFile(outputFilePath, jsonString)

@@ -36,3 +36,8 @@ local analysisResult = FileAnalyzer:AnalyzeRSW(rswFiles)
 dump(analysisResult)
 
 console.stopTimer("Extracting RSW files")
+
+local json = require("json")
+local jsonString = json.prettier(analysisResult.fields.version)
+local outputFilePath = path.join("Exports", "rsw-versions.json")
+C_FileSystem.WriteFile(outputFilePath, jsonString)

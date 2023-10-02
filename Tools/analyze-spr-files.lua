@@ -36,3 +36,8 @@ local analysisResult = FileAnalyzer:AnalyzeSPR(sprFiles)
 dump(analysisResult)
 
 console.stopTimer("Extracting SPR files")
+
+local json = require("json")
+local jsonString = json.prettier(analysisResult.fields.version)
+local outputFilePath = path.join("Exports", "spr-versions.json")
+C_FileSystem.WriteFile(outputFilePath, jsonString)
