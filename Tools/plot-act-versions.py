@@ -1,9 +1,13 @@
 import json
 import matplotlib.pyplot as plt
 from datetime import datetime
+import os
 
-# Load data from JSON file
-with open('data.json', 'r') as file:
+# Construct the path to the JSON file
+file_path = os.path.join("Exports", "act-versions.json")
+
+# Load data from the JSON file
+with open(file_path, 'r') as file:
     versions = json.load(file)
 
 # Convert string keys to floats (JSON keys are always strings)
