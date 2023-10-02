@@ -1,14 +1,13 @@
+import json
 import matplotlib.pyplot as plt
 from datetime import datetime
 
-# Data
-versions = {
-    2: 3,
-    2.1: 242,
-    2.3: 373,
-    2.4: 2682,
-    2.5: 49151
-}
+# Load data from JSON file
+with open('data.json', 'r') as file:
+    versions = json.load(file)
+
+# Convert string keys to floats (JSON keys are always strings)
+versions = {float(k): v for k, v in versions.items()}
 
 # Extract version numbers and their counts
 version_nums = list(versions.keys())
@@ -43,6 +42,3 @@ if add_date_annotation:
 # Save the plot to a file
 plt.tight_layout()
 plt.savefig('version_distribution.png', dpi=300)
-
-# If you still want to display after saving, uncomment the line below
-# plt.show()
