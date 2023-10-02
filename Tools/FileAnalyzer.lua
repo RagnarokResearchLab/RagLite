@@ -23,8 +23,9 @@ function FileAnalyzer:AnalyzeGND(gndFiles)
 		local gnd = RagnarokGND()
 		gnd:DecodeFileContents(gndFileContents)
 
-		analysisResult.fields.version[gnd.version] = analysisResult.fields.version[gnd.version] or 0
-		analysisResult.fields.version[gnd.version] = analysisResult.fields.version[gnd.version] + 1
+		local stringKey = tostring(gnd.version)
+		analysisResult.fields.version[stringKey] = analysisResult.fields.version[stringKey] or 0
+		analysisResult.fields.version[stringKey] = analysisResult.fields.version[stringKey] + 1
 
 		analysisResult.fields.diffuseTextureCount[gnd.diffuseTextureCount] = analysisResult.fields.diffuseTextureCount[gnd.diffuseTextureCount]
 			or 0
@@ -60,8 +61,9 @@ function FileAnalyzer:AnalyzeSPR(sprFiles)
 		local spr = RagnarokSPR()
 		spr:DecodeFileContents(sprFileContents)
 
-		analysisResult.fields.version[spr.version] = analysisResult.fields.version[spr.version] or 0
-		analysisResult.fields.version[spr.version] = analysisResult.fields.version[spr.version] + 1
+		local stringKey = tostring(spr.version)
+		analysisResult.fields.version[stringKey] = analysisResult.fields.version[stringKey] or 0
+		analysisResult.fields.version[stringKey] = analysisResult.fields.version[stringKey] + 1
 
 		analysisResult.fields.bmpImagesCount[spr.bmpImagesCount] = analysisResult.fields.bmpImagesCount[spr.bmpImagesCount]
 			or 0
@@ -104,8 +106,9 @@ function FileAnalyzer:AnalyzeRSW(rswFiles)
 		local rsw = RagnarokRSW()
 		rsw:DecodeFileContents(rswFileContents)
 
-		analysisResult.fields.version[rsw.version] = analysisResult.fields.version[rsw.version] or 0
-		analysisResult.fields.version[rsw.version] = analysisResult.fields.version[rsw.version] + 1
+		local stringKey = tostring(rsw.version)
+		analysisResult.fields.version[stringKey] = analysisResult.fields.version[stringKey] or 0
+		analysisResult.fields.version[stringKey] = analysisResult.fields.version[stringKey] + 1
 
 		analysisResult.fields.buildNumber[rsw.buildNumber] = analysisResult.fields.buildNumber[rsw.buildNumber] or 0
 		analysisResult.fields.buildNumber[rsw.buildNumber] = analysisResult.fields.buildNumber[rsw.buildNumber] + 1
@@ -182,8 +185,10 @@ function FileAnalyzer:AnalyzeACT(actFiles)
 		for fieldName, numOccurencesPerValue in pairs(analysisResult.fields) do
 		end
 
-		analysisResult.fields.version[act.version] = analysisResult.fields.version[act.version] or 0
-		analysisResult.fields.version[act.version] = analysisResult.fields.version[act.version] + 1
+		-- Hacky: string keys are needed for JSON exports
+		local stringKey = tostring(act.version)
+		analysisResult.fields.version[stringKey] = analysisResult.fields.version[stringKey] or 0
+		analysisResult.fields.version[stringKey] = analysisResult.fields.version[stringKey] + 1
 
 		analysisResult.fields.numAnimationClips[act.numAnimationClips] = analysisResult.fields.numAnimationClips[act.numAnimationClips]
 			or 0
