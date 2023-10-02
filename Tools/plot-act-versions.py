@@ -57,7 +57,7 @@ if add_date_annotation:
 	plt.annotate(f"Snapshot: {current_date}",
              xy=(0.05, 0.95),
              xycoords='axes fraction',
-             fontsize=10,
+             fontsize=8,
              fontweight='bold')
 
 # Save the plot to a file
