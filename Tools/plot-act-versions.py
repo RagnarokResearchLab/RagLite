@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+from datetime import datetime
 
 # Data
 versions = {
@@ -28,6 +29,14 @@ plt.xticks(version_nums)  # ensures that each version number is shown on the x-a
 # If the flag is set, change the y-axis to logarithmic scale
 if use_log_scale:
     plt.yscale('log')
+
+# Annotate with the current date
+current_date = datetime.now().strftime('%Y-%m-%d')
+plt.annotate(f"Snapshot: {current_date}",
+             xy=(0.05, 0.95),
+             xycoords='axes fraction',
+             fontsize=10,
+             fontweight='bold')
 
 # Save the plot to a file
 plt.tight_layout()
