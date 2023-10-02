@@ -15,7 +15,7 @@ version_nums = list(versions.keys())
 counts = list(versions.values())
 
 # Flag to determine if the y-axis should be in logarithmic scale
-use_log_scale = True
+use_log_scale = False
 add_date_annotation = True
 
 # Create a bar plot
