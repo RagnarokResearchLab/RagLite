@@ -13,16 +13,23 @@ versions = {
 version_nums = list(versions.keys())
 counts = list(versions.values())
 
+# Flag to determine if the y-axis should be in logarithmic scale
+use_log_scale = True
+
 # Create a bar plot
 plt.bar(version_nums, counts, color='blue')
 
 # Title and labels
 plt.title('Distribution of Versions')
 plt.xlabel('Version Number')
-plt.ylabel('Count')
+plt.ylabel('Count (Log Scale)' if use_log_scale else 'Count')
 plt.xticks(version_nums)  # ensures that each version number is shown on the x-axis
 
-# Save the plot to a file before showing
+# If the flag is set, change the y-axis to logarithmic scale
+if use_log_scale:
+    plt.yscale('log')
+
+# Save the plot to a file
 plt.tight_layout()
 plt.savefig('version_distribution.png', dpi=300)
 
