@@ -48,7 +48,7 @@ plt.bar(x_values, counts, color='#7ABFFF', align='center', width=0.6)  # 'align'
 plot_title = 'Distribution of ' + filename.upper() + ' versions'
 print("Generating plot: " + plot_title)
 plt.title(plot_title)
-plt.xlabel('Version')
+plt.xlabel('Version Number')
 plt.ylabel('Count (Log Scale)' if use_log_scale else 'Number of Files')
 # plt.xticks(version_nums)  # ensures that each version number is shown on the x-axis
 plt.xticks(x_values, version_nums)  # Set custom tick labels
