@@ -54,7 +54,7 @@ if add_date_annotation:
 	plt.ylim(0, ymax)
 
 	current_date = datetime.now().strftime('%Y-%m-%d')
-	plt.annotate(f"Snapshot: {current_date}",
+	plt.annotate(f"Snapshot Date: {current_date}",
              xy=(0.05, 0.95),
              xycoords='axes fraction',
              fontsize=8,
