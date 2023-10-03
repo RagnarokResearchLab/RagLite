@@ -1,9 +1,15 @@
 import json
 import matplotlib.pyplot as plt
+import matplotlib.ticker as ticker
 from datetime import datetime
 import os
 
 import sys
+
+def format_large_numbers(x, pos=None):
+    """Format large numbers with commas as thousands separators."""
+    return '{:,.0f}'.format(x)
+
 
 # Check if a filename is provided
 if len(sys.argv) < 2:
@@ -35,7 +41,8 @@ add_date_annotation = True
 
 # Create a bar plot
 # plt.bar(version_nums, counts, color='blue')
-plt.bar(x_values, counts, color='blue', align='center', width=0.6)  # 'align' ensures bars are centered on their tick, 'width' sets a consistent bar width
+# #7ABFFF
+plt.bar(x_values, counts, color='#7ABFFF', align='center', width=0.6)  # 'align' ensures bars are centered on their tick, 'width' sets a consistent bar width
 
 # Title and labels
 plot_title = 'Distribution of ' + filename.upper() + ' versions'
@@ -45,6 +52,11 @@ plt.xlabel('Version')
 plt.ylabel('Count (Log Scale)' if use_log_scale else 'Number of Files')
 # plt.xticks(version_nums)  # ensures that each version number is shown on the x-axis
 plt.xticks(x_values, version_nums)  # Set custom tick labels
+
+# Apply the custom formatter to the y-axis
+# TODO bool flag for this, too
+y_format = ticker.FuncFormatter(format_large_numbers)
+plt.gca().yaxis.set_major_formatter(y_format)
 
 # If the flag is set, change the y-axis to logarithmic scale
 if use_log_scale:
