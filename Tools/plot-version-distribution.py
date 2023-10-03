@@ -42,7 +42,7 @@ add_date_annotation = True
 # Create a bar plot
 # plt.bar(version_nums, counts, color='blue')
 # #7ABFFF
-plt.bar(x_values, counts, color='#7ABFFF', align='center', width=0.6)  # 'align' ensures bars are centered on their tick, 'width' sets a consistent bar width
+bars = plt.bar(x_values, counts, color='#7ABFFF', align='center', width=0.6)  # 'align' ensures bars are centered on their tick, 'width' sets a consistent bar width
 
 # Title and labels
 plot_title = 'Distribution of ' + filename.upper() + ' versions'
@@ -57,6 +57,12 @@ plt.xticks(x_values, version_nums)  # Set custom tick labels
 # TODO bool flag for this, too
 y_format = ticker.FuncFormatter(format_large_numbers)
 plt.gca().yaxis.set_major_formatter(y_format)
+
+# Annotate each bar with its exact count
+for bar in bars:
+    yval = bar.get_height()
+    plt.text(bar.get_x() + bar.get_width()/2, yval + 0.02 * max(counts), format_large_numbers(yval),
+             ha='center', va='bottom', fontsize=8)  # Adjust fontsize if needed
 
 # If the flag is set, change the y-axis to logarithmic scale
 if use_log_scale:
