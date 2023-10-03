@@ -41,14 +41,13 @@ add_date_annotation = True
 
 # Create a bar plot
 # plt.bar(version_nums, counts, color='blue')
-# #7ABFFF
 bars = plt.bar(x_values, counts, color='#7ABFFF', align='center', width=0.6)  # 'align' ensures bars are centered on their tick, 'width' sets a consistent bar width
 
 # Title and labels
 plot_title = 'Distribution of ' + filename.upper() + ' versions'
 print("Generating plot: " + plot_title)
 plt.title(plot_title)
-plt.xlabel('Version Number')
+plt.xlabel(filename.upper() + ' Version')
 plt.ylabel('Count (Log Scale)' if use_log_scale else 'Number of Files')
 # plt.xticks(version_nums)  # ensures that each version number is shown on the x-axis
 plt.xticks(x_values, version_nums)  # Set custom tick labels
@@ -71,7 +70,7 @@ if use_log_scale:
 # Annotate with the current date
 if add_date_annotation:
 	# Adjust y-axis limits to add padding at the top
-	ymax = max(counts) * 1.1  # This adds 10% padding at the top
+	ymax = max(counts) * 1.2  # This adds 20% padding at the top
 	plt.ylim(0, ymax)
 
 	current_date = datetime.now().strftime('%Y-%m-%d')
