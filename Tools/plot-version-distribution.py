@@ -27,21 +27,24 @@ versions = {float(k): v for k, v in versions.items()}
 # Extract version numbers and their counts
 version_nums = list(versions.keys())
 counts = list(versions.values())
+x_values = range(len(version_nums))
 
 # Flag to determine if the y-axis should be in logarithmic scale
 use_log_scale = False
 add_date_annotation = True
 
 # Create a bar plot
-plt.bar(version_nums, counts, color='blue')
+# plt.bar(version_nums, counts, color='blue')
+plt.bar(x_values, counts, color='blue', align='center', width=0.6)  # 'align' ensures bars are centered on their tick, 'width' sets a consistent bar width
 
 # Title and labels
 plot_title = 'Distribution of ' + filename.upper() + ' versions'
 print("Generating plot: " + plot_title)
 plt.title(plot_title)
-plt.xlabel('Version Number')
+plt.xlabel('Version')
 plt.ylabel('Count (Log Scale)' if use_log_scale else 'Number of Files')
-plt.xticks(version_nums)  # ensures that each version number is shown on the x-axis
+# plt.xticks(version_nums)  # ensures that each version number is shown on the x-axis
+plt.xticks(x_values, version_nums)  # Set custom tick labels
 
 # If the flag is set, change the y-axis to logarithmic scale
 if use_log_scale:
