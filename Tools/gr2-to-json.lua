@@ -29,8 +29,8 @@ for index, gr2FilePath in ipairs(filesToExport) do
 	local gr2 = RagnarokGR2()
 	gr2:DecodeFileContents(gr2Bytes)
 
-	local exportFilePathRoot = path.join("Exports", path.basename(gr2FilePath) .. ".json")
-	C_FileSystem.WriteFile(exportFilePathRoot, gr2:ToJSON())
+	local outputFilePath = path.join("Exports", path.basename(gr2FilePath) .. ".json")
+	C_FileSystem.WriteFile(outputFilePath, gr2:ToJSON())
 end
 
 grf:Close()
