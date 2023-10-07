@@ -20,12 +20,12 @@ function QuadTreeRange:Construct(reader, recursionDepth, normalize)
 	}
 
 	instance.axisAlignedBoundingBox = {
-		max = {
+		bottom = {
 			x = reader:GetFloat() * RagnarokGND.NORMALIZING_SCALE_FACTOR,
 			y = -1 * reader:GetFloat() * RagnarokGND.NORMALIZING_SCALE_FACTOR,
 			z = reader:GetFloat() * RagnarokGND.NORMALIZING_SCALE_FACTOR,
 		},
-		min = {
+		top = {
 			x = reader:GetFloat() * RagnarokGND.NORMALIZING_SCALE_FACTOR,
 			y = -1 * reader:GetFloat() * RagnarokGND.NORMALIZING_SCALE_FACTOR,
 			z = reader:GetFloat() * RagnarokGND.NORMALIZING_SCALE_FACTOR,
@@ -84,18 +84,18 @@ end
 
 local preallocatedFloatBuffer = ffi.new("float[1]")
 function QuadTreeRange:RecursivelySerializeBoundingBoxes(outputBuffer)
-	preallocatedFloatBuffer[0] = self.axisAlignedBoundingBox.max.x
+	preallocatedFloatBuffer[0] = self.axisAlignedBoundingBox.bottom.x
 	outputBuffer:putcdata(preallocatedFloatBuffer, SIZEOF_FLOAT)
-	preallocatedFloatBuffer[0] = self.axisAlignedBoundingBox.max.y
+	preallocatedFloatBuffer[0] = self.axisAlignedBoundingBox.bottom.y
 	outputBuffer:putcdata(preallocatedFloatBuffer, SIZEOF_FLOAT)
-	preallocatedFloatBuffer[0] = self.axisAlignedBoundingBox.max.z
+	preallocatedFloatBuffer[0] = self.axisAlignedBoundingBox.bottom.z
 	outputBuffer:putcdata(preallocatedFloatBuffer, SIZEOF_FLOAT)
 
-	preallocatedFloatBuffer[0] = self.axisAlignedBoundingBox.min.x
+	preallocatedFloatBuffer[0] = self.axisAlignedBoundingBox.top.x
 	outputBuffer:putcdata(preallocatedFloatBuffer, SIZEOF_FLOAT)
-	preallocatedFloatBuffer[0] = self.axisAlignedBoundingBox.min.y
+	preallocatedFloatBuffer[0] = self.axisAlignedBoundingBox.top.y
 	outputBuffer:putcdata(preallocatedFloatBuffer, SIZEOF_FLOAT)
-	preallocatedFloatBuffer[0] = self.axisAlignedBoundingBox.min.z
+	preallocatedFloatBuffer[0] = self.axisAlignedBoundingBox.top.z
 	outputBuffer:putcdata(preallocatedFloatBuffer, SIZEOF_FLOAT)
 
 	preallocatedFloatBuffer[0] = self.axisAlignedBoundingBox.diameter.x
@@ -130,12 +130,12 @@ function QuadTreeRange:ToString(indentLevel)
 	local str = string.format(
 		"%sAABB (max: {x = %.2f, y = %.2f, z = %.2f}, min: {x = %.2f, y = %.2f, z = %.2f})\n",
 		indent,
-		self.axisAlignedBoundingBox.max.x,
-		self.axisAlignedBoundingBox.max.y,
-		self.axisAlignedBoundingBox.max.z,
-		self.axisAlignedBoundingBox.min.x,
-		self.axisAlignedBoundingBox.min.y,
-		self.axisAlignedBoundingBox.min.z
+		self.axisAlignedBoundingBox.bottom.x,
+		self.axisAlignedBoundingBox.bottom.y,
+		self.axisAlignedBoundingBox.bottom.z,
+		self.axisAlignedBoundingBox.top.x,
+		self.axisAlignedBoundingBox.top.y,
+		self.axisAlignedBoundingBox.top.z
 	)
 
 	if not self.isLeafNode then
@@ -162,12 +162,12 @@ function QuadTreeRange:ToGraphVizDot(maxDepth)
 		local id = #nodes + 1
 		local label = string.format(
 			"AABB\nmax: (%.2f, %.2f, %.2f)\nmin: (%.2f, %.2f, %.2f)",
-			node.axisAlignedBoundingBox.max.x,
-			node.axisAlignedBoundingBox.max.y,
-			node.axisAlignedBoundingBox.max.z,
-			node.axisAlignedBoundingBox.min.x,
-			node.axisAlignedBoundingBox.min.y,
-			node.axisAlignedBoundingBox.min.z
+			node.axisAlignedBoundingBox.bottom.x,
+			node.axisAlignedBoundingBox.bottom.y,
+			node.axisAlignedBoundingBox.bottom.z,
+			node.axisAlignedBoundingBox.top.x,
+			node.axisAlignedBoundingBox.top.y,
+			node.axisAlignedBoundingBox.top.z
 		)
 
 		table.insert(nodes, string.format('  node%d [label="%s"];', id, label))
