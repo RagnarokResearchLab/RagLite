@@ -1,0 +1,57 @@
+{
+	"animationClips": [
+		{
+			"animationFrames": [
+				{
+					"anchors": {},
+					"animationEventID": -1,
+					"mysteryBytes": [
+						286331153,
+						572662306,
+						858993459,
+						1145324612,
+						1431655765,
+						1717986918,
+						2004318071,
+						-2004318072
+					],
+					"numAnchors": 0,
+					"numSpriteLayers": 1,
+					"spriteLayers": [
+						{
+							"colorTint": {
+								"alpha": 1,
+								"blue": 1,
+								"green": 1,
+								"red": 1
+							},
+							"imageDimensions": {
+								"u": 22,
+								"v": 26
+							},
+							"imageType": "BITMAP",
+							"isMirroredV": false,
+							"position": {
+								"u": 0,
+								"v": 0
+							},
+							"rotationInDegrees": 0,
+							"scale": {
+								"u": 1,
+								"v": 1
+							},
+							"spritesheetCellIndex": 0
+						}
+					]
+				}
+			],
+			"frameDisplayTimeInMilliseconds": 960,
+			"numAnimationFrames": 1
+		}
+	],
+	"animationEvents": {},
+	"numAnimationClips": 1,
+	"signature": "AC",
+	"unknownHeaderField": "\u00124Vxê\u0013\u0014\u0015\u0016\u0018",
+	"version": 2.5
+}
