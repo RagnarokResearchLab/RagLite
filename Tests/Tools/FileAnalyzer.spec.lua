@@ -22,6 +22,14 @@ local rswFiles = {
 	[path.join("Tests", "Fixtures", "v0206-with-rsm2-flag.rsw")] = true,
 }
 
+local actFiles = {
+	path.join("Tests", "Fixtures", "v0200.act"),
+	path.join("Tests", "Fixtures", "v0201.act"),
+	path.join("Tests", "Fixtures", "v0203.act"),
+	path.join("Tests", "Fixtures", "v0204.act"),
+	path.join("Tests", "Fixtures", "v0205.act"),
+}
+
 describe("FileAnalyzer", function()
 	describe("AnalyzeGND", function()
 		it("should return a summary of the metadata found in the given GND files", function()
@@ -114,6 +122,22 @@ describe("FileAnalyzer", function()
 			assertEquals(analysisResult.fields.numSpatialAudioSources[2], 6)
 			assertEquals(analysisResult.fields.numParticleEffectEmitters[2], 6)
 			assertEquals(analysisResult.fields.isSolid[false], 12)
+		end)
+	end)
+
+	describe("AnalyzeACT", function()
+		it("should return a summary of the metadata found in the given ACT files", function()
+			local analysisResult = FileAnalyzer:AnalyzeACT(actFiles)
+
+			assertEquals(analysisResult.numFilesAnalyzed, 5)
+
+			assertEquals(analysisResult.fields.version[2.0], 1)
+			assertEquals(analysisResult.fields.version[2.1], 1)
+			assertEquals(analysisResult.fields.version[2.3], 1)
+			assertEquals(analysisResult.fields.version[2.4], 1)
+			assertEquals(analysisResult.fields.version[2.5], 1)
+
+			assertEquals(analysisResult.fields.numAnimationClips[1], 5)
 		end)
 	end)
 end)
