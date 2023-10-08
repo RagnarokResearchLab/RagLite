@@ -13,14 +13,14 @@ grf:Open("data.grf")
 console.startTimer("Extracting SPR files")
 
 local fileList = grf:GetFileList()
-local gndFiles = {}
+local sprFiles = {}
 for index, fileEntry in ipairs(fileList) do
 	local filePath = fileEntry.name
 	local isSPR = (path.extname(filePath) == ".spr")
 
 	if isSPR then
 		local tempFilePath = path.join(TEMP_DIR, fileEntry.name)
-		table.insert(gndFiles, tempFilePath)
+		table.insert(sprFiles, tempFilePath)
 		if not C_FileSystem.Exists(tempFilePath) then
 			local tempDirectory = path.dirname(tempFilePath)
 			C_FileSystem.MakeDirectoryTree(tempDirectory)
@@ -32,7 +32,7 @@ end
 
 grf:Close()
 
-local analysisResult = FileAnalyzer:AnalyzeSPR(gndFiles)
+local analysisResult = FileAnalyzer:AnalyzeSPR(sprFiles)
 dump(analysisResult)
 
 console.stopTimer("Extracting SPR files")
