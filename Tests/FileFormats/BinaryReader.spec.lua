@@ -43,6 +43,28 @@ describe("BinaryReader", function()
 		end)
 	end)
 
+	describe("GetBufferSize", function()
+		it("should return the byte size of the internal buffer", function()
+			local fileContents = buffer.new(42):put("HELLO")
+			local reader = BinaryReader(fileContents)
+
+			assertEquals(reader:GetBufferSize(), 5)
+			local numBytesRemaining = reader.endOfFilePointer - reader.virtualFilePointer
+			assertEquals(reader:GetBufferSize(), numBytesRemaining)
+		end)
+	end)
+
+	describe("__len", function()
+		it("should return the byte size of the internal buffer", function()
+			local fileContents = buffer.new(42):put("HELLO")
+			local reader = BinaryReader(fileContents)
+
+			assertEquals(#reader, 5)
+			local numBytesRemaining = reader.endOfFilePointer - reader.virtualFilePointer
+			assertEquals(#reader, numBytesRemaining)
+		end)
+	end)
+
 	describe("Forward", function()
 		it("should forward the virtual file pointer if it will stay in the buffered range", function()
 			local fileContents = buffer.new(42):put("He went home and became a family man")
