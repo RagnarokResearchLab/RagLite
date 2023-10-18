@@ -209,7 +209,7 @@ function RagnarokGR2:DecodeDataSegments()
 		printf("[RagnarokGR2] Exporting %s data segment (for further analysis)", string.filesize(#segmentBytes))
 
 		-- Cannot proceed here, for now (since Oodle decompression and relocations aren't supported)
-		segment.bytes = debug.sbuf(segmentBytes) -- Not particularly useful, but oh well
+		segment.bytes = tostring(segmentBytes) -- Not particularly useful, but oh well
 
 		table.insert(dataSegments, segment)
 	end
