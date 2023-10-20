@@ -429,7 +429,7 @@ function RagnarokRSW:DecodeParticleEffectEmitter()
 	local particleEmissionDelayInSeconds = emitter.emission_speed / expectedFPS
 
 	local objectInfo = {
-		name = ffi_string(emitter.name), -- TBD use len?
+		name = ffi_string(emitter.name),
 		normalizedWorldPosition = {
 			x = emitter.position.x * RagnarokGND.NORMALIZING_SCALE_FACTOR,
 			y = -1 * emitter.position.y * RagnarokGND.NORMALIZING_SCALE_FACTOR,
