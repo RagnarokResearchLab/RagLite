@@ -45,6 +45,7 @@ There isn't much to see yet, but if you want to give it a try:
 	* Run ``./download-runtime.sh``, or download from [GitHub Releases](https://github.com/evo-lua/evo-runtime/releases)
 	* The required version is usually the latest, but check the above script
 	* You can also build it from source (see [docs](https://evo-lua.github.io/docs/how-to-guides/building-from-source) here; for advanced users)
+	* Linux users only: You may need to [install additional dependencies](https://evo-lua.github.io/docs/getting-started/installation#external-dependencies)
 1. Copy (or better yet, [symlink](https://en.wikipedia.org/wiki/Symbolic_link)) in a suitable asset container, e.g., `data.grf`
 1. Now you can start one of the core apps, e.g., via `./evo start-client.lua`
 1. Datamining or debugging tools can be run via `./evo Tools/<script>.lua`
