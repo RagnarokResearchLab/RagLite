@@ -1,7 +1,11 @@
 local RagnarokACT = require("Core.FileFormats.RagnarokACT")
+local RagnarokGAT = require("Core.FileFormats.RagnarokGAT")
 local RagnarokGND = require("Core.FileFormats.RagnarokGND")
 local RagnarokRSW = require("Core.FileFormats.RagnarokRSW")
 local RagnarokSPR = require("Core.FileFormats.RagnarokSPR")
+
+local math_max = math.max
+local math_min = math.min
 
 local FileAnalyzer = {}
 
@@ -201,6 +205,90 @@ function FileAnalyzer:AnalyzeACT(actFiles)
 			or 0
 		analysisResult.fields.unknownHeaderField[act.unknownHeaderField] = analysisResult.fields.unknownHeaderField[act.unknownHeaderField]
 			+ 1
+
+		analysisResult.numFilesAnalyzed = analysisResult.numFilesAnalyzed + 1
+	end
+
+	return analysisResult
+end
+
+function FileAnalyzer:AnalyzeGAT(gatFiles)
+	local analysisResult = {
+		numFilesAnalyzed = 0,
+		fields = {
+			version = {},
+			mapU = {},
+			mapV = {},
+			terrainTypes = {},
+			terrainFlags = {
+				isWalkable = 0,
+				isSnipeable = 0,
+				isWater = 0,
+			},
+			renewalWaterFlags = {},
+		},
+	}
+
+	for index, filePath in ipairs(gatFiles) do
+		printf("Analyzing file: %s", filePath)
+
+		local fileContents = C_FileSystem.ReadFile(filePath)
+		local gat = RagnarokGAT()
+		gat:DecodeFileContents(fileContents)
+
+		analysisResult.fields.version[gat.version] = analysisResult.fields.version[gat.version] or 0
+		analysisResult.fields.version[gat.version] = analysisResult.fields.version[gat.version] + 1
+
+		analysisResult.fields.mapU[gat.mapU] = analysisResult.fields.mapU[gat.mapU] or 0
+		analysisResult.fields.mapV[gat.mapV] = analysisResult.fields.mapV[gat.mapV] or 0
+		analysisResult.fields.mapU[gat.mapU] = analysisResult.fields.mapU[gat.mapU] + 1
+		analysisResult.fields.mapV[gat.mapV] = analysisResult.fields.mapV[gat.mapV] + 1
+
+		-- Storing the individual values is overkill (and doesn't even work with regular tables as there are too many)
+		local minObservedAltitude = math.huge
+		local maxObservedAltitude = 0
+		for mapV = 1, gat.mapV, 1 do
+			for mapU = 1, gat.mapU, 1 do
+				local tileID = gat:MapPositionToTileID(mapU, mapV)
+				local tile = gat.collisionMap[tileID]
+
+				minObservedAltitude = math_min(minObservedAltitude, tile.altitude_southwest)
+				minObservedAltitude = math_min(minObservedAltitude, tile.altitude_southeast)
+				minObservedAltitude = math_min(minObservedAltitude, tile.altitude_northwest)
+				minObservedAltitude = math_min(minObservedAltitude, tile.altitude_northeast)
+
+				maxObservedAltitude = math_max(maxObservedAltitude, tile.altitude_southwest)
+				maxObservedAltitude = math_max(maxObservedAltitude, tile.altitude_southeast)
+				maxObservedAltitude = math_max(maxObservedAltitude, tile.altitude_northwest)
+				maxObservedAltitude = math_max(maxObservedAltitude, tile.altitude_northeast)
+
+				analysisResult.fields.terrainTypes[tile.terrain_flags] = analysisResult.fields.terrainTypes[tile.terrain_flags]
+					or 0
+				analysisResult.fields.terrainTypes[tile.terrain_flags] = analysisResult.fields.terrainTypes[tile.terrain_flags]
+					+ 1
+
+				if gat:IsObstructedTerrain(mapU, mapV) then
+					analysisResult.fields.terrainFlags.isWalkable = analysisResult.fields.terrainFlags.isWalkable + 1
+				end
+
+				if not gat:IsTerrainBlockingRangedAttacks(mapU, mapV) then
+					analysisResult.fields.terrainFlags.isSnipeable = analysisResult.fields.terrainFlags.isSnipeable + 1
+				end
+
+				if gat:IsWater(mapU, mapV) then
+					analysisResult.fields.terrainFlags.isWater = analysisResult.fields.terrainFlags.isWater + 1
+				end
+
+				-- Don't know what the RE water flag does exactly, so can't do much with it right now...
+				analysisResult.fields.renewalWaterFlags[tile.renewal_water_flag] = analysisResult.fields.renewalWaterFlags[tile.renewal_water_flag]
+					or 0
+				analysisResult.fields.renewalWaterFlags[tile.renewal_water_flag] = analysisResult.fields.renewalWaterFlags[tile.renewal_water_flag]
+					+ 1
+			end
+		end
+
+		analysisResult.minObservedAltitude = minObservedAltitude
+		analysisResult.maxObservedAltitude = maxObservedAltitude
 
 		analysisResult.numFilesAnalyzed = analysisResult.numFilesAnalyzed + 1
 	end

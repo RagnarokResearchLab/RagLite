@@ -30,6 +30,11 @@ local actFiles = {
 	path.join("Tests", "Fixtures", "v0205.act"),
 }
 
+local gatFiles = {
+	path.join("Tests", "Fixtures", "v0102.gat"),
+	path.join("Tests", "Fixtures", "v0103.gat"),
+}
+
 describe("FileAnalyzer", function()
 	describe("AnalyzeGND", function()
 		it("should return a summary of the metadata found in the given GND files", function()
@@ -138,6 +143,36 @@ describe("FileAnalyzer", function()
 			assertEquals(analysisResult.fields.version[2.5], 1)
 
 			assertEquals(analysisResult.fields.numAnimationClips[1], 5)
+		end)
+	end)
+
+	describe("AnalyzeGAT", function()
+		it("should return a summary of the metadata found in the given GAT files", function()
+			local analysisResult = FileAnalyzer:AnalyzeGAT(gatFiles)
+
+			assertEquals(analysisResult.numFilesAnalyzed, 2)
+
+			assertEquals(analysisResult.fields.version[1.2], 1)
+			assertEquals(analysisResult.fields.version[1.3], 1)
+
+			assertEquals(analysisResult.fields.mapU[3], 2)
+			assertEquals(analysisResult.fields.mapV[2], 2)
+
+			assertEquals(analysisResult.fields.terrainTypes, { 2, 1, 1, 1, 1, 1, [0] = 5 })
+
+			assertEquals(analysisResult.fields.terrainFlags, {
+				isSnipeable = 3,
+				isWalkable = 4,
+				isWater = 3,
+			})
+
+			assertEquals(analysisResult.fields.renewalWaterFlags, {
+				[0] = 10,
+				[32768] = 2,
+			})
+
+			assertEquals(analysisResult.minObservedAltitude, 1)
+			assertEquals(analysisResult.maxObservedAltitude, 4)
 		end)
 	end)
 end)
