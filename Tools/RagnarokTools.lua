@@ -12,6 +12,7 @@ local path_extname = path.extname
 local table_insert = table.insert
 
 local BinaryReader = require("Core.FileFormats.BinaryReader")
+local RagnarokGAT = require("Core.FileFormats.RagnarokGAT")
 local RagnarokGND = require("Core.FileFormats.RagnarokGND")
 local RagnarokGRF = require("Core.FileFormats.RagnarokGRF")
 local RagnarokSPR = require("Core.FileFormats.RagnarokSPR")
@@ -218,6 +219,127 @@ function RagnarokTools:ExportSceneGraphFromRSW(rswFileContents, outputDirectory)
 	printf("Generated GraphViz dot file: %s", outputFilePath .. ".dot")
 	printf("To turn this into an actual diagram, install graphviz and then run the following command:")
 	printf("dot -Tpng -o quadtree.png %s.dot", outputFilePath)
+end
+
+function RagnarokTools:ExportHeightMapFromGAT(gatFileContents, outputDirectory)
+	outputDirectory = outputDirectory or "Exports"
+	C_FileSystem.MakeDirectoryTree(outputDirectory)
+
+	local gat = RagnarokGAT()
+	gat:DecodeFileContents(gatFileContents)
+
+	local rgbaImageBytes = buffer.new(gat.mapU * gat.mapV * 4)
+
+	local maxObservedAltitude = 0
+	for v = 1, gat.mapV do
+		for u = 1, gat.mapU do
+			local altitude = gat:GetTerrainAltitudeAt(u, v)
+			maxObservedAltitude = math.max(maxObservedAltitude, altitude)
+		end
+	end
+
+	local normalizationFactor = 1 - math.floor(255 / maxObservedAltitude)
+
+	for v = 1, gat.mapV do
+		for u = 1, gat.mapU do
+			local altitude = gat:GetTerrainAltitudeAt(u, v)
+			local relativeHeight = math.floor(altitude * normalizationFactor)
+			rgbaImageBytes:putcdata(ffi.new("uint8_t[1]", relativeHeight * 255), 1)
+			rgbaImageBytes:putcdata(ffi.new("uint8_t[1]", relativeHeight * 255), 1)
+			rgbaImageBytes:putcdata(ffi.new("uint8_t[1]", relativeHeight * 255), 1)
+			rgbaImageBytes:putcdata(ffi.new("uint8_t[1]", 0), 1)
+		end
+	end
+
+	stbi.bindings.stbi_flip_vertically_on_write(true)
+	local pngBytes = C_ImageProcessing.EncodePNG(rgbaImageBytes, gat.mapU, gat.mapV)
+	stbi.bindings.stbi_flip_vertically_on_write(false)
+
+	C_FileSystem.WriteFile(path.join(outputDirectory, "gat-height-map.png"), pngBytes)
+end
+
+function RagnarokTools:ExportCollisionMapFromGAT(gatFileContents, outputDirectory)
+	outputDirectory = outputDirectory or "Exports"
+	C_FileSystem.MakeDirectoryTree(outputDirectory)
+
+	local gat = RagnarokGAT()
+	gat:DecodeFileContents(gatFileContents)
+
+	local rgbaImageBytes = buffer.new(gat.mapU * gat.mapV * 4)
+
+	local maxObservedAltitude = 0
+	for v = 1, gat.mapV do
+		for u = 1, gat.mapU do
+			local altitude = gat:GetTerrainAltitudeAt(u, v)
+			maxObservedAltitude = math.max(maxObservedAltitude, altitude)
+		end
+	end
+
+	for v = 1, gat.mapV do
+		for u = 1, gat.mapU do
+			local isBlocked = gat:IsObstructedTerrain(u, v)
+			rgbaImageBytes:putcdata(ffi.new("uint8_t[1]", (isBlocked and 0 or 1) * 255), 1)
+			rgbaImageBytes:putcdata(ffi.new("uint8_t[1]", (isBlocked and 0 or 1) * 255), 1)
+			rgbaImageBytes:putcdata(ffi.new("uint8_t[1]", (isBlocked and 0 or 1) * 255), 1)
+			rgbaImageBytes:putcdata(ffi.new("uint8_t[1]", 0), 1)
+		end
+	end
+
+	stbi.bindings.stbi_flip_vertically_on_write(true)
+	local pngBytes = C_ImageProcessing.EncodePNG(rgbaImageBytes, gat.mapU, gat.mapV)
+	stbi.bindings.stbi_flip_vertically_on_write(false)
+
+	C_FileSystem.WriteFile(path.join(outputDirectory, "gat-collision-map.png"), pngBytes)
+end
+
+local terrainTypeColors = {
+	[0] = { red = 0xA5, blue = 0xBF, green = 0x65 },
+	[1] = { red = 0, blue = 0, green = 0 },
+	[2] = { red = 0x26, blue = 0x22, green = 0x4A },
+	[3] = { red = 0x52, blue = 0x7F, green = 0x80 },
+	[4] = { red = 0x4C, blue = 0x50, green = 0x73 },
+	[5] = { red = 0xC1, blue = 0xC5, green = 0xB2 },
+	[6] = { red = 0x3C, blue = 0x40, green = 0x2B },
+	[7] = { red = 0xFF, blue = 0, green = 0xFF },
+}
+
+function RagnarokTools:ExportTerrainMapFromGAT(gatFileContents, outputDirectory)
+	outputDirectory = outputDirectory or "Exports"
+	C_FileSystem.MakeDirectoryTree(outputDirectory)
+
+	local gat = RagnarokGAT()
+	gat:DecodeFileContents(gatFileContents)
+
+	local rgbaImageBytes = buffer.new(gat.mapU * gat.mapV * 4)
+
+	local maxObservedAltitude = 0
+	for v = 1, gat.mapV do
+		for u = 1, gat.mapU do
+			local altitude = gat:GetTerrainAltitudeAt(u, v)
+			maxObservedAltitude = math.max(maxObservedAltitude, altitude)
+		end
+	end
+
+	for v = 1, gat.mapV do
+		for u = 1, gat.mapU do
+			local tileID = gat:MapPositionToTileID(u, v)
+			local terrainTypeID = tonumber(gat.collisionMap[tileID].terrain_flags)
+			local pixelColor = terrainTypeColors[terrainTypeID]
+
+			assert(pixelColor, format("Missing pixel color for terrain type %s", terrainTypeID))
+
+			rgbaImageBytes:putcdata(ffi.new("uint8_t[1]", pixelColor.red), 1)
+			rgbaImageBytes:putcdata(ffi.new("uint8_t[1]", pixelColor.green * 255), 1)
+			rgbaImageBytes:putcdata(ffi.new("uint8_t[1]", pixelColor.blue * 255), 1)
+			rgbaImageBytes:putcdata(ffi.new("uint8_t[1]", 0), 1)
+		end
+	end
+
+	stbi.bindings.stbi_flip_vertically_on_write(true)
+	local pngBytes = C_ImageProcessing.EncodePNG(rgbaImageBytes, gat.mapU, gat.mapV)
+	stbi.bindings.stbi_flip_vertically_on_write(false)
+
+	C_FileSystem.WriteFile(path.join(outputDirectory, "gat-terrain-map.png"), pngBytes)
 end
 
 return RagnarokTools

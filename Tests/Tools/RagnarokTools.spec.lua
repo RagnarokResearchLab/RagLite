@@ -84,4 +84,52 @@ describe("RagnarokTools", function()
 			assertEquals(reEncodedQuadTreeBytes, normalizedQuadTreeBytes)
 		end)
 	end)
+
+	describe("ExportCollisionMapFromGAT", function()
+		it("should export the GAT terrain data in a human-readable format if a valid GAT buffer is passed", function()
+			local expectedChecksum = "30acbeac20c84b513f45455f1acfacbdc4bca67d65d2627bcbd84e243034ba0b"
+
+			local gatFileContents = C_FileSystem.ReadFile(path.join("Tests", "Fixtures", "v0102.gat"))
+			RagnarokTools:ExportCollisionMapFromGAT(gatFileContents, uv.cwd())
+
+			local generatedImageBytes = C_FileSystem.ReadFile("gat-collision-map.png")
+			local generatedChecksum = openssl.digest.digest("sha256", generatedImageBytes)
+
+			assertEquals(generatedChecksum, expectedChecksum)
+
+			C_FileSystem.Delete("gat-collision-map.png")
+		end)
+	end)
+
+	describe("ExportTerrainMapFromGAT", function()
+		it("should export the GAT terrain data in a human-readable format if a valid GAT buffer is passed", function()
+			local expectedChecksum = "9178031d79bc95c68368abbd870768fc27b6e2603f1b2975079b714260c85684"
+
+			local gatFileContents = C_FileSystem.ReadFile(path.join("Tests", "Fixtures", "v0102.gat"))
+			RagnarokTools:ExportTerrainMapFromGAT(gatFileContents, uv.cwd())
+
+			local generatedImageBytes = C_FileSystem.ReadFile("gat-terrain-map.png")
+			local generatedChecksum = openssl.digest.digest("sha256", generatedImageBytes)
+
+			assertEquals(generatedChecksum, expectedChecksum)
+
+			C_FileSystem.Delete("gat-terrain-map.png")
+		end)
+	end)
+
+	describe("ExportHeightMapFromGAT", function()
+		it("should export the GAT terrain data in a human-readable format if a valid GAT buffer is passed", function()
+			local expectedChecksum = "1f4328f8de834ddbdccb038ea4e95ee8a1b4cbfe6df0d09d3b19fc4af8acfa99"
+
+			local gatFileContents = C_FileSystem.ReadFile(path.join("Tests", "Fixtures", "v0102.gat"))
+			RagnarokTools:ExportHeightMapFromGAT(gatFileContents, uv.cwd())
+
+			local generatedImageBytes = C_FileSystem.ReadFile("gat-height-map.png")
+			local generatedChecksum = openssl.digest.digest("sha256", generatedImageBytes)
+
+			assertEquals(generatedChecksum, expectedChecksum)
+
+			C_FileSystem.Delete("gat-height-map.png")
+		end)
+	end)
 end)
