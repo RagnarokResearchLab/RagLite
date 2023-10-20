@@ -16,6 +16,7 @@ globals = {
 	"after",
 	"assertEqualNumbers",
 	"assertEquals",
+	"assertFailure",
 	"assertFalse",
 	"assertThrows",
 	"assertTrue",
