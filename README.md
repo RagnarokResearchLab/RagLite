@@ -34,8 +34,6 @@ Not much to say here; hopefully it'll "just work" on most systems:
 * Any graphics backend supported by WebGPU (DirectX/Metal/Vulkan)
 * CPU architecture must be supported by the LuaJIT engine
 
-Note: Rendering on Mac OS may not work correctly at this time. Will fix later.
-
 ## Usage
 
 There isn't much to see yet, but if you want to give it a try:
