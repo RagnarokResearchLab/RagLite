@@ -87,14 +87,25 @@ function NativeClient:CreateMainWindow()
 	-- Resizing the window means recreating a whole bunch of stuff (swap chain, buffers, ...) - let's sidestep all that for now
 	local GLFW_RESIZABLE = glfw.bindings.glfw_find_constant("GLFW_RESIZABLE")
 	local GLFW_FALSE = glfw.bindings.glfw_find_constant("GLFW_FALSE")
-	glfw.bindings.glfw_window_hint(GLFW_RESIZABLE, GLFW_FALSE)
+	local GLFW_TRUE = glfw.bindings.glfw_find_constant("GLFW_TRUE")
+	local GLFW_DECORATED = glfw.bindings.glfw_find_constant("GLFW_DECORATED")
+    local GLFW_MAXIMIZED = glfw.bindings.glfw_find_constant("GLFW_MAXIMIZED")
+    glfw.bindings.glfw_window_hint(GLFW_DECORATED, GLFW_TRUE)  -- No title bar or borders
+    glfw.bindings.glfw_window_hint(GLFW_RESIZABLE, GLFW_TRUE)  -- Prevent resizing
+	glfw.bindings.glfw_window_hint(GLFW_MAXIMIZED, GLFW_TRUE)
 
-	local window = glfw.bindings.glfw_create_window(videoMode.width, videoMode.height, "RagLite", nil, nil)
+
+
+	local window = glfw.bindings.glfw_create_window(videoMode.width, videoMode.height, "RagLite",
+	nil,
+	--primaryMonitor,
+	 nil)
 	if not window then
 		error("Failed to create application window")
 	end
 
-	glfw.bindings.glfw_set_window_pos(window, 0, 0)
+--	glfw.bindings.glfw_set_window_pos(window, 0, 0) -- TBD can remove?
+	glfw.bindings.glfw_maximize_window(window)
 	self.deferredEventQueue = interop.bindings.queue_create()
 	glfw.bindings.glfw_register_events(window, self.deferredEventQueue)
 
