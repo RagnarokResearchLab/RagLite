@@ -1,5 +1,6 @@
 local BinaryReader = require("Core.FileFormats.BinaryReader")
 
+local json = require("json")
 local openssl = require("openssl")
 local uv = require("uv")
 
@@ -42,7 +43,8 @@ function RagnarokGR2:DecodeFileHeader()
 	if self.signature ~= RagnarokGR2.MAGIC_HEADER then
 		error(
 			format(
-				"Failed to decode GR2 header (Signature " .. self.signature .. ' should be "%s")',
+				'Failed to decode GR2 header (Signature %s should be "%s")',
+				self.signature,
 				RagnarokGR2.MAGIC_HEADER
 			),
 			0
@@ -216,8 +218,6 @@ function RagnarokGR2:DecodeDataSegments()
 
 	self.dataSegments = dataSegments
 end
-
-local json = require("json")
 
 function RagnarokGR2:ToJSON()
 	local gr2 = {
