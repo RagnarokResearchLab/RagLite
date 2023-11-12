@@ -43,7 +43,8 @@ function RagnarokGR2:DecodeFileHeader()
 	if self.signature ~= RagnarokGR2.MAGIC_HEADER then
 		error(
 			format(
-				"Failed to decode GR2 header (Signature " .. self.signature .. ' should be "%s")',
+				'Failed to decode GR2 header (Signature %s should be "%s")',
+				self.signature,
 				RagnarokGR2.MAGIC_HEADER
 			),
 			0
