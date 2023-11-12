@@ -41,6 +41,10 @@ function RagnarokSPR:DecodeFileContents(fileContents)
 	self:DecodeTrueColorImages()
 	self:DecodeColorPalette()
 
+	local numBytesRemaining = self.reader.endOfFilePointer - self.reader.virtualFilePointer
+	local eofErrorMessage = format("Detected %s leftover bytes at the end of the structure!", numBytesRemaining)
+	assert(self.reader:HasReachedEOF(), eofErrorMessage)
+
 	local endTime = uv_hrtime()
 	local decodingTimeInMilliseconds = (endTime - startTime) / 10E5
 	printf("[RagnarokSPR] Finished decoding file contents in %.2f ms", decodingTimeInMilliseconds)
