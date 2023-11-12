@@ -1,5 +1,6 @@
 local BinaryReader = require("Core.FileFormats.BinaryReader")
 
+local json = require("json")
 local openssl = require("openssl")
 local uv = require("uv")
 
@@ -216,8 +217,6 @@ function RagnarokGR2:DecodeDataSegments()
 
 	self.dataSegments = dataSegments
 end
-
-local json = require("json")
 
 function RagnarokGR2:ToJSON()
 	local gr2 = {
