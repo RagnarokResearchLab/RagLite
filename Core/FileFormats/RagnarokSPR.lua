@@ -1,3 +1,4 @@
+local BinaryReader = require("Core.FileFormats.BinaryReader")
 local RagnarokPAL = require("Core.FileFormats.RagnarokPAL")
 
 local ffi = require("ffi")
@@ -10,27 +11,9 @@ local tonumber = tonumber
 local ffi_cast = ffi.cast
 local ffi_new = ffi.new
 local ffi_sizeof = ffi.sizeof
-local ffi_string = ffi.string
 local uv_hrtime = uv.hrtime
 
-local RagnarokSPR = {
-	cdefs = [[
-		#pragma pack(1)
-		typedef struct spr_header {
-			char signature[2];
-			uint8_t version_minor;
-			uint8_t version_major;
-			uint16_t bmp_images_count;
-			uint16_t tga_images_count;
-		} spr_header_t;
-
-		typedef struct spr_rle_header {
-			uint16_t pixel_width;
-			uint16_t pixel_height;
-			uint16_t compressed_buffer_size;
-		} spr_rle_header_t;
-	]],
-}
+local RagnarokSPR = {}
 
 function RagnarokSPR:Construct()
 	local instance = {
@@ -50,16 +33,13 @@ setmetatable(RagnarokSPR, RagnarokSPR)
 function RagnarokSPR:DecodeFileContents(fileContents)
 	local startTime = uv.hrtime()
 
-	self.fileContents = ffi_cast("char*", fileContents)
+	self.reader = BinaryReader(fileContents)
 
 	self:DecodeHeader()
-	self:DecodeColorPalette(#fileContents)
-
 	self:DecodeIndexedColorBitmaps()
 	self:DecodeIndexedColorBitmapsWithRLE()
 	self:DecodeTrueColorImages()
-
-	self.fileContents = fileContents -- GC anchor for the cdata used internally
+	self:DecodeColorPalette()
 
 	local endTime = uv_hrtime()
 	local decodingTimeInMilliseconds = (endTime - startTime) / 10E5
@@ -67,41 +47,28 @@ function RagnarokSPR:DecodeFileContents(fileContents)
 end
 
 function RagnarokSPR:DecodeHeader()
-	local header = ffi_cast("spr_header_t*", self.fileContents)
-	local headerSize = ffi_sizeof(header.signature)
+	local reader = self.reader
 
-	self.signature = ffi_string(header.signature, headerSize)
+	self.signature = reader:GetCountedString(2)
 	if self.signature ~= "SP" then
 		error("Failed to decode SPR header (Signature " .. self.signature .. ' should be "SP")', 0)
 	end
 
-	self.version = header.version_major + header.version_minor / 10
+	local minorVersion = reader:GetUnsignedInt8()
+	local majorVersion = reader:GetUnsignedInt8()
+	self.version = majorVersion + minorVersion / 10
 
-	self.bmpImagesCount = tonumber(header.bmp_images_count)
-	self.tgaImagesCount = tonumber(header.tga_images_count)
-
-	if self.version == 1.1 then
-		self.tgaImagesCount = 0
-		-- Need to rewind since we went past the header
-		self.fileContents = self.fileContents - ffi_sizeof("uint16_t")
-	end
+	self.bmpImagesCount = reader:GetUnsignedInt16()
+	self.tgaImagesCount = self.version > 1.1 and reader:GetUnsignedInt16() or 0
 
 	assert(self.version == 1.1 or self.version >= 2.0, "Unsupported SPR version " .. self.version)
-
-	self.fileContents = self.fileContents + ffi_sizeof("spr_header_t")
 end
 
-function RagnarokSPR:DecodeColorPalette(endOfFileOffset)
-	local paletteStartOffset = endOfFileOffset - ffi_sizeof("spr_palette_t")
-	local numSkippedBytes = ffi_sizeof("spr_header_t")
+function RagnarokSPR:DecodeColorPalette()
+	local reader = self.reader
 
-	if self.version < 2.0 then
-		-- No TGA images are present, so we went too far
-		numSkippedBytes = numSkippedBytes - ffi_sizeof("uint16_t")
-	end
-
-	self.palette = ffi_cast("spr_palette_t*", self.fileContents - numSkippedBytes + paletteStartOffset)
-	self.paletteStartOffset = paletteStartOffset
+	self.paletteStartOffset = reader.endOfFilePointer - ffi_sizeof("spr_palette_t")
+	self.palette = reader:GetTypedArray("spr_palette_t")
 end
 
 function RagnarokSPR:DecompressRunLengthEncodedBytes(compressedBuffer, decompressedBuffer)
@@ -154,20 +121,17 @@ function RagnarokSPR:DecodeIndexedColorBitmaps()
 		return -- Need to deal with RLE first
 	end
 
+	local reader = self.reader
 	for index = 1, self.bmpImagesCount, 1 do
-		local imageWidthInPixels = ffi_cast("int16_t*", self.fileContents)[0]
-		self.fileContents = self.fileContents + ffi_sizeof("int16_t")
-
-		local imageHeightInPixels = ffi_cast("int16_t*", self.fileContents)[0]
-		self.fileContents = self.fileContents + ffi_sizeof("int16_t")
+		local imageWidthInPixels = reader:GetUnsignedInt16()
+		local imageHeightInPixels = reader:GetUnsignedInt16()
 
 		local pixelCount = imageWidthInPixels * imageHeightInPixels
 		local pixelBufferSize = pixelCount * 4 -- RGBA
 		local pixelBuffer = buffer.new(pixelBufferSize)
 
-		local pixels = ffi_cast("uint8_t*", self.fileContents)
+		local pixels = reader:GetTypedArray("uint8_t", pixelCount)
 		pixelBuffer:putcdata(pixels, pixelCount)
-		self.fileContents = self.fileContents + pixelCount
 
 		self.bmpImages[index] = {
 			pixelWidth = imageWidthInPixels,
@@ -184,17 +148,15 @@ function RagnarokSPR:DecodeIndexedColorBitmapsWithRLE()
 		return -- RLE isn't used
 	end
 
+	local reader = self.reader
 	for index = 1, self.bmpImagesCount, 1 do
-		local runLengthEncodedImageMetadata = ffi_cast("spr_rle_header_t*", self.fileContents)
-		self.fileContents = self.fileContents + ffi_sizeof("spr_rle_header_t")
+		local imageWidthInPixels = reader:GetUnsignedInt16()
+		local imageHeightInPixels = reader:GetUnsignedInt16()
 
-		local compressedBufferSize = tonumber(runLengthEncodedImageMetadata.compressed_buffer_size)
+		local compressedBufferSize = reader:GetUnsignedInt16()
 		local compressedBytes = buffer.new(compressedBufferSize)
-		compressedBytes:putcdata(ffi_cast("uint8_t*", self.fileContents), compressedBufferSize)
-		self.fileContents = self.fileContents + compressedBufferSize
-
-		local imageWidthInPixels = tonumber(runLengthEncodedImageMetadata.pixel_width)
-		local imageHeightInPixels = tonumber(runLengthEncodedImageMetadata.pixel_height)
+		local compressedImageBytes = reader:GetTypedArray("uint8_t", compressedBufferSize)
+		compressedBytes:putcdata(compressedImageBytes, compressedBufferSize)
 
 		-- We only require width * height * 1 bytes to decompress, but later we'll need to replace the palette colors anyway
 		local decompressedBufferSize = imageWidthInPixels * imageHeightInPixels * 4 -- RGBA
@@ -219,22 +181,20 @@ function RagnarokSPR:DecodeTrueColorImages()
 	local image = ffi_new("stbi_image_t")
 	image.channels = 4
 
+	local reader = self.reader
 	for index = 1, self.tgaImagesCount, 1 do
-		image.width = ffi_cast("uint16_t*", self.fileContents)[0]
-		self.fileContents = self.fileContents + ffi_sizeof("uint16_t")
-
-		image.height = ffi_cast("uint16_t*", self.fileContents)[0]
-		self.fileContents = self.fileContents + ffi_sizeof("uint16_t")
+		image.width = reader:GetUnsignedInt16()
+		image.height = reader:GetUnsignedInt16()
 
 		local pixelBufferSize = image.width * image.height * 4 -- ABGR
 		local pixelBuffer = buffer.new(pixelBufferSize)
 
-		local abgrPixelArray = ffi_cast("stbi_pixelbuffer_t", self.fileContents)
+		local abgrPixelBytes = reader:GetTypedArray("uint8_t", pixelBufferSize)
+		local abgrPixelArray = ffi_cast("stbi_pixelbuffer_t", abgrPixelBytes) -- TBD redundant, can remove?
 		image.data = abgrPixelArray
 
 		stbi.bindings.stbi_abgr_to_rgba(image)
 		pixelBuffer:putcdata(image.data, pixelBufferSize)
-		self.fileContents = self.fileContents + pixelBufferSize
 
 		self.tgaImages[index] = {
 			pixelWidth = tonumber(image.width),
@@ -243,7 +203,5 @@ function RagnarokSPR:DecodeTrueColorImages()
 		}
 	end
 end
-
-ffi.cdef(RagnarokSPR.cdefs)
 
 return RagnarokSPR
