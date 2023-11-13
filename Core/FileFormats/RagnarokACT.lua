@@ -101,53 +101,7 @@ function RagnarokACT:DecodeAnimationFrame()
 	}
 
 	for layerID = 1, frame.numSpriteLayers do
-		local layer = {
-			position = {
-				u = reader:GetInt32(),
-				v = reader:GetInt32(),
-			},
-			spritesheetCellIndex = reader:GetInt32(),
-			isMirroredV = (reader:GetInt32() == 1 and true or false),
-			colorTint = {
-				red = 1,
-				green = 1,
-				blue = 1,
-				alpha = 1,
-			},
-			scale = {
-				u = 1,
-				v = 1,
-			},
-			rotationInDegrees = 0,
-			imageType = RagnarokACT.IMAGE_TYPES.BITMAP,
-		}
-
-		if self.version >= 2.0 then
-			layer.colorTint = {
-				red = reader:GetUnsignedInt8() / 255,
-				green = reader:GetUnsignedInt8() / 255,
-				blue = reader:GetUnsignedInt8() / 255,
-				alpha = reader:GetUnsignedInt8() / 255,
-			}
-			layer.scale.u = reader:GetFloat()
-
-			if self.version < 2.4 then
-				layer.scale.v = layer.scale.u
-			else
-				layer.scale.v = reader:GetFloat()
-			end
-
-			layer.rotationInDegrees = reader:GetInt32()
-			layer.imageType = RagnarokACT.IMAGE_TYPES[reader:GetInt32()]
-		end
-
-		if self.version >= 2.5 then
-			layer.imageDimensions = {
-				u = reader:GetInt32(),
-				v = reader:GetInt32(),
-			}
-		end
-
+		local layer = self:DecodeSpriteLayer()
 		table_insert(frame.spriteLayers, layer)
 	end
 
@@ -169,6 +123,58 @@ function RagnarokACT:DecodeAnimationFrame()
 	return frame
 end
 
+function RagnarokACT:DecodeSpriteLayer()
+	local reader = self.reader
+
+	local layer = {
+		position = {
+			u = reader:GetInt32(),
+			v = reader:GetInt32(),
+		},
+		spritesheetCellIndex = reader:GetInt32(),
+		isMirroredV = (reader:GetInt32() == 1 and true or false),
+		colorTint = {
+			red = 1,
+			green = 1,
+			blue = 1,
+			alpha = 1,
+		},
+		scale = {
+			u = 1,
+			v = 1,
+		},
+		rotationInDegrees = 0,
+		imageType = RagnarokACT.IMAGE_TYPES.BITMAP,
+	}
+
+	if self.version >= 2.0 then
+		layer.colorTint = {
+			red = reader:GetUnsignedInt8() / 255,
+			green = reader:GetUnsignedInt8() / 255,
+			blue = reader:GetUnsignedInt8() / 255,
+			alpha = reader:GetUnsignedInt8() / 255,
+		}
+		layer.scale.u = reader:GetFloat()
+
+		if self.version < 2.4 then
+			layer.scale.v = layer.scale.u
+		else
+			layer.scale.v = reader:GetFloat()
+		end
+
+		layer.rotationInDegrees = reader:GetInt32()
+		layer.imageType = RagnarokACT.IMAGE_TYPES[reader:GetInt32()]
+	end
+
+	if self.version >= 2.5 then
+		layer.imageDimensions = {
+			u = reader:GetInt32(),
+			v = reader:GetInt32(),
+		}
+	end
+
+	return layer
+end
 function RagnarokACT:DecodeAnimationEvents()
 	if self.version < 2.1 then
 		return
