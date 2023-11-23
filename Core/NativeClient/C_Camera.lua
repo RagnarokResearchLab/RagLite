@@ -30,6 +30,7 @@ local C_Camera = {
 	MIN_ORBIT_DISTANCE = 45,
 	MAX_ORBIT_DISTANCE = 80,
 	targetWorldPosition = Vector3D(0, 0, 0),
+	TARGET_DEBUG_STEPSIZE_IN_WORLD_UNITS = 12,
 }
 
 function C_Camera.CreatePerspectiveProjection(verticalFieldOfViewInDegrees, aspectRatio, zNearDistance, zFarDistance)
