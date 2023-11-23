@@ -29,6 +29,7 @@ local C_Camera = {
 	DEGREES_PER_ZOOM_LEVEL = 5,
 	MIN_ORBIT_DISTANCE = 45,
 	MAX_ORBIT_DISTANCE = 80,
+	targetWorldPosition = Vector3D(0, 0, 0),
 }
 
 function C_Camera.CreatePerspectiveProjection(verticalFieldOfViewInDegrees, aspectRatio, zNearDistance, zFarDistance)
@@ -155,11 +156,13 @@ function C_Camera.StopAdjustingView()
 end
 
 function C_Camera.GetWorldPosition()
-	return C_Camera.ComputeOrbitPositionInLocalSpace(
+	local orbitPositionRelativeToTarget = C_Camera.ComputeOrbitPositionInLocalSpace(
 		C_Camera.horizontalRotationAngleInDegrees,
 		C_Camera.verticalRotationAngleInDegrees,
 		C_Camera.orbitDistanceInWorldUnits
 	)
+
+	return orbitPositionRelativeToTarget:Add(C_Camera.targetWorldPosition)
 end
 
 function C_Camera.GetHorizontalRotationAngle()
@@ -207,6 +210,16 @@ end
 
 function C_Camera.SetOrbitDistance(distance)
 	C_Camera.orbitDistanceInWorldUnits = distance
+end
+
+function C_Camera.GetTargetPosition()
+	return C_Camera.targetWorldPosition
+end
+
+function C_Camera.SetTargetPosition(newPosition)
+	C_Camera.targetWorldPosition.x = newPosition.x
+	C_Camera.targetWorldPosition.y = newPosition.y
+	C_Camera.targetWorldPosition.z = newPosition.z
 end
 
 return C_Camera

@@ -321,10 +321,10 @@ function Renderer:UpdateUniformBuffer()
 	local perSceneUniformData = self.perSceneUniformData
 
 	local cameraWorldPosition = C_Camera.GetWorldPosition()
-	local targetWorldPosition = Vector3D(0, 0, 0)
+	local cameraTarget = C_Camera.GetTargetPosition()
 	local upVectorHint = Vector3D(0, 1, 0)
 	local perspective = C_Camera.GetPerspective()
-	perSceneUniformData.view = C_Camera.CreateOrbitalView(cameraWorldPosition, targetWorldPosition, upVectorHint)
+	perSceneUniformData.view = C_Camera.CreateOrbitalView(cameraWorldPosition, cameraTarget, upVectorHint)
 	perSceneUniformData.perspectiveProjection =
 		C_Camera.CreatePerspectiveProjection(perspective.fov, aspectRatio, perspective.nearZ, perspective.farZ)
 	perSceneUniformData.time = ffi.new("float", currentTime)

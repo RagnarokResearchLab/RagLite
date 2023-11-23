@@ -285,6 +285,38 @@ describe("C_Camera", function()
 
 			C_Camera.ResetView()
 		end)
+
+		it("should take into account the camera's focus target", function()
+			local positionBefore = C_Camera.GetWorldPosition()
+			local targetPosition = Vector3D(1, 2, 3)
+			C_Camera.SetTargetPosition(targetPosition)
+
+			local defaultCameraPosition = C_Camera.ComputeOrbitPositionInLocalSpace(
+				C_Camera.DEFAULT_HORIZONTAL_ROTATION,
+				C_Camera.DEFAULT_VERTICAL_ROTATION,
+				C_Camera.DEFAULT_ORBIT_DISTANCE
+			)
+
+			assertEquals(positionBefore.x, defaultCameraPosition.x)
+			assertEquals(positionBefore.y, defaultCameraPosition.y)
+			assertEquals(positionBefore.z, defaultCameraPosition.z)
+
+			C_Camera.ApplyHorizontalRotation(90)
+			local newCameraPosition = C_Camera.ComputeOrbitPositionInLocalSpace(
+				C_Camera.DEFAULT_HORIZONTAL_ROTATION + 90,
+				C_Camera.DEFAULT_VERTICAL_ROTATION,
+				C_Camera.DEFAULT_ORBIT_DISTANCE
+			)
+			newCameraPosition = newCameraPosition:Add(targetPosition) -- Local to world space
+
+			local positionAfter = C_Camera.GetWorldPosition()
+			assertEquals(positionAfter.x, newCameraPosition.x)
+			assertEquals(positionAfter.y, newCameraPosition.y)
+			assertEquals(positionAfter.z, newCameraPosition.z)
+
+			C_Camera.ResetView()
+			C_Camera.SetTargetPosition(Vector3D(0, 0, 0))
+		end)
 	end)
 
 	describe("ApplyHorizontalRotation", function()
