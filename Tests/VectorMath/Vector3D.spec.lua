@@ -21,6 +21,26 @@ describe("Vector3D", function()
 		end
 	)
 
+	describe("Add", function()
+		it("should return a new 3D vector that contains the sum of the two given inputs", function()
+			local initialPosition = Vector3D()
+			local finalPosition = Vector3D()
+
+			initialPosition.x = 2
+			initialPosition.y = 4
+			initialPosition.z = 6
+
+			finalPosition.x = 1
+			finalPosition.y = 2
+			finalPosition.z = 3
+
+			local resultant = finalPosition:Add(initialPosition)
+			assertEquals(resultant.x, 3)
+			assertEquals(resultant.y, 6)
+			assertEquals(resultant.z, 9)
+		end)
+	end)
+
 	describe("Subtract", function()
 		it("should return a new 3D vector that contains the displacement between two given inputs", function()
 			local initialPosition = Vector3D()
