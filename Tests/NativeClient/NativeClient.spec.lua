@@ -4,6 +4,7 @@ local glfw = require("glfw")
 local C_Camera = require("Core.NativeClient.C_Camera")
 local C_Cursor = require("Core.NativeClient.C_Cursor")
 local NativeClient = require("Core.NativeClient.NativeClient")
+local Vector3D = require("Core.VectorMath.Vector3D")
 
 describe("NativeClient", function()
 	describe("CURSOR_MOVED", function()
@@ -478,5 +479,80 @@ describe("NativeClient", function()
 				assertEquals(C_Camera.GetVerticalRotationAngle(), C_Camera.MAX_VERTICAL_ROTATION)
 			end
 		)
+	end)
+
+	describe("KEYPRESS_STATUS_CHANGED", function()
+		local originalCameraTarget = C_Camera.GetTargetPosition()
+		after(function()
+			C_Camera.SetTargetPosition(originalCameraTarget)
+		end)
+
+		it("should adjust the camera target if SHIFT + LEFT was pressed", function()
+			local event = ffi.new("deferred_event_t")
+			event.key_details.key = glfw.bindings.glfw_find_constant("GLFW_KEY_LEFT")
+			event.key_details.action = glfw.bindings.glfw_find_constant("GLFW_PRESS")
+			event.key_details.mods = glfw.bindings.glfw_find_constant("GLFW_MOD_SHIFT")
+
+			NativeClient:KEYPRESS_STATUS_CHANGED("KEYPRESS_STATUS_CHANGED", event)
+
+			local newCameraTarget = C_Camera.GetTargetPosition()
+			local expectedTranslation = Vector3D(-C_Camera.TARGET_DEBUG_STEPSIZE_IN_WORLD_UNITS, 0, 0)
+			local expectedCameraTarget = originalCameraTarget:Add(expectedTranslation)
+
+			assertEquals(newCameraTarget.x, expectedCameraTarget.x)
+			assertEquals(newCameraTarget.y, expectedCameraTarget.y)
+			assertEquals(newCameraTarget.z, expectedCameraTarget.z)
+		end)
+
+		it("should adjust the camera target if SHIFT + RIGHT was pressed", function()
+			local event = ffi.new("deferred_event_t")
+			event.key_details.key = glfw.bindings.glfw_find_constant("GLFW_KEY_RIGHT")
+			event.key_details.action = glfw.bindings.glfw_find_constant("GLFW_PRESS")
+			event.key_details.mods = glfw.bindings.glfw_find_constant("GLFW_MOD_SHIFT")
+
+			NativeClient:KEYPRESS_STATUS_CHANGED("KEYPRESS_STATUS_CHANGED", event)
+
+			local newCameraTarget = C_Camera.GetTargetPosition()
+			local expectedTranslation = Vector3D(C_Camera.TARGET_DEBUG_STEPSIZE_IN_WORLD_UNITS, 0, 0)
+			local expectedCameraTarget = originalCameraTarget:Add(expectedTranslation)
+
+			assertEquals(newCameraTarget.x, expectedCameraTarget.x)
+			assertEquals(newCameraTarget.y, expectedCameraTarget.y)
+			assertEquals(newCameraTarget.z, expectedCameraTarget.z)
+		end)
+
+		it("should adjust the camera target if SHIFT + UP was pressed", function()
+			local event = ffi.new("deferred_event_t")
+			event.key_details.key = glfw.bindings.glfw_find_constant("GLFW_KEY_UP")
+			event.key_details.action = glfw.bindings.glfw_find_constant("GLFW_PRESS")
+			event.key_details.mods = glfw.bindings.glfw_find_constant("GLFW_MOD_SHIFT")
+
+			NativeClient:KEYPRESS_STATUS_CHANGED("KEYPRESS_STATUS_CHANGED", event)
+
+			local newCameraTarget = C_Camera.GetTargetPosition()
+			local expectedTranslation = Vector3D(0, 0, C_Camera.TARGET_DEBUG_STEPSIZE_IN_WORLD_UNITS)
+			local expectedCameraTarget = originalCameraTarget:Add(expectedTranslation)
+
+			assertEquals(newCameraTarget.x, expectedCameraTarget.x)
+			assertEquals(newCameraTarget.y, expectedCameraTarget.y)
+			assertEquals(newCameraTarget.z, expectedCameraTarget.z)
+		end)
+
+		it("should adjust the camera target if SHIFT + DOWN was pressed", function()
+			local event = ffi.new("deferred_event_t")
+			event.key_details.key = glfw.bindings.glfw_find_constant("GLFW_KEY_DOWN")
+			event.key_details.action = glfw.bindings.glfw_find_constant("GLFW_PRESS")
+			event.key_details.mods = glfw.bindings.glfw_find_constant("GLFW_MOD_SHIFT")
+
+			NativeClient:KEYPRESS_STATUS_CHANGED("KEYPRESS_STATUS_CHANGED", event)
+
+			local newCameraTarget = C_Camera.GetTargetPosition()
+			local expectedTranslation = Vector3D(0, 0, -C_Camera.TARGET_DEBUG_STEPSIZE_IN_WORLD_UNITS)
+			local expectedCameraTarget = originalCameraTarget:Add(expectedTranslation)
+
+			assertEquals(newCameraTarget.x, expectedCameraTarget.x)
+			assertEquals(newCameraTarget.y, expectedCameraTarget.y)
+			assertEquals(newCameraTarget.z, expectedCameraTarget.z)
+		end)
 	end)
 end)

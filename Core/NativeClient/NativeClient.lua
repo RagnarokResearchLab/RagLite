@@ -1,3 +1,4 @@
+local bit = require("bit")
 local ffi = require("ffi")
 local glfw = require("glfw")
 local interop = require("interop")
@@ -6,6 +7,7 @@ local uv = require("uv")
 local C_Camera = require("Core.NativeClient.C_Camera")
 local C_Cursor = require("Core.NativeClient.C_Cursor")
 local Renderer = require("Core.NativeClient.Renderer")
+local Vector3D = require("Core.VectorMath.Vector3D")
 
 local Box = require("Core.NativeClient.DebugDraw.Box")
 local Cone = require("Core.NativeClient.DebugDraw.Cone")
@@ -261,7 +263,38 @@ function NativeClient:SCROLL_STATUS_CHANGED(eventID, payload)
 end
 
 function NativeClient:KEYPRESS_STATUS_CHANGED(eventID, payload)
-	print("KEYPRESS_STATUS_CHANGED")
+	local GLFW_KEY_LEFT = glfw.bindings.glfw_find_constant("GLFW_KEY_LEFT")
+	local GLFW_KEY_RIGHT = glfw.bindings.glfw_find_constant("GLFW_KEY_RIGHT")
+	local GLFW_KEY_DOWN = glfw.bindings.glfw_find_constant("GLFW_KEY_DOWN")
+	local GLFW_KEY_UP = glfw.bindings.glfw_find_constant("GLFW_KEY_UP")
+	local GLFW_MOD_SHIFT = glfw.bindings.glfw_find_constant("GLFW_MOD_SHIFT")
+	local GLFW_PRESS = glfw.bindings.glfw_find_constant("GLFW_PRESS")
+	local wasKeyPressed = tonumber(payload.key_details.action) == GLFW_PRESS
+	if not wasKeyPressed then
+		return
+	end
+
+	local isModifiedBySHIFT = bit.band(payload.key_details.mods, GLFW_MOD_SHIFT) == 1
+	if not isModifiedBySHIFT then
+		return
+	end
+
+	local wasLeftKey = payload.key_details.key == GLFW_KEY_LEFT
+	local wasRightKey = payload.key_details.key == GLFW_KEY_RIGHT
+	local wasUpKey = payload.key_details.key == GLFW_KEY_UP
+	local wasDownKey = payload.key_details.key == GLFW_KEY_DOWN
+	local movementDirectionX = wasLeftKey and -1 or 0
+	movementDirectionX = wasRightKey and 1 or movementDirectionX
+	local movementDirectionZ = wasUpKey and 1 or 0
+	movementDirectionZ = wasDownKey and -1 or movementDirectionZ
+
+	local movementDistanceInWorldUnits = C_Camera.TARGET_DEBUG_STEPSIZE_IN_WORLD_UNITS
+	local translation = Vector3D(
+		movementDirectionX * movementDistanceInWorldUnits,
+		0,
+		movementDirectionZ * movementDistanceInWorldUnits
+	)
+	C_Camera.targetWorldPosition = C_Camera.targetWorldPosition:Add(translation)
 end
 
 function NativeClient:UNICODE_INPUT_RECEIVED(eventID, payload)
