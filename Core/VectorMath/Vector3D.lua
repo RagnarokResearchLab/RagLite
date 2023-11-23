@@ -32,6 +32,14 @@ Vector3D.__call = function(_, x, y, z)
 	return vector
 end
 
+function Vector3D:Add(anotherVector)
+	local result = ffi_new("Vector3D")
+	result.x = self.x + anotherVector.x
+	result.y = self.y + anotherVector.y
+	result.z = self.z + anotherVector.z
+	return result
+end
+
 function Vector3D:Subtract(anotherVector)
 	local result = ffi_new("Vector3D")
 	result.x = self.x - anotherVector.x
