@@ -61,7 +61,7 @@ describe("RagnarokGR2", function()
 
 				local jsonString = gr2:ToJSON()
 				assertEquals(#jsonString, expectedLength)
-				local checksum = miniz.crc32(0, jsonString)
+				local checksum = miniz.crc32(jsonString)
 				assertEquals(checksum, expectedChecksum)
 			end)
 		end
