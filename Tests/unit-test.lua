@@ -12,6 +12,7 @@ local specFiles = {
 	"Tests/FileFormats/RagnarokMap.spec.lua",
 	"Tests/FileFormats/RagnarokPAL.spec.lua",
 	"Tests/FileFormats/RagnarokRGZ.spec.lua",
+	"Tests/FileFormats/RagnarokRSM.spec.lua",
 	"Tests/FileFormats/RagnarokRSW.spec.lua",
 	"Tests/FileFormats/RagnarokSPR.spec.lua",
 	"Tests/FileFormats/RSW/QuadTreeRange.spec.lua",
