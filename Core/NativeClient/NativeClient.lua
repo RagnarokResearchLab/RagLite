@@ -17,16 +17,26 @@ local Pyramid = require("Core.NativeClient.DebugDraw.Pyramid")
 local Sphere = require("Core.NativeClient.DebugDraw.Sphere")
 local WorldAxis = require("Core.NativeClient.DebugDraw.WorldAxis")
 
+local RagnarokGRF = require("Core.FileFormats.RagnarokGRF")
+
 local tonumber = tonumber
 
 local NativeClient = {
 	mainWindow = nil,
 	deferredEventQueue = nil,
+	-- Should probably move this to a dedicated Resources API (later)
+	GRF_FILE_PATH = "data.grf",
+	PERSISTENT_RESOURCES = {
+		["data/sprite/cursors.act"] = false,
+		["data/sprite/cursors.spr"] = false,
+	},
 }
 
 function NativeClient:Start()
 	self.mainWindow = self:CreateMainWindow()
 	Renderer:InitializeWithGLFW(self.mainWindow)
+
+	self:PreloadPersistentResources()
 
 	local oldPyramidMesh = Pyramid()
 	local worldAxesVisualizationMesh = WorldAxis()
@@ -311,6 +321,30 @@ function NativeClient:IsShiftKeyDown()
 	local GLFW_PRESS = glfw.bindings.glfw_find_constant("GLFW_PRESS")
 	local GLFW_KEY_LEFT_SHIFT = glfw.bindings.glfw_find_constant("GLFW_KEY_LEFT_SHIFT")
 	return (glfw.bindings.glfw_get_key(self.mainWindow, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
+end
+
+-- Can move to runtime later?
+local function table_count(t)
+	local count = 0
+
+	for k, v in pairs(t) do
+		count = count + 1
+	end
+
+	return count
+end
+
+-- Should probably move this to a dedicated Resources API (later)
+function NativeClient:PreloadPersistentResources()
+	local grf = RagnarokGRF()
+	grf:Open(self.GRF_FILE_PATH)
+
+	printf("Preloading %d persistent resources from %s", table_count(self.PERSISTENT_RESOURCES), self.GRF_FILE_PATH)
+	for filePath, isLoaded in pairs(self.PERSISTENT_RESOURCES) do
+		self.PERSISTENT_RESOURCES[filePath] = grf:ExtractFileInMemory(filePath)
+	end
+
+	grf:Close() -- Probably best to leave it open? Revisit later, once more assets need to be loaded...
 end
 
 return NativeClient
