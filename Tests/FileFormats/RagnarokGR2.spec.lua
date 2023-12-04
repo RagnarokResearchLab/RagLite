@@ -41,7 +41,6 @@ describe("RagnarokGR2", function()
 
 	local grf = RagnarokGRF()
 	grf:Open(grfPath) -- Leave this handle open to speed up the test (OS will clean up on exit, presumably)
-	before(function() end)
 
 	describe("DecodeFileContents", function()
 		assertEquals(#grannyFilesList, 21)
