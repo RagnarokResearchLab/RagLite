@@ -186,8 +186,9 @@ function RagnarokGRF:DecodeFileName(input)
 	local originalLength = cstring.size(pointerToNullTerminatedStringBytes)
 	self.preallocatedConversionBuffer:reset()
 	local ptr, len = self.preallocatedConversionBuffer:reserve(originalLength * 3) -- Worst case (no 4-byte chars exist for EUC-KR)
-	local numBytesWritten =
+	local result =
 		iconv.bindings.iconv_convert(pointerToNullTerminatedStringBytes, originalLength, "CP949", "UTF-8", ptr, len)
+	local numBytesWritten = tonumber(result.num_bytes_written)
 	self.preallocatedConversionBuffer:commit(numBytesWritten)
 	local decodedFileName, decodedLength = self.preallocatedConversionBuffer:ref()
 
