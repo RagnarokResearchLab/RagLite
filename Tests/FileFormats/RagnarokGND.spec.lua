@@ -43,8 +43,8 @@ describe("RagnarokGND", function()
 			assertEquals(gnd.diffuseTextureCount, 2)
 			assertEquals(gnd.texturePathLength, 80)
 
-			assertEquals(gnd.diffuseTexturePaths[0], "TEXTURE1.BMP")
-			assertEquals(gnd.diffuseTexturePaths[1], "somedir1\\texture2-01.bmp")
+			assertEquals(gnd.diffuseTexturePaths[1], "TEXTURE1.BMP")
+			assertEquals(gnd.diffuseTexturePaths[2], "somedir1\\texture2-01.bmp")
 
 			assertEquals(gnd.lightmapFormat.numSlices, 4)
 			assertEquals(gnd.lightmapFormat.pixelWidth, 8)
