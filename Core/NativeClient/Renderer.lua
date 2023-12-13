@@ -357,6 +357,13 @@ function Renderer:CreateDummyTexture()
 	Renderer:UploadTextureImage(blankTexture)
 end
 
+function Renderer:CreateTextureImage(rgbaImageBytes, width, height)
+	local texture = Texture(self.wgpuDevice, rgbaImageBytes, width, height)
+	Renderer:UploadTextureImage(texture)
+
+	return texture
+end
+
 require("table.new")
 
 function Renderer:CreateDummyTextureCoordinatesBuffer()
