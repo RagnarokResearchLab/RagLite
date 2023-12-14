@@ -283,12 +283,11 @@ describe("BinaryReader", function()
 		end)
 
 		it("should return a cdata pointer to the scanned region", function()
-			local fileContents = buffer.new(42):put("Hello World!")
+			local fileContents = buffer.new(42):put("Hello World!\0")
 			local reader = BinaryReader(fileContents)
-			local bytes = ffi.string(reader:GetUnsafePointer(5))
+			local bytes = ffi.string(reader:GetUnsafePointer(5)) -- Mid-string (not terminated)
 			-- Deliberately read-fault off the end of the scanned range
 			-- This tests that we actually do get a pointer, and not a copy of the bytes
-			-- While it can return unexpected data, the important part is that it doesn't SEGFAULT
 			assertEquals(bytes, "Hello World!")
 		end)
 	end)

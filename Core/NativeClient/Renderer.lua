@@ -76,41 +76,57 @@ function Renderer:CreateGraphicsContext(nativeWindowHandle)
 	self.viewportWidth, self.viewportHeight = self:GetViewportSize(nativeWindowHandle)
 
 	-- In order to support window resizing, we'll need to re-create this on the fly (later)
-	self:CreateSwapchain()
+	self:CreatePresentableSurface()
 end
 
-function Renderer:CreateSwapchain()
-	local swapChainDescriptor = ffi.new("WGPUSwapChainDescriptor")
-
-	-- The underlying framebuffer may be different if DPI scaling is applied, but let's ignore that for now
-	swapChainDescriptor.width = self.viewportWidth
-	swapChainDescriptor.height = self.viewportHeight
-
+function Renderer:CreatePresentableSurface()
 	local textureFormat = webgpu.bindings.wgpu_surface_get_preferred_format(self.wgpuSurface, self.wgpuAdapter)
-	self.swapChainTextureFormatID = tonumber(textureFormat)
-
-	printf("Creating swap chain with preferred texture format: %d", self.swapChainTextureFormatID)
+	local preferredSurfaceTextureFormat = tonumber(textureFormat)
+	printf("Creating surface with preferred texture format: %d", preferredSurfaceTextureFormat)
 	assert(textureFormat == ffi.C.WGPUTextureFormat_BGRA8UnormSrgb, "Only sRGB texture formats are currently supported")
 
-	swapChainDescriptor.format = textureFormat
-	swapChainDescriptor.usage = ffi.C.WGPUTextureUsage_RenderAttachment
-	swapChainDescriptor.presentMode = ffi.C.WGPUPresentMode_Fifo
+	local textureViewDescriptor = ffi.new("WGPUTextureViewDescriptor")
+	textureViewDescriptor.dimension = ffi.C.WGPUTextureViewDimension_2D
+	textureViewDescriptor.format = preferredSurfaceTextureFormat
+	textureViewDescriptor.mipLevelCount = 1
+	textureViewDescriptor.arrayLayerCount = 1
 
-	self.wgpuSwapchain =
-		webgpu.bindings.wgpu_device_create_swapchain(self.wgpuDevice, self.wgpuSurface, swapChainDescriptor)
-	self.wgpuSwapchainDescriptor = swapChainDescriptor
+	self.wgpuSurfaceTexture = ffi.new("WGPUSurfaceTexture")
+	self.wgpuSurfaceTextureViewDescriptor = textureViewDescriptor
+
+	local surfaceConfiguration = ffi.new("WGPUSurfaceConfiguration")
+	surfaceConfiguration.device = self.wgpuDevice
+	surfaceConfiguration.format = textureFormat
+	surfaceConfiguration.usage = ffi.C.WGPUTextureUsage_RenderAttachment
+
+	-- The underlying framebuffer may be different if DPI scaling is applied, but let's ignore that for now
+	surfaceConfiguration.width = self.viewportWidth
+	surfaceConfiguration.height = self.viewportHeight
+	surfaceConfiguration.presentMode = ffi.C.WGPUPresentMode_Fifo
+
+	webgpu.bindings.wgpu_surface_configure(self.wgpuSurface, surfaceConfiguration)
+	self.surfaceConfiguration = surfaceConfiguration
+	self.preferredSurfaceTextureFormat = preferredSurfaceTextureFormat
 end
 
 function Renderer:CreatePipelineConfigurations()
 	-- This is just a placeholder; eventually there should be real pipelines here
-	local pipeline = BasicTriangleDrawingPipeline(self.wgpuDevice, self.swapChainTextureFormatID)
+	local pipeline = BasicTriangleDrawingPipeline(self.wgpuDevice, self.preferredSurfaceTextureFormat)
 	self.renderPipelines[pipeline] = BasicTriangleDrawingPipeline
 end
 
 function Renderer:RenderNextFrame()
 	-- Since resizing isn't yet supported, fail loudly if somehow that is actually done (i.e., not prevented by GLFW)
-	local nextTextureView = webgpu.bindings.wgpu_swapchain_get_current_texture_view(self.wgpuSwapchain)
-	assert(nextTextureView, "Cannot acquire next swap chain texture (window surface has changed?)")
+	local surfaceTexture = self.wgpuSurfaceTexture
+	webgpu.bindings.wgpu_surface_get_current_texture(self.wgpuSurface, surfaceTexture)
+	assert(surfaceTexture.status == ffi.C.WGPUSurfaceGetCurrentTextureStatus_Success, "Unexpected surface status") -- Probably minimized/resized? A problem for future me...
+	assert(surfaceTexture.suboptimal, "Surface texture should be optimal") -- Same :3
+
+	local textureViewDescriptor = self.wgpuSurfaceTextureViewDescriptor
+	textureViewDescriptor.aspect = (self.viewportHeight / self.viewportWidth)
+
+	local nextTextureView = webgpu.bindings.wgpu_texture_create_view(surfaceTexture.texture, textureViewDescriptor)
+	assert(nextTextureView, "Cannot acquire next presentable texture view (window surface has changed?)")
 
 	local commandEncoderDescriptor = ffi_new("WGPUCommandEncoderDescriptor")
 	local commandEncoder = webgpu.bindings.wgpu_device_create_command_encoder(self.wgpuDevice, commandEncoderDescriptor)
@@ -128,7 +144,7 @@ function Renderer:RenderNextFrame()
 
 	webgpu.bindings.wgpu_render_pass_encoder_end(renderPass)
 	self:SubmitCommandBuffer(commandEncoder)
-	webgpu.bindings.wgpu_swapchain_present(self.wgpuSwapchain)
+	webgpu.bindings.wgpu_surface_present(self.wgpuSurface)
 end
 
 function Renderer:BeginRenderPass(commandEncoder, nextTextureView)
