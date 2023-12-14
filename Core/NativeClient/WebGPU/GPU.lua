@@ -41,12 +41,12 @@ function GPU:RequestLogicalDevice(adapter, options)
 	options.defaultQueue = options.defaultQueue or {}
 
 	options.label = options.label or "Logical WebGPU Device"
-	options.requiredFeaturesCount = options.requiredFeaturesCount or 0
+	options.requiredFeatureCount = options.requiredFeatureCount or 0
 	options.defaultQueue.label = options.defaultQueue.label or "Default Queue"
 
 	local deviceDescriptor = ffi.new("WGPUDeviceDescriptor")
 	deviceDescriptor.label = options.label
-	deviceDescriptor.requiredFeaturesCount = options.requiredFeaturesCount
+	deviceDescriptor.requiredFeatureCount = options.requiredFeatureCount
 	deviceDescriptor.defaultQueue.label = options.defaultQueue.label
 
 	local supportedLimits = ffi.new("WGPUSupportedLimits")
@@ -67,6 +67,7 @@ function GPU:RequestLogicalDevice(adapter, options)
 	requiredLimits.limits.maxSampledTexturesPerShaderStage = 1 -- Diffuse texture (increase for lightmaps, later?)
 	requiredLimits.limits.maxSamplersPerShaderStage = 1 -- Diffuse texture sampler (increase for lightmaps, later?)
 	requiredLimits.limits.maxUniformBufferBindingSize = 48 * ffi.sizeof("float")
+	requiredLimits.limits.maxBindingsPerBindGroup = 1 -- Max. allowed binding index
 
 	requiredLimits.limits.minStorageBufferOffsetAlignment = supportedLimits.limits.minStorageBufferOffsetAlignment
 	requiredLimits.limits.minUniformBufferOffsetAlignment = supportedLimits.limits.minUniformBufferOffsetAlignment
