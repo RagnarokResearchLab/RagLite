@@ -200,6 +200,10 @@ function Texture:GenerateCheckeredGridImage(firstColor, secondColor)
 	return pixels
 end
 
+function Texture:CreateTextureView(wgpuTexture, wgpuTextureViewDescriptor)
+	return webgpu.bindings.wgpu_texture_create_view(wgpuTexture, wgpuTextureViewDescriptor)
+end
+
 Texture.__call = Texture.Construct
 Texture.__index = Texture
 setmetatable(Texture, Texture)
