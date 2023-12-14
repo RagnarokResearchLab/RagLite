@@ -9,6 +9,7 @@ local BasicTriangleDrawingPipeline = {
 }
 
 function BasicTriangleDrawingPipeline:Construct(wgpuDeviceHandle, textureFormatID)
+	printf("Creating render pipeline with texture format %d", tonumber(textureFormatID))
 	local descriptor = ffi.new("WGPURenderPipelineDescriptor")
 	local pipelineDesc = descriptor
 
