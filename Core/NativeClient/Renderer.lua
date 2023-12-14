@@ -120,7 +120,7 @@ function Renderer:RenderNextFrame()
 	local surfaceTexture = self.wgpuSurfaceTexture
 	webgpu.bindings.wgpu_surface_get_current_texture(self.wgpuSurface, surfaceTexture)
 	assert(surfaceTexture.status == ffi.C.WGPUSurfaceGetCurrentTextureStatus_Success, "Unexpected surface status") -- Probably minimized/resized? A problem for future me...
-	assert(surfaceTexture.suboptimal, "Surface texture should be optimal") -- Same :3
+	assert(tonumber(surfaceTexture.suboptimal) == 0, "Surface texture should be optimal") -- Same :3
 
 	local textureViewDescriptor = self.wgpuSurfaceTextureViewDescriptor
 	textureViewDescriptor.aspect = (self.viewportHeight / self.viewportWidth)
