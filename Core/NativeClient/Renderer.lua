@@ -1,6 +1,5 @@
 local bit = require("bit")
 local ffi = require("ffi")
-local glfw = require("glfw")
 local webgpu = require("webgpu")
 local uv = require("uv")
 local validation = require("validation")
@@ -8,6 +7,7 @@ local validation = require("validation")
 local GPU = require("Core.NativeClient.WebGPU.GPU")
 local Buffer = require("Core.NativeClient.WebGPU.Buffer")
 local BasicTriangleDrawingPipeline = require("Core.NativeClient.WebGPU.BasicTriangleDrawingPipeline")
+local Surface = require("Core.NativeClient.WebGPU.Surface")
 local Texture = require("Core.NativeClient.WebGPU.Texture")
 
 local _ = require("Core.VectorMath.Matrix4D") -- Only needed for the cdefs right now
@@ -72,61 +72,20 @@ function Renderer:CreateGraphicsContext(nativeWindowHandle)
 	self.wgpuDeviceDescriptor = deviceDescriptor
 
 	-- Updates to the backing window should be pushed via events, so only store the result here
-	self.wgpuSurface = glfw.bindings.glfw_get_wgpu_surface(instance, nativeWindowHandle)
-	self.viewportWidth, self.viewportHeight = self:GetViewportSize(nativeWindowHandle)
-
-	-- In order to support window resizing, we'll need to re-create this on the fly (later)
-	self:CreatePresentableSurface()
-end
-
-function Renderer:CreatePresentableSurface()
-	local textureFormat = webgpu.bindings.wgpu_surface_get_preferred_format(self.wgpuSurface, self.wgpuAdapter)
-	local preferredSurfaceTextureFormat = tonumber(textureFormat)
-	printf("Creating surface with preferred texture format: %d", preferredSurfaceTextureFormat)
-	assert(textureFormat == ffi.C.WGPUTextureFormat_BGRA8UnormSrgb, "Only sRGB texture formats are currently supported")
-
-	local textureViewDescriptor = ffi.new("WGPUTextureViewDescriptor")
-	textureViewDescriptor.dimension = ffi.C.WGPUTextureViewDimension_2D
-	textureViewDescriptor.format = preferredSurfaceTextureFormat
-	textureViewDescriptor.mipLevelCount = 1
-	textureViewDescriptor.arrayLayerCount = 1
-
-	self.wgpuSurfaceTexture = ffi.new("WGPUSurfaceTexture")
-	self.wgpuSurfaceTextureViewDescriptor = textureViewDescriptor
-
-	local surfaceConfiguration = ffi.new("WGPUSurfaceConfiguration")
-	surfaceConfiguration.device = self.wgpuDevice
-	surfaceConfiguration.format = textureFormat
-	surfaceConfiguration.usage = ffi.C.WGPUTextureUsage_RenderAttachment
-
-	-- The underlying framebuffer may be different if DPI scaling is applied, but let's ignore that for now
-	surfaceConfiguration.width = self.viewportWidth
-	surfaceConfiguration.height = self.viewportHeight
-	surfaceConfiguration.presentMode = ffi.C.WGPUPresentMode_Fifo
-
-	webgpu.bindings.wgpu_surface_configure(self.wgpuSurface, surfaceConfiguration)
-	self.surfaceConfiguration = surfaceConfiguration
-	self.preferredSurfaceTextureFormat = preferredSurfaceTextureFormat
+	self.backingSurface = Surface(instance, adapter, device, nativeWindowHandle)
 end
 
 function Renderer:CreatePipelineConfigurations()
+	-- Need to compute the preferred texture format first
+	self.backingSurface:UpdateConfiguration()
+
 	-- This is just a placeholder; eventually there should be real pipelines here
-	local pipeline = BasicTriangleDrawingPipeline(self.wgpuDevice, self.preferredSurfaceTextureFormat)
+	local pipeline = BasicTriangleDrawingPipeline(self.wgpuDevice, self.backingSurface.preferredTextureFormat)
 	self.renderPipelines[pipeline] = BasicTriangleDrawingPipeline
 end
 
 function Renderer:RenderNextFrame()
-	-- Since resizing isn't yet supported, fail loudly if somehow that is actually done (i.e., not prevented by GLFW)
-	local surfaceTexture = self.wgpuSurfaceTexture
-	webgpu.bindings.wgpu_surface_get_current_texture(self.wgpuSurface, surfaceTexture)
-	assert(surfaceTexture.status == ffi.C.WGPUSurfaceGetCurrentTextureStatus_Success, "Unexpected surface status") -- Probably minimized/resized? A problem for future me...
-	assert(tonumber(surfaceTexture.suboptimal) == 0, "Surface texture should be optimal") -- Same :3
-
-	local textureViewDescriptor = self.wgpuSurfaceTextureViewDescriptor
-	textureViewDescriptor.aspect = (self.viewportHeight / self.viewportWidth)
-
-	local nextTextureView = webgpu.bindings.wgpu_texture_create_view(surfaceTexture.texture, textureViewDescriptor)
-	assert(nextTextureView, "Cannot acquire next presentable texture view (window surface has changed?)")
+	local nextTextureView = self.backingSurface:AcquireTextureView()
 
 	local commandEncoderDescriptor = ffi_new("WGPUCommandEncoderDescriptor")
 	local commandEncoder = webgpu.bindings.wgpu_device_create_command_encoder(self.wgpuDevice, commandEncoderDescriptor)
@@ -144,7 +103,7 @@ function Renderer:RenderNextFrame()
 
 	webgpu.bindings.wgpu_render_pass_encoder_end(renderPass)
 	self:SubmitCommandBuffer(commandEncoder)
-	webgpu.bindings.wgpu_surface_present(self.wgpuSurface)
+	self.backingSurface:PresentNextFrame()
 end
 
 function Renderer:BeginRenderPass(commandEncoder, nextTextureView)
@@ -331,7 +290,7 @@ function Renderer:CreateUniformBuffer()
 end
 
 function Renderer:UpdateUniformBuffer()
-	local aspectRatio = self.viewportWidth / self.viewportHeight
+	local aspectRatio = self.backingSurface:GetAspectRatio()
 
 	local currentTime = uv.hrtime() / 10E9
 	local perSceneUniformData = self.perSceneUniformData
@@ -362,11 +321,13 @@ function Renderer:EnableDepthBuffer()
 	depthTextureDesc.format = ffi.C.WGPUTextureFormat_Depth24Plus
 	depthTextureDesc.mipLevelCount = 1
 	depthTextureDesc.sampleCount = 1
+	local viewportWidth, viewportHeight = self.backingSurface:GetViewportSize()
 	depthTextureDesc.size = {
-		ffi.cast("unsigned int", self.viewportWidth),
-		ffi.cast("unsigned int", self.viewportHeight),
+		viewportWidth,
+		viewportHeight,
 		1,
 	}
+	printf("Creating depth buffer with texture dimensions %d x %d", viewportWidth, viewportHeight)
 	depthTextureDesc.usage = ffi.C.WGPUTextureUsage_RenderAttachment
 	depthTextureDesc.viewFormatCount = 1
 	depthTextureDesc.viewFormats = ffi.new("WGPUTextureFormat[1]", ffi.C.WGPUTextureFormat_Depth24Plus)
@@ -384,15 +345,6 @@ function Renderer:EnableDepthBuffer()
 	local depthTextureView = webgpu.bindings.wgpu_texture_create_view(depthTexture, depthTextureViewDesc)
 
 	self.depthTextureView = depthTextureView
-end
-
-function Renderer:GetViewportSize(nativeWindowHandle)
-	-- Should probably differentiate between window and frame buffer here for high-DPI (later)
-	local contentWidthInPixels = ffi.new("int[1]")
-	local contentHeightInPixels = ffi.new("int[1]")
-	glfw.bindings.glfw_get_window_size(nativeWindowHandle, contentWidthInPixels, contentHeightInPixels)
-
-	return tonumber(contentWidthInPixels[0]), tonumber(contentHeightInPixels[0])
 end
 
 function Renderer:CreateDebugTexture()
