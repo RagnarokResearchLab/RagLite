@@ -1,8 +1,8 @@
 local console = require("console")
 local uv = require("uv")
 
-local WorldServer = require("Core.WorldServer")
-local C_ServerHealth = require("Core.World.C_ServerHealth")
+local WorldServer = require("Core.WorldServer.WorldServer")
+local C_ServerHealth = require("Core.WorldServer.C_ServerHealth")
 
 local function simulateServerTick()
 	local startTime = uv.hrtime()

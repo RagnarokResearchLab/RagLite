@@ -1,5 +1,1 @@
-package.path = "?.lua"
-
-local WorldServer = require("Core.WorldServer")
-
-WorldServer:Start()
+-- Placeholder: For the time being, each app has to be started separately
