@@ -1,3 +1,5 @@
+local etrace = require("Core.RuntimeExtensions.etrace")
+
 local bit = require("bit")
 local ffi = require("ffi")
 local uv = require("uv")
@@ -89,6 +91,7 @@ function Renderer:CreatePipelineConfigurations()
 end
 
 function Renderer:RenderNextFrame()
+	etrace.clear()
 	local nextTextureView = self.backingSurface:AcquireTextureView()
 
 	local commandEncoderDescriptor = ffi_new("WGPUCommandEncoderDescriptor")

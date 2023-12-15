@@ -113,6 +113,7 @@ end
 
 function NativeClient:StartRenderLoop()
 	while glfw.bindings.glfw_window_should_close(self.mainWindow) == 0 do
+		uv.run("nowait")
 		glfw.bindings.glfw_poll_events()
 		self:ProcessWindowEvents()
 		Renderer:RenderNextFrame()
