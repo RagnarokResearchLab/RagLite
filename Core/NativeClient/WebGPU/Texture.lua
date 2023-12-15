@@ -7,7 +7,16 @@ local webgpu = require("webgpu")
 local ffi_cast = ffi.cast
 local math_floor = math.floor
 
-local Texture = {}
+local Texture = {
+	ERROR_DIMENSIONS_NOT_POWER_OF_TWO = "Texture dimensions should always be a power of two",
+}
+
+local function assertPowerOfTwoDimensions(width, height)
+	-- The assumption that dimensions are power-of-two is implicit in the codebase, so let's avoid surprises here
+	if not Texture:IsPowerOfTwo(width) or not Texture:IsPowerOfTwo(height) then
+		error(Texture.ERROR_DIMENSIONS_NOT_POWER_OF_TWO, 0)
+	end
+end
 
 local DEFAULT_TEXTURE_SIZE = 256
 local GRID_CELL_SIZE = 64
@@ -17,6 +26,7 @@ function Texture:Construct(wgpuDevice, rgbaImageBytes, textureWidthInPixels, tex
 
 	textureWidthInPixels = textureWidthInPixels or DEFAULT_TEXTURE_SIZE
 	textureHeightInPixels = textureHeightInPixels or DEFAULT_TEXTURE_SIZE
+	assertPowerOfTwoDimensions(textureWidthInPixels, textureHeightInPixels)
 
 	local textureDescriptor = ffi.new("WGPUTextureDescriptor")
 	textureDescriptor.dimension = ffi.C.WGPUTextureDimension_2D
@@ -134,6 +144,7 @@ local RGBA_OFFSET_ALPHA = 3
 function Texture:GenerateSimpleGradientImage(textureWidthInPixels, textureHeightInPixels)
 	textureWidthInPixels = textureWidthInPixels or DEFAULT_TEXTURE_SIZE
 	textureHeightInPixels = textureHeightInPixels or DEFAULT_TEXTURE_SIZE
+	assertPowerOfTwoDimensions(textureWidthInPixels, textureHeightInPixels)
 
 	local pixelCount = textureWidthInPixels * textureHeightInPixels
 	local pixels = ffi.new("uint8_t[?]", 4 * pixelCount)
@@ -152,9 +163,14 @@ function Texture:GenerateSimpleGradientImage(textureWidthInPixels, textureHeight
 	return pixels
 end
 
-function Texture:GenerateBlankImage(textureWidthInPixels, textureHeightInPixels)
+function Texture:IsPowerOfTwo(n)
+	return n > 0 and (bit.band(n, n - 1) == 0)
+end
+
+function Texture:GenerateBlankImage(textureWidthInPixels, textureHeightInPixels, color)
 	textureWidthInPixels = textureWidthInPixels or DEFAULT_TEXTURE_SIZE
 	textureHeightInPixels = textureHeightInPixels or DEFAULT_TEXTURE_SIZE
+	assertPowerOfTwoDimensions(textureWidthInPixels, textureHeightInPixels)
 
 	local pixelCount = textureWidthInPixels * textureHeightInPixels
 	local pixels = ffi.new("uint8_t[?]", 4 * pixelCount)
@@ -173,12 +189,13 @@ function Texture:GenerateBlankImage(textureWidthInPixels, textureHeightInPixels)
 	return pixels
 end
 
-function Texture:GenerateCheckeredGridImage(firstColor, secondColor)
+function Texture:GenerateCheckeredGridImage(textureWidthInPixels, textureHeightInPixels, firstColor, secondColor)
+	textureWidthInPixels = textureWidthInPixels or DEFAULT_TEXTURE_SIZE
+	textureHeightInPixels = textureHeightInPixels or DEFAULT_TEXTURE_SIZE
+	assertPowerOfTwoDimensions(textureWidthInPixels, textureHeightInPixels)
+
 	firstColor = firstColor or { red = 1, blue = 1, green = 1 }
 	secondColor = secondColor or { red = 0, blue = 0, green = 0 }
-
-	local textureWidthInPixels = DEFAULT_TEXTURE_SIZE
-	local textureHeightInPixels = DEFAULT_TEXTURE_SIZE
 
 	local pixelCount = textureWidthInPixels * textureHeightInPixels
 	local pixels = ffi.new("uint8_t[?]", 4 * pixelCount)
