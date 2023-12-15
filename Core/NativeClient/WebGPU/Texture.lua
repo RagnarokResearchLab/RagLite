@@ -9,7 +9,9 @@ local ffi_cast = ffi.cast
 local math_floor = math.floor
 
 local Texture = {
+	MAX_TEXTURE_DIMENSION = 4096,
 	ERROR_DIMENSIONS_NOT_POWER_OF_TWO = "Texture dimensions should always be a power of two",
+	ERROR_DIMENSIONS_EXCEEDING_LIMIT = "Texture dimensions must not exceed the configured GPU limit",
 }
 
 local function assertPowerOfTwoDimensions(width, height)
@@ -19,15 +21,22 @@ local function assertPowerOfTwoDimensions(width, height)
 	end
 end
 
+local function assertDimensionsAreWithinLimits(width, height)
+	-- This may be caught by the validation layer, but no need to waste resources generating incompatible textures
+	if width > Texture.MAX_TEXTURE_DIMENSION or height > Texture.MAX_TEXTURE_DIMENSION then
+		error(Texture.ERROR_DIMENSIONS_EXCEEDING_LIMIT, 0)
+	end
+end
+
 local DEFAULT_TEXTURE_SIZE = 256
 local GRID_CELL_SIZE = 64
 
 function Texture:Construct(wgpuDevice, rgbaImageBytes, textureWidthInPixels, textureHeightInPixels)
-	assert(rgbaImageBytes, "Failed to create 2D texture (no image data was provided)")
-
 	textureWidthInPixels = textureWidthInPixels or DEFAULT_TEXTURE_SIZE
 	textureHeightInPixels = textureHeightInPixels or DEFAULT_TEXTURE_SIZE
 	assertPowerOfTwoDimensions(textureWidthInPixels, textureHeightInPixels)
+	assertDimensionsAreWithinLimits(textureWidthInPixels, textureHeightInPixels)
+	assert(rgbaImageBytes, "Failed to create 2D texture (no image data was provided)")
 
 	local textureDescriptor = ffi.new("WGPUTextureDescriptor")
 	textureDescriptor.dimension = ffi.C.WGPUTextureDimension_2D
@@ -146,6 +155,7 @@ function Texture:GenerateSimpleGradientImage(textureWidthInPixels, textureHeight
 	textureWidthInPixels = textureWidthInPixels or DEFAULT_TEXTURE_SIZE
 	textureHeightInPixels = textureHeightInPixels or DEFAULT_TEXTURE_SIZE
 	assertPowerOfTwoDimensions(textureWidthInPixels, textureHeightInPixels)
+	assertDimensionsAreWithinLimits(textureWidthInPixels, textureHeightInPixels)
 
 	local pixelCount = textureWidthInPixels * textureHeightInPixels
 	local pixels = ffi.new("uint8_t[?]", 4 * pixelCount)
@@ -172,6 +182,7 @@ function Texture:GenerateBlankImage(textureWidthInPixels, textureHeightInPixels,
 	textureWidthInPixels = textureWidthInPixels or DEFAULT_TEXTURE_SIZE
 	textureHeightInPixels = textureHeightInPixels or DEFAULT_TEXTURE_SIZE
 	assertPowerOfTwoDimensions(textureWidthInPixels, textureHeightInPixels)
+	assertDimensionsAreWithinLimits(textureWidthInPixels, textureHeightInPixels)
 	color = color or Color.WHITE
 
 	local pixelCount = textureWidthInPixels * textureHeightInPixels
@@ -195,6 +206,7 @@ function Texture:GenerateCheckeredGridImage(textureWidthInPixels, textureHeightI
 	textureWidthInPixels = textureWidthInPixels or DEFAULT_TEXTURE_SIZE
 	textureHeightInPixels = textureHeightInPixels or DEFAULT_TEXTURE_SIZE
 	assertPowerOfTwoDimensions(textureWidthInPixels, textureHeightInPixels)
+	assertDimensionsAreWithinLimits(textureWidthInPixels, textureHeightInPixels)
 
 	firstColor = firstColor or { red = 1, blue = 1, green = 1 }
 	secondColor = secondColor or { red = 0, blue = 0, green = 0 }

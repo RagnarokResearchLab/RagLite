@@ -1,3 +1,5 @@
+local Texture = require("Core.NativeClient.WebGPU.Texture")
+
 local ffi = require("ffi")
 local glfw = require("glfw")
 local webgpu = require("webgpu")
@@ -53,7 +55,7 @@ function GPU:RequestLogicalDevice(adapter, options)
 	webgpu.bindings.wgpu_adapter_get_limits(adapter, supportedLimits)
 	local requiredLimits = ffi.new("WGPURequiredLimits")
 	requiredLimits.limits.maxTextureDimension1D = 0
-	requiredLimits.limits.maxTextureDimension2D = 4096
+	requiredLimits.limits.maxTextureDimension2D = Texture.MAX_TEXTURE_DIMENSION
 	requiredLimits.limits.maxTextureDimension3D = 0
 	requiredLimits.limits.maxTextureArrayLayers = 1 -- For the depth/stencil texture
 	requiredLimits.limits.maxVertexAttributes = 3 -- Vertex positions, vertex colors, diffuse texture UVs

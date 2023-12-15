@@ -4,6 +4,36 @@ local Color = require("Core.NativeClient.DebugDraw.Color")
 local Texture = require("Core.NativeClient.WebGPU.Texture")
 
 describe("Texture", function()
+	describe("Construct", function()
+		it("should throw if the dimensions aren't a power of two", function()
+			assertThrows(function()
+				Texture(nil, "", 13, 37)
+			end, Texture.ERROR_DIMENSIONS_NOT_POWER_OF_TWO)
+
+			assertThrows(function()
+				Texture(nil, "", 128, 37)
+			end, Texture.ERROR_DIMENSIONS_NOT_POWER_OF_TWO)
+
+			assertThrows(function()
+				Texture(nil, "", 13, 128)
+			end, Texture.ERROR_DIMENSIONS_NOT_POWER_OF_TWO)
+		end)
+
+		it("should throw if the dimensions are larger than the configured GPU limit for 2D textures", function()
+			assertThrows(function()
+				Texture(nil, "", 2 * Texture.MAX_TEXTURE_DIMENSION, 2 * Texture.MAX_TEXTURE_DIMENSION)
+			end, Texture.ERROR_DIMENSIONS_EXCEEDING_LIMIT)
+
+			assertThrows(function()
+				Texture(nil, "", 128, 2 * Texture.MAX_TEXTURE_DIMENSION)
+			end, Texture.ERROR_DIMENSIONS_EXCEEDING_LIMIT)
+
+			assertThrows(function()
+				Texture(nil, "", 2 * Texture.MAX_TEXTURE_DIMENSION, 128)
+			end, Texture.ERROR_DIMENSIONS_EXCEEDING_LIMIT)
+		end)
+	end)
+
 	describe("GenerateSimpleGradientImage", function()
 		it("should return the RGBA pixel data for a linear rainbow gradient", function()
 			local rgbaImageBytes = Texture:GenerateSimpleGradientImage()
@@ -26,6 +56,23 @@ describe("Texture", function()
 				Texture:GenerateSimpleGradientImage(13, 128)
 			end, Texture.ERROR_DIMENSIONS_NOT_POWER_OF_TWO)
 		end)
+
+		it("should throw if the dimensions are larger than the configured GPU limit for 2D textures", function()
+			assertThrows(function()
+				Texture:GenerateSimpleGradientImage(
+					2 * Texture.MAX_TEXTURE_DIMENSION,
+					2 * Texture.MAX_TEXTURE_DIMENSION
+				)
+			end, Texture.ERROR_DIMENSIONS_EXCEEDING_LIMIT)
+
+			assertThrows(function()
+				Texture:GenerateSimpleGradientImage(128, 2 * Texture.MAX_TEXTURE_DIMENSION)
+			end, Texture.ERROR_DIMENSIONS_EXCEEDING_LIMIT)
+
+			assertThrows(function()
+				Texture:GenerateSimpleGradientImage(2 * Texture.MAX_TEXTURE_DIMENSION, 128)
+			end, Texture.ERROR_DIMENSIONS_EXCEEDING_LIMIT)
+		end)
 	end)
 
 	describe("GenerateBlankImage", function()
@@ -42,6 +89,13 @@ describe("Texture", function()
 			local expectedPixelData = string.rep("\255\0\0\255", 256 * 256)
 			assertEquals(ffi.string(rgbaImageBytes, 256 * 256 * 4), expectedPixelData)
 		end)
+
+		it("should return the RGBA pixel data for a texture of the given dimensions", function()
+			local rgbaImageBytes = Texture:GenerateBlankImage(32, 32, Color.RED)
+			local expectedPixelData = string.rep("\255\0\0\255", 32 * 32)
+			assertEquals(ffi.string(rgbaImageBytes, 32 * 32 * 4), expectedPixelData)
+		end)
+
 		it("should throw if the dimensions aren't a power of two", function()
 			assertThrows(function()
 				Texture:GenerateBlankImage(13, 37)
@@ -54,6 +108,20 @@ describe("Texture", function()
 			assertThrows(function()
 				Texture:GenerateBlankImage(13, 128)
 			end, Texture.ERROR_DIMENSIONS_NOT_POWER_OF_TWO)
+		end)
+
+		it("should throw if the dimensions are larger than the configured GPU limit for 2D textures", function()
+			assertThrows(function()
+				Texture:GenerateBlankImage(2 * Texture.MAX_TEXTURE_DIMENSION, 2 * Texture.MAX_TEXTURE_DIMENSION)
+			end, Texture.ERROR_DIMENSIONS_EXCEEDING_LIMIT)
+
+			assertThrows(function()
+				Texture:GenerateBlankImage(128, 2 * Texture.MAX_TEXTURE_DIMENSION)
+			end, Texture.ERROR_DIMENSIONS_EXCEEDING_LIMIT)
+
+			assertThrows(function()
+				Texture:GenerateBlankImage(2 * Texture.MAX_TEXTURE_DIMENSION, 128)
+			end, Texture.ERROR_DIMENSIONS_EXCEEDING_LIMIT)
 		end)
 	end)
 
@@ -132,6 +200,20 @@ describe("Texture", function()
 			assertThrows(function()
 				Texture:GenerateCheckeredGridImage(13, 128)
 			end, Texture.ERROR_DIMENSIONS_NOT_POWER_OF_TWO)
+		end)
+
+		it("should throw if the dimensions are larger than the configured GPU limit for 2D textures", function()
+			assertThrows(function()
+				Texture:GenerateCheckeredGridImage(2 * Texture.MAX_TEXTURE_DIMENSION, 2 * Texture.MAX_TEXTURE_DIMENSION)
+			end, Texture.ERROR_DIMENSIONS_EXCEEDING_LIMIT)
+
+			assertThrows(function()
+				Texture:GenerateCheckeredGridImage(128, 2 * Texture.MAX_TEXTURE_DIMENSION)
+			end, Texture.ERROR_DIMENSIONS_EXCEEDING_LIMIT)
+
+			assertThrows(function()
+				Texture:GenerateCheckeredGridImage(2 * Texture.MAX_TEXTURE_DIMENSION, 128)
+			end, Texture.ERROR_DIMENSIONS_EXCEEDING_LIMIT)
 		end)
 	end)
 end)
