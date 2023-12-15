@@ -15,6 +15,7 @@ local specFiles = {
 	"Tests/FileFormats/RagnarokSPR.spec.lua",
 	"Tests/FileFormats/RSW/QuadTreeRange.spec.lua",
 	"Tests/RuntimeExtensions/C_Runtime.spec.lua",
+	"Tests/RuntimeExtensions/etrace.spec.lua",
 	"Tests/VectorMath/Matrix3D.spec.lua",
 	"Tests/VectorMath/Matrix4D.spec.lua",
 	"Tests/VectorMath/Vector3D.spec.lua",
