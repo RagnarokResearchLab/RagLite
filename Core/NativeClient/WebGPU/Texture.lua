@@ -1,3 +1,10 @@
+local etrace = require("Core.RuntimeExtensions.etrace")
+
+etrace.register("GPU_CREATE_TEXTURE")
+etrace.register("GPU_CREATE_SAMPLER")
+etrace.register("GPU_CREATE_BIND_GROUP")
+etrace.register("GPU_WRITE_TEXTURE")
+
 local BasicTriangleDrawingPipeline = require("Core.NativeClient.WebGPU.BasicTriangleDrawingPipeline")
 
 local bit = require("bit")
@@ -28,6 +35,7 @@ function Texture:Construct(wgpuDevice, rgbaImageBytes, textureWidthInPixels, tex
 
 	textureDescriptor.viewFormatCount = 0 -- No texture view (for now)
 
+	etrace.create("GPU_CREATE_TEXTURE", { descriptor = textureDescriptor })
 	local textureHandle = webgpu.bindings.wgpu_device_create_texture(wgpuDevice, textureDescriptor)
 
 	-- Create readonly view that should be accessed by a sampler
@@ -54,6 +62,8 @@ function Texture:Construct(wgpuDevice, rgbaImageBytes, textureWidthInPixels, tex
 	samplerDescriptor.lodMaxClamp = math.huge
 	samplerDescriptor.compare = ffi.C.WGPUCompareFunction_Undefined -- Irrelevant (not a depth texture)
 	samplerDescriptor.maxAnisotropy = 1 -- Might want to use clamped addressing with anisotropic filtering here?
+
+	etrace.create("GPU_CREATE_SAMPLER", { descriptor = samplerDescriptor })
 	local textureSampler = webgpu.bindings.wgpu_device_create_sampler(wgpuDevice, samplerDescriptor)
 
 	-- Assign texture view and sampler so that they can be bound to the pipeline (in the render loop)
@@ -76,6 +86,7 @@ function Texture:Construct(wgpuDevice, rgbaImageBytes, textureWidthInPixels, tex
 		BasicTriangleDrawingPipeline.wgpuMaterialBindGroupLayoutDescriptor.entryCount
 	textureBindGroupDescriptor.entries = bindGroupEntries
 
+	etrace.create("GPU_CREATE_BIND_GROUP", { descriptor = textureBindGroupDescriptor })
 	local bindGroup = webgpu.bindings.wgpu_device_create_bind_group(wgpuDevice, textureBindGroupDescriptor)
 
 	local instance = {
@@ -116,6 +127,13 @@ function Texture:CopyImageBytesToGPU()
 
 	source.rowsPerImage = self.height
 
+	etrace.create("GPU_WRITE_TEXTURE", {
+		destination = destination,
+		-- data = self.rgbaImageBytes,
+		dataSize = textureBufferSize,
+		dataLayout = source,
+		writeSize = self.wgpuTextureDescriptor.size,
+	})
 	webgpu.bindings.wgpu_queue_write_texture(
 		webgpu.bindings.wgpu_device_get_queue(self.wgpuDevice),
 		destination,
