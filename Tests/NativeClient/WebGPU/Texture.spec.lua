@@ -1,5 +1,6 @@
 local ffi = require("ffi")
 
+local Color = require("Core.NativeClient.DebugDraw.Color")
 local Texture = require("Core.NativeClient.WebGPU.Texture")
 
 describe("Texture", function()
@@ -28,11 +29,17 @@ describe("Texture", function()
 	end)
 
 	describe("GenerateBlankImage", function()
-		it("should return the RGBA pixel data for a solid white grid texture", function()
+		it("should return the RGBA pixel data for a solid white texture if no color was passed", function()
 			local rgbaImageBytes = Texture:GenerateBlankImage()
 			local imageFilePath = path.join("Tests", "Fixtures", "blank-texture.png")
 			local pngImageBytes = C_FileSystem.ReadFile(imageFilePath)
 			local expectedPixelData = C_ImageProcessing.DecodeFileContents(pngImageBytes)
+			assertEquals(ffi.string(rgbaImageBytes, 256 * 256 * 4), expectedPixelData)
+		end)
+
+		it("should return the RGBA pixel data for a solid colored texture if a color was passed", function()
+			local rgbaImageBytes = Texture:GenerateBlankImage(256, 256, Color.RED)
+			local expectedPixelData = string.rep("\255\0\0\255", 256 * 256)
 			assertEquals(ffi.string(rgbaImageBytes, 256 * 256 * 4), expectedPixelData)
 		end)
 		it("should throw if the dimensions aren't a power of two", function()

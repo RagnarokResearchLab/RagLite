@@ -1,3 +1,4 @@
+local Color = require("Core.NativeClient.DebugDraw.Color")
 local BasicTriangleDrawingPipeline = require("Core.NativeClient.WebGPU.BasicTriangleDrawingPipeline")
 
 local bit = require("bit")
@@ -171,6 +172,7 @@ function Texture:GenerateBlankImage(textureWidthInPixels, textureHeightInPixels,
 	textureWidthInPixels = textureWidthInPixels or DEFAULT_TEXTURE_SIZE
 	textureHeightInPixels = textureHeightInPixels or DEFAULT_TEXTURE_SIZE
 	assertPowerOfTwoDimensions(textureWidthInPixels, textureHeightInPixels)
+	color = color or Color.WHITE
 
 	local pixelCount = textureWidthInPixels * textureHeightInPixels
 	local pixels = ffi.new("uint8_t[?]", 4 * pixelCount)
@@ -179,9 +181,9 @@ function Texture:GenerateBlankImage(textureWidthInPixels, textureHeightInPixels,
 		for v = 0, textureHeightInPixels - 1 do
 			local index = 4 * (v * textureWidthInPixels + u)
 
-			pixels[index + RGBA_OFFSET_RED] = ffi_cast("uint8_t", 255)
-			pixels[index + RGBA_OFFSET_GREEN] = ffi_cast("uint8_t", 255)
-			pixels[index + RGBA_OFFSET_BLUE] = ffi_cast("uint8_t", 255)
+			pixels[index + RGBA_OFFSET_RED] = ffi_cast("uint8_t", color.red * 255)
+			pixels[index + RGBA_OFFSET_GREEN] = ffi_cast("uint8_t", color.green * 255)
+			pixels[index + RGBA_OFFSET_BLUE] = ffi_cast("uint8_t", color.blue * 255)
 			pixels[index + RGBA_OFFSET_ALPHA] = ffi_cast("uint8_t", 255)
 		end
 	end
