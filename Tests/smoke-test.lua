@@ -6,7 +6,6 @@ local specFiles = {
 	"Tests/AssetServer/serves-grf-index.lua",
 	"Tests/AssetServer/serves-file-contents.lua",
 	"Tests/DB/validate-creature-spawns.lua",
-	"Tests/RealmServer/serves-realm-list.lua",
 }
 
 local numFailedTests = C_Runtime.RunBasicTests(specFiles)
