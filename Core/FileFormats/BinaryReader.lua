@@ -160,8 +160,13 @@ function BinaryReader:GetUnsignedInt8()
 	return tonumber(cdataPointer[0])
 end
 
+function BinaryReader:GetBufferSize()
+	return #self.readOnlyBuffer
+end
+
 BinaryReader.__index = BinaryReader
 BinaryReader.__call = BinaryReader.Construct
+BinaryReader.__len = BinaryReader.GetBufferSize
 setmetatable(BinaryReader, BinaryReader)
 
 return BinaryReader
