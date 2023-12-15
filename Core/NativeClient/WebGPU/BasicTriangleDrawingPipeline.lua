@@ -2,6 +2,8 @@ local bit = require("bit")
 local ffi = require("ffi")
 local webgpu = require("webgpu")
 
+local Device = require("Core.NativeClient.WebGPU.Device")
+
 local binary_not = bit.bnot
 
 local BasicTriangleDrawingPipeline = {
@@ -22,7 +24,7 @@ function BasicTriangleDrawingPipeline:Construct(wgpuDeviceHandle, textureFormatI
 	shaderDesc.nextInChain = shaderCodeDesc.chain
 	shaderCodeDesc.code = shaderSource
 
-	local shaderModule = webgpu.bindings.wgpu_device_create_shader_module(wgpuDeviceHandle, shaderDesc)
+	local shaderModule = Device:CreateShaderModule(wgpuDeviceHandle, shaderDesc)
 
 	-- Configure vertex processing pipeline (vertex fetch/vertex shader stages)
 	local positionAttrib = ffi.new("WGPUVertexAttribute")

@@ -1,12 +1,16 @@
 local bit = require("bit")
 local ffi = require("ffi")
-local webgpu = require("webgpu")
 local uv = require("uv")
 local validation = require("validation")
 
 local GPU = require("Core.NativeClient.WebGPU.GPU")
-local Buffer = require("Core.NativeClient.WebGPU.Buffer")
 local BasicTriangleDrawingPipeline = require("Core.NativeClient.WebGPU.BasicTriangleDrawingPipeline")
+
+local Buffer = require("Core.NativeClient.WebGPU.Buffer")
+local CommandEncoder = require("Core.NativeClient.WebGPU.CommandEncoder")
+local Device = require("Core.NativeClient.WebGPU.Device")
+local Queue = require("Core.NativeClient.WebGPU.Queue")
+local RenderPassEncoder = require("Core.NativeClient.WebGPU.RenderPassEncoder")
 local Surface = require("Core.NativeClient.WebGPU.Surface")
 local Texture = require("Core.NativeClient.WebGPU.Texture")
 
@@ -88,20 +92,20 @@ function Renderer:RenderNextFrame()
 	local nextTextureView = self.backingSurface:AcquireTextureView()
 
 	local commandEncoderDescriptor = ffi_new("WGPUCommandEncoderDescriptor")
-	local commandEncoder = webgpu.bindings.wgpu_device_create_command_encoder(self.wgpuDevice, commandEncoderDescriptor)
+	local commandEncoder = Device:CreateCommandEncoder(self.wgpuDevice, commandEncoderDescriptor)
 	local renderPass = self:BeginRenderPass(commandEncoder, nextTextureView)
 
 	self:UpdateUniformBuffer()
 
 	for wgpuRenderPipeline, pipelineConfiguration in pairs(self.renderPipelines) do
-		webgpu.bindings.wgpu_render_pass_encoder_set_pipeline(renderPass, wgpuRenderPipeline)
+		RenderPassEncoder:SetPipeline(renderPass, wgpuRenderPipeline)
 
 		for _, mesh in ipairs(self.meshes) do
 			self:DrawMesh(renderPass, mesh)
 		end
 	end
 
-	webgpu.bindings.wgpu_render_pass_encoder_end(renderPass)
+	RenderPassEncoder:End(renderPass)
 	self:SubmitCommandBuffer(commandEncoder)
 	self.backingSurface:PresentNextFrame()
 end
@@ -136,7 +140,7 @@ function Renderer:BeginRenderPass(commandEncoder, nextTextureView)
 
 	renderPassDescriptor.depthStencilAttachment = depthStencilAttachment
 
-	return webgpu.bindings.wgpu_command_encoder_begin_render_pass(commandEncoder, renderPassDescriptor)
+	return CommandEncoder:BeginRenderPass(commandEncoder, renderPassDescriptor)
 end
 
 function Renderer:DrawMesh(renderPass, mesh)
@@ -146,47 +150,35 @@ function Renderer:DrawMesh(renderPass, mesh)
 	local diffuseTexCoordsBufferSize = mesh.diffuseTextureCoords and (#mesh.diffuseTextureCoords * ffi.sizeof("float"))
 		or GPU.MAX_VERTEX_COUNT
 
-	webgpu.bindings.wgpu_render_pass_encoder_set_vertex_buffer(renderPass, 0, mesh.vertexBuffer, 0, vertexBufferSize)
-	webgpu.bindings.wgpu_render_pass_encoder_set_vertex_buffer(renderPass, 1, mesh.colorBuffer, 0, colorBufferSize)
-	webgpu.bindings.wgpu_render_pass_encoder_set_vertex_buffer(
-		renderPass,
-		2,
-		mesh.diffuseTexCoordsBuffer,
-		0,
-		diffuseTexCoordsBufferSize
-	)
-	webgpu.bindings.wgpu_render_pass_encoder_set_index_buffer(
-		renderPass,
-		mesh.indexBuffer,
-		ffi.C.WGPUIndexFormat_Uint16,
-		0,
-		indexBufferSize
-	)
+	RenderPassEncoder:SetVertexBuffer(renderPass, 0, mesh.vertexBuffer, 0, vertexBufferSize)
+	RenderPassEncoder:SetVertexBuffer(renderPass, 1, mesh.colorBuffer, 0, colorBufferSize)
+	RenderPassEncoder:SetVertexBuffer(renderPass, 2, mesh.diffuseTexCoordsBuffer, 0, diffuseTexCoordsBufferSize)
+	RenderPassEncoder:SetIndexBuffer(renderPass, mesh.indexBuffer, ffi.C.WGPUIndexFormat_Uint16, 0, indexBufferSize)
 
 	local currentTime = uv.hrtime() / 10E9
 	self.perSceneUniformData.time = currentTime
-	webgpu.bindings.wgpu_queue_write_buffer(
-		webgpu.bindings.wgpu_device_get_queue(self.wgpuDevice),
+	Queue:WriteBuffer(
+		Device:GetQueue(self.wgpuDevice),
 		self.uniformBuffer,
 		0,
 		self.perSceneUniformData,
 		ffi.sizeof(self.perSceneUniformData)
 	)
 
-	webgpu.bindings.wgpu_render_pass_encoder_set_bind_group(renderPass, 0, self.bindGroup, 0, nil)
+	RenderPassEncoder:SetBindGroup(renderPass, 0, self.bindGroup, 0, nil)
 
 	if not mesh.texture then
 		-- The pipeline layout is kept identical (for simplicity's sake... ironic, considering how complicated this already is)
-		webgpu.bindings.wgpu_render_pass_encoder_set_bind_group(renderPass, 1, self.dummyTexture.wgpuBindGroup, 0, nil)
+		RenderPassEncoder:SetBindGroup(renderPass, 1, self.dummyTexture.wgpuBindGroup, 0, nil)
 	else
-		webgpu.bindings.wgpu_render_pass_encoder_set_bind_group(renderPass, 1, mesh.texture.wgpuBindGroup, 0, nil)
+		RenderPassEncoder:SetBindGroup(renderPass, 1, mesh.texture.wgpuBindGroup, 0, nil)
 	end
 
 	local instanceCount = 1
 	local firstVertexIndex = 0
 	local firstInstanceIndex = 0
 	local indexBufferOffset = 0
-	webgpu.bindings.wgpu_render_pass_encoder_draw_indexed(
+	RenderPassEncoder:DrawIndexed(
 		renderPass,
 		#mesh.triangleConnections,
 		instanceCount,
@@ -198,12 +190,12 @@ end
 
 function Renderer:SubmitCommandBuffer(commandEncoder)
 	local commandBufferDescriptor = ffi_new("WGPUCommandBufferDescriptor")
-	local commandBuffer = webgpu.bindings.wgpu_command_encoder_finish(commandEncoder, commandBufferDescriptor)
+	local commandBuffer = CommandEncoder:Finish(commandEncoder, commandBufferDescriptor)
 
 	-- The WebGPU API expects an array here, but currently this renderer only supports a single buffer (to keep things simple)
-	local queue = webgpu.bindings.wgpu_device_get_queue(self.wgpuDevice)
+	local queue = Device:GetQueue(self.wgpuDevice)
 	local commandBuffers = ffi_new("WGPUCommandBuffer[1]", commandBuffer)
-	webgpu.bindings.wgpu_queue_submit(queue, 1, commandBuffers)
+	Queue:Submit(queue, 1, commandBuffers)
 end
 
 function Renderer:UploadMeshGeometry(mesh)
@@ -268,7 +260,7 @@ function Renderer:CreateUniformBuffer()
 	bufferDescriptor.usage = bit.bor(ffi.C.WGPUBufferUsage_CopyDst, ffi.C.WGPUBufferUsage_Uniform)
 	bufferDescriptor.mappedAtCreation = false
 
-	local uniformBuffer = webgpu.bindings.wgpu_device_create_buffer(self.wgpuDevice, bufferDescriptor)
+	local uniformBuffer = Device:CreateBuffer(self.wgpuDevice, bufferDescriptor)
 
 	self.perSceneUniformData = ffi.new("scenewide_uniform_t")
 
@@ -283,7 +275,7 @@ function Renderer:CreateUniformBuffer()
 	cameraBindGroupDescriptor.layout = BasicTriangleDrawingPipeline.wgpuCameraBindGroupLayout
 	cameraBindGroupDescriptor.entryCount = BasicTriangleDrawingPipeline.wgpuCameraBindGroupLayoutDescriptor.entryCount
 	cameraBindGroupDescriptor.entries = binding
-	local bindGroup = webgpu.bindings.wgpu_device_create_bind_group(self.wgpuDevice, cameraBindGroupDescriptor)
+	local bindGroup = Device:CreateBindGroup(self.wgpuDevice, cameraBindGroupDescriptor)
 	self.bindGroup = bindGroup
 
 	self.uniformBuffer = uniformBuffer
@@ -305,8 +297,8 @@ function Renderer:UpdateUniformBuffer()
 	perSceneUniformData.time = ffi.new("float", currentTime)
 	perSceneUniformData.color = ffi.new("float[4]", { 1.0, 1.0, 1.0, 1.0 })
 
-	webgpu.bindings.wgpu_queue_write_buffer(
-		webgpu.bindings.wgpu_device_get_queue(self.wgpuDevice),
+	Queue:WriteBuffer(
+		Device:GetQueue(self.wgpuDevice),
 		self.uniformBuffer,
 		0,
 		perSceneUniformData,
@@ -331,7 +323,7 @@ function Renderer:EnableDepthBuffer()
 	depthTextureDesc.usage = ffi.C.WGPUTextureUsage_RenderAttachment
 	depthTextureDesc.viewFormatCount = 1
 	depthTextureDesc.viewFormats = ffi.new("WGPUTextureFormat[1]", ffi.C.WGPUTextureFormat_Depth24Plus)
-	local depthTexture = webgpu.bindings.wgpu_device_create_texture(self.wgpuDevice, depthTextureDesc)
+	local depthTexture = Device:CreateTexture(self.wgpuDevice, depthTextureDesc)
 
 	-- Create the view of the depth texture manipulated by the rasterizer
 	local depthTextureViewDesc = ffi.new("WGPUTextureViewDescriptor")
@@ -342,7 +334,7 @@ function Renderer:EnableDepthBuffer()
 	depthTextureViewDesc.mipLevelCount = 1
 	depthTextureViewDesc.dimension = ffi.C.WGPUTextureViewDimension_2D
 	depthTextureViewDesc.format = ffi.C.WGPUTextureFormat_Depth24Plus
-	local depthTextureView = webgpu.bindings.wgpu_texture_create_view(depthTexture, depthTextureViewDesc)
+	local depthTextureView = Texture:CreateTextureView(depthTexture, depthTextureViewDesc)
 
 	self.depthTextureView = depthTextureView
 end
