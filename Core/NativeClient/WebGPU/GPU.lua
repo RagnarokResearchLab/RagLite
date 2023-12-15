@@ -3,7 +3,7 @@ local glfw = require("glfw")
 local webgpu = require("webgpu")
 
 local GPU = {
-	MAX_VERTEX_COUNT = 65536, -- Should be configurable (later)
+	MAX_VERTEX_COUNT = 200000, -- Should be configurable (later)
 }
 
 function GPU:CreateInstance()

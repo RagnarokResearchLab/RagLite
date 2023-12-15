@@ -149,14 +149,14 @@ end
 function Renderer:DrawMesh(renderPass, mesh)
 	local vertexBufferSize = #mesh.vertexPositions * ffi.sizeof("float")
 	local colorBufferSize = #mesh.vertexColors * ffi.sizeof("float")
-	local indexBufferSize = #mesh.triangleConnections * ffi.sizeof("uint16_t")
+	local indexBufferSize = #mesh.triangleConnections * ffi.sizeof("uint32_t")
 	local diffuseTexCoordsBufferSize = mesh.diffuseTextureCoords and (#mesh.diffuseTextureCoords * ffi.sizeof("float"))
 		or GPU.MAX_VERTEX_COUNT
 
 	RenderPassEncoder:SetVertexBuffer(renderPass, 0, mesh.vertexBuffer, 0, vertexBufferSize)
 	RenderPassEncoder:SetVertexBuffer(renderPass, 1, mesh.colorBuffer, 0, colorBufferSize)
 	RenderPassEncoder:SetVertexBuffer(renderPass, 2, mesh.diffuseTexCoordsBuffer, 0, diffuseTexCoordsBufferSize)
-	RenderPassEncoder:SetIndexBuffer(renderPass, mesh.indexBuffer, ffi.C.WGPUIndexFormat_Uint16, 0, indexBufferSize)
+	RenderPassEncoder:SetIndexBuffer(renderPass, mesh.indexBuffer, ffi.C.WGPUIndexFormat_Uint32, 0, indexBufferSize)
 
 	RenderPassEncoder:SetBindGroup(renderPass, 0, self.bindGroup, 0, nil)
 

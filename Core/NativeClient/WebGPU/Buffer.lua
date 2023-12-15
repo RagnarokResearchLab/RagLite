@@ -40,7 +40,7 @@ function Buffer:CreateVertexBuffer(wgpuDevice, entries)
 end
 
 function Buffer:CreateIndexBuffer(wgpuDevice, indices)
-	local rawBufferSizeInBytes = #indices * ffi.sizeof("uint16_t") -- Assumes there won't be too many trianglces per mesh
+	local rawBufferSizeInBytes = #indices * ffi.sizeof("uint32_t") -- Assumes there won't be too many trianglces per mesh
 	local alignedBufferSizeInBytes = Buffer.GetAlignedSize(rawBufferSizeInBytes)
 
 	local bufferDescriptor = ffi.new("WGPUBufferDescriptor")
@@ -53,7 +53,7 @@ function Buffer:CreateIndexBuffer(wgpuDevice, indices)
 		webgpu.bindings.wgpu_device_get_queue(wgpuDevice),
 		buffer,
 		0,
-		ffi.new("uint16_t[?]", alignedBufferSizeInBytes, indices),
+		ffi.new("uint32_t[?]", alignedBufferSizeInBytes, indices),
 		alignedBufferSizeInBytes
 	)
 
