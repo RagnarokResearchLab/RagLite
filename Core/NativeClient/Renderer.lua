@@ -155,16 +155,6 @@ function Renderer:DrawMesh(renderPass, mesh)
 	RenderPassEncoder:SetVertexBuffer(renderPass, 2, mesh.diffuseTexCoordsBuffer, 0, diffuseTexCoordsBufferSize)
 	RenderPassEncoder:SetIndexBuffer(renderPass, mesh.indexBuffer, ffi.C.WGPUIndexFormat_Uint16, 0, indexBufferSize)
 
-	local currentTime = uv.hrtime() / 10E9
-	self.perSceneUniformData.time = currentTime
-	Queue:WriteBuffer(
-		Device:GetQueue(self.wgpuDevice),
-		self.uniformBuffer,
-		0,
-		self.perSceneUniformData,
-		ffi.sizeof(self.perSceneUniformData)
-	)
-
 	RenderPassEncoder:SetBindGroup(renderPass, 0, self.bindGroup, 0, nil)
 
 	if not mesh.texture then
