@@ -1,7 +1,7 @@
 local ffi = require("ffi")
 local uv = require("uv")
 
-local C_ServerHealth = require("Core.World.C_ServerHealth")
+local C_ServerHealth = require("Core.WorldServer.C_ServerHealth")
 
 local TARGET_FPS = 50
 

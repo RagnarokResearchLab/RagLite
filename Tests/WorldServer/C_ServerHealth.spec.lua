@@ -1,4 +1,4 @@
-local C_ServerHealth = require("Core.World.C_ServerHealth")
+local C_ServerHealth = require("Core.WorldServer.C_ServerHealth")
 
 describe("C_ServerHealth", function()
 	describe("UpdateWithTickTime", function()
