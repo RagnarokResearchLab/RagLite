@@ -1,5 +1,7 @@
 package.path = "?.lua"
 
+require("Core.RuntimeExtensions.C_Runtime")
+
 local specFiles = {
 	"Tests/FileFormats/BinaryReader.spec.lua",
 	"Tests/FileFormats/RagnarokACT.spec.lua",
@@ -12,6 +14,7 @@ local specFiles = {
 	"Tests/FileFormats/RagnarokRSW.spec.lua",
 	"Tests/FileFormats/RagnarokSPR.spec.lua",
 	"Tests/FileFormats/RSW/QuadTreeRange.spec.lua",
+	"Tests/RuntimeExtensions/C_Runtime.spec.lua",
 	"Tests/VectorMath/Matrix3D.spec.lua",
 	"Tests/VectorMath/Matrix4D.spec.lua",
 	"Tests/VectorMath/Vector3D.spec.lua",
