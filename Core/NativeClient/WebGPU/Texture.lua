@@ -14,7 +14,7 @@ local Texture = {
 	ERROR_DIMENSIONS_EXCEEDING_LIMIT = "Texture dimensions must not exceed the configured GPU limit",
 }
 
-local function assertPowerOfTwoDimensions(width, height)
+local function assertDimensionsArePowerOfTwo(width, height)
 	-- The assumption that dimensions are power-of-two is implicit in the codebase, so let's avoid surprises here
 	if not Texture:IsPowerOfTwo(width) or not Texture:IsPowerOfTwo(height) then
 		error(Texture.ERROR_DIMENSIONS_NOT_POWER_OF_TWO, 0)
@@ -34,7 +34,7 @@ local GRID_CELL_SIZE = 64
 function Texture:Construct(wgpuDevice, rgbaImageBytes, textureWidthInPixels, textureHeightInPixels)
 	textureWidthInPixels = textureWidthInPixels or DEFAULT_TEXTURE_SIZE
 	textureHeightInPixels = textureHeightInPixels or DEFAULT_TEXTURE_SIZE
-	assertPowerOfTwoDimensions(textureWidthInPixels, textureHeightInPixels)
+	assertDimensionsArePowerOfTwo(textureWidthInPixels, textureHeightInPixels)
 	assertDimensionsAreWithinLimits(textureWidthInPixels, textureHeightInPixels)
 	assert(rgbaImageBytes, "Failed to create 2D texture (no image data was provided)")
 
@@ -154,7 +154,7 @@ local RGBA_OFFSET_ALPHA = 3
 function Texture:GenerateSimpleGradientImage(textureWidthInPixels, textureHeightInPixels)
 	textureWidthInPixels = textureWidthInPixels or DEFAULT_TEXTURE_SIZE
 	textureHeightInPixels = textureHeightInPixels or DEFAULT_TEXTURE_SIZE
-	assertPowerOfTwoDimensions(textureWidthInPixels, textureHeightInPixels)
+	assertDimensionsArePowerOfTwo(textureWidthInPixels, textureHeightInPixels)
 	assertDimensionsAreWithinLimits(textureWidthInPixels, textureHeightInPixels)
 
 	local pixelCount = textureWidthInPixels * textureHeightInPixels
@@ -181,7 +181,7 @@ end
 function Texture:GenerateBlankImage(textureWidthInPixels, textureHeightInPixels, color)
 	textureWidthInPixels = textureWidthInPixels or DEFAULT_TEXTURE_SIZE
 	textureHeightInPixels = textureHeightInPixels or DEFAULT_TEXTURE_SIZE
-	assertPowerOfTwoDimensions(textureWidthInPixels, textureHeightInPixels)
+	assertDimensionsArePowerOfTwo(textureWidthInPixels, textureHeightInPixels)
 	assertDimensionsAreWithinLimits(textureWidthInPixels, textureHeightInPixels)
 	color = color or Color.WHITE
 
@@ -205,7 +205,7 @@ end
 function Texture:GenerateCheckeredGridImage(textureWidthInPixels, textureHeightInPixels, firstColor, secondColor)
 	textureWidthInPixels = textureWidthInPixels or DEFAULT_TEXTURE_SIZE
 	textureHeightInPixels = textureHeightInPixels or DEFAULT_TEXTURE_SIZE
-	assertPowerOfTwoDimensions(textureWidthInPixels, textureHeightInPixels)
+	assertDimensionsArePowerOfTwo(textureWidthInPixels, textureHeightInPixels)
 	assertDimensionsAreWithinLimits(textureWidthInPixels, textureHeightInPixels)
 
 	firstColor = firstColor or { red = 1, blue = 1, green = 1 }
