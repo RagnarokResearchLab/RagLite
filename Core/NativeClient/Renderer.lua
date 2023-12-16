@@ -26,6 +26,8 @@ local ipairs = ipairs
 local ffi_new = ffi.new
 local filesize = string.filesize
 
+local Color = require("Core.NativeClient.DebugDraw.Color")
+
 local Renderer = {
 	cdefs = [[
 		// Must match the struct defined in the shader
@@ -39,7 +41,7 @@ local Renderer = {
 			float padding[3]; // Needs to be updateds whenever the struct changes!
 		} scenewide_uniform_t;
 	]],
-	clearColorRGBA = { 0.05, 0.05, 0.05, 1.0 },
+	clearColorRGBA = { Color.GREY.red, Color.GREY.green, Color.GREY.blue, 0 },
 	renderPipelines = {},
 	meshes = {},
 }
