@@ -132,8 +132,6 @@ function Texture:CopyImageBytesToGPU()
 	source.offset = 0 -- Read everything from the start (no fancy optimizations here...)
 	source.bytesPerRow = 4 * self.width -- Might be different for textures loaded from disk?
 
-	assert(source.bytesPerRow >= 256, "Cannot copy texture image (bytesPerRow must be at least 256)")
-
 	source.rowsPerImage = self.height
 
 	webgpu.bindings.wgpu_queue_write_texture(
