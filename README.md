@@ -2,14 +2,21 @@
 
 Standalone client with built-in backend server that allows running a persistent world simulation on your computer.
 
-## Roadmap & Features
+> [!IMPORTANT]
+> Standalone in this context means that all scripts should "just work" in the [Evo.lua](https://evo-lua.github.io/) runtime environment.
+
+*Evo is a custom [Lua](https://www.lua.org/about.html) interpreter written in C++ (and C), which comes with a host of useful libraries to do the heavy lifting. You can see it as the "engine" for this and other programs, providing core features like graphics and networking. Despite being a separate project unrelated to this one, it's similarly created and maintained by me.*
+
+Please note that this is explicitly **NOT** a full game client or server implementation. If you want that, there are [many other projects](https://ragnarokresearchlab.github.io/community-projects/) aiming to accomplish this lofty goal. My focus is on research, and the tool reflects that.
+
+## Overview
 
 This project is built on a few core technologies:
 
-* A [WebGPU](https://github.com/gpuweb/gpuweb)-based 3D rendering engine is built in (uses [wgpu-native](https://github.com/gfx-rs/wgpu-native))
-* Simple networking layer based on the HTTP and WebSockets protocols
-* Native C++ runtime with a focus on Lua scripting (powered by [LuaJIT](https://luajit.org/))
-* Asynchronous [libuv](https://github.com/libuv/libuv)-based event loop running in the host application
+* A [WebGPU](https://en.wikipedia.org/wiki/WebGPU)-based 3D rendering engine is included (uses [wgpu-native](https://github.com/gfx-rs/wgpu-native))
+* Simple networking layer based on the [HTTP](https://en.wikipedia.org/wiki/HTTP) and [WebSocket](https://en.wikipedia.org/wiki/WebSocket) protocols
+* Native [C++ runtime](https://github.com/evo-lua/evo-runtime) with a focus on Lua scripting (powered by [LuaJIT](https://luajit.org/))
+* Asynchronous [libuv](https://github.com/libuv/libuv)-based [event loop](http://docs.libuv.org/en/v1.x/guide/basics.html) running in the host application
 * Integrated tooling to analyze and work with various binary file formats
 
 Lua is the primary language, augmented with C/C++ libraries and glue code.
@@ -18,21 +25,43 @@ Lua is the primary language, augmented with C/C++ libraries and glue code.
 
 I've developed many different tools to help with my research over the years. This is just the latest iteration, but fully integrated to make my life easier. Some people have expressed interest in seeing the code, so here you go?
 
-The previous iterations were written in JavaScript and TypeScript, with [BabylonJS](https://www.babylonjs.com/) as the rendering engine and [Electron](https://www.electronjs.org/) as the runtime. This version is powered by native technologies instead, mainly because I wanted more control.
+The previous iterations were written in JavaScript/TypeScript, with [BabylonJS](https://www.babylonjs.com/) as the rendering engine and [Electron](https://www.electronjs.org/) as the runtime. This version is powered by native technologies instead, mainly because I wanted more control.
 
 ## Status
 
-Work in progress. It's mostly developed in public so that I can use GitHub Actions for automated testing. Note: This is a developer tool and not very advanced. Don't expect too much or you'll be disappointed. I haven't ported over most features from older versions, and likely won't add things I no longer need unless someone specifically asks.
+Work in progress. Developed in public, to make use of GitHub Actions for automated testing. I haven't ported over most features from older versions and likely won't add things I no longer need - unless someone specifically asks.
+
+> [!NOTE]
+> This is a developer tool and not very advanced. Don't expect too much or you'll be disappointed. 
 
 If you want to follow the development more closely, check out the [roadmap](https://github.com/orgs/RagnarokResearchLab/projects/2) (includes both my documentation work and tools). To view the implementation status, [milestones](https://github.com/RagnarokResearchLab/RagLite/milestones) are your best bet - although they're necessarily incomplete.
 
+## Roadmap & Features
+
+Because this tool is an interactive aid that's part of my ongoing research efforts, you can expect the following:
+
+* Complete, well-tested and documented decoders for all file formats that are of interest
+* Data mining/analysis toolkit that allows importing, dumping, and converting their contents
+* Approximate recreation of 3D scenes with key actors, interactions, animations, and effects
+* CLI or UI-based control flow that is suitable for developers, though not necessarily "end users"
+* Proof-of-concept or prototype implementations of gameplay and/or simulation steps (server)
+
+Needless to say, it will take a lot more time and work until all of the above has been fully implemented.
+
 ## System Requirements
 
-Not much to say here; hopefully it'll "just work" on most systems:
+Not much to say here; hopefully the software will run on most systems:
 
 * Recent versions of macOS, Linux, or Windows
 * Any graphics backend supported by WebGPU (DirectX/Metal/Vulkan)
 * CPU architecture must be supported by the LuaJIT engine
+
+General rule of thumb: All platforms undergoing automated testing via [GitHub Actions](https://github.com/RagnarokResearchLab/RagLite/actions) are officially supported.
+
+> [!TIP]
+> For Linux users: To see what system dependencies may be required, check out the [build workflow](https://github.com/RagnarokResearchLab/RagLite/blob/main/.github/workflows/ci-linux.yml).
+
+Mobile platforms aren't supported, and likely won't ever be (by me). It just doesn't make sense (again, to me).
 
 ## Usage
 
@@ -72,4 +101,4 @@ I'm just one person, so anything that I can't implement or that exceedingly anno
 
 ## Contributing
 
-Contributions of all kinds are welcome. There's no process, just open an issue (or pull request) if you like.
+Contributions of all kinds are welcome. There's no process, just [open an issue](https://github.com/RagnarokResearchLab/RagLite/issues/new) (or [pull request](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/about-pull-requests)) if you like.
