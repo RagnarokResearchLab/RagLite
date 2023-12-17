@@ -1,3 +1,5 @@
+local ffi = require("ffi")
+
 local RagnarokGND = require("Core.FileFormats.RagnarokGND")
 
 local GND_WITHOUT_WATER_PLANE = C_FileSystem.ReadFile(path.join("Tests", "Fixtures", "no-water-plane.gnd"))
@@ -125,6 +127,108 @@ describe("RagnarokGND", function()
 			assertEquals(gnd.waterPlanes[0].waveform_phase, 1)
 			assertEquals(gnd.waterPlanes[0].surface_curvature_deg, 50)
 			assertEquals(gnd.waterPlanes[0].texture_cycling_interval, 3)
+		end)
+	end)
+
+	describe("GridPositionToCubeID", function()
+		local gnd = RagnarokGND()
+		gnd.gridSizeU = 3
+		gnd.gridSizeV = 3
+		it("should return the corresponding C-style cube index if a valid grid position was given", function()
+			assertEquals(gnd:GridPositionToCubeID(1, 1), 0) -- C arrays start at zero
+			assertEquals(gnd:GridPositionToCubeID(2, 1), 1)
+			assertEquals(gnd:GridPositionToCubeID(3, 1), 2)
+			assertEquals(gnd:GridPositionToCubeID(1, 2), 3)
+			assertEquals(gnd:GridPositionToCubeID(2, 2), 4)
+			assertEquals(gnd:GridPositionToCubeID(3, 2), 5)
+			assertEquals(gnd:GridPositionToCubeID(1, 3), 6)
+			assertEquals(gnd:GridPositionToCubeID(2, 3), 7)
+			assertEquals(gnd:GridPositionToCubeID(3, 3), 8)
+		end)
+
+		it("should fail if the given grid position is out of bounds", function()
+			-- The purpose of this is to make sure OOB access raises an error, rather than potentially SEGFAULTing
+			assertFailure(function()
+				return gnd:GridPositionToCubeID(4, 1)
+			end, "Grid position (4, 1) is out of bounds")
+
+			assertFailure(function()
+				return gnd:GridPositionToCubeID(1, 4)
+			end, "Grid position (1, 4) is out of bounds")
+
+			assertFailure(function()
+				return gnd:GridPositionToCubeID(1, -1)
+			end, "Grid position (1, -1) is out of bounds")
+
+			assertFailure(function()
+				return gnd:GridPositionToCubeID(-1, 1)
+			end, "Grid position (-1, 1) is out of bounds")
+
+			assertFailure(function()
+				return gnd:GridPositionToCubeID(1, 0)
+			end, "Grid position (1, 0) is out of bounds")
+
+			assertFailure(function()
+				return gnd:GridPositionToCubeID(0, 1)
+			end, "Grid position (0, 1) is out of bounds")
+
+			assertFailure(function()
+				return gnd:GridPositionToCubeID(0, 0)
+			end, "Grid position (0, 0) is out of bounds")
+		end)
+	end)
+
+	describe("GenerateGroundMeshSections", function()
+		it("should generate one ground mesh section per diffuse texture", function()
+			local gnd = RagnarokGND()
+			gnd.gridSizeU = 3
+			gnd.gridSizeV = 3
+			gnd.cubeGrid = ffi.new("gnd_groundmesh_cube_t[?]", gnd.gridSizeU * gnd.gridSizeV)
+			for gridV = 1, gnd.gridSizeV, 1 do
+				for gridU = 1, gnd.gridSizeU, 1 do
+					local cubeID = (gridU - 1) + (gridV - 1) * gnd.gridSizeU
+					local cube = gnd.cubeGrid[cubeID]
+					cube.southwest_corner_altitude = -4 * cubeID + 1
+					cube.southeast_corner_altitude = -4 * cubeID + 2
+					cube.northwest_corner_altitude = -4 * cubeID + 3
+					cube.northeast_corner_altitude = -4 * cubeID + 4
+				end
+			end
+			gnd.texturedSurfaces = ffi.new("gnd_textured_surface_t[?]", gnd.gridSizeU * gnd.gridSizeV)
+			gnd.texturedSurfaces[0].bottom_left_color.red = 255
+			gnd.texturedSurfaces[0].bottom_left_color.green = 255
+			gnd.texturedSurfaces[0].bottom_left_color.blue = 255
+			gnd.texturedSurfaces[0].bottom_left_color.alpha = 255
+			gnd.texturedSurfaces[0].uvs.bottom_left_u = 0
+			gnd.texturedSurfaces[0].uvs.bottom_left_v = 0
+			gnd.texturedSurfaces[0].uvs.bottom_right_u = 0.25 * 4
+			gnd.texturedSurfaces[0].uvs.bottom_right_v = 0
+			gnd.texturedSurfaces[0].uvs.top_left_u = 0
+			gnd.texturedSurfaces[0].uvs.top_left_v = 0.25 * 4
+			gnd.texturedSurfaces[0].uvs.top_right_u = 0.25 * 4
+			gnd.texturedSurfaces[0].uvs.top_right_v = 0.25 * 4
+			gnd.texturedSurfaceCount = gnd.gridSizeU * gnd.gridSizeV
+			gnd.diffuseTextureCount = 1
+			gnd.diffuseTexturePaths = {
+				"whatever.bmp",
+			}
+			gnd.groundMeshSections = {
+				{
+					vertexPositions = {},
+					vertexColors = {},
+					triangleConnections = {},
+					diffuseTextureCoords = {},
+				},
+			}
+			local sections = gnd:GenerateGroundMeshSections()
+			assertEquals(#sections, 1) -- Index starts at zero
+			assertEquals(table.count(sections), 1)
+			local json = require("json")
+			local jsonDump = json.prettier(sections)
+			-- Leaving this here because the snapshot likely needs to be recreated once lightmaps/normals are needed
+			-- C_FileSystem.WriteFile(path.join("Tests", "Fixtures", "Snapshots", "gnd-geometry.json"), jsonDump)
+			local snapshot = C_FileSystem.ReadFile(path.join("Tests", "Fixtures", "Snapshots", "gnd-geometry.json"))
+			assertEquals(json.parse(jsonDump), json.parse(snapshot)) -- Workaround for encoding issues in the CI :/
 		end)
 	end)
 end)
