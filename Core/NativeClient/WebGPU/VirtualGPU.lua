@@ -54,6 +54,7 @@ function VirtualGPU:Disable()
 	end
 
 	webgpu.bindings = self.backedUpBindings
+	self.backedUpBindings = nil
 
 	etrace.disable()
 end
