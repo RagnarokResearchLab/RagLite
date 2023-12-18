@@ -5,9 +5,9 @@ Standalone client with built-in backend server that allows running a persistent 
 > [!IMPORTANT]
 > Standalone in this context means that all scripts should "just work" in the [Evo.lua](https://evo-lua.github.io/) runtime environment.
 
-*Evo is a custom [Lua](https://www.lua.org/about.html) interpreter written in C++ (and C), which comes with a host of useful libraries to do the heavy lifting. You can see it as the "engine" for this and other programs, providing core features like graphics and networking. Despite being a separate project unrelated to this one, it's similarly created and maintained by me.*
+*Evo is a custom [Lua](https://www.lua.org/about.html) interpreter/runtime environment written in C++ (and C), which comes with a host of useful libraries to do the heavy lifting. You can see it as the "engine" for this and other programs, providing core features like graphics and networking. Despite being a separate project unrelated to this one, it's similarly created and maintained by me.*
 
-Please note that this is explicitly **NOT** a full game client or server implementation. If you want that, there are [many other projects](https://ragnarokresearchlab.github.io/community-projects/) aiming to accomplish this lofty goal. My focus is on research, and the tool reflects that.
+Please note that RagLite is explicitly **NOT** a full game client or server implementation. If you want one, there are [many other projects](https://ragnarokresearchlab.github.io/community-projects/) aiming to accomplish this lofty goal. My focus is on research, and the tool reflects that.
 
 ## Overview
 
