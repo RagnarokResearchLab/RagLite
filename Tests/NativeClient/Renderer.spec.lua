@@ -2,21 +2,11 @@ local etrace = require("Core.RuntimeExtensions.etrace")
 local ffi = require("ffi")
 
 local Renderer = require("Core.NativeClient.Renderer")
-local VirtualGPU = require("Core.NativeClient.WebGPU.VirtualGPU")
 
 describe("Renderer", function()
 	-- The renderer wasn't designed to be testable, so a few hacks are currently required...
 	Renderer.wgpuDevice = ffi.new("WGPUDevice")
-
-	before(function()
-		VirtualGPU:Enable()
-		etrace.enable("GPU_TEXTURE_WRITE")
-	end)
-
-	after(function()
-		etrace.disable("GPU_TEXTURE_WRITE")
-		VirtualGPU:Disable()
-	end)
+	-- Should use beforeEach/afterEach to set up and tear down the VirtualGPU here
 
 	describe("CreateTextureImage", function()
 		it("should upload the image data to the GPU", function()

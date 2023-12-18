@@ -36,6 +36,8 @@ function VirtualGPU:Enable()
 
 	self.backedUpBindings = webgpu.bindings
 	webgpu.bindings = self.virtualizedBindings
+
+	etrace.enable()
 end
 
 function VirtualGPU:Disable()
@@ -44,6 +46,8 @@ function VirtualGPU:Disable()
 	end
 
 	webgpu.bindings = self.backedUpBindings
+
+	etrace.disable()
 end
 
 return VirtualGPU

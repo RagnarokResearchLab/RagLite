@@ -37,6 +37,10 @@ local specFiles = {
 	"Tests/Tools/RagnarokTools.spec.lua",
 }
 
+-- The test runner currently doesn't support "before-each" and "after-each"; remove this hack later
+local VirtualGPU = require("Core.NativeClient.WebGPU.VirtualGPU")
+VirtualGPU:Enable()
 local numFailedSections = C_Runtime.RunDetailedTests(#arg > 0 and arg or specFiles)
+VirtualGPU:Disable()
 
 os.exit(numFailedSections)
