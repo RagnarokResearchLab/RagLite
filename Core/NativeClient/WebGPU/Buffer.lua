@@ -60,4 +60,8 @@ function Buffer:CreateIndexBuffer(wgpuDevice, indices)
 	return buffer
 end
 
+function Buffer:Destroy(wgpuBuffer)
+	webgpu.bindings.wgpu_buffer_destroy(wgpuBuffer)
+end
+
 return Buffer

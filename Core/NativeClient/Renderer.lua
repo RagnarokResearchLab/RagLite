@@ -241,6 +241,22 @@ function Renderer:UploadMeshGeometry(mesh)
 	table.insert(self.meshes, mesh)
 end
 
+function Renderer:DestroyMeshGeometry(mesh)
+	Buffer:Destroy(mesh.vertexBuffer)
+	Buffer:Destroy(mesh.colorBuffer)
+	Buffer:Destroy(mesh.indexBuffer)
+	if mesh.diffuseTexCoordsBuffer ~= self.dummyTexCoordsBuffer then
+		-- Don't destroy this, it might still be used by other meshes
+		Buffer:Destroy(mesh.diffuseTexCoordsBuffer)
+	end
+
+	for index, value in pairs(self.meshes) do
+		if value == mesh then
+			table.remove(self.meshes, index)
+		end
+	end
+end
+
 function Renderer:UploadTextureImage(texture)
 	if not texture then
 		return
