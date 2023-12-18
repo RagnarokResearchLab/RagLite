@@ -29,7 +29,14 @@ local VirtualGPU = {
 	},
 }
 
+setmetatable(VirtualGPU.virtualizedBindings, {
+	__index = function(t, k)
+		error(format("NYI: Virtualized binding is missing for %s", k), 0)
+	end,
+})
+
 function VirtualGPU:Enable()
+	printf("[VirtualGPU] WebGPU call interception is now ON")
 	for event, _ in pairs(self.events) do
 		etrace.register(event)
 	end
@@ -41,6 +48,7 @@ function VirtualGPU:Enable()
 end
 
 function VirtualGPU:Disable()
+	printf("[VirtualGPU] WebGPU call interception is now OFF")
 	for event, isEnabled in pairs(self.events) do
 		etrace.unregister(event)
 	end
