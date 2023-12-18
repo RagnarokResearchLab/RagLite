@@ -23,6 +23,7 @@ local specFiles = {
 	"Tests/NativeClient/C_Camera.spec.lua",
 	"Tests/NativeClient/C_Cursor.spec.lua",
 	"Tests/NativeClient/NativeClient.spec.lua",
+	"Tests/NativeClient/Renderer.spec.lua",
 	"Tests/NativeClient/DebugDraw/Box.spec.lua",
 	"Tests/NativeClient/DebugDraw/Cone.spec.lua",
 	"Tests/NativeClient/DebugDraw/Cylinder.spec.lua",

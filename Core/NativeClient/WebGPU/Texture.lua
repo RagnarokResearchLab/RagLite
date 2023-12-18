@@ -92,8 +92,10 @@ function Texture:Construct(wgpuDevice, rgbaImageBytes, textureWidthInPixels, tex
 	-- Depending on the pipeline to be initialized here is unfortunate, but I guess there's no other way?
 	local textureBindGroupDescriptor = ffi.new("WGPUBindGroupDescriptor")
 	textureBindGroupDescriptor.layout = BasicTriangleDrawingPipeline.wgpuMaterialBindGroupLayout
-	textureBindGroupDescriptor.entryCount =
-		BasicTriangleDrawingPipeline.wgpuMaterialBindGroupLayoutDescriptor.entryCount
+
+	local wgpuMaterialBindGroupLayoutDescriptor = BasicTriangleDrawingPipeline.wgpuMaterialBindGroupLayoutDescriptor
+		or select(2, BasicTriangleDrawingPipeline:CreateMaterialBindGroupLayout(wgpuDevice))
+	textureBindGroupDescriptor.entryCount = wgpuMaterialBindGroupLayoutDescriptor.entryCount
 	textureBindGroupDescriptor.entries = bindGroupEntries
 
 	local bindGroup = webgpu.bindings.wgpu_device_create_bind_group(wgpuDevice, textureBindGroupDescriptor)
