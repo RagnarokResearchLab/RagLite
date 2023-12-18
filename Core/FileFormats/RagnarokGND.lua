@@ -309,7 +309,7 @@ function RagnarokGND:GenerateGroundMeshSections()
 	local endTime = uv.hrtime()
 	local terrainGenerationTimeInMilliseconds = (endTime - startTime) / 10E5
 	printf(
-		"[RagnarokGND] Finished generating terrain geometry for %d ground mesh sections in %.2f ms",
+		"[RagnarokGND] Finished generating terrain geometry for %d ground mesh section(s) in %.2f ms",
 		self.diffuseTextureCount,
 		terrainGenerationTimeInMilliseconds
 	)
