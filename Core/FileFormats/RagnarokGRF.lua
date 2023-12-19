@@ -16,6 +16,7 @@ local ffi_cast = ffi.cast
 local ffi_sizeof = ffi.sizeof
 local ffi_string = ffi.string
 local string_lower = string.lower
+local table_insert = table.insert
 
 local RagnarokGRF = {
 	MAGIC_HEADER = "Master of Magic",
@@ -214,6 +215,25 @@ function RagnarokGRF:FindLargestFileEntry()
 	end
 
 	return largestEncounteredFileEntry
+end
+
+function RagnarokGRF:FindFilesByType(fileExtension)
+	local matchingFileEntries = {}
+
+	local hasDot = fileExtension:sub(1, 1) == "."
+	if not hasDot then
+		fileExtension = "." .. fileExtension
+	end
+
+	for index, entry in ipairs(self.fileTable.entries) do
+		local isFileEnry = (entry.typeID == RagnarokGRF.COMPRESSED_FILE_ENTRY_TYPE)
+		local hasMatchingExtension = (path.extname(entry.name) == fileExtension)
+		if isFileEnry and hasMatchingExtension then
+			table_insert(matchingFileEntries, entry)
+		end
+	end
+
+	return matchingFileEntries
 end
 
 function RagnarokGRF:ExtractFileToDisk(fileName, where)
