@@ -12,6 +12,8 @@ if arg[1] == "--etrace" then
 		printf("Dumping traced events for the last rendered frame...")
 		dump(etrace.filter())
 	end)
+	_G.arg[1] = nil -- Don't try to load it as a scene
 end
 
-NativeClient:Start()
+local mapID = arg[1]
+NativeClient:Start(mapID)

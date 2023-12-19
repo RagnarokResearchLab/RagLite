@@ -27,12 +27,12 @@ local NativeClient = {
 	FALLBACK_SCENE_ID = "wgpu",
 }
 
-function NativeClient:Start()
+function NativeClient:Start(loginSceneID)
 	self.mainWindow = self:CreateMainWindow()
 	Renderer:InitializeWithGLFW(self.mainWindow)
 
 	self:PreloadPersistentResources()
-	self:LoadSceneByID(self.FALLBACK_SCENE_ID)
+	self:LoadSceneByID(loginSceneID or self.FALLBACK_SCENE_ID)
 
 	self:StartRenderLoop()
 end
