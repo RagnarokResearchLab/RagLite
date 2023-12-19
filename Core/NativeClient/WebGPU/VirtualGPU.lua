@@ -4,6 +4,9 @@ local webgpu = require("webgpu")
 
 local VirtualGPU = {
 	events = {
+		GPU_BUFFER_CREATE = true,
+		GPU_BUFFER_DESTROY = true,
+		GPU_BUFFER_WRITE = true,
 		GPU_TEXTURE_WRITE = true,
 	},
 	virtualizedBindings = {
@@ -24,6 +27,26 @@ local VirtualGPU = {
 				dataSize = dataSize,
 				dataLayout = dataLayout,
 				writeSize = writeSize,
+			})
+		end,
+		wgpu_device_create_buffer = function(device, descriptor)
+			etrace.create("GPU_BUFFER_CREATE", {
+				device = device,
+				descriptor = descriptor,
+			})
+		end,
+		wgpu_queue_write_buffer = function(queue, buffer, bufferOffset, data, size)
+			etrace.create("GPU_BUFFER_WRITE", {
+				queue = queue,
+				buffer = buffer,
+				bufferOffset = bufferOffset,
+				data = data,
+				size = size,
+			})
+		end,
+		wgpu_buffer_destroy = function(buffer)
+			etrace.create("GPU_BUFFER_DESTROY", {
+				buffer = buffer,
 			})
 		end,
 	},

@@ -12,7 +12,7 @@ table_copy = function(source)
 
 	for key, value in pairs(source) do
 		if type(value) == "table" then
-			deepCopy[key] = table.copy(value)
+			deepCopy[key] = table_copy(value)
 		else
 			deepCopy[key] = value
 		end
