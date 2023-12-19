@@ -79,6 +79,30 @@ There isn't much to see yet, but if you want to give it a try:
 
 A window should pop up with a basic 3D scene being visible. Tools are CLI only.
 
+### Loading Scenes
+
+To load a specific map, you can pass the `mapID` (unique scene identifier) to the client via CLI args:
+
+```sh
+# Valid scene IDs are any map that's listed in the DB/classic-maps.lua table
+# You can also directly load debug scenes (e.g., 'cube3d' or 'webgpu') this way
+./evo start-client aldebaran
+```
+
+If all you're seeing is the "hello world" fallback scene, then the map wasn't found in the classic database.
+
+### Camera Controls
+
+The following controls have been implemented so far:
+
+* Right-click and drag: Adjust camera rotation (horizontal)
+* SHIFT + right-click and drag: Adjust camera rotation (vertical)
+* Double-right-click: Instantly reset camera rotation
+* Mouse wheel (scrolling): Adjust zoom level
+* SHIFT + Arrow keys: Move the camera position (by a fixed amount) in the given direction
+
+They're of course very rough, but should allow inspecting the rendered scene.
+
 ## Goals
 
 I'm building this software with the following guidelines in mind:
