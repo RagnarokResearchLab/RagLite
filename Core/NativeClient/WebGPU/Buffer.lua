@@ -2,7 +2,10 @@ local bit = require("bit")
 local ffi = require("ffi")
 local webgpu = require("webgpu")
 
-local Buffer = {}
+local Buffer = {
+	VERTEX_BUFFER_FLAGS = bit.bor(ffi.C.WGPUBufferUsage_CopyDst, ffi.C.WGPUBufferUsage_Vertex),
+	INDEX_BUFFER_FLAGS = bit.bor(ffi.C.WGPUBufferUsage_CopyDst, ffi.C.WGPUBufferUsage_Index),
+}
 
 local ALIGNMENT_IN_BYTES = 4
 
@@ -24,7 +27,7 @@ function Buffer:CreateVertexBuffer(wgpuDevice, entries)
 
 	local bufferDescriptor = ffi.new("WGPUBufferDescriptor")
 	bufferDescriptor.size = alignedBufferSizeInBytes
-	bufferDescriptor.usage = bit.bor(ffi.C.WGPUBufferUsage_CopyDst, ffi.C.WGPUBufferUsage_Vertex)
+	bufferDescriptor.usage = Buffer.VERTEX_BUFFER_FLAGS
 	bufferDescriptor.mappedAtCreation = false
 
 	local buffer = webgpu.bindings.wgpu_device_create_buffer(wgpuDevice, bufferDescriptor)
@@ -45,7 +48,7 @@ function Buffer:CreateIndexBuffer(wgpuDevice, indices)
 
 	local bufferDescriptor = ffi.new("WGPUBufferDescriptor")
 	bufferDescriptor.size = alignedBufferSizeInBytes
-	bufferDescriptor.usage = bit.bor(ffi.C.WGPUBufferUsage_CopyDst, ffi.C.WGPUBufferUsage_Index)
+	bufferDescriptor.usage = Buffer.INDEX_BUFFER_FLAGS
 	bufferDescriptor.mappedAtCreation = false
 
 	local buffer = webgpu.bindings.wgpu_device_create_buffer(wgpuDevice, bufferDescriptor)
@@ -58,6 +61,10 @@ function Buffer:CreateIndexBuffer(wgpuDevice, indices)
 	)
 
 	return buffer
+end
+
+function Buffer:Destroy(wgpuBuffer)
+	webgpu.bindings.wgpu_buffer_destroy(wgpuBuffer)
 end
 
 return Buffer

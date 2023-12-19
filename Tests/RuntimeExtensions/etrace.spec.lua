@@ -472,5 +472,28 @@ describe("etrace", function()
 			assertEquals(eventLog[2], expectedEventLog[2])
 			assertEquals(eventLog[3], expectedEventLog[3])
 		end)
+
+		it("should return a copy of the list and not a reference that can change after the fact", function()
+			etrace.register("SOME_EVENT")
+			etrace.register("ANOTHER_EVENT")
+			etrace.enable("SOME_EVENT")
+			etrace.enable("ANOTHER_EVENT")
+
+			etrace.create("SOME_EVENT")
+			local eventLog = etrace.filter()
+			local expectedEventLog = {
+				{ name = "SOME_EVENT", payload = {} },
+			}
+
+			-- So far, so good...
+			assertEquals(#eventLog, #expectedEventLog)
+			assertEquals(eventLog[1], expectedEventLog[1])
+
+			etrace.create("ANOTHER_EVENT")
+
+			-- If a copy of the internal event log is returned, more events can be added after the fact
+			assertEquals(#eventLog, #expectedEventLog)
+			assertEquals(eventLog[1], expectedEventLog[1])
+		end)
 	end)
 end)

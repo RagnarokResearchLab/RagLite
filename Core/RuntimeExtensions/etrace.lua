@@ -6,6 +6,21 @@ local type = type
 local format = string.format
 local table_insert = table.insert
 
+local table_copy
+table_copy = function(source)
+	local deepCopy = {}
+
+	for key, value in pairs(source) do
+		if type(value) == "table" then
+			deepCopy[key] = table_copy(value)
+		else
+			deepCopy[key] = value
+		end
+	end
+
+	return deepCopy
+end
+
 local etrace = {
 	registeredEvents = {},
 	eventLog = {},
@@ -145,8 +160,8 @@ end
 
 function etrace.filter(event)
 	if event == nil or (type(event) == "table" and #event == 0) then
-		-- This better not be modified from outside (avoids a deep copy)
-		return etrace.eventLog
+		-- This may be modified if other events are created
+		return table_copy(etrace.eventLog)
 	end
 
 	local events = {}
