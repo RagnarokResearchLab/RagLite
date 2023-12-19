@@ -3,6 +3,7 @@ local BasicTriangleDrawingPipeline = require("Core.NativeClient.WebGPU.BasicTria
 
 local bit = require("bit")
 local ffi = require("ffi")
+local transform = require("transform")
 local webgpu = require("webgpu")
 
 local ffi_cast = ffi.cast
@@ -34,9 +35,13 @@ local GRID_CELL_SIZE = 64
 function Texture:Construct(wgpuDevice, rgbaImageBytes, textureWidthInPixels, textureHeightInPixels)
 	textureWidthInPixels = textureWidthInPixels or DEFAULT_TEXTURE_SIZE
 	textureHeightInPixels = textureHeightInPixels or DEFAULT_TEXTURE_SIZE
-	assertDimensionsArePowerOfTwo(textureWidthInPixels, textureHeightInPixels)
 	assertDimensionsAreWithinLimits(textureWidthInPixels, textureHeightInPixels)
 	assert(rgbaImageBytes, "Failed to create 2D texture (no image data was provided)")
+
+	if not Texture:IsPowerOfTwo(textureWidthInPixels) or not Texture:IsPowerOfTwo(textureHeightInPixels) then
+		-- This isn't ideal, but some maps use textures that will be oddly-sized (e.g., prontera)
+		print(transform.yellow("WARNING: " .. Texture.ERROR_DIMENSIONS_NOT_POWER_OF_TWO))
+	end
 
 	local textureDescriptor = ffi.new("WGPUTextureDescriptor")
 	textureDescriptor.dimension = ffi.C.WGPUTextureDimension_2D
