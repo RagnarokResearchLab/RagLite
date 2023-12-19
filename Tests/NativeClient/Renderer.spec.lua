@@ -154,6 +154,33 @@ describe("Renderer", function()
 			-- Default texture coordinates shouldn't be destroyed (implicit)
 		end)
 	end)
+
+	describe("LoadSceneObjects", function()
+		after(function()
+			Renderer:ResetScene()
+		end)
+
+		it("should all meshes to the scene", function()
+			local scene = require("Core.NativeClient.DebugDraw.Scenes.cube3d")
+			Renderer:LoadSceneObjects(scene)
+			assertEquals(#Renderer.meshes, 3)
+			Renderer:LoadSceneObjects(scene)
+		end)
+
+		describe("ResetScene", function()
+			it("should remove all existing meshes from the scene", function()
+				local scene = require("Core.NativeClient.DebugDraw.Scenes.wgpu")
+				Renderer:LoadSceneObjects(scene)
+				assertEquals(#Renderer.meshes, 9)
+
+				-- A bit sketchy, but oh well... Better: Track wgpu calls (again)? Maybe later, seems redundant
+				_G.assertCallsFunction(function()
+					Renderer:ResetScene()
+				end, Renderer.DestroyMeshGeometry, 42)
+				assertEquals(#Renderer.meshes, 0)
+			end)
+		end)
+	end)
 end)
 
 VirtualGPU:Disable()

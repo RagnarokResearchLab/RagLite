@@ -1,0 +1,17 @@
+local DebugScene = require("Core.NativeClient.DebugDraw.DebugScene")
+
+describe("DebugScene", function()
+	describe("Construct", function()
+		it("should return a scene definition if a valid debug scene ID was passed", function()
+			local scene = DebugScene("cube3d")
+			local cubeDemoScene = require("Core.NativeClient.DebugDraw.Scenes.cube3d")
+			assertEquals(scene, cubeDemoScene)
+		end)
+
+		it("should return the WebGPU demo as a fallback if an invalid scene ID was passed", function()
+			local scene = DebugScene("invalid")
+			local wgpuDemoScene = require("Core.NativeClient.DebugDraw.Scenes.wgpu")
+			assertEquals(scene, wgpuDemoScene)
+		end)
+	end)
+end)

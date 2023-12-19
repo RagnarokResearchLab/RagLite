@@ -6,18 +6,12 @@ local uv = require("uv")
 
 local C_Camera = require("Core.NativeClient.C_Camera")
 local C_Cursor = require("Core.NativeClient.C_Cursor")
+local DebugScene = require("Core.NativeClient.DebugDraw.DebugScene")
 local Renderer = require("Core.NativeClient.Renderer")
 local Vector3D = require("Core.VectorMath.Vector3D")
 
-local Box = require("Core.NativeClient.DebugDraw.Box")
-local Cone = require("Core.NativeClient.DebugDraw.Cone")
-local Cylinder = require("Core.NativeClient.DebugDraw.Cylinder")
-local Plane = require("Core.NativeClient.DebugDraw.Plane")
-local Pyramid = require("Core.NativeClient.DebugDraw.Pyramid")
-local Sphere = require("Core.NativeClient.DebugDraw.Sphere")
-local WorldAxis = require("Core.NativeClient.DebugDraw.WorldAxis")
-
 local RagnarokGRF = require("Core.FileFormats.RagnarokGRF")
+local RagnarokMap = require("Core.FileFormats.RagnarokMap")
 
 local tonumber = tonumber
 
@@ -30,6 +24,7 @@ local NativeClient = {
 		["data/sprite/cursors.act"] = false,
 		["data/sprite/cursors.spr"] = false,
 	},
+	FALLBACK_SCENE_ID = "wgpu",
 }
 
 function NativeClient:Start()
@@ -37,31 +32,7 @@ function NativeClient:Start()
 	Renderer:InitializeWithGLFW(self.mainWindow)
 
 	self:PreloadPersistentResources()
-
-	local oldPyramidMesh = Pyramid()
-	local worldAxesVisualizationMesh = WorldAxis()
-
-	local sphereMesh = Sphere({ resolution = 100, translation = { x = 5, y = 0, z = -5 } })
-	local cubeMesh = Box({ translation = { x = -5, y = 0, z = -5 } })
-	local cylinderMesh = Cylinder({ resolution = 100, translation = { x = -5, y = 0, z = 5 } })
-	local coneMesh = Cone({ resolution = 100, translation = { x = 5, y = 0, z = 5 } })
-	local pyramidMesh = Pyramid({ dimensions = { x = 1, y = 2, z = 1 }, translation = { x = -7.5, y = 0, z = 0 } })
-	local boxMesh = Box({ dimensions = { x = 1, y = 2, z = 1 }, translation = { x = 7.5, y = 0, z = 0 } })
-	local groundMesh = Plane({ dimensions = { x = 20, z = 20 }, translation = { x = 0, y = -2, z = 0 } })
-
-	local checkeredDebugTexture = Renderer:CreateDebugTexture()
-	groundMesh.texture = checkeredDebugTexture -- Should probably use materials here?
-	Renderer:UploadTextureImage(checkeredDebugTexture)
-
-	Renderer:UploadMeshGeometry(worldAxesVisualizationMesh)
-	Renderer:UploadMeshGeometry(oldPyramidMesh)
-	Renderer:UploadMeshGeometry(pyramidMesh)
-	Renderer:UploadMeshGeometry(groundMesh)
-	Renderer:UploadMeshGeometry(sphereMesh)
-	Renderer:UploadMeshGeometry(cubeMesh)
-	Renderer:UploadMeshGeometry(boxMesh)
-	Renderer:UploadMeshGeometry(cylinderMesh)
-	Renderer:UploadMeshGeometry(coneMesh)
+	self:LoadSceneByID(self.FALLBACK_SCENE_ID)
 
 	self:StartRenderLoop()
 end
@@ -345,7 +316,18 @@ function NativeClient:PreloadPersistentResources()
 		self.PERSISTENT_RESOURCES[filePath] = grf:ExtractFileInMemory(filePath)
 	end
 
-	grf:Close() -- Probably best to leave it open? Revisit later, once more assets need to be loaded...
+	self.grf = grf -- No need to close as reopening would be expensive (OS will free the handle)
+end
+
+function NativeClient:LoadSceneByID(globallyUniqueSceneID)
+	printf("Loading scene %s", globallyUniqueSceneID)
+	Renderer:ResetScene()
+
+	-- This might seem sketchy, but it allows swapping the asset source on the fly (e.g., disk/network/virtual FS)
+	local grfFileSystem = self.grf:MakeFileSystem(self.GRF_FILE_PATH)
+
+	local map = RagnarokMap(globallyUniqueSceneID, grfFileSystem) or DebugScene(globallyUniqueSceneID)
+	Renderer:LoadSceneObjects(map)
 end
 
 return NativeClient
