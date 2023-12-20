@@ -15,6 +15,7 @@ local string_filesize = string.filesize
 local ffi_cast = ffi.cast
 local ffi_sizeof = ffi.sizeof
 local ffi_string = ffi.string
+local format = string.format
 local string_lower = string.lower
 local table_insert = table.insert
 
@@ -305,6 +306,21 @@ function RagnarokGRF:GetNormalizedFilePath(fileName)
 	fileName = fileName:gsub("//", "/")
 
 	return fileName
+end
+
+function RagnarokGRF:MakeFileSystem(name)
+	local grfFileSystem = {
+		ROOT_DIR = "data",
+		name = name,
+	}
+
+	function grfFileSystem.Fetch(fileSystem, resourceID)
+		local resourcePath = format("%s/%s", fileSystem.ROOT_DIR, resourceID)
+		printf("Fetching resource %s via %s", resourcePath, fileSystem.name)
+		return self:ExtractFileInMemory(resourcePath)
+	end
+
+	return grfFileSystem
 end
 
 ffi.cdef(RagnarokGRF.cdefs)

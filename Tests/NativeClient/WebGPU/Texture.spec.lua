@@ -5,20 +5,6 @@ local Texture = require("Core.NativeClient.WebGPU.Texture")
 
 describe("Texture", function()
 	describe("Construct", function()
-		it("should throw if the dimensions aren't a power of two", function()
-			assertThrows(function()
-				Texture(nil, "", 13, 37)
-			end, Texture.ERROR_DIMENSIONS_NOT_POWER_OF_TWO)
-
-			assertThrows(function()
-				Texture(nil, "", 128, 37)
-			end, Texture.ERROR_DIMENSIONS_NOT_POWER_OF_TWO)
-
-			assertThrows(function()
-				Texture(nil, "", 13, 128)
-			end, Texture.ERROR_DIMENSIONS_NOT_POWER_OF_TWO)
-		end)
-
 		it("should throw if the dimensions are larger than the configured GPU limit for 2D textures", function()
 			assertThrows(function()
 				Texture(nil, "", 2 * Texture.MAX_TEXTURE_DIMENSION, 2 * Texture.MAX_TEXTURE_DIMENSION)

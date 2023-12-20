@@ -250,11 +250,7 @@ function Renderer:DestroyMeshGeometry(mesh)
 		Buffer:Destroy(mesh.diffuseTexCoordsBuffer)
 	end
 
-	for index, value in pairs(self.meshes) do
-		if value == mesh then
-			table.remove(self.meshes, index)
-		end
-	end
+	self.meshes = {}
 end
 
 function Renderer:UploadTextureImage(texture)
@@ -390,6 +386,31 @@ function Renderer:CreateDummyTextureCoordinatesBuffer()
 	local dummyCoords = table.new(maxAllowedVerticesPerMesh, 0)
 	local buffer = Buffer:CreateVertexBuffer(self.wgpuDevice, dummyCoords)
 	self.dummyTexCoordsBuffer = buffer
+end
+
+function Renderer:LoadSceneObjects(scene)
+	printf("Loading scene objects for [[%s]]", scene.displayName)
+	for index, mesh in ipairs(scene.meshes) do
+		self:UploadMeshGeometry(mesh)
+
+		if mesh.diffuseTexture then
+			local diffuseTexture = self:CreateTextureImage(
+				mesh.diffuseTexture.rgbaImageBytes,
+				mesh.diffuseTexture.width,
+				mesh.diffuseTexture.height
+			)
+			mesh.texture = diffuseTexture
+			self:UploadTextureImage(mesh.texture)
+		end
+	end
+end
+
+function Renderer:ResetScene()
+	printf("Unloading %d meshes", #self.meshes)
+	for index, mesh in ipairs(self.meshes) do
+		-- Should also free textures here? (deferred until the Resources API is in)
+		self:DestroyMeshGeometry(mesh)
+	end
 end
 
 return Renderer
