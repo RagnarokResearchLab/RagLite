@@ -330,4 +330,26 @@ function NativeClient:LoadSceneByID(globallyUniqueSceneID)
 	Renderer:LoadSceneObjects(map)
 end
 
+function NativeClient:LoadScenesOneByOne(delayInMilliseconds)
+	delayInMilliseconds = delayInMilliseconds or 1000 -- Should be long enough to load any scene fully?
+	local mapDB = require("DB.classic-maps")
+
+	printf(
+		"Starting stress test (loading %d maps one by one) with a delay of %d ms",
+		table.count(mapDB),
+		delayInMilliseconds
+	)
+	local mapID, ticker
+	ticker = C_Timer.NewTicker(delayInMilliseconds, function()
+		mapID = next(mapDB, mapID)
+
+		if mapID then
+			self:LoadSceneByID(mapID)
+		else
+			print("Stress test finished! All maps were loaded once... hopefully successfully?")
+			ticker:stop()
+		end
+	end)
+end
+
 return NativeClient

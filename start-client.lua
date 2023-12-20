@@ -13,6 +13,11 @@ if arg[1] == "--etrace" then
 		dump(etrace.filter())
 	end)
 	_G.arg[1] = nil -- Don't try to load it as a scene
+elseif arg[1] == "--stresstest" then
+	C_Timer.After(2000, function()
+		NativeClient:LoadScenesOneByOne(arg[2])
+	end)
+	_G.arg[1] = nil -- Don't try to load it as a scene
 end
 
 local mapID = arg[1]
