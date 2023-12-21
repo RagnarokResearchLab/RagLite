@@ -331,23 +331,41 @@ function NativeClient:LoadSceneByID(globallyUniqueSceneID)
 end
 
 function NativeClient:LoadScenesOneByOne(delayInMilliseconds)
-	delayInMilliseconds = delayInMilliseconds or 1000 -- Should be long enough to load any scene fully?
-	local mapDB = require("DB.classic-maps")
+	delayInMilliseconds = delayInMilliseconds or 1
+	local mapDB = require("DB.Maps")
+	local gndFiles = self.grf:FindFilesByType("gnd")
+	local numAvailableGNDs = table.count(gndFiles)
+
+	local numMapsLoaded, numMapsSkipped = 0, 0
 
 	printf(
-		"Starting stress test (loading %d maps one by one) with a delay of %d ms",
-		table.count(mapDB),
+		"Starting stress test (loading at most %d maps one by one) with a delay of %d ms",
+		numAvailableGNDs,
 		delayInMilliseconds
 	)
-	local mapID, ticker
-	ticker = C_Timer.NewTicker(delayInMilliseconds, function()
-		mapID = next(mapDB, mapID)
 
-		if mapID then
-			self:LoadSceneByID(mapID)
-		else
-			print("Stress test finished! All maps were loaded once... hopefully successfully?")
+	local index, ticker, entry, mapID, mapInfo
+	ticker = C_Timer.NewTicker(delayInMilliseconds, function()
+		index, entry = next(gndFiles, index)
+		if not index then
+			printf(
+				"Stress test finished! A total of %d maps were loaded, while %d were skipped.",
+				numMapsLoaded,
+				numMapsSkipped
+			)
 			ticker:stop()
+			self:Stop()
+			return
+		end
+
+		mapID = path.basename(entry.name, ".gnd")
+		mapInfo = mapDB[mapID]
+		if mapInfo then
+			self:LoadSceneByID(mapID)
+			numMapsLoaded = numMapsLoaded + 1
+		else
+			printf("Skipping map %s since it wasn't found in %s", mapID, self.GRF_FILE_PATH)
+			numMapsSkipped = numMapsSkipped + 1
 		end
 	end)
 end

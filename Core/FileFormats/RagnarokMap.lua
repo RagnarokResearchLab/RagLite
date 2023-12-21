@@ -4,7 +4,7 @@ local RagnarokGRF = require("Core.FileFormats.RagnarokGRF")
 local table_insert = table.insert
 
 local RagnarokMap = {
-	MAP_DATABASE = require("DB.classic-maps"),
+	MAP_DATABASE = require("DB.Maps"),
 	ERROR_INVALID_MAP_ID = "No such entry exists in the map database",
 	ERROR_INVALID_FILE_SYSTEM = "Cannot fetch resources without a registered file system handler",
 }
