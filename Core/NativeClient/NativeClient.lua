@@ -333,21 +333,27 @@ end
 function NativeClient:LoadScenesOneByOne(delayInMilliseconds)
 	delayInMilliseconds = delayInMilliseconds or 1000 -- Should be long enough to load any scene fully?
 	local mapDB = require("DB.classic-maps")
-
+	local gndFiles = self.grf:FindFilesByType("gnd")
 	printf(
 		"Starting stress test (loading %d maps one by one) with a delay of %d ms",
 		table.count(mapDB),
 		delayInMilliseconds
 	)
-	local mapID, ticker
+	local index, ticker, entry, mapID, mapInfo
 	ticker = C_Timer.NewTicker(delayInMilliseconds, function()
-		mapID = next(mapDB, mapID)
-
-		if mapID then
-			self:LoadSceneByID(mapID)
-		else
+		index, entry = next(gndFiles, index)
+		if not index then
 			print("Stress test finished! All maps were loaded once... hopefully successfully?")
 			ticker:stop()
+			return
+		end
+
+		mapID = path.basename(entry.name, ".gnd")
+		mapInfo = mapDB[mapID]
+		if mapInfo then
+			self:LoadSceneByID(mapID)
+		else
+			printf("Skipping map %s since it wasn't found in %s", mapID, self.GRF_FILE_PATH)
 		end
 	end)
 end
