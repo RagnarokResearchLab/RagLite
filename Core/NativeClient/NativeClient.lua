@@ -332,7 +332,7 @@ end
 
 function NativeClient:LoadScenesOneByOne(delayInMilliseconds)
 	delayInMilliseconds = delayInMilliseconds or 1
-	local mapDB = require("DB.classic-maps")
+	local mapDB = require("DB.Maps")
 	local gndFiles = self.grf:FindFilesByType("gnd")
 	local numAvailableGNDs = table.count(gndFiles)
 
