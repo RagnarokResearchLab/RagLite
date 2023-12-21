@@ -331,7 +331,7 @@ function NativeClient:LoadSceneByID(globallyUniqueSceneID)
 end
 
 function NativeClient:LoadScenesOneByOne(delayInMilliseconds)
-	delayInMilliseconds = delayInMilliseconds or 1000 -- Should be long enough to load any scene fully?
+	delayInMilliseconds = delayInMilliseconds or 1
 	local mapDB = require("DB.classic-maps")
 	local gndFiles = self.grf:FindFilesByType("gnd")
 	printf(
