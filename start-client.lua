@@ -3,7 +3,7 @@ package.path = "?.lua"
 local NativeClient = require("Core.NativeClient.NativeClient")
 
 if arg[1] == "--etrace" then
-	local etrace = require("Core.RuntimeExtensions.etrace")
+	local etrace = require("etrace")
 	-- The Renderer (and WebGPU modules) have to be loaded prior to this so their events are registered
 	etrace.enable()
 
