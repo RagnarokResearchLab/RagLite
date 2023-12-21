@@ -26,6 +26,45 @@ return {
 	["06guild_r"] = {
 		displayName = "Guild Arena Waiting Room",
 	},
+	["1@20cn1"] = {
+		displayName = "1@20cn1",
+	},
+	["1@20cn2"] = {
+		displayName = "1@20cn2",
+	},
+	["1@4cdn"] = {
+		displayName = "1@4cdn",
+	},
+	["1@4drk"] = {
+		displayName = "1@4drk",
+	},
+	["1@4igd"] = {
+		displayName = "1@4igd",
+	},
+	["1@4inq"] = {
+		displayName = "1@4inq",
+	},
+	["1@4mag"] = {
+		displayName = "1@4mag",
+	},
+	["1@4mst"] = {
+		displayName = "1@4mst",
+	},
+	["1@4sac"] = {
+		displayName = "1@4sac",
+	},
+	["1@4tro"] = {
+		displayName = "1@4tro",
+	},
+	["1@4win"] = {
+		displayName = "1@4win",
+	},
+	["1@adv"] = {
+		displayName = "1@adv",
+	},
+	["1@advs"] = {
+		displayName = "1@advs",
+	},
 	["1@air1"] = {
 		displayName = "Airship",
 	},
@@ -35,6 +74,12 @@ return {
 	["1@ant01"] = {
 		displayName = "Ant Hell",
 	},
+	["1@bamn"] = {
+		displayName = "1@bamn",
+	},
+	["1@bamq"] = {
+		displayName = "1@bamq",
+	},
 	["1@begi"] = {
 		displayName = "Poring Town",
 	},
@@ -43,6 +88,12 @@ return {
 	},
 	["1@cata"] = {
 		displayName = "Sealed Shrine 1",
+	},
+	["1@ch_t"] = {
+		displayName = "1@ch_t",
+	},
+	["1@ch_u"] = {
+		displayName = "1@ch_u",
 	},
 	["1@cor"] = {
 		displayName = "Core Memorial",
@@ -58,6 +109,9 @@ return {
 	},
 	["1@def03"] = {
 		displayName = "Wave Dungeon - Lava",
+	},
+	["1@dime"] = {
+		displayName = "1@dime",
 	},
 	["1@drdo"] = {
 		displayName = "Legend of Dorado",
@@ -77,11 +131,32 @@ return {
 	["1@eom"] = {
 		displayName = "Shrine of Demon God",
 	},
+	["1@exds"] = {
+		displayName = "1@exds",
+	},
+	["1@exhn"] = {
+		displayName = "1@exhn",
+	},
+	["1@exnw"] = {
+		displayName = "1@exnw",
+	},
+	["1@exse"] = {
+		displayName = "1@exse",
+	},
+	["1@exsh"] = {
+		displayName = "1@exsh",
+	},
+	["1@exsr"] = {
+		displayName = "1@exsr",
+	},
 	["1@face"] = {
 		displayName = "Faceworm's Nest",
 	},
 	["1@ffp"] = {
 		displayName = "Remnant Hideout",
+	},
+	["1@ge_sn"] = {
+		displayName = "1@ge_sn",
 	},
 	["1@ge_st"] = {
 		displayName = "Geffen Magic Tournament",
@@ -92,8 +167,14 @@ return {
 	["1@gef_in"] = {
 		displayName = "Geffen Magic Tournament",
 	},
+	["1@ghg"] = {
+		displayName = "1@ghg",
+	},
 	["1@gl_he"] = {
 		displayName = "������ ����",
+	},
+	["1@gl_he2"] = {
+		displayName = "1@gl_he2",
 	},
 	["1@gl_k"] = {
 		displayName = "Old Glastheim Chivalry F2",
@@ -119,11 +200,26 @@ return {
 	["1@halo"] = {
 		displayName = "Halloween Festival Hall",
 	},
+	["1@herbs"] = {
+		displayName = "1@herbs",
+	},
+	["1@hgd1"] = {
+		displayName = "1@hgd1",
+	},
 	["1@infi"] = {
 		displayName = "Infinite Space",
 	},
+	["1@iwp"] = {
+		displayName = "1@iwp",
+	},
 	["1@izd02"] = {
 		displayName = "Undersea Tunnel B2",
+	},
+	["1@jorchs"] = {
+		displayName = "1@jorchs",
+	},
+	["1@jorlab"] = {
+		displayName = "1@jorlab",
 	},
 	["1@jtb"] = {
 		displayName = "Dream and Shadow",
@@ -133,6 +229,12 @@ return {
 	},
 	["1@lhz"] = {
 		displayName = "Lighthalzen Indoor",
+	},
+	["1@lost"] = {
+		displayName = "1@lost",
+	},
+	["1@lvcb"] = {
+		displayName = "1@lvcb",
 	},
 	["1@ma_b"] = {
 		displayName = "Bakonawa Hideout",
@@ -158,11 +260,23 @@ return {
 	["1@mist"] = {
 		displayName = "The Hazy Maze Forest",
 	},
+	["1@mjo1"] = {
+		displayName = "1@mjo1",
+	},
+	["1@mjo2"] = {
+		displayName = "1@mjo2",
+	},
 	["1@momo"] = {
 		displayName = "Momotaro Experience Hall",
 	},
 	["1@nyd"] = {
 		displayName = "Nidhoggur's Nest 1",
+	},
+	["1@nyr"] = {
+		displayName = "1@nyr",
+	},
+	["1@odin"] = {
+		displayName = "1@odin",
 	},
 	["1@orcs"] = {
 		displayName = "Subterranean Orc Cave 1",
@@ -172,6 +286,12 @@ return {
 	},
 	["1@os_b"] = {
 		displayName = "Sealed OS",
+	},
+	["1@oz"] = {
+		displayName = "1@oz",
+	},
+	["1@pdb"] = {
+		displayName = "1@pdb",
 	},
 	["1@pop1"] = {
 		displayName = "Pope's Office",
@@ -197,6 +317,9 @@ return {
 	["1@sewb2"] = {
 		displayName = "Sewer",
 	},
+	["1@slug"] = {
+		displayName = "1@slug",
+	},
 	["1@slw"] = {
 		displayName = "Central room of Werner Laboratory",
 	},
@@ -205,6 +328,9 @@ return {
 	},
 	["1@spa"] = {
 		displayName = "Ghost Palace",
+	},
+	["1@spa2"] = {
+		displayName = "1@spa2",
 	},
 	["1@sthb"] = {
 		displayName = "Air Fortress - Inside",
@@ -217,6 +343,12 @@ return {
 	},
 	["1@swat"] = {
 		displayName = "Heart Hunter Military Base",
+	},
+	["1@tcamp"] = {
+		displayName = "1@tcamp",
+	},
+	["1@thts"] = {
+		displayName = "1@thts",
 	},
 	["1@tnm1"] = {
 		displayName = "Demon's Tower - Upper floor",
@@ -236,8 +368,47 @@ return {
 	["1@tre02"] = {
 		displayName = "Sunken Ship",
 	},
+	["1@twas"] = {
+		displayName = "1@twas",
+	},
+	["1@twbs"] = {
+		displayName = "1@twbs",
+	},
+	["1@twig"] = {
+		displayName = "1@twig",
+	},
+	["1@twsd"] = {
+		displayName = "1@twsd",
+	},
 	["1@uns"] = {
 		displayName = "The Last room",
+	},
+	["1@vrac1"] = {
+		displayName = "1@vrac1",
+	},
+	["1@vrac2"] = {
+		displayName = "1@vrac2",
+	},
+	["1@vrcas"] = {
+		displayName = "1@vrcas",
+	},
+	["1@vrclo"] = {
+		displayName = "1@vrclo",
+	},
+	["1@vrev"] = {
+		displayName = "1@vrev",
+	},
+	["1@vrgen"] = {
+		displayName = "1@vrgen",
+	},
+	["1@vrhha"] = {
+		displayName = "1@vrhha",
+	},
+	["1@vrpo"] = {
+		displayName = "1@vrpo",
+	},
+	["1@whl"] = {
+		displayName = "1@whl",
 	},
 	["1@xm_d"] = {
 		displayName = "Horror Toy Factory",
@@ -281,6 +452,12 @@ return {
 	["2@cata"] = {
 		displayName = "Sealed Shrine 2",
 	},
+	["2@ch_t"] = {
+		displayName = "2@ch_t",
+	},
+	["2@exds"] = {
+		displayName = "2@exds",
+	},
 	["2@gl_k"] = {
 		displayName = "Old Glastheim Chivalry F1",
 	},
@@ -296,26 +473,56 @@ return {
 	["2@nyd"] = {
 		displayName = "Nidhoggur's Nest 2",
 	},
+	["2@nyr"] = {
+		displayName = "2@nyr",
+	},
 	["2@orcs"] = {
 		displayName = "Subterranean Orc Cave 2",
 	},
 	["2@pump"] = {
 		displayName = "Culvert",
 	},
+	["2@thts"] = {
+		displayName = "2@thts",
+	},
 	["2@tower"] = {
 		displayName = "Endless Tower F26-50",
+	},
+	["2@vrclo"] = {
+		displayName = "2@vrclo",
+	},
+	["3@ch_t"] = {
+		displayName = "3@ch_t",
+	},
+	["3@thts"] = {
+		displayName = "3@thts",
 	},
 	["3@tower"] = {
 		displayName = "Endless Tower F51-75",
 	},
+	["4@thts"] = {
+		displayName = "4@thts",
+	},
 	["4@tower"] = {
 		displayName = "Endless Tower F76-99",
+	},
+	["5@thts"] = {
+		displayName = "5@thts",
 	},
 	["5@tower"] = {
 		displayName = "Endless Tower F100",
 	},
+	["6@thts"] = {
+		displayName = "6@thts",
+	},
 	["6@tower"] = {
 		displayName = "Endless Tower Unknown Area",
+	},
+	["7@thts"] = {
+		displayName = "7@thts",
+	},
+	["8@thts"] = {
+		displayName = "8@thts",
 	},
 	abbey01 = {
 		displayName = "Cursed Abbey 1",
@@ -338,8 +545,14 @@ return {
 	abyss_04 = {
 		displayName = "Abyss Lakes Underground Cave area 4",
 	},
+	air_if = {
+		displayName = "air_if",
+	},
 	airplane = {
 		displayName = "Airship [Domestic]",
+	},
+	airplane2 = {
+		displayName = "airplane2",
 	},
 	airplane_01 = {
 		displayName = "Airship [International]",
@@ -382,6 +595,12 @@ return {
 	},
 	alde_gld = {
 		displayName = "Luina, the Satellite of Al De Baran",
+	},
+	alde_tt02 = {
+		displayName = "alde_tt02",
+	},
+	alde_tt03 = {
+		displayName = "alde_tt03",
 	},
 	aldeba_in = {
 		displayName = "Al De Baran [Inside]",
@@ -431,8 +650,23 @@ return {
 	amatsu = {
 		displayName = "Amatsu, the Land of Destiny",
 	},
+	amicit01 = {
+		displayName = "amicit01",
+	},
+	amicit02 = {
+		displayName = "amicit02",
+	},
+	amicitia1 = {
+		displayName = "amicitia1",
+	},
+	amicitia2 = {
+		displayName = "amicitia2",
+	},
 	anothership = {
 		displayName = "Another Ship",
+	},
+	ant_d02_i = {
+		displayName = "ant_d02_i",
 	},
 	anthell01 = {
 		displayName = "Ant Hell 1",
@@ -497,6 +731,42 @@ return {
 	ayothaya = {
 		displayName = "Ayothaya, the Tiger Village",
 	},
+	ba_2whs01 = {
+		displayName = "ba_2whs01",
+	},
+	ba_2whs02 = {
+		displayName = "ba_2whs02",
+	},
+	ba_bath = {
+		displayName = "ba_bath",
+	},
+	ba_chess = {
+		displayName = "ba_chess",
+	},
+	ba_go = {
+		displayName = "ba_go",
+	},
+	ba_in01 = {
+		displayName = "ba_in01",
+	},
+	ba_lib = {
+		displayName = "ba_lib",
+	},
+	ba_lost = {
+		displayName = "ba_lost",
+	},
+	ba_maison = {
+		displayName = "ba_maison",
+	},
+	ba_pw01 = {
+		displayName = "ba_pw01",
+	},
+	ba_pw02 = {
+		displayName = "ba_pw02",
+	},
+	ba_pw03 = {
+		displayName = "ba_pw03",
+	},
 	baby_para = {
 		displayName = "Playground",
 	},
@@ -538,6 +808,27 @@ return {
 	},
 	bif_fild02 = {
 		displayName = "Bifrost Bridge",
+	},
+	bl_death = {
+		displayName = "bl_death",
+	},
+	bl_grass = {
+		displayName = "bl_grass",
+	},
+	bl_ice = {
+		displayName = "bl_ice",
+	},
+	bl_lava = {
+		displayName = "bl_lava",
+	},
+	bl_soul = {
+		displayName = "bl_soul",
+	},
+	bl_temple = {
+		displayName = "bl_temple",
+	},
+	bl_venom = {
+		displayName = "bl_venom",
 	},
 	bossnia_01 = {
 		displayName = "Bossnia",
@@ -586,6 +877,9 @@ return {
 	},
 	cave = {
 		displayName = "Hidden Cave",
+	},
+	clock_01 = {
+		displayName = "clock_01",
 	},
 	cmd_fild01 = {
 		displayName = "Papuchicha Forest",
@@ -731,6 +1025,9 @@ return {
 	ein_dun02 = {
 		displayName = "Einbech Mine 2",
 	},
+	ein_dun03 = {
+		displayName = "ein_dun03",
+	},
 	ein_fild01 = {
 		displayName = "Einbroch Field 1",
 	},
@@ -778,6 +1075,9 @@ return {
 	},
 	evt_hello = {
 		displayName = "Dead Angel's landing",
+	},
+	evt_mobroom = {
+		displayName = "evt_mobroom",
 	},
 	evt_zombie = {
 		displayName = "Run from Zombies",
@@ -1067,6 +1367,9 @@ return {
 	gonryun = {
 		displayName = "Kunlun, the Hermit Land",
 	},
+	grademk = {
+		displayName = "grademk",
+	},
 	guild_room = {
 		displayName = "Guild Arena Lobby",
 	},
@@ -1154,6 +1457,12 @@ return {
 	guild_vs5 = {
 		displayName = "Guild Arena 5",
 	},
+	gw_fild01 = {
+		displayName = "gw_fild01",
+	},
+	gw_fild02 = {
+		displayName = "gw_fild02",
+	},
 	har_in01 = {
 		displayName = "Rockridge",
 	},
@@ -1162,6 +1471,51 @@ return {
 	},
 	harboro2 = {
 		displayName = "Underground Waterway",
+	},
+	hero_dun1 = {
+		displayName = "hero_dun1",
+	},
+	hero_ent1 = {
+		displayName = "hero_ent1",
+	},
+	hero_ent2 = {
+		displayName = "hero_ent2",
+	},
+	hero_ent3 = {
+		displayName = "hero_ent3",
+	},
+	hero_in1 = {
+		displayName = "hero_in1",
+	},
+	hero_in2 = {
+		displayName = "hero_in2",
+	},
+	hero_in3 = {
+		displayName = "hero_in3",
+	},
+	hero_in4 = {
+		displayName = "hero_in4",
+	},
+	hero_lb = {
+		displayName = "hero_lb",
+	},
+	hero_out1 = {
+		displayName = "hero_out1",
+	},
+	hero_out2 = {
+		displayName = "hero_out2",
+	},
+	hero_out3 = {
+		displayName = "hero_out3",
+	},
+	hero_out4 = {
+		displayName = "hero_out4",
+	},
+	hero_tra = {
+		displayName = "hero_tra",
+	},
+	herosria = {
+		displayName = "herosria",
 	},
 	himinn = {
 		displayName = "Valkyrie Hall",
@@ -1208,6 +1562,12 @@ return {
 	["hunter_3-1"] = {
 		displayName = "Hunter Guild",
 	},
+	icas_in = {
+		displayName = "icas_in",
+	},
+	icas_in2 = {
+		displayName = "icas_in2",
+	},
 	ice_d03_i = {
 		displayName = "Frozen Memory",
 	},
@@ -1222,6 +1582,9 @@ return {
 	},
 	ice_dun04 = {
 		displayName = "Ice Cave 4",
+	},
+	icecastle = {
+		displayName = "icecastle",
 	},
 	in_hunter = {
 		displayName = "Hunter Guild",
@@ -1297,6 +1660,12 @@ return {
 	},
 	iz_ac02_d = {
 		displayName = "Criatura Academy F2",
+	},
+	iz_d04_i = {
+		displayName = "iz_d04_i",
+	},
+	iz_d05_i = {
+		displayName = "iz_d05_i",
 	},
 	iz_dun00 = {
 		displayName = "Undersea Tunnel 1",
@@ -1403,11 +1772,23 @@ return {
 	job3_rune03 = {
 		displayName = "Test room for Rune Knight Job Change",
 	},
+	job3_sha01 = {
+		displayName = "job3_sha01",
+	},
 	job3_war01 = {
 		displayName = "Test room for Warlock Job Change",
 	},
 	job3_war02 = {
 		displayName = "Test room for Warlock Job Change",
+	},
+	job4_bio = {
+		displayName = "job4_bio",
+	},
+	job4_mag = {
+		displayName = "job4_mag",
+	},
+	job4_tro = {
+		displayName = "job4_tro",
 	},
 	job_cru = {
 		displayName = "Crusader Realm",
@@ -1462,6 +1843,75 @@ return {
 	},
 	job_wizard = {
 		displayName = "Wizard Academy",
+	},
+	jor_ab01 = {
+		displayName = "jor_ab01",
+	},
+	jor_ab02 = {
+		displayName = "jor_ab02",
+	},
+	jor_back1 = {
+		displayName = "jor_back1",
+	},
+	jor_back2 = {
+		displayName = "jor_back2",
+	},
+	jor_back3 = {
+		displayName = "jor_back3",
+	},
+	jor_back4 = {
+		displayName = "jor_back4",
+	},
+	jor_back5 = {
+		displayName = "jor_back5",
+	},
+	jor_back6 = {
+		displayName = "jor_back6",
+	},
+	jor_dun01 = {
+		displayName = "jor_dun01",
+	},
+	jor_dun02 = {
+		displayName = "jor_dun02",
+	},
+	jor_dun03 = {
+		displayName = "jor_dun03",
+	},
+	jor_maze = {
+		displayName = "jor_maze",
+	},
+	jor_nest = {
+		displayName = "jor_nest",
+	},
+	jor_que = {
+		displayName = "jor_que",
+	},
+	jor_root1 = {
+		displayName = "jor_root1",
+	},
+	jor_root2 = {
+		displayName = "jor_root2",
+	},
+	jor_root3 = {
+		displayName = "jor_root3",
+	},
+	jor_safty1 = {
+		displayName = "jor_safty1",
+	},
+	jor_safty2 = {
+		displayName = "jor_safty2",
+	},
+	jor_sanct = {
+		displayName = "jor_sanct",
+	},
+	jor_tail = {
+		displayName = "jor_tail",
+	},
+	jor_twice = {
+		displayName = "jor_twice",
+	},
+	jor_twig = {
+		displayName = "jor_twig",
 	},
 	jp_castle = {
 		displayName = "Halloween Castle",
@@ -1739,6 +2189,9 @@ return {
 	manuk = {
 		displayName = "Manuk, the City of Ice",
 	},
+	memohall = {
+		displayName = "memohall",
+	},
 	mid_camp = {
 		displayName = "Rune Midgard Allied Forces Post",
 	},
@@ -1754,6 +2207,9 @@ return {
 	mjo_dun03 = {
 		displayName = "Mjolnir Dead Pit 3",
 	},
+	mjo_wst01 = {
+		displayName = "mjo_wst01",
+	},
 	mjolnir_01 = {
 		displayName = "Mt.Mjolnir 1",
 	},
@@ -1765,6 +2221,9 @@ return {
 	},
 	mjolnir_04 = {
 		displayName = "Mt.Mjolnir 4",
+	},
+	mjolnir_04_1 = {
+		displayName = "mjolnir_04_1",
 	},
 	mjolnir_05 = {
 		displayName = "Mt.Mjolnir 5",
@@ -1973,6 +2432,12 @@ return {
 	mosk_ship = {
 		displayName = "Charabel",
 	},
+	n_castle = {
+		displayName = "n_castle",
+	},
+	nakhyang = {
+		displayName = "nakhyang",
+	},
 	nameless_i = {
 		displayName = "Nameless Island [Day]",
 	},
@@ -2042,6 +2507,9 @@ return {
 	["new_5-4"] = {
 		displayName = "Training Ground",
 	},
+	new_event = {
+		displayName = "new_event",
+	},
 	new_zone01 = {
 		displayName = "Training Ground",
 	},
@@ -2054,6 +2522,12 @@ return {
 	new_zone04 = {
 		displayName = "Training Ground",
 	},
+	nif_dun01 = {
+		displayName = "nif_dun01",
+	},
+	nif_dun02 = {
+		displayName = "nif_dun02",
+	},
 	nif_fild01 = {
 		displayName = "Skellington",
 	},
@@ -2065,6 +2539,9 @@ return {
 	},
 	niflheim = {
 		displayName = "Niflheim, Realm of the Dead",
+	},
+	niflxmas = {
+		displayName = "niflxmas",
 	},
 	nyd_dun01 = {
 		displayName = "Yggdrasil Root 1",
@@ -2140,6 +2617,12 @@ return {
 	},
 	ordeal_a02 = {
 		displayName = "Battle Ordeal Mode",
+	},
+	oz_dun01 = {
+		displayName = "oz_dun01",
+	},
+	oz_dun02 = {
+		displayName = "oz_dun02",
 	},
 	p_track01 = {
 		displayName = "Monster Race Room 1",
@@ -2249,6 +2732,9 @@ return {
 	poring_w02 = {
 		displayName = "Poring War [Arena]",
 	},
+	pprontera = {
+		displayName = "pprontera",
+	},
 	["priest_1-1"] = {
 		displayName = "The Sanctum",
 	},
@@ -2305,6 +2791,9 @@ return {
 	},
 	prt_dugn01 = {
 		displayName = "Prontera Dungeon",
+	},
+	prt_elib = {
+		displayName = "prt_elib",
 	},
 	prt_evt_in = {
 		displayName = "Hunting Lodge",
@@ -2807,6 +3296,9 @@ return {
 	que_thor = {
 		displayName = "Thor Volcano Dungeon",
 	},
+	que_thr = {
+		displayName = "que_thr",
+	},
 	quiz_00 = {
 		displayName = "Quiz Revolution",
 	},
@@ -2861,6 +3353,9 @@ return {
 	ra_in01 = {
 		displayName = "Rachel [Inside]",
 	},
+	ra_pol01 = {
+		displayName = "ra_pol01",
+	},
 	ra_san01 = {
 		displayName = "Holy Ground 1",
 	},
@@ -2887,6 +3382,12 @@ return {
 	},
 	rachel = {
 		displayName = "Rachel, Capital of the Arunafeltz States",
+	},
+	rag_fes = {
+		displayName = "rag_fes",
+	},
+	rag_fes_a = {
+		displayName = "rag_fes_a",
 	},
 	rebel_in = {
 		displayName = "Clana Nemieri",
@@ -2960,6 +3461,9 @@ return {
 	sec_pri = {
 		displayName = "Jail",
 	},
+	siege_test = {
+		displayName = "siege_test",
+	},
 	silk_lair = {
 		displayName = "Python's Lair",
 	},
@@ -2980,6 +3484,9 @@ return {
 	},
 	sp_rudus3 = {
 		displayName = "Rudus, Experiment Waste Disposal F3",
+	},
+	sp_rudus4 = {
+		displayName = "sp_rudus4",
 	},
 	spl_fild01 = {
 		displayName = "Splendide Field 1",
@@ -3037,6 +3544,21 @@ return {
 	},
 	te_aldecas05 = {
 		displayName = "W Castle",
+	},
+	te_aldecas1 = {
+		displayName = "te_aldecas1",
+	},
+	te_aldecas2 = {
+		displayName = "te_aldecas2",
+	},
+	te_aldecas3 = {
+		displayName = "te_aldecas3",
+	},
+	te_aldecas4 = {
+		displayName = "te_aldecas4",
+	},
+	te_aldecas5 = {
+		displayName = "te_aldecas5",
 	},
 	te_prt_gld = {
 		displayName = "Gloria",
@@ -3106,6 +3628,9 @@ return {
 	},
 	thana_boss = {
 		displayName = "Thanatos Tower [Unknown Area]",
+	},
+	thana_scene01 = {
+		displayName = "thana_scene01",
 	},
 	thana_step = {
 		displayName = "Thanatos Tower [Stairwell]",
@@ -3278,6 +3803,9 @@ return {
 	tower_d9 = {
 		displayName = "Tower D9",
 	},
+	tra_fild = {
+		displayName = "tra_fild",
+	},
 	treasure01 = {
 		displayName = "Sunken Ship 1",
 	},
@@ -3295,6 +3823,12 @@ return {
 	},
 	tur_d04_i = {
 		displayName = "Bleak Turtle Palace",
+	},
+	tur_d04ia = {
+		displayName = "tur_d04ia",
+	},
+	tur_d04ib = {
+		displayName = "tur_d04ib",
 	},
 	tur_dun01 = {
 		displayName = "Turtle Island 1 [Surface]",
@@ -3416,6 +3950,12 @@ return {
 	verus02 = {
 		displayName = "Research Building-WISH",
 	},
+	verus02_a = {
+		displayName = "verus02_a",
+	},
+	verus02_b = {
+		displayName = "verus02_b",
+	},
 	verus03 = {
 		displayName = "Verus - Central Plaza",
 	},
@@ -3434,6 +3974,9 @@ return {
 	vis_h04 = {
 		displayName = "Welcome Corridor F4",
 	},
+	vr_bob = {
+		displayName = "vr_bob",
+	},
 	["wizard_1-1"] = {
 		displayName = "Wizard Academy",
 	},
@@ -3442,6 +3985,9 @@ return {
 	},
 	["wizard_3-1"] = {
 		displayName = "Wizard Academy",
+	},
+	wolfvill = {
+		displayName = "wolfvill",
 	},
 	x_lhz = {
 		displayName = "Lighthalzen - Beyond dimension",
