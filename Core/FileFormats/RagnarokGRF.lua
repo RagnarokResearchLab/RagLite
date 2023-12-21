@@ -178,7 +178,8 @@ end
 function RagnarokGRF:DecodeFileName(input)
 	-- This should likely be moved since it won't happen at decoding time, only on demand (in other decoders)
 	if type(input) == "string" then
-		local unicodeFilePath = iconv.convert(input, "CP949", "UTF-8")
+		local unicodeFilePath, err = iconv.convert(input, "CP949", "UTF-8")
+		assert(unicodeFilePath, err)
 		return self:GetNormalizedFilePath(unicodeFilePath)
 	end
 
