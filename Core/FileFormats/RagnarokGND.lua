@@ -257,6 +257,7 @@ function RagnarokGND:GenerateGroundMeshSections()
 	for gridV = 1, self.gridSizeV do
 		for gridU = 1, self.gridSizeU do
 			local cubeID = self:GridPositionToCubeID(gridU, gridV)
+			assert(cubeID < self.gridSizeU * self.gridSizeV)
 			local cube = self.cubeGrid[cubeID]
 
 			-- Walls can't be raised if there's no adjacent cube to connect the surface to
@@ -408,6 +409,7 @@ function RagnarokGND:GenerateGroundVertices(gridU, gridV)
 
 	assert(cubeID ~= nil, format("Failed to generate GROUND surface at (%d, %d)", gridU, gridV))
 
+	assert(cubeID < self.gridSizeU * self.gridSizeV)
 	local cube = self.cubeGrid[cubeID]
 
 	local bottomLeftCorner = {}
@@ -437,6 +439,8 @@ end
 function RagnarokGND:GenerateWallVerticesNorth(gridU, gridV)
 	local cubeID = self:GridPositionToCubeID(gridU, gridV)
 	local adjacentCubeNorthID = self:GridPositionToCubeID(gridU, gridV + 1)
+	assert(cubeID < self.gridSizeU * self.gridSizeV)
+	assert(adjacentCubeNorthID < self.gridSizeU * self.gridSizeV)
 
 	assert(cubeID ~= nil, format("Failed to generate EAST surface at (%d, %d)", gridU, gridV))
 	assert(adjacentCubeNorthID ~= nil, format("Failed to generate EAST surface at (%d, %d)", gridU, gridV))
@@ -475,6 +479,9 @@ function RagnarokGND:GenerateWallVerticesEast(gridU, gridV)
 	assert(cubeID ~= nil, format("Failed to generate EAST surface at (%d, %d)", gridU, gridV))
 	assert(adjacentCubeEastID ~= nil, format("Failed to generate EAST surface at (%d, %d)", gridU, gridV))
 
+	assert(cubeID < self.gridSizeU * self.gridSizeV)
+	assert(adjacentCubeEastID < self.gridSizeU * self.gridSizeV)
+
 	local cube = self.cubeGrid[cubeID]
 	local adjacentCubeEast = self.cubeGrid[adjacentCubeEastID]
 
@@ -509,12 +516,14 @@ function RagnarokGND:PickVertexColor(gridU, gridV)
 		return RagnarokGND.FALLBACK_VERTEX_COLOR
 	end
 
+	assert(cubeID < self.gridSizeU * self.gridSizeV)
 	local cube = self.cubeGrid[cubeID]
 	if cube.top_surface_id == -1 then
 		-- No GROUND surface to copy from
 		return RagnarokGND.FALLBACK_VERTEX_COLOR
 	end
 
+	assert(cube.top_surface_id <= self.texturedSurfaceCount)
 	local surface = self.texturedSurfaces[cube.top_surface_id]
 	return {
 		red = surface.bottom_left_color.red,
