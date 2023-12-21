@@ -345,6 +345,7 @@ function NativeClient:LoadScenesOneByOne(delayInMilliseconds)
 		if not index then
 			print("Stress test finished! All maps were loaded once... hopefully successfully?")
 			ticker:stop()
+			self:Stop()
 			return
 		end
 
