@@ -1,4 +1,4 @@
-local etrace = require("Core.RuntimeExtensions.etrace")
+local etrace = require("etrace")
 local ffi = require("ffi")
 
 local Plane = require("Core.NativeClient.DebugDraw.Plane")

@@ -1,4 +1,4 @@
-local etrace = require("Core.RuntimeExtensions.etrace")
+local etrace = require("etrace")
 local ffi = require("ffi")
 local webgpu = require("webgpu")
 
@@ -21,7 +21,7 @@ local VirtualGPU = {
 			return ffi.new("WGPUQueue")
 		end,
 		wgpu_queue_write_texture = function(queue, destination, data, dataSize, dataLayout, writeSize)
-			etrace.create("GPU_TEXTURE_WRITE", {
+			etrace.record("GPU_TEXTURE_WRITE", {
 				destination = destination,
 				data = data,
 				dataSize = dataSize,
@@ -30,13 +30,13 @@ local VirtualGPU = {
 			})
 		end,
 		wgpu_device_create_buffer = function(device, descriptor)
-			etrace.create("GPU_BUFFER_CREATE", {
+			etrace.record("GPU_BUFFER_CREATE", {
 				device = device,
 				descriptor = descriptor,
 			})
 		end,
 		wgpu_queue_write_buffer = function(queue, buffer, bufferOffset, data, size)
-			etrace.create("GPU_BUFFER_WRITE", {
+			etrace.record("GPU_BUFFER_WRITE", {
 				queue = queue,
 				buffer = buffer,
 				bufferOffset = bufferOffset,
@@ -45,7 +45,7 @@ local VirtualGPU = {
 			})
 		end,
 		wgpu_buffer_destroy = function(buffer)
-			etrace.create("GPU_BUFFER_DESTROY", {
+			etrace.record("GPU_BUFFER_DESTROY", {
 				buffer = buffer,
 			})
 		end,

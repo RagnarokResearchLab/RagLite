@@ -1,4 +1,4 @@
-local etrace = require("Core.RuntimeExtensions.etrace")
+local etrace = require("etrace")
 
 local bit = require("bit")
 local ffi = require("ffi")
