@@ -95,9 +95,9 @@ If all you're seeing is the "hello world" fallback scene, then the map wasn't fo
 
 The following controls have been implemented so far:
 
-* Right-click and drag: Adjust camera rotation (horizontal)
-* SHIFT + right-click and drag: Adjust camera rotation (vertical)
-* Double-right-click: Instantly reset camera rotation
+* Hold right-click and drag: Adjust camera rotation (horizontal)
+* SHIFT + mouse wheel (scrolling): Adjust camera rotation (vertical)
+* Double-right-click: Instantly reset camera rotation (horizontal *and* vertical)
 * Mouse wheel (scrolling): Adjust zoom level
 * SHIFT + Arrow keys: Move the camera position (by a fixed amount) in the given direction
 
