@@ -26,6 +26,7 @@ struct VertexOutput {
 };
 
 const MATH_PI = 3.14159266;
+const DEBUG_ALPHA_OFFSET = 0.0; // Set to non-zero value (e.g., 0.2) to make transparent background pixels visible
 
 fn deg2rad(angleInDegrees: f32) -> f32 {
     return angleInDegrees * MATH_PI / 180.0;
@@ -106,5 +107,5 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4f {
     // When setting the surface format to BGRA8UnormSrgb it performs a linear to sRGB conversion.
     // Gamma-correction
     let corrected_color = pow(finalColor.rgb, vec3f(2.2));
-    return vec4f(corrected_color, uPerSceneData.color.a);
+    return vec4f(corrected_color, uPerSceneData.color.a * diffuseTextureColor.a + DEBUG_ALPHA_OFFSET);
 }
