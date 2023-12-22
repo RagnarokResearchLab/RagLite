@@ -26,12 +26,6 @@ function Vector3D.__tostring(self)
 	return format("%s\n%s", transform_bold("cdata<Vector3D>:"), firstRow)
 end
 
-Vector3D.__call = function(_, x, y, z)
-	local vector = ffi_new("Vector3D")
-	vector.x, vector.y, vector.z = x or 0, y or 0, z or 0
-	return vector
-end
-
 function Vector3D:Add(anotherVector)
 	local result = ffi_new("Vector3D")
 	result.x = self.x + anotherVector.x
