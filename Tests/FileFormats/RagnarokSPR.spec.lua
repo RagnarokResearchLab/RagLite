@@ -1,3 +1,4 @@
+local ffi = require("ffi")
 local miniz = require("miniz")
 
 local RagnarokSPR = require("Core.FileFormats.RagnarokSPR")
@@ -202,7 +203,35 @@ describe("RagnarokSPR", function()
 			local palette = RagnarokSPR:GetEmbeddedColorPalette(TGA_SPR_WITH_RLE)
 			local rgbaPixelBuffer = RagnarokSPR:ApplyColorPalette(indexedColorImageData, palette)
 
-			assertEquals(tostring(rgbaPixelBuffer), "\9\8\7\6\66\66\66\66")
+			assertEquals(tostring(rgbaPixelBuffer), "\9\8\7\000\66\66\66\255") -- Alpha was overwritten (intended)
+		end)
+
+		it("should set the alpha values so that only background pixels are invisible", function()
+			local indexedColorImageData = buffer.new(2):put("\0\1")
+			local palette = ffi.new("spr_palette_t")
+			palette.colors[0].red = 65
+			palette.colors[0].green = 66
+			palette.colors[0].blue = 67
+			palette.colors[0].alpha = 254
+
+			palette.colors[1].red = 68
+			palette.colors[1].green = 69
+			palette.colors[1].blue = 70
+			palette.colors[1].alpha = 253
+
+			local rgbaPixelBuffer = RagnarokSPR:ApplyColorPalette(indexedColorImageData, palette)
+
+			assertEquals(palette.colors[0].red, 65)
+			assertEquals(palette.colors[0].green, 66)
+			assertEquals(palette.colors[0].blue, 67)
+			assertEquals(palette.colors[0].alpha, 0)
+
+			assertEquals(palette.colors[1].red, 68)
+			assertEquals(palette.colors[1].green, 69)
+			assertEquals(palette.colors[1].blue, 70)
+			assertEquals(palette.colors[1].alpha, 255)
+
+			assertEquals(tostring(rgbaPixelBuffer), "\065\066\067\000\068\069\070\255")
 		end)
 	end)
 end)
