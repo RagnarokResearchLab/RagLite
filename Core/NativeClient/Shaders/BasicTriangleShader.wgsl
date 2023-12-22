@@ -98,7 +98,6 @@ fn vs_main(in: VertexInput) -> VertexOutput {
 
 @fragment
 fn fs_main(in: VertexOutput) -> @location(0) vec4f {
-    // Hardcoded for now (need to update the pipeline in order to pass uvs in)
     let textureCoords = in.diffuseTextureCoords;
     let diffuseTextureColor = textureSample(diffuseTexture, diffuseTextureSampler, textureCoords);
     let finalColor = in.color * diffuseTextureColor.rgb * uPerSceneData.color.rgb;
