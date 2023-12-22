@@ -16,7 +16,7 @@ ffi.cdef([[
 
 local Vector3D = {}
 
-function Vector3D.__tostring(self)
+function Vector3D:__tostring()
 	local formatted = {
 		x = format("%.3f", self.x),
 		y = format("%.3f", self.y),

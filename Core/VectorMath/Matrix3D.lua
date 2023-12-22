@@ -23,7 +23,7 @@ ffi.cdef([[
 
 local Matrix3D = {}
 
-function Matrix3D.__tostring(self)
+function Matrix3D:__tostring()
 	local formatted = {
 		x1 = format("%.3f", self.x1),
 		x2 = format("%.3f", self.x2),
