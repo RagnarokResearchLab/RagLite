@@ -114,6 +114,11 @@ function RagnarokSPR:ApplyColorPalette(indexedColorImageBytes, palette)
 	for byteIndex = 0, #indexedColorImageBytes - 1, 1 do
 		local paletteIndex = tonumber(paletteIndices[byteIndex])
 		local paletteColor = palette.colors[tonumber(paletteIndex)]
+		if paletteIndex == 0 then
+			paletteColor.alpha = 0 -- Should already be zero, but you never know...
+		else
+			paletteColor.alpha = 255 -- BMP alpha is not supported (except for the background color)
+		end
 		rgbaImageBytes:putcdata(paletteColor, ffi_sizeof(paletteColor))
 	end
 
