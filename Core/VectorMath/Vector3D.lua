@@ -16,7 +16,7 @@ ffi.cdef([[
 
 local Vector3D = {}
 
-function Vector3D.__tostring(self)
+function Vector3D:__tostring()
 	local formatted = {
 		x = format("%.3f", self.x),
 		y = format("%.3f", self.y),
@@ -24,12 +24,6 @@ function Vector3D.__tostring(self)
 	}
 	local firstRow = format("%10s %10s %10s", formatted.x, formatted.y, formatted.z)
 	return format("%s\n%s", transform_bold("cdata<Vector3D>:"), firstRow)
-end
-
-Vector3D.__call = function(_, x, y, z)
-	local vector = ffi_new("Vector3D")
-	vector.x, vector.y, vector.z = x or 0, y or 0, z or 0
-	return vector
 end
 
 function Vector3D:Add(anotherVector)
