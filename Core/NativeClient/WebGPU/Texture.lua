@@ -6,7 +6,8 @@ local ffi = require("ffi")
 local transform = require("transform")
 local webgpu = require("webgpu")
 
-local ffi_cast = ffi.cast
+local cast = ffi.cast
+local new = ffi.new
 local math_floor = math.floor
 
 local Texture = {
@@ -43,59 +44,65 @@ function Texture:Construct(wgpuDevice, rgbaImageBytes, textureWidthInPixels, tex
 		print(transform.yellow("WARNING: " .. Texture.ERROR_DIMENSIONS_NOT_POWER_OF_TWO))
 	end
 
-	local textureDescriptor = ffi.new("WGPUTextureDescriptor")
-	textureDescriptor.dimension = ffi.C.WGPUTextureDimension_2D
-	textureDescriptor.size = { textureWidthInPixels, textureHeightInPixels, 1 }
-	textureDescriptor.mipLevelCount = 1 -- No need for mip-maps (deferred)
-	textureDescriptor.sampleCount = 1 -- MSAA isn't currently supported)
-	textureDescriptor.format = ffi.C.WGPUTextureFormat_RGBA8Unorm -- TBD: WGPUTextureFormat_BGRA8UnormSrgb ?
-	textureDescriptor.usage = bit.bor(ffi.C.WGPUTextureUsage_CopyDst, ffi.C.WGPUTextureUsage_TextureBinding)
-
-	textureDescriptor.viewFormatCount = 0 -- No texture view (for now)
+	local textureDescriptor = new("WGPUTextureDescriptor", {
+		dimension = ffi.C.WGPUTextureDimension_2D,
+		size = {
+			width = textureWidthInPixels,
+			height = textureHeightInPixels,
+			depthOrArrayLayers = 1,
+		},
+		mipLevelCount = 1, -- No need for mip-maps (deferred)
+		sampleCount = 1, -- MSAA isn't currently supported)
+		format = ffi.C.WGPUTextureFormat_RGBA8Unorm, -- TBD: WGPUTextureFormat_BGRA8UnormSrgb ?
+		usage = bit.bor(ffi.C.WGPUTextureUsage_CopyDst, ffi.C.WGPUTextureUsage_TextureBinding),
+		viewFormatCount = 0, -- No texture view (for now)
+	})
 
 	local textureHandle = webgpu.bindings.wgpu_device_create_texture(wgpuDevice, textureDescriptor)
 
 	-- Create readonly view that should be accessed by a sampler
-	local textureViewDescriptor = ffi.new("WGPUTextureViewDescriptor")
-	textureViewDescriptor.aspect = ffi.C.WGPUTextureAspect_All
-	textureViewDescriptor.baseArrayLayer = 0
-	textureViewDescriptor.arrayLayerCount = 1
-	textureViewDescriptor.baseMipLevel = 0
-	textureViewDescriptor.mipLevelCount = 1
-	textureViewDescriptor.dimension = ffi.C.WGPUTextureViewDimension_2D
-	textureViewDescriptor.format = textureDescriptor.format
+	local textureViewDescriptor = new("WGPUTextureViewDescriptor", {
+		aspect = ffi.C.WGPUTextureAspect_All,
+		baseArrayLayer = 0,
+		arrayLayerCount = 1,
+		baseMipLevel = 0,
+		mipLevelCount = 1,
+		dimension = ffi.C.WGPUTextureViewDimension_2D,
+		format = textureDescriptor.format,
+	})
 	local textureView = webgpu.bindings.wgpu_texture_create_view(textureHandle, textureViewDescriptor)
 
 	-- Creating one sampler per texture is wasteful, but gives the most flexibility (revisit later, if needed)
-	local samplerDescriptor = ffi.new("WGPUSamplerDescriptor")
-	samplerDescriptor.label = "SharedTextureSampler"
-	samplerDescriptor.addressModeU = ffi.C.WGPUAddressMode_ClampToEdge
-	samplerDescriptor.addressModeV = ffi.C.WGPUAddressMode_ClampToEdge
-	samplerDescriptor.addressModeW = ffi.C.WGPUAddressMode_ClampToEdge
-	samplerDescriptor.magFilter = ffi.C.WGPUFilterMode_Linear
-	samplerDescriptor.minFilter = ffi.C.WGPUFilterMode_Linear
-	samplerDescriptor.mipmapFilter = ffi.C.WGPUFilterMode_Linear
-	samplerDescriptor.lodMinClamp = 0.0
-	samplerDescriptor.lodMaxClamp = math.huge
-	samplerDescriptor.compare = ffi.C.WGPUCompareFunction_Undefined -- Irrelevant (not a depth texture)
-	samplerDescriptor.maxAnisotropy = 1 -- Might want to use clamped addressing with anisotropic filtering here?
+	local samplerDescriptor = new("WGPUSamplerDescriptor", {
+		label = "SharedTextureSampler",
+		addressModeU = ffi.C.WGPUAddressMode_ClampToEdge,
+		addressModeV = ffi.C.WGPUAddressMode_ClampToEdge,
+		addressModeW = ffi.C.WGPUAddressMode_ClampToEdge,
+		magFilter = ffi.C.WGPUFilterMode_Linear,
+		minFilter = ffi.C.WGPUFilterMode_Linear,
+		mipmapFilter = ffi.C.WGPUFilterMode_Linear,
+		lodMinClamp = 0.0,
+		lodMaxClamp = math.huge,
+		compare = ffi.C.WGPUCompareFunction_Undefined, -- Irrelevant (not a depth texture)
+		maxAnisotropy = 1, -- Might want to use clamped addressing with anisotropic filtering here?
+	})
 	local textureSampler = webgpu.bindings.wgpu_device_create_sampler(wgpuDevice, samplerDescriptor)
 
 	-- Assign texture view and sampler so that they can be bound to the pipeline (in the render loop)
-	local textureViewBindGroupEntry = ffi.new("WGPUBindGroupEntry")
-	textureViewBindGroupEntry.binding = 0
-	textureViewBindGroupEntry.textureView = textureView
 
-	local samplerBindGroupEntry = ffi.new("WGPUBindGroupEntry")
-	samplerBindGroupEntry.binding = 1
-	samplerBindGroupEntry.sampler = textureSampler
-
-	local bindGroupEntries = ffi.new("WGPUBindGroupEntry[?]", 2)
-	bindGroupEntries[0] = textureViewBindGroupEntry
-	bindGroupEntries[1] = samplerBindGroupEntry
+	local bindGroupEntries = new("WGPUBindGroupEntry[?]", 2, {
+		new("WGPUBindGroupEntry", {
+			binding = 0,
+			textureView = textureView,
+		}),
+		new("WGPUBindGroupEntry", {
+			binding = 1,
+			sampler = textureSampler,
+		}),
+	})
 
 	-- Depending on the pipeline to be initialized here is unfortunate, but I guess there's no other way?
-	local textureBindGroupDescriptor = ffi.new("WGPUBindGroupDescriptor")
+	local textureBindGroupDescriptor = new("WGPUBindGroupDescriptor")
 	textureBindGroupDescriptor.layout = BasicTriangleDrawingPipeline.wgpuMaterialBindGroupLayout
 
 	local wgpuMaterialBindGroupLayoutDescriptor = BasicTriangleDrawingPipeline.wgpuMaterialBindGroupLayoutDescriptor
@@ -129,17 +136,18 @@ function Texture:CopyImageBytesToGPU()
 	local textureBufferSize = self.width * self.height * 4 -- Assuming RGBA
 	printf("Uploading 2D texture: %d x %d (%s)", self.width, self.height, string.filesize(textureBufferSize))
 
-	local destination = ffi.new("WGPUImageCopyTexture")
-	destination.texture = self.wgpuTexture
-	destination.mipLevel = 0 -- Should update all mip levels automatically here (later)
-	destination.origin = { 0, 0, 0 } -- No offsets needed as this isn't an atlas/subresource
-	destination.aspect = ffi.C.WGPUTextureAspect_All -- Irrelevant (not a depth/stencil texture)
+	local destination = new("WGPUImageCopyTexture", {
+		texture = self.wgpuTexture,
+		mipLevel = 0, -- Should update all mip levels automatically here (later)
+		origin = { 0, 0, 0 }, -- No offsets needed as this isn't an atlas/subresource
+		aspect = ffi.C.WGPUTextureAspect_All, -- Irrelevant (not a depth/stencil texture)
+	})
 
-	local source = ffi.new("WGPUTextureDataLayout")
-	source.offset = 0 -- Read everything from the start (no fancy optimizations here...)
-	source.bytesPerRow = 4 * self.width -- Might be different for textures loaded from disk?
-
-	source.rowsPerImage = self.height
+	local source = new("WGPUTextureDataLayout", {
+		offset = 0, -- Read everything from the start (no fancy optimizations here...)
+		bytesPerRow = 4 * self.width, -- Might be different for textures loaded from disk?
+		rowsPerImage = self.height,
+	})
 
 	webgpu.bindings.wgpu_queue_write_texture(
 		webgpu.bindings.wgpu_device_get_queue(self.wgpuDevice),
@@ -163,16 +171,16 @@ function Texture:GenerateSimpleGradientImage(textureWidthInPixels, textureHeight
 	assertDimensionsAreWithinLimits(textureWidthInPixels, textureHeightInPixels)
 
 	local pixelCount = textureWidthInPixels * textureHeightInPixels
-	local pixels = ffi.new("uint8_t[?]", 4 * pixelCount)
+	local pixels = new("uint8_t[?]", 4 * pixelCount)
 
 	for u = 0, textureWidthInPixels - 1 do
 		for v = 0, textureHeightInPixels - 1 do
 			local index = 4 * (v * textureWidthInPixels + u)
 
-			pixels[index + RGBA_OFFSET_RED] = ffi_cast("uint8_t", u)
-			pixels[index + RGBA_OFFSET_GREEN] = ffi_cast("uint8_t", v)
-			pixels[index + RGBA_OFFSET_BLUE] = ffi_cast("uint8_t", 128)
-			pixels[index + RGBA_OFFSET_ALPHA] = ffi_cast("uint8_t", 255)
+			pixels[index + RGBA_OFFSET_RED] = cast("uint8_t", u)
+			pixels[index + RGBA_OFFSET_GREEN] = cast("uint8_t", v)
+			pixels[index + RGBA_OFFSET_BLUE] = cast("uint8_t", 128)
+			pixels[index + RGBA_OFFSET_ALPHA] = cast("uint8_t", 255)
 		end
 	end
 
@@ -191,16 +199,16 @@ function Texture:GenerateBlankImage(textureWidthInPixels, textureHeightInPixels,
 	color = color or Color.WHITE
 
 	local pixelCount = textureWidthInPixels * textureHeightInPixels
-	local pixels = ffi.new("uint8_t[?]", 4 * pixelCount)
+	local pixels = new("uint8_t[?]", 4 * pixelCount)
 
 	for u = 0, textureWidthInPixels - 1 do
 		for v = 0, textureHeightInPixels - 1 do
 			local index = 4 * (v * textureWidthInPixels + u)
 
-			pixels[index + RGBA_OFFSET_RED] = ffi_cast("uint8_t", color.red * 255)
-			pixels[index + RGBA_OFFSET_GREEN] = ffi_cast("uint8_t", color.green * 255)
-			pixels[index + RGBA_OFFSET_BLUE] = ffi_cast("uint8_t", color.blue * 255)
-			pixels[index + RGBA_OFFSET_ALPHA] = ffi_cast("uint8_t", 255)
+			pixels[index + RGBA_OFFSET_RED] = cast("uint8_t", color.red * 255)
+			pixels[index + RGBA_OFFSET_GREEN] = cast("uint8_t", color.green * 255)
+			pixels[index + RGBA_OFFSET_BLUE] = cast("uint8_t", color.blue * 255)
+			pixels[index + RGBA_OFFSET_ALPHA] = cast("uint8_t", 255)
 		end
 	end
 
@@ -217,7 +225,7 @@ function Texture:GenerateCheckeredGridImage(textureWidthInPixels, textureHeightI
 	secondColor = secondColor or { red = 0, blue = 0, green = 0 }
 
 	local pixelCount = textureWidthInPixels * textureHeightInPixels
-	local pixels = ffi.new("uint8_t[?]", 4 * pixelCount)
+	local pixels = new("uint8_t[?]", 4 * pixelCount)
 
 	for u = 0, textureWidthInPixels - 1 do
 		for v = 0, textureHeightInPixels - 1 do

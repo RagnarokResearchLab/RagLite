@@ -25,10 +25,11 @@ function Buffer:CreateVertexBuffer(wgpuDevice, entries)
 	local rawBufferSizeInBytes = #entries * ffi.sizeof("float") -- Assumes 3D positions, texture coords, or colors
 	local alignedBufferSizeInBytes = Buffer.GetAlignedSize(rawBufferSizeInBytes)
 
-	local bufferDescriptor = ffi.new("WGPUBufferDescriptor")
-	bufferDescriptor.size = alignedBufferSizeInBytes
-	bufferDescriptor.usage = Buffer.VERTEX_BUFFER_FLAGS
-	bufferDescriptor.mappedAtCreation = false
+	local bufferDescriptor = ffi.new("WGPUBufferDescriptor", {
+		size = alignedBufferSizeInBytes,
+		usage = Buffer.VERTEX_BUFFER_FLAGS,
+		mappedAtCreation = false,
+	})
 
 	local buffer = webgpu.bindings.wgpu_device_create_buffer(wgpuDevice, bufferDescriptor)
 	webgpu.bindings.wgpu_queue_write_buffer(
@@ -46,10 +47,11 @@ function Buffer:CreateIndexBuffer(wgpuDevice, indices)
 	local rawBufferSizeInBytes = #indices * ffi.sizeof("uint32_t") -- Assumes there won't be too many trianglces per mesh
 	local alignedBufferSizeInBytes = Buffer.GetAlignedSize(rawBufferSizeInBytes)
 
-	local bufferDescriptor = ffi.new("WGPUBufferDescriptor")
-	bufferDescriptor.size = alignedBufferSizeInBytes
-	bufferDescriptor.usage = Buffer.INDEX_BUFFER_FLAGS
-	bufferDescriptor.mappedAtCreation = false
+	local bufferDescriptor = ffi.new("WGPUBufferDescriptor", {
+		size = alignedBufferSizeInBytes,
+		usage = Buffer.INDEX_BUFFER_FLAGS,
+		mappedAtCreation = false,
+	})
 
 	local buffer = webgpu.bindings.wgpu_device_create_buffer(wgpuDevice, bufferDescriptor)
 	webgpu.bindings.wgpu_queue_write_buffer(

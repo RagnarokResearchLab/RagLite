@@ -118,34 +118,33 @@ function Renderer:RenderNextFrame()
 end
 
 function Renderer:BeginRenderPass(commandEncoder, nextTextureView)
-	local renderPassDescriptor = ffi_new("WGPURenderPassDescriptor")
-
 	-- Clearing is a built-in mechanism of the render pass
-	local renderPassColorAttachment = ffi_new("WGPURenderPassColorAttachment")
-	renderPassColorAttachment.view = nextTextureView
-	renderPassColorAttachment.loadOp = ffi.C.WGPULoadOp_Clear
-	renderPassColorAttachment.storeOp = ffi.C.WGPUStoreOp_Store
-	renderPassColorAttachment.clearValue = ffi_new("WGPUColor", self.clearColorRGBA)
-
-	renderPassDescriptor.colorAttachmentCount = 1
-	renderPassDescriptor.colorAttachments = renderPassColorAttachment
+	local renderPassColorAttachment = ffi_new("WGPURenderPassColorAttachment", {
+		view = nextTextureView,
+		loadOp = ffi.C.WGPULoadOp_Clear,
+		storeOp = ffi.C.WGPUStoreOp_Store,
+		clearValue = ffi_new("WGPUColor", self.clearColorRGBA),
+	})
 
 	-- Enable Z buffering in the fragment stage
-	local depthStencilAttachment = ffi.new("WGPURenderPassDepthStencilAttachment")
-	depthStencilAttachment.view = self.depthTextureView
-	-- The initial value of the depth buffer, meaning "far"
-	depthStencilAttachment.depthClearValue = 1.0
-	depthStencilAttachment.depthLoadOp = ffi.C.WGPULoadOp_Clear
-	depthStencilAttachment.depthStoreOp = ffi.C.WGPUStoreOp_Store -- Enable depth write (should disable for UI later?)
-	depthStencilAttachment.depthReadOnly = false
+	local depthStencilAttachment = ffi.new("WGPURenderPassDepthStencilAttachment", {
+		view = self.depthTextureView,
+		depthClearValue = 1.0, -- The initial value of the depth buffer, meaning "far"
+		depthLoadOp = ffi.C.WGPULoadOp_Clear,
+		depthStoreOp = ffi.C.WGPUStoreOp_Store, -- Enable depth write (should disable for UI later?)
+		depthReadOnly = false,
+		-- Stencil setup; mandatory but unused
+		stencilClearValue = 0,
+		stencilLoadOp = ffi.C.WGPULoadOp_Clear,
+		stencilStoreOp = ffi.C.WGPUStoreOp_Store,
+		stencilReadOnly = true,
+	})
 
-	-- Stencil setup, mandatory but unused
-	depthStencilAttachment.stencilClearValue = 0
-	depthStencilAttachment.stencilLoadOp = ffi.C.WGPULoadOp_Clear
-	depthStencilAttachment.stencilStoreOp = ffi.C.WGPUStoreOp_Store
-	depthStencilAttachment.stencilReadOnly = true
-
-	renderPassDescriptor.depthStencilAttachment = depthStencilAttachment
+	local renderPassDescriptor = ffi_new("WGPURenderPassDescriptor", {
+		colorAttachmentCount = 1,
+		colorAttachments = renderPassColorAttachment,
+		depthStencilAttachment = depthStencilAttachment,
+	})
 
 	return CommandEncoder:BeginRenderPass(commandEncoder, renderPassDescriptor)
 end
@@ -264,26 +263,29 @@ function Renderer:UploadTextureImage(texture)
 end
 
 function Renderer:CreateUniformBuffer()
-	local bufferDescriptor = ffi.new("WGPUBufferDescriptor")
-	bufferDescriptor.size = ffi.sizeof("scenewide_uniform_t")
-	bufferDescriptor.usage = bit.bor(ffi.C.WGPUBufferUsage_CopyDst, ffi.C.WGPUBufferUsage_Uniform)
-	bufferDescriptor.mappedAtCreation = false
+	local bufferDescriptor = ffi.new("WGPUBufferDescriptor", {
+		size = ffi.sizeof("scenewide_uniform_t"),
+		usage = bit.bor(ffi.C.WGPUBufferUsage_CopyDst, ffi.C.WGPUBufferUsage_Uniform),
+		mappedAtCreation = false,
+	})
 
 	local uniformBuffer = Device:CreateBuffer(self.wgpuDevice, bufferDescriptor)
 
 	self.perSceneUniformData = ffi.new("scenewide_uniform_t")
 
-	local binding = ffi.new("WGPUBindGroupEntry")
+	local binding = ffi.new("WGPUBindGroupEntry", {
+		binding = 0,
+		buffer = uniformBuffer,
+		offset = 0,
+		size = ffi.sizeof(self.perSceneUniformData),
+	})
 
-	binding.binding = 0
-	binding.buffer = uniformBuffer
-	binding.offset = 0
-	binding.size = ffi.sizeof(self.perSceneUniformData)
+	local cameraBindGroupDescriptor = ffi.new("WGPUBindGroupDescriptor", {
+		layout = BasicTriangleDrawingPipeline.wgpuCameraBindGroupLayout,
+		entryCount = BasicTriangleDrawingPipeline.wgpuCameraBindGroupLayoutDescriptor.entryCount,
+		entries = binding,
+	})
 
-	local cameraBindGroupDescriptor = ffi.new("WGPUBindGroupDescriptor")
-	cameraBindGroupDescriptor.layout = BasicTriangleDrawingPipeline.wgpuCameraBindGroupLayout
-	cameraBindGroupDescriptor.entryCount = BasicTriangleDrawingPipeline.wgpuCameraBindGroupLayoutDescriptor.entryCount
-	cameraBindGroupDescriptor.entries = binding
 	local bindGroup = Device:CreateBindGroup(self.wgpuDevice, cameraBindGroupDescriptor)
 	self.bindGroup = bindGroup
 
@@ -317,32 +319,34 @@ end
 
 function Renderer:EnableDepthBuffer()
 	-- Create the depth texture
-	local depthTextureDesc = ffi.new("WGPUTextureDescriptor")
-	depthTextureDesc.dimension = ffi.C.WGPUTextureDimension_2D
-	depthTextureDesc.format = ffi.C.WGPUTextureFormat_Depth24Plus
-	depthTextureDesc.mipLevelCount = 1
-	depthTextureDesc.sampleCount = 1
 	local viewportWidth, viewportHeight = self.backingSurface:GetViewportSize()
-	depthTextureDesc.size = {
-		viewportWidth,
-		viewportHeight,
-		1,
-	}
 	printf("Creating depth buffer with texture dimensions %d x %d", viewportWidth, viewportHeight)
-	depthTextureDesc.usage = ffi.C.WGPUTextureUsage_RenderAttachment
-	depthTextureDesc.viewFormatCount = 1
-	depthTextureDesc.viewFormats = ffi.new("WGPUTextureFormat[1]", ffi.C.WGPUTextureFormat_Depth24Plus)
+	local depthTextureDesc = ffi.new("WGPUTextureDescriptor", {
+		dimension = ffi.C.WGPUTextureDimension_2D,
+		format = ffi.C.WGPUTextureFormat_Depth24Plus,
+		mipLevelCount = 1,
+		sampleCount = 1,
+		size = {
+			viewportWidth,
+			viewportHeight,
+			1,
+		},
+		usage = ffi.C.WGPUTextureUsage_RenderAttachment,
+		viewFormatCount = 1,
+		viewFormats = ffi.new("WGPUTextureFormat[1]", ffi.C.WGPUTextureFormat_Depth24Plus),
+	})
 	local depthTexture = Device:CreateTexture(self.wgpuDevice, depthTextureDesc)
 
 	-- Create the view of the depth texture manipulated by the rasterizer
-	local depthTextureViewDesc = ffi.new("WGPUTextureViewDescriptor")
-	depthTextureViewDesc.aspect = ffi.C.WGPUTextureAspect_DepthOnly
-	depthTextureViewDesc.baseArrayLayer = 0
-	depthTextureViewDesc.arrayLayerCount = 1
-	depthTextureViewDesc.baseMipLevel = 0
-	depthTextureViewDesc.mipLevelCount = 1
-	depthTextureViewDesc.dimension = ffi.C.WGPUTextureViewDimension_2D
-	depthTextureViewDesc.format = ffi.C.WGPUTextureFormat_Depth24Plus
+	local depthTextureViewDesc = ffi.new("WGPUTextureViewDescriptor", {
+		aspect = ffi.C.WGPUTextureAspect_DepthOnly,
+		baseArrayLayer = 0,
+		arrayLayerCount = 1,
+		baseMipLevel = 0,
+		mipLevelCount = 1,
+		dimension = ffi.C.WGPUTextureViewDimension_2D,
+		format = ffi.C.WGPUTextureFormat_Depth24Plus,
+	})
 	local depthTextureView = Texture:CreateTextureView(depthTexture, depthTextureViewDesc)
 
 	self.depthTextureView = depthTextureView

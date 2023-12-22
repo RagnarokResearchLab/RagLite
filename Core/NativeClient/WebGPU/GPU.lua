@@ -4,12 +4,14 @@ local ffi = require("ffi")
 local glfw = require("glfw")
 local webgpu = require("webgpu")
 
+local new = ffi.new
+
 local GPU = {
 	MAX_VERTEX_COUNT = 200000, -- Should be configurable (later)
 }
 
 function GPU:CreateInstance()
-	local instanceDescriptor = ffi.new("WGPUInstanceDescriptor")
+	local instanceDescriptor = new("WGPUInstanceDescriptor")
 	local instance = webgpu.bindings.wgpu_create_instance(instanceDescriptor)
 	if not instance then
 		error("Could not initialize WebGPU")
@@ -19,11 +21,10 @@ function GPU:CreateInstance()
 end
 
 function GPU:RequestAdapter(instance, window)
-	local surface = glfw.bindings.glfw_get_wgpu_surface(instance, window)
-
-	local adapterOptions = ffi.new("WGPURequestAdapterOptions")
-	adapterOptions.compatibleSurface = surface
-	adapterOptions.powerPreference = ffi.C.WGPUPowerPreference_HighPerformance
+	local adapterOptions = new("WGPURequestAdapterOptions", {
+		compatibleSurface = glfw.bindings.glfw_get_wgpu_surface(instance, window),
+		powerPreference = ffi.C.WGPUPowerPreference_HighPerformance,
+	})
 
 	local requestedAdapter
 	local function onAdapterRequested(status, adapter, message, userdata)
@@ -46,35 +47,38 @@ function GPU:RequestLogicalDevice(adapter, options)
 	options.requiredFeatureCount = options.requiredFeatureCount or 0
 	options.defaultQueue.label = options.defaultQueue.label or "Default Queue"
 
-	local deviceDescriptor = ffi.new("WGPUDeviceDescriptor")
-	deviceDescriptor.label = options.label
-	deviceDescriptor.requiredFeatureCount = options.requiredFeatureCount
-	deviceDescriptor.defaultQueue.label = options.defaultQueue.label
-
-	local supportedLimits = ffi.new("WGPUSupportedLimits")
+	local supportedLimits = new("WGPUSupportedLimits")
 	webgpu.bindings.wgpu_adapter_get_limits(adapter, supportedLimits)
-	local requiredLimits = ffi.new("WGPURequiredLimits")
-	requiredLimits.limits.maxTextureDimension1D = 0
-	requiredLimits.limits.maxTextureDimension2D = Texture.MAX_TEXTURE_DIMENSION
-	requiredLimits.limits.maxTextureDimension3D = 0
-	requiredLimits.limits.maxTextureArrayLayers = 1 -- For the depth/stencil texture
-	requiredLimits.limits.maxVertexAttributes = 3 -- Vertex positions, vertex colors, diffuse texture UVs
-	requiredLimits.limits.maxVertexBuffers = 3 -- Vertex positions, vertex colors, diffuse texture UVs
-	requiredLimits.limits.maxInterStageShaderComponents = 5 -- sizeof(VertexOutput\{#@builtins}) = #(vec3f color, vec2f diffuseTextureCoords)
 	local numComponentsPerVertex = 3 -- sizeof(Vertex3D) = positions (x, y, z)
-	requiredLimits.limits.maxBufferSize = self.MAX_VERTEX_COUNT * numComponentsPerVertex * ffi.sizeof("float")
-	requiredLimits.limits.maxVertexBufferArrayStride = numComponentsPerVertex * ffi.sizeof("float")
-	requiredLimits.limits.maxBindGroups = 2 -- Camera, material (increase for model transforms, later?)
-	requiredLimits.limits.maxUniformBuffersPerShaderStage = 1 -- Camera properties (increase for material, soon?)
-	requiredLimits.limits.maxSampledTexturesPerShaderStage = 1 -- Diffuse texture (increase for lightmaps, later?)
-	requiredLimits.limits.maxSamplersPerShaderStage = 1 -- Diffuse texture sampler (increase for lightmaps, later?)
-	requiredLimits.limits.maxUniformBufferBindingSize = 48 * ffi.sizeof("float")
-	requiredLimits.limits.maxBindingsPerBindGroup = 1 -- Max. allowed binding index
 
-	requiredLimits.limits.minStorageBufferOffsetAlignment = supportedLimits.limits.minStorageBufferOffsetAlignment
-	requiredLimits.limits.minUniformBufferOffsetAlignment = supportedLimits.limits.minUniformBufferOffsetAlignment
-
-	deviceDescriptor.requiredLimits = requiredLimits
+	local deviceDescriptor = new("WGPUDeviceDescriptor", {
+		label = options.label,
+		defaultQueue = {
+			label = options.defaultQueue.label,
+		},
+		requiredFeatureCount = options.requiredFeatureCount,
+		requiredLimits = new("WGPURequiredLimits", {
+			limits = {
+				maxTextureDimension1D = 0,
+				maxTextureDimension2D = Texture.MAX_TEXTURE_DIMENSION,
+				maxTextureDimension3D = 0,
+				maxTextureArrayLayers = 1, -- For the depth/stencil texture
+				maxVertexAttributes = 3, -- Vertex positions, vertex colors, diffuse texture UVs
+				maxVertexBuffers = 3, -- Vertex positions, vertex colors, diffuse texture UVs
+				maxInterStageShaderComponents = 5, -- sizeof(VertexOutput\{#@builtins}) = #(vec3f color, vec2f diffuseTextureCoords)
+				maxBufferSize = self.MAX_VERTEX_COUNT * numComponentsPerVertex * ffi.sizeof("float"),
+				maxVertexBufferArrayStride = numComponentsPerVertex * ffi.sizeof("float"),
+				maxBindGroups = 2, -- Camera, material (increase for model transforms, later?)
+				maxUniformBuffersPerShaderStage = 1, -- Camera properties (increase for material, soon?)
+				maxSampledTexturesPerShaderStage = 1, -- Diffuse texture (increase for lightmaps, later?)
+				maxSamplersPerShaderStage = 1, -- Diffuse texture sampler (increase for lightmaps, later?)
+				maxUniformBufferBindingSize = 48 * ffi.sizeof("float"),
+				maxBindingsPerBindGroup = 1, -- Max. allowed binding index
+				minStorageBufferOffsetAlignment = supportedLimits.limits.minStorageBufferOffsetAlignment,
+				minUniformBufferOffsetAlignment = supportedLimits.limits.minUniformBufferOffsetAlignment,
+			},
+		}),
+	})
 
 	local requestedDevice
 	local function onDeviceRequested(status, device, message, userdata)
