@@ -49,13 +49,13 @@ local RagnarokGRF = {
 		} grf_file_entry_t;
 	]],
 	HEADER_SIZE_IN_BYTES = 46,
+	preallocatedConversionBuffer = buffer.new(1024),
 }
 
 function RagnarokGRF:Construct()
 	local instance = {
 		pathToGRF = "",
 		fileTable = {},
-		preallocatedConversionBuffer = buffer.new(1024),
 	}
 
 	setmetatable(instance, self)
