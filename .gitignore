@@ -1,6 +1,6 @@
 *.log
 data.grf
-*.extracted.grf/*
+*.grf.extracted/*
 Exports
 *.mp3
 *.bin

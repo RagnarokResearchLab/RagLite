@@ -3,7 +3,7 @@ local FileAnalyzer = require("Tools.FileAnalyzer")
 
 local console = require("console")
 
-local TEMP_DIR = "data.extracted.grf"
+local TEMP_DIR = "data.grf.extracted"
 printf("Creating temporary directory: %s", TEMP_DIR)
 C_FileSystem.MakeDirectory(TEMP_DIR)
 
