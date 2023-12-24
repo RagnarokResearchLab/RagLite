@@ -75,6 +75,9 @@ function NativeClient:CreateMainWindow()
 		error("Failed to create application window")
 	end
 
+	local appIconImageBytes = C_FileSystem.ReadFile(path.join("Core", "NativeClient", "Assets", "app-icon.png"))
+	glfw.setWindowIcon(window, { appIconImageBytes })
+
 	glfw.bindings.glfw_set_window_pos(window, 0, 0)
 	self.deferredEventQueue = interop.bindings.queue_create()
 	glfw.bindings.glfw_register_events(window, self.deferredEventQueue)
