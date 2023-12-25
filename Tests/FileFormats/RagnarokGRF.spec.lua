@@ -158,6 +158,16 @@ describe("RagnarokGRF", function()
 				"I'm inside the GRF archive, just minding my business. Would you like some tea?"
 			assertEquals(fileContents, expectedFileContents)
 		end)
+
+		it("should throw if no file handle has been opened yet", function()
+			local function extractBeforeOpen()
+				local grf = RagnarokGRF()
+				grf:ExtractFileInMemory("something.txt")
+			end
+			local expectedErrorMessage =
+				"Failed to extract something.txt (no file table loaded; forgot to open a handle?)"
+			assertThrows(extractBeforeOpen, expectedErrorMessage)
+		end)
 	end)
 
 	describe("ExtractFileToDisk", function()
@@ -225,6 +235,16 @@ describe("RagnarokGRF", function()
 			local expectedFileContents = "안녕하십니까"
 
 			assertEquals(fileContents, expectedFileContents)
+		end)
+
+		it("should throw if no file handle has been opened yet", function()
+			local function extractBeforeOpen()
+				local grf = RagnarokGRF()
+				grf:ExtractFileToDisk("something.txt", "whatever")
+			end
+			local expectedErrorMessage =
+				"Failed to extract something.txt (no file table loaded; forgot to open a handle?)"
+			assertThrows(extractBeforeOpen, expectedErrorMessage)
 		end)
 	end)
 

@@ -244,6 +244,10 @@ function RagnarokGRF:ExtractFileToDisk(fileName, where)
 end
 
 function RagnarokGRF:ExtractFileInMemory(fileName)
+	if not self.fileTable.entries then
+		error(format("Failed to extract %s (no file table loaded; forgot to open a handle?)", fileName), 0)
+	end
+
 	local timeBefore = uv.hrtime()
 
 	local normalizedFileName = self:GetNormalizedFilePath(fileName)
