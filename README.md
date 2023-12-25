@@ -41,10 +41,10 @@ If you want to follow the development more closely, check out the [roadmap](http
 Because this tool is an interactive aid that's part of my ongoing research efforts, you can expect the following:
 
 * Complete, well-tested and documented decoders for all file formats that are of interest
-* Data mining/analysis toolkit that allows importing, dumping, and converting their contents
+* Data mining/analysis toolkit that allows importing, exporting, and converting their contents
 * Approximate recreation of 3D scenes with key actors, interactions, animations, and effects
-* CLI or UI-based control flow that is suitable for developers, though not necessarily "end users"
-* Proof-of-concept or prototype implementations of gameplay and/or simulation steps (server)
+* CLI or UI-based control flow that's suitable for developers, though not necessarily "end users"
+* Proof-of-concept or prototype implementations of gameplay mechanics and simulation steps (server)
 
 Needless to say, it will take a lot more time and work until all of the above has been fully implemented.
 
