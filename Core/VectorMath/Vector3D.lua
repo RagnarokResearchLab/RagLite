@@ -22,8 +22,8 @@ function Vector3D:__tostring()
 		y = format("%.3f", self.y),
 		z = format("%.3f", self.z),
 	}
-	local firstRow = format("%10s %10s %10s", formatted.x, formatted.y, formatted.z)
-	return format("%s\n%s", transform_bold("cdata<Vector3D>:"), firstRow)
+	local firstRow = format("{ x = %s, y = %s, z = %s }", formatted.x, formatted.y, formatted.z)
+	return format("%s %s", transform_bold("Vector3D"), firstRow)
 end
 
 function Vector3D:Add(anotherVector)
