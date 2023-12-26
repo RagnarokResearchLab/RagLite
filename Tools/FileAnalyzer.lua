@@ -1,6 +1,7 @@
 local RagnarokACT = require("Core.FileFormats.RagnarokACT")
 local RagnarokGAT = require("Core.FileFormats.RagnarokGAT")
 local RagnarokGND = require("Core.FileFormats.RagnarokGND")
+local RagnarokRSM = require("Core.FileFormats.RagnarokRSM")
 local RagnarokRSW = require("Core.FileFormats.RagnarokRSW")
 local RagnarokSPR = require("Core.FileFormats.RagnarokSPR")
 
@@ -289,6 +290,30 @@ function FileAnalyzer:AnalyzeGAT(gatFiles)
 
 		analysisResult.minObservedAltitude = minObservedAltitude
 		analysisResult.maxObservedAltitude = maxObservedAltitude
+
+		analysisResult.numFilesAnalyzed = analysisResult.numFilesAnalyzed + 1
+	end
+
+	return analysisResult
+end
+
+function FileAnalyzer:AnalyzeRSM(rsmFiles)
+	local analysisResult = {
+		numFilesAnalyzed = 0,
+		fields = {
+			version = {},
+		},
+	}
+
+	for index, filePath in ipairs(rsmFiles) do
+		printf("Analyzing file: %s", filePath)
+
+		local rsmFileContents = C_FileSystem.ReadFile(filePath)
+		local rsm = RagnarokRSM()
+		rsm:DecodeFileContents(rsmFileContents)
+
+		analysisResult.fields.version[rsm.version] = analysisResult.fields.version[rsm.version] or 0
+		analysisResult.fields.version[rsm.version] = analysisResult.fields.version[rsm.version] + 1
 
 		analysisResult.numFilesAnalyzed = analysisResult.numFilesAnalyzed + 1
 	end
