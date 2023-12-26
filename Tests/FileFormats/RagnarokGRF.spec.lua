@@ -103,6 +103,47 @@ describe("RagnarokGRF", function()
 		end)
 	end)
 
+	describe("FindLargestFileByType", function()
+		it(
+			"should return the entry for the largest file of the given type when a valid GRF archive was opened",
+			function()
+				local grf = RagnarokGRF()
+				grf:Open("Tests/Fixtures/test.grf")
+				grf:Close()
+				local fileEntry = grf:FindLargestFileByType(".txt")
+
+				assertEquals(fileEntry.name, "subdirectory/hello.txt")
+				assertEquals(fileEntry.compressedSizeInBytes, 82)
+				assertEquals(fileEntry.alignedSizeInBytes, 88)
+				assertEquals(fileEntry.decompressedSizeInBytes, 78)
+				assertEquals(fileEntry.typeID, RagnarokGRF.COMPRESSED_FILE_ENTRY_TYPE)
+				assertEquals(fileEntry.offsetRelativeToHeader, 0)
+			end
+		)
+
+		it("should automatically prepend a dot to the file extension if none was provided", function()
+			local grf = RagnarokGRF()
+			grf:Open("Tests/Fixtures/test.grf")
+			grf:Close()
+			local fileEntry = grf:FindLargestFileByType("txt")
+
+			assertEquals(fileEntry.name, "subdirectory/hello.txt")
+			assertEquals(fileEntry.compressedSizeInBytes, 82)
+			assertEquals(fileEntry.alignedSizeInBytes, 88)
+			assertEquals(fileEntry.decompressedSizeInBytes, 78)
+			assertEquals(fileEntry.typeID, RagnarokGRF.COMPRESSED_FILE_ENTRY_TYPE)
+			assertEquals(fileEntry.offsetRelativeToHeader, 0)
+		end)
+
+		it("should return nil if no entry of the given type exists in the archive", function()
+			local grf = RagnarokGRF()
+			grf:Open("Tests/Fixtures/test.grf")
+			grf:Close()
+
+			assertEquals(grf:FindLargestFileByType(".foobar"), nil)
+		end)
+	end)
+
 	describe("ExtractFileInMemory", function()
 		it("should throw if no entry with the given name exists within the archive", function()
 			local function extractWithInvalidPath()
