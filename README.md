@@ -84,12 +84,12 @@ A window should pop up with a basic 3D scene being visible. Tools are CLI only.
 To load a specific map, you can pass the `mapID` (unique scene identifier) to the client via CLI args:
 
 ```sh
-# Valid scene IDs are any map that's listed in the DB/maps.lua table
+# Valid scene IDs are any map that's listed in the DB/Maps.lua table
 # You can also directly load debug scenes (e.g., 'cube3d' or 'webgpu') this way
 ./evo start-client aldebaran
 ```
 
-If all you're seeing is the "hello world" fallback scene, then the map wasn't found in the classic database.
+If all you're seeing is the "hello world" fallback scene, then the map wasn't found in the database.
 
 ### Camera Controls
 
