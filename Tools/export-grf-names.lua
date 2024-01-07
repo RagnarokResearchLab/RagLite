@@ -49,8 +49,10 @@ local koreanDirectoryNames = {}
 for index, fileName in ipairs(koreanFileNames) do
 	local directoryName = path.dirname(fileName)
 	-- print(directoryName)
+	local isKoreanDirectoryName = false
 	if not IsEnglishPhrase(directoryName) then
-		koreanDirectoryNames[directoryName] = directoryName
+		-- koreanDirectoryNames[directoryName] = directoryName
+		isKoreanDirectoryName = true
 	end
 
 
@@ -70,10 +72,16 @@ for index, fileName in ipairs(koreanFileNames) do
 				for k, v in ipairs(tokensSplitByUnderscore) do
 					local isNumericString = (tonumber(v) ~= nil)
 					if not isNumericString and not IsEnglishPhrase(v) then
+						if isKoreanDirectoryName then
+							koreanDirectoryNames[v] = v
+						end
 						koreanWordsOrPhrases[v] = v
 					end
 				end
 			else
+				if isKoreanDirectoryName then
+					koreanDirectoryNames[token] = token
+				end
 				koreanWordsOrPhrases[token] = token
 			end
 		end
