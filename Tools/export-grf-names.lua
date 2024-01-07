@@ -53,7 +53,7 @@ for index, fileName in ipairs(koreanFileNames) do
 		if not IsEnglishPhrase(token) then
 			-- print(token)
 			-- TODO strip file extension (don't need to translate it)
-			token = path.basename(token)
+			token = path.basename(token, path.extname(token))
 			-- table.insert(koreanWordsOrPhrases, token)
 			koreanWordsOrPhrases[token] = token
 		end
