@@ -44,16 +44,26 @@ printf("Korean file names: %d", #koreanFileNames)
 assert(#englishFileNames + #koreanFileNames == #originalFileNames)
 
 local koreanWordsOrPhrases = {}
+local koreanDirectoryNames = {}
 
 for index, fileName in ipairs(koreanFileNames) do
+	local directoryName = path.dirname(fileName)
+	-- print(directoryName)
+	if not IsEnglishPhrase(directoryName) then
+		koreanDirectoryNames[directoryName] = directoryName
+	end
+
+
 	local tokens = string.explode(fileName, "/") -- Paths are normalized so this is fine
 	-- print(fileName, #tokens)
 	for _, token in ipairs(tokens) do
 		-- print(_, token)
 		if not IsEnglishPhrase(token) then
 			-- print(token)
+
 			-- TODO strip file extension (don't need to translate it)
 			token = path.basename(token, path.extname(token))
+
 			-- table.insert(koreanWordsOrPhrases, token)
 			local tokensSplitByUnderscore = string.explode(token, "_")
 			if #tokensSplitByUnderscore > 1 then
@@ -73,10 +83,14 @@ end
 -- TODO sort, filter out duplicates
 -- dump(koreanWordsOrPhrases)
 
+printf("Number of Korean directory names: %d", table.count(koreanDirectoryNames))
 printf("Number of Korean phrases or tokens: %d", table.count(koreanWordsOrPhrases))
 
-local localizationTable = json.prettier(koreanWordsOrPhrases)
-local outputFilePath = path.join("Exports", "grf-names-kr.json")
-printf("Storing localization table: %s", outputFilePath)
-
-C_FileSystem.WriteFile(outputFilePath, localizationTable)
+local jsonDirectoryDB = json.prettier(koreanDirectoryNames)
+local jsonTokenDB = json.prettier(koreanWordsOrPhrases)
+local directoriesDB = path.join("Exports", "grf-directories-kr.json")
+local tokenDB = path.join("Exports", "grf-tokens-kr.json")
+printf("Storing Korean directories: %s", directoriesDB)
+printf("Storing korean tokens: %s", tokenDB)
+C_FileSystem.WriteFile(directoriesDB, jsonDirectoryDB)
+C_FileSystem.WriteFile(tokenDB, jsonTokenDB)
