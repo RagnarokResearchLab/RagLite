@@ -59,7 +59,7 @@ for index, fileName in ipairs(koreanFileNames) do
 			if #tokensSplitByUnderscore > 1 then
 				for k, v in ipairs(tokensSplitByUnderscore) do
 					local isNumericString = (tonumber(v) ~= nil)
-					if not isNumericString then
+					if not isNumericString and not IsEnglishPhrase(v) then
 						koreanWordsOrPhrases[v] = v
 					end
 				end
