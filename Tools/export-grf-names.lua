@@ -55,7 +55,17 @@ for index, fileName in ipairs(koreanFileNames) do
 			-- TODO strip file extension (don't need to translate it)
 			token = path.basename(token, path.extname(token))
 			-- table.insert(koreanWordsOrPhrases, token)
-			koreanWordsOrPhrases[token] = token
+			local tokensSplitByUnderscore = string.explode(token, "_")
+			if #tokensSplitByUnderscore > 1 then
+				for k, v in ipairs(tokensSplitByUnderscore) do
+					local isNumericString = (tonumber(v) ~= nil)
+					if not isNumericString then
+						koreanWordsOrPhrases[v] = v
+					end
+				end
+			else
+				koreanWordsOrPhrases[token] = token
+			end
 		end
 	end
 end
