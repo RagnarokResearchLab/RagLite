@@ -86,7 +86,7 @@ To load a specific map, you can pass the `mapID` (unique scene identifier) to th
 ```sh
 # Valid scene IDs are any map that's listed in the DB/Maps.lua table
 # You can also directly load debug scenes (e.g., 'cube3d' or 'webgpu') this way
-./evo start-client aldebaran
+./evo start-client.lua aldebaran
 ```
 
 If all you're seeing is the "hello world" fallback scene, then the map wasn't found in the database.
