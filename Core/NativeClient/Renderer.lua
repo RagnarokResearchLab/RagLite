@@ -149,7 +149,7 @@ function Renderer:RenderNextFrame()
 
 	do
 		local renderPass = self:BeginRenderPass(commandEncoder, nextTextureView)
-
+		self:ResetScissorRectangle(renderPass)
 		self:UpdateScenewideUniformBuffer()
 
 		RenderPassEncoder:SetPipeline(renderPass, self.meshGeometryRenderingPipeline)
@@ -169,11 +169,111 @@ function Renderer:RenderNextFrame()
 		-- NO MORE CHANGES here before rendering the updated state!
 		rml.bindings.rml_context_render(self.rmlContext)
 
+		self:ProcessUserInterfaceRenderCommands(uiRenderPass)
+
 		RenderPassEncoder:End(uiRenderPass)
 	end
 
 	self:SubmitCommandBuffer(commandEncoder)
 	self.backingSurface:PresentNextFrame()
+end
+
+local rmlEventNames = {
+	[ffi.C.ERROR_EVENT] = "UNKNOWN_RENDER_COMMAND",
+	[ffi.C.GEOMETRY_RENDER_EVENT] = "GEOMETRY_RENDER_EVENT",
+	[ffi.C.GEOMETRY_COMPILE_EVENT] = "GEOMETRY_COMPILE_EVENT",
+	[ffi.C.COMPILATION_RENDER_EVENT] = "COMPILATION_RENDER_EVENT",
+	[ffi.C.COMPILATION_RELEASE_EVENT] = "COMPILATION_RELEASE_EVENT",
+	[ffi.C.SCISSORTEST_STATUS_EVENT] = "SCISSORTEST_STATUS_EVENT",
+	[ffi.C.SCISSORTEST_REGION_EVENT] = "SCISSORTEST_REGION_EVENT",
+	[ffi.C.TEXTURE_LOAD_EVENT] = "TEXTURE_LOAD_EVENT",
+	[ffi.C.TEXTURE_GENERATION_EVENT] = "TEXTURE_GENERATION_EVENT",
+	[ffi.C.TEXTURE_RELEASE_EVENT] = "TEXTURE_RELEASE_EVENT",
+	[ffi.C.TRANSFORMATION_UPDATE_EVENT] = "TRANSFORMATION_UPDATE_EVENT",
+}
+
+function Renderer:ProcessUserInterfaceRenderCommands(uiRenderPass)
+	local eventCount
+	repeat
+		eventCount = tonumber(interop.bindings.queue_size(self.rmlCommandQueue))
+		if eventCount > 0 then
+			local eventInfo = interop.bindings.queue_pop_event(self.rmlCommandQueue)
+			local event = ffi.cast("error_event_t*", eventInfo)
+			local eventName = rmlEventNames[event.type] or rmlEventNames[ffi.C.ERROR_EVENT]
+			local eventHandler = self[eventName]
+			eventHandler(self, eventName, eventInfo, uiRenderPass)
+		end
+	until eventCount == 0
+end
+
+function Renderer:UNKNOWN_RENDER_COMMAND(eventID, payload)
+	-- This should never happen: If RML updates the render interface this Renderer too needs an update
+	error("UNKNOWN_RENDER_COMMAND")
+end
+
+function Renderer:GEOMETRY_RENDER_EVENT(eventID, payload)
+	-- This should never happen: ALL geometry has to be compiled for the render interface to work
+	error("GEOMETRY_RENDER_EVENT")
+end
+
+function Renderer:GEOMETRY_COMPILE_EVENT(eventID, payload)
+	-- NOOP since all the required work is done inside the render interface (C++ layer of the runtime)
+end
+
+function Renderer:COMPILATION_RENDER_EVENT(eventID, payload, uiRenderPass)
+	local geometry = payload.compilation_render_details.compiled_geometry
+	local offsetU = payload.compilation_render_details.translate_u
+	local offsetV = payload.compilation_render_details.translate_v
+	self:DrawWidget(uiRenderPass, geometry, offsetU, offsetV)
+end
+
+function Renderer:COMPILATION_RELEASE_EVENT(eventID, payload)
+	error("COMPILATION_RELEASE_EVENT") -- NYI (the memory leak doesn't matter, for now)
+end
+
+function Renderer:SCISSORTEST_STATUS_EVENT(eventID, payload, uiRenderPass)
+	if payload.scissortest_status_details.enabled_flag then
+		return -- There'll be another event to actually set the scissor region
+	end
+
+	self:ResetScissorRectangle(uiRenderPass)
+end
+
+function Renderer:ResetScissorRectangle(uiRenderPass)
+	local viewportWidth, viewportHeight = self.backingSurface:GetViewportSize()
+	webgpu.bindings.wgpu_render_pass_encoder_set_scissor_rect(uiRenderPass, 0, 0, viewportWidth, viewportHeight)
+end
+
+function Renderer:SCISSORTEST_REGION_EVENT(eventID, payload, uiRenderPass)
+	local region = payload.scissortest_region_details
+	-- Might want to skip this if the rectangle hasn't changed? (Needs benchmarking)
+	webgpu.bindings.wgpu_render_pass_encoder_set_scissor_rect(
+		uiRenderPass,
+		math.max(region.u, 0),
+		math.max(region.v, 0),
+		region.width,
+		region.height
+	)
+end
+
+function Renderer:TEXTURE_LOAD_EVENT(eventID, payload)
+	error("TEXTURE_LOAD_EVENT") -- NYI (CSS textures aren't currently supported, nor used)
+end
+
+function Renderer:TEXTURE_GENERATION_EVENT(eventID, payload)
+	local wgpuTexture = ffi.cast("WGPUTexture", payload.texture_generation_details.texture)
+	local bindGroup = Texture:CreateBindGroupForPipeline(wgpuTexture, WidgetDrawingPipeline)
+
+	local wgpuTexturePointer = tonumber(ffi.cast("intptr_t", wgpuTexture))
+	self.userInterfaceTextureBindGroups[wgpuTexturePointer] = bindGroup
+end
+
+function Renderer:TEXTURE_RELEASE_EVENT(eventID, payload)
+	error("TEXTURE_RELEASE_EVENT") -- NYI (the memory leak doesn't matter, for now)
+end
+
+function Renderer:TRANSFORMATION_UPDATE_EVENT(eventID, payload)
+	error("TRANSFORMATION_UPDATE_EVENT") -- NYI (CSS transforms aren't currently supported, nor used)
 end
 
 function Renderer:BeginRenderPass(commandEncoder, nextTextureView)
@@ -219,7 +319,7 @@ function Renderer:BeginUserInterfaceRenderPass(commandEncoder, nextTextureView)
 	local renderPassDescriptor = ffi_new("WGPURenderPassDescriptor", {
 		colorAttachmentCount = 1,
 		colorAttachments = renderPassColorAttachment,
-		-- depth/stencil testing is omitted since it's not needed for UI rendering
+		-- Depth/stencil testing is omitted since it isn't needed for UI rendering
 	})
 
 	return CommandEncoder:BeginRenderPass(commandEncoder, renderPassDescriptor)
@@ -253,6 +353,69 @@ function Renderer:DrawMesh(renderPass, mesh)
 	RenderPassEncoder:DrawIndexed(
 		renderPass,
 		#mesh.triangleConnections,
+		instanceCount,
+		firstVertexIndex,
+		firstInstanceIndex,
+		indexBufferOffset
+	)
+end
+
+function Renderer:DrawWidget(renderPass, compiledWidgetGeometry, offsetU, offsetV)
+	local SIZEOF_RML_VERTEX = 20
+	local vertexBufferSize = compiledWidgetGeometry.num_vertices * SIZEOF_RML_VERTEX
+	local indexBufferSize = compiledWidgetGeometry.num_indices * ffi.sizeof("int")
+
+	assert(
+		self.numWidgetTransformsUsedThisFrame < WidgetDrawingPipeline.MAX_WIDGET_COUNT,
+		"No available slots for widget transforms in the preallocated uniform buffer"
+	)
+
+	-- UpdateObjectTransform(u, v)
+	local perMeshUniformData = self.uniforms.perMesh.data
+	local widgetTranslationStartOffset = ffi.sizeof("mesh_uniform_t") * self.numWidgetTransformsUsedThisFrame
+	perMeshUniformData[widgetTranslationStartOffset].translation = ffi.new("float[2]", { offsetU, offsetV })
+	self.numWidgetTransformsUsedThisFrame = self.numWidgetTransformsUsedThisFrame + 1
+
+	Queue:WriteBuffer(
+		Device:GetQueue(self.wgpuDevice),
+		self.uniforms.perMesh.buffer,
+		widgetTranslationStartOffset,
+		perMeshUniformData[widgetTranslationStartOffset],
+		ffi.sizeof("mesh_uniform_t")
+	)
+
+	RenderPassEncoder:SetVertexBuffer(renderPass, 0, compiledWidgetGeometry.vertex_buffer, 0, vertexBufferSize)
+	RenderPassEncoder:SetIndexBuffer(
+		renderPass,
+		compiledWidgetGeometry.index_buffer,
+		ffi.C.WGPUIndexFormat_Uint32,
+		0,
+		indexBufferSize
+	)
+
+	RenderPassEncoder:SetBindGroup(renderPass, 0, self.uniforms.perScene.bindGroup, 0, nil)
+
+	if compiledWidgetGeometry.texture == ffi.NULL then
+		RenderPassEncoder:SetBindGroup(renderPass, 1, self.dummyTexture.wgpuBindGroup, 0, nil)
+	else
+		local wgpuTexture = ffi.cast("WGPUTexture", compiledWidgetGeometry.texture)
+		local wgpuTexturePointer = tonumber(ffi.cast("intptr_t", wgpuTexture))
+		local textureBindGroup = self.userInterfaceTextureBindGroups[wgpuTexturePointer]
+		assert(textureBindGroup, "No relevant bind group found for RML texture: " .. tostring(wgpuTexture))
+		RenderPassEncoder:SetBindGroup(renderPass, 1, textureBindGroup, 0, nil)
+	end
+
+	local dynamicUniformBufferOffset = ffi.new("uint32_t[1]")
+	dynamicUniformBufferOffset[0] = widgetTranslationStartOffset
+	RenderPassEncoder:SetBindGroup(renderPass, 2, self.uniforms.perMesh.bindGroup, 1, dynamicUniformBufferOffset)
+
+	local instanceCount = 1
+	local firstVertexIndex = 0
+	local firstInstanceIndex = 0
+	local indexBufferOffset = 0
+	RenderPassEncoder:DrawIndexed(
+		renderPass,
+		compiledWidgetGeometry.num_indices,
 		instanceCount,
 		firstVertexIndex,
 		firstInstanceIndex,
