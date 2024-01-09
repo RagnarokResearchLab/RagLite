@@ -49,7 +49,6 @@ function GPU:RequestLogicalDevice(adapter, options)
 
 	local supportedLimits = new("WGPUSupportedLimits")
 	webgpu.bindings.wgpu_adapter_get_limits(adapter, supportedLimits)
-	local numComponentsPerVertex = 3 -- sizeof(Vertex3D) = positions (x, y, z)
 
 	local deviceDescriptor = new("WGPUDeviceDescriptor", {
 		label = options.label,
@@ -65,9 +64,9 @@ function GPU:RequestLogicalDevice(adapter, options)
 				maxTextureArrayLayers = 1, -- For the depth/stencil texture
 				maxVertexAttributes = 3, -- Vertex positions, vertex colors, diffuse texture UVs
 				maxVertexBuffers = 3, -- Vertex positions, vertex colors, diffuse texture UVs
-				maxInterStageShaderComponents = 5, -- sizeof(VertexOutput\{#@builtins}) = #(vec3f color, vec2f diffuseTextureCoords)
-				maxBufferSize = self.MAX_VERTEX_COUNT * numComponentsPerVertex * ffi.sizeof("float"),
-				maxVertexBufferArrayStride = numComponentsPerVertex * ffi.sizeof("float"),
+				maxInterStageShaderComponents = 6, -- #(vec3f color, vec2f diffuseTextureCoords, float alpha)
+				maxBufferSize = self.MAX_VERTEX_COUNT * 5 * ffi.sizeof("float"), -- #(vec3f position, vec2f transform)
+				maxVertexBufferArrayStride = 20, -- #(Rml::Vertex)
 				maxBindGroups = 3, -- Camera, material, transforms
 				maxUniformBuffersPerShaderStage = 1, -- Camera properties (increase for material, soon?)
 				maxSampledTexturesPerShaderStage = 1, -- Diffuse texture (increase for lightmaps, later?)
