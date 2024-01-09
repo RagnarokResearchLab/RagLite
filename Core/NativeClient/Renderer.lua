@@ -7,6 +7,7 @@ local validation = require("validation")
 
 local GPU = require("Core.NativeClient.WebGPU.GPU")
 local BasicTriangleDrawingPipeline = require("Core.NativeClient.WebGPU.BasicTriangleDrawingPipeline")
+local WidgetDrawingPipeline = require("Core.NativeClient.WebGPU.WidgetDrawingPipeline")
 
 local Buffer = require("Core.NativeClient.WebGPU.Buffer")
 local CommandEncoder = require("Core.NativeClient.WebGPU.CommandEncoder")
@@ -101,8 +102,10 @@ function Renderer:CreatePipelineConfigurations()
 	self.backingSurface:UpdateConfiguration()
 
 	-- This is just a placeholder; eventually there should be real pipelines here
-	local pipeline = BasicTriangleDrawingPipeline(self.wgpuDevice, self.backingSurface.preferredTextureFormat)
-	self.renderPipelines[pipeline] = BasicTriangleDrawingPipeline
+	self.meshGeometryRenderingPipeline =
+		BasicTriangleDrawingPipeline(self.wgpuDevice, self.backingSurface.preferredTextureFormat)
+	self.userInterfaceRenderingPipeline =
+		WidgetDrawingPipeline(self.wgpuDevice, self.backingSurface.preferredTextureFormat)
 end
 
 function Renderer:RenderNextFrame()
