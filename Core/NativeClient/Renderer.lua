@@ -69,7 +69,7 @@ assert(
 function Renderer:InitializeWithGLFW(nativeWindowHandle)
 	Renderer:CreateGraphicsContext(nativeWindowHandle)
 	Renderer:CreatePipelineConfigurations()
-	Renderer:CreateUniformBuffer()
+	Renderer:CreateUniformBuffers()
 	Renderer:EnableDepthBuffer()
 
 	-- Default texture that is multiplicatively neutral (use with untextured geometry to keep things simple)
@@ -113,7 +113,7 @@ function Renderer:RenderNextFrame()
 	local commandEncoder = Device:CreateCommandEncoder(self.wgpuDevice, commandEncoderDescriptor)
 	local renderPass = self:BeginRenderPass(commandEncoder, nextTextureView)
 
-	self:UpdateUniformBuffer()
+		self:UpdateScenewideUniformBuffer()
 
 	for wgpuRenderPipeline, pipelineConfiguration in pairs(self.renderPipelines) do
 		RenderPassEncoder:SetPipeline(renderPass, wgpuRenderPipeline)
@@ -172,7 +172,7 @@ function Renderer:DrawMesh(renderPass, mesh)
 	RenderPassEncoder:SetVertexBuffer(renderPass, 2, mesh.diffuseTexCoordsBuffer, 0, diffuseTexCoordsBufferSize)
 	RenderPassEncoder:SetIndexBuffer(renderPass, mesh.indexBuffer, ffi.C.WGPUIndexFormat_Uint32, 0, indexBufferSize)
 
-	RenderPassEncoder:SetBindGroup(renderPass, 0, self.bindGroup, 0, nil)
+	RenderPassEncoder:SetBindGroup(renderPass, 0, self.uniforms.perScene.bindGroup, 0, nil)
 
 	if not mesh.diffuseTexture then
 		-- The pipeline layout is kept identical (for simplicity's sake... ironic, considering how complicated this already is)
@@ -273,41 +273,68 @@ function Renderer:UploadTextureImage(texture)
 	texture:CopyImageBytesToGPU(texture.rgbaImageBytes)
 end
 
-function Renderer:CreateUniformBuffer()
-	local bufferDescriptor = ffi.new("WGPUBufferDescriptor", {
-		size = ffi.sizeof("scenewide_uniform_t"),
-		usage = bit.bor(ffi.C.WGPUBufferUsage_CopyDst, ffi.C.WGPUBufferUsage_Uniform),
-		mappedAtCreation = false,
-	})
-
-	local uniformBuffer = Device:CreateBuffer(self.wgpuDevice, bufferDescriptor)
-
-	self.perSceneUniformData = ffi.new("scenewide_uniform_t")
-
-	local binding = ffi.new("WGPUBindGroupEntry", {
-		binding = 0,
-		buffer = uniformBuffer,
-		offset = 0,
-		size = ffi.sizeof(self.perSceneUniformData),
-	})
-
+function Renderer:CreateUniformBuffers()
+	local scenewideUniformBuffer = Device:CreateBuffer(
+		self.wgpuDevice,
+		ffi.new("WGPUBufferDescriptor", {
+			size = ffi.sizeof("scenewide_uniform_t"),
+			usage = bit.bor(ffi.C.WGPUBufferUsage_CopyDst, ffi.C.WGPUBufferUsage_Uniform),
+			mappedAtCreation = false,
+		})
+	)
 	local cameraBindGroupDescriptor = ffi.new("WGPUBindGroupDescriptor", {
 		layout = BasicTriangleDrawingPipeline.wgpuCameraBindGroupLayout,
 		entryCount = BasicTriangleDrawingPipeline.wgpuCameraBindGroupLayoutDescriptor.entryCount,
-		entries = binding,
+		entries = ffi.new("WGPUBindGroupEntry", {
+			binding = 0,
+			buffer = scenewideUniformBuffer,
+			offset = 0,
+			size = ffi.sizeof("scenewide_uniform_t"),
+		}),
 	})
 
-	local bindGroup = Device:CreateBindGroup(self.wgpuDevice, cameraBindGroupDescriptor)
-	self.bindGroup = bindGroup
+	local meshSpecificUniformBuffer = Device:CreateBuffer(
+		self.wgpuDevice,
+		ffi.new("WGPUBufferDescriptor", {
+			size = ffi.sizeof("mesh_uniform_t") * WidgetDrawingPipeline.MAX_WIDGET_COUNT,
+			usage = bit.bor(ffi.C.WGPUBufferUsage_CopyDst, ffi.C.WGPUBufferUsage_Uniform),
+			mappedAtCreation = false,
+		})
+	)
+	local transformBindGroupDescriptor = ffi.new("WGPUBindGroupDescriptor", {
+		-- This probably doesn't need to be pipeline-specific (can reuse for per-mesh transforms later)?
+		layout = WidgetDrawingPipeline.wgpuTransformBindGroupLayout,
+		entryCount = WidgetDrawingPipeline.wgpuTransformBindGroupLayoutDescriptor.entryCount,
+		entries = ffi.new("WGPUBindGroupEntry", {
+			binding = 0,
+			buffer = meshSpecificUniformBuffer,
+			offset = 0,
+			size = ffi.sizeof("mesh_uniform_t"), -- Only bind one part as it's dynamically offset
+		}),
+	})
 
-	self.uniformBuffer = uniformBuffer
+	self.uniforms = {
+		perScene = {
+			bindGroupDescriptor = cameraBindGroupDescriptor,
+			bindGroup = Device:CreateBindGroup(self.wgpuDevice, cameraBindGroupDescriptor),
+			buffer = scenewideUniformBuffer,
+			data = ffi.new("scenewide_uniform_t"),
+		},
+		-- Should create the per-material buffer here, as well?
+		perMesh = {
+			bindGroupDescriptor = transformBindGroupDescriptor,
+			bindGroup = Device:CreateBindGroup(self.wgpuDevice, transformBindGroupDescriptor),
+			buffer = meshSpecificUniformBuffer,
+			data = ffi.new("mesh_uniform_t[?]", WidgetDrawingPipeline.MAX_WIDGET_COUNT),
+		},
+	}
 end
 
-function Renderer:UpdateUniformBuffer()
+function Renderer:UpdateScenewideUniformBuffer()
 	local aspectRatio = self.backingSurface:GetAspectRatio()
 	local viewportWidth, viewportHeight = self.backingSurface:GetViewportSize()
 
-	local perSceneUniformData = self.perSceneUniformData
+	local perSceneUniformData = self.uniforms.perScene.data
 
 	local cameraWorldPosition = C_Camera.GetWorldPosition()
 	local cameraTarget = C_Camera.GetTargetPosition()
@@ -322,7 +349,7 @@ function Renderer:UpdateUniformBuffer()
 
 	Queue:WriteBuffer(
 		Device:GetQueue(self.wgpuDevice),
-		self.uniformBuffer,
+		self.uniforms.perScene.buffer,
 		0,
 		perSceneUniformData,
 		ffi.sizeof(perSceneUniformData)
