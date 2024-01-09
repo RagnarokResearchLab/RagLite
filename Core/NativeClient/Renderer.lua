@@ -1,8 +1,8 @@
-local etrace = require("etrace")
-
 local bit = require("bit")
+local etrace = require("etrace")
 local ffi = require("ffi")
-local uv = require("uv")
+local interop = require("interop")
+local rml = require("rml")
 local validation = require("validation")
 local webgpu = require("webgpu")
 
@@ -53,8 +53,10 @@ local Renderer = {
 	]],
 	clearColorRGBA = { Color.GREY.red, Color.GREY.green, Color.GREY.blue, 0 },
 	renderPipelines = {},
+	userInterfaceTextureBindGroups = {},
 	meshes = {},
 	DEBUG_DISCARDED_BACKGROUND_PIXELS = false, -- This is really slow (disk I/O); don't enable unless necessary
+	numWidgetTransformsUsedThisFrame = 0,
 }
 
 ffi.cdef(Renderer.cdefs)
@@ -78,6 +80,8 @@ function Renderer:InitializeWithGLFW(nativeWindowHandle)
 	Renderer:CreateDummyTexture()
 	-- Untextured geometry still needs to bind a UV buffer since we only have a single pipeline (hacky...)
 	Renderer:CreateDummyTextureCoordinatesBuffer()
+
+	Renderer:CreateUserInterface()
 end
 
 function Renderer:CreateGraphicsContext(nativeWindowHandle)
@@ -109,25 +113,65 @@ function Renderer:CreatePipelineConfigurations()
 		WidgetDrawingPipeline(self.wgpuDevice, self.backingSurface.preferredTextureFormat)
 end
 
+function Renderer:CreateUserInterface()
+	local ROBOTO_FILE_PATH = path.join("Core", "NativeClient", "Assets", "Fonts", "Roboto-Regular.ttf")
+	local RML_TEST_FILE_PATH = path.join("Tests", "Fixtures", "test.rml")
+
+	local glfwSystemInterface = rml.bindings.rml_create_glfw_system_interface()
+	self.rmlCommandQueue = interop.bindings.queue_create()
+	local wgpuRenderInterface = rml.bindings.rml_create_wgpu_render_interface(self.wgpuDevice, self.rmlCommandQueue)
+	rml.bindings.rml_set_system_interface(glfwSystemInterface)
+	rml.bindings.rml_set_render_interface(wgpuRenderInterface)
+	self.rmlRenderInterface = wgpuRenderInterface
+
+	assert(rml.bindings.rml_initialise(), "Failed to initialise RML library context")
+	assert(
+		rml.bindings.rml_load_font_face(ROBOTO_FILE_PATH, true),
+		"Failed to load default font face " .. ROBOTO_FILE_PATH
+	)
+
+	local viewportWidth, viewportHeight = self.backingSurface:GetViewportSize()
+	local rmlContext = rml.bindings.rml_context_create("default", viewportWidth, viewportHeight)
+	assert(rmlContext, "Failed to create RML library context")
+	self.rmlContext = rmlContext
+
+	local document = rml.bindings.rml_context_load_document(rmlContext, RML_TEST_FILE_PATH)
+	assert(document ~= ffi.NULL, "Failed to load default RML document " .. RML_TEST_FILE_PATH)
+	rml.bindings.rml_document_show(document)
+end
+
 function Renderer:RenderNextFrame()
 	etrace.clear()
 	local nextTextureView = self.backingSurface:AcquireTextureView()
 
 	local commandEncoderDescriptor = ffi_new("WGPUCommandEncoderDescriptor")
 	local commandEncoder = Device:CreateCommandEncoder(self.wgpuDevice, commandEncoderDescriptor)
-	local renderPass = self:BeginRenderPass(commandEncoder, nextTextureView)
+
+	do
+		local renderPass = self:BeginRenderPass(commandEncoder, nextTextureView)
 
 		self:UpdateScenewideUniformBuffer()
 
-	for wgpuRenderPipeline, pipelineConfiguration in pairs(self.renderPipelines) do
-		RenderPassEncoder:SetPipeline(renderPass, wgpuRenderPipeline)
-
+		RenderPassEncoder:SetPipeline(renderPass, self.meshGeometryRenderingPipeline)
 		for _, mesh in ipairs(self.meshes) do
 			self:DrawMesh(renderPass, mesh)
 		end
+
+		RenderPassEncoder:End(renderPass)
 	end
 
-	RenderPassEncoder:End(renderPass)
+	do
+		local uiRenderPass = self:BeginUserInterfaceRenderPass(commandEncoder, nextTextureView)
+		RenderPassEncoder:SetPipeline(uiRenderPass, self.userInterfaceRenderingPipeline)
+
+		self.numWidgetTransformsUsedThisFrame = 0
+		rml.bindings.rml_context_update(self.rmlContext)
+		-- NO MORE CHANGES here before rendering the updated state!
+		rml.bindings.rml_context_render(self.rmlContext)
+
+		RenderPassEncoder:End(uiRenderPass)
+	end
+
 	self:SubmitCommandBuffer(commandEncoder)
 	self.backingSurface:PresentNextFrame()
 end
@@ -159,6 +203,23 @@ function Renderer:BeginRenderPass(commandEncoder, nextTextureView)
 		colorAttachmentCount = 1,
 		colorAttachments = renderPassColorAttachment,
 		depthStencilAttachment = depthStencilAttachment,
+	})
+
+	return CommandEncoder:BeginRenderPass(commandEncoder, renderPassDescriptor)
+end
+
+function Renderer:BeginUserInterfaceRenderPass(commandEncoder, nextTextureView)
+	local renderPassColorAttachment = ffi_new("WGPURenderPassColorAttachment", {
+		view = nextTextureView,
+		loadOp = ffi.C.WGPULoadOp_Load, -- Preserve existing framebuffer content
+		storeOp = ffi.C.WGPUStoreOp_Store,
+		clearValue = ffi_new("WGPUColor", self.clearColorRGBA),
+	})
+
+	local renderPassDescriptor = ffi_new("WGPURenderPassDescriptor", {
+		colorAttachmentCount = 1,
+		colorAttachments = renderPassColorAttachment,
+		-- depth/stencil testing is omitted since it's not needed for UI rendering
 	})
 
 	return CommandEncoder:BeginRenderPass(commandEncoder, renderPassDescriptor)
