@@ -2,6 +2,7 @@ local bit = require("bit")
 local ffi = require("ffi")
 local glfw = require("glfw")
 local interop = require("interop")
+local rml = require("rml")
 local uv = require("uv")
 
 local C_Camera = require("Core.NativeClient.C_Camera")
@@ -184,6 +185,16 @@ function NativeClient:MOUSECLICK_STATUS_UPDATED(eventID, payload)
 	local wasButtonPressed = (payload.mouse_button_details.action == GLFW_PRESS)
 	local wasControlKeyDown = (payload.mouse_button_details.mods == GLFW_MOD_CONTROL)
 
+	local shouldProcessEvent = rml.bindings.rml_process_mouse_button_callback(
+		Renderer.rmlContext,
+		payload.mouse_button_details.button,
+		payload.mouse_button_details.action,
+		payload.mouse_button_details.mods
+	)
+	if not shouldProcessEvent then
+		return
+	end
+
 	-- Should probably use a proper FSM for more complex input sequences, but for now this will do
 	local now = uv.hrtime()
 	if isRightButton then
@@ -205,6 +216,16 @@ function NativeClient:MOUSECLICK_STATUS_UPDATED(eventID, payload)
 end
 
 function NativeClient:CURSOR_MOVED(eventID, payload)
+	local shouldProcessEvent = rml.bindings.rml_process_cursor_pos_callback(
+		Renderer.rmlContext,
+		payload.cursor_move_details.x,
+		payload.cursor_move_details.y,
+		0
+	) -- The modifiers aren't provided by GLFW here? Fix later if it turns out to be a problem...
+	if not shouldProcessEvent then
+		return
+	end
+
 	C_Cursor.SetLastKnownPosition(payload.cursor_move_details.x, payload.cursor_move_details.y)
 
 	if not C_Camera.IsAdjustingView() then
