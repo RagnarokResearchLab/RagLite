@@ -15,10 +15,7 @@ local BasicTriangleDrawingPipeline = {
 
 function BasicTriangleDrawingPipeline:Construct(wgpuDeviceHandle, textureFormatID)
 	printf("Creating render pipeline with texture format %d", tonumber(textureFormatID))
-
-	-- TODO prevent cdata refs from getting GCed
-	-- Configure vertex processing pipeline (vertex fetch/vertex shader stages)
-	-- Positions, colors, diffuse UVs
+	self.wgpuDevice = wgpuDeviceHandle
 
 	local sharedShaderModule = self:CreateShaderModule(wgpuDeviceHandle)
 	local renderPipelineDescriptor = new("WGPURenderPipelineDescriptor", {

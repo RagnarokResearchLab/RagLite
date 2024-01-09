@@ -4,6 +4,7 @@ local bit = require("bit")
 local ffi = require("ffi")
 local uv = require("uv")
 local validation = require("validation")
+local webgpu = require("webgpu")
 
 local GPU = require("Core.NativeClient.WebGPU.GPU")
 local BasicTriangleDrawingPipeline = require("Core.NativeClient.WebGPU.BasicTriangleDrawingPipeline")
