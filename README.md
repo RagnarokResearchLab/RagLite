@@ -5,7 +5,7 @@ Standalone client with built-in backend server that allows running a persistent 
 > [!IMPORTANT]
 > Standalone in this context means that all scripts should "just work" in the [Evo.lua](https://evo-lua.github.io/) runtime environment.
 
-*Evo is a custom [Lua](https://www.lua.org/about.html) interpreter/runtime environment written in C++ (and C), which comes with a host of useful libraries to do the heavy lifting. You can see it as the "engine" for this and other programs, providing core features like graphics and networking. Despite being a separate project unrelated to this one, it's similarly created and maintained by me.*
+*Evo is a custom [Lua](https://www.lua.org/about.html) interpreter written in C++ (and C), which comes with a host of useful libraries to do the heavy lifting. You can see it as the "engine" for this and other programs, providing core features like graphics and networking. Despite being a separate project unrelated to this one, it's similarly created and maintained by me.*
 
 Please note that RagLite is explicitly **NOT** a full game client or server implementation. If you want one, there are [many other projects](https://ragnarokresearchlab.github.io/community-projects/) aiming to accomplish this lofty goal. My focus is on research, and the tool reflects that.
 
@@ -41,10 +41,10 @@ If you want to follow the development more closely, check out the [roadmap](http
 Because this tool is an interactive aid that's part of my ongoing research efforts, you can expect the following:
 
 * Complete, well-tested and documented decoders for all file formats that are of interest
-* Data mining/analysis toolkit that allows importing, dumping, and converting their contents
+* Data mining/analysis toolkit that allows importing, exporting, and converting their contents
 * Approximate recreation of 3D scenes with key actors, interactions, animations, and effects
-* CLI or UI-based control flow that is suitable for developers, though not necessarily "end users"
-* Proof-of-concept or prototype implementations of gameplay and/or simulation steps (server)
+* CLI or UI-based control flow that's suitable for developers, though not necessarily "end users"
+* Proof-of-concept or prototype implementations of gameplay mechanics and simulation steps (server)
 
 Needless to say, it will take a lot more time and work until all of the above has been fully implemented.
 
@@ -84,12 +84,12 @@ A window should pop up with a basic 3D scene being visible. Tools are CLI only.
 To load a specific map, you can pass the `mapID` (unique scene identifier) to the client via CLI args:
 
 ```sh
-# Valid scene IDs are any map that's listed in the DB/maps.lua table
+# Valid scene IDs are any map that's listed in the DB/Maps.lua table
 # You can also directly load debug scenes (e.g., 'cube3d' or 'webgpu') this way
-./evo start-client aldebaran
+./evo start-client.lua aldebaran
 ```
 
-If all you're seeing is the "hello world" fallback scene, then the map wasn't found in the classic database.
+If all you're seeing is the "hello world" fallback scene, then the map wasn't found in the database.
 
 ### Camera Controls
 

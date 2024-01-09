@@ -35,6 +35,13 @@ local gatFiles = {
 	path.join("Tests", "Fixtures", "v0103.gat"),
 }
 
+local rsmFiles = {
+	path.join("Tests", "Fixtures", "v0104.rsm"),
+	path.join("Tests", "Fixtures", "v0105.rsm"),
+	path.join("Tests", "Fixtures", "v0202.rsm2"),
+	path.join("Tests", "Fixtures", "v0203.rsm2"),
+}
+
 describe("FileAnalyzer", function()
 	describe("AnalyzeGND", function()
 		it("should return a summary of the metadata found in the given GND files", function()
@@ -173,6 +180,19 @@ describe("FileAnalyzer", function()
 
 			assertEquals(analysisResult.minObservedAltitude, 1)
 			assertEquals(analysisResult.maxObservedAltitude, 4)
+		end)
+	end)
+
+	describe("AnalyzeRSM", function()
+		it("should return a summary of the metadata found in the given RSM files", function()
+			local analysisResult = FileAnalyzer:AnalyzeRSM(rsmFiles)
+
+			assertEquals(analysisResult.numFilesAnalyzed, 4)
+
+			assertEquals(analysisResult.fields.version[1.4], 1)
+			assertEquals(analysisResult.fields.version[1.5], 1)
+			assertEquals(analysisResult.fields.version[2.2], 1)
+			assertEquals(analysisResult.fields.version[2.3], 1)
 		end)
 	end)
 end)

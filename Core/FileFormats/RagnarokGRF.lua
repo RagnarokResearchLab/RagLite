@@ -219,6 +219,21 @@ function RagnarokGRF:FindLargestFileEntry()
 	return largestEncounteredFileEntry
 end
 
+function RagnarokGRF:FindLargestFileByType(fileType)
+	local largestEncounteredFileEntry
+	local largestEncounteredFileSize = 0
+
+	local relevantFileEntries = self:FindFilesByType(fileType)
+	for index, entry in ipairs(relevantFileEntries) do
+		if entry.decompressedSizeInBytes > largestEncounteredFileSize then
+			largestEncounteredFileEntry = entry
+			largestEncounteredFileSize = entry.decompressedSizeInBytes
+		end
+	end
+
+	return largestEncounteredFileEntry
+end
+
 function RagnarokGRF:FindFilesByType(fileExtension)
 	local matchingFileEntries = {}
 
@@ -244,6 +259,10 @@ function RagnarokGRF:ExtractFileToDisk(fileName, where)
 end
 
 function RagnarokGRF:ExtractFileInMemory(fileName)
+	if not self.fileTable.entries then
+		error(format("Failed to extract %s (no file table loaded; forgot to open a handle?)", fileName), 0)
+	end
+
 	local timeBefore = uv.hrtime()
 
 	local normalizedFileName = self:GetNormalizedFilePath(fileName)
