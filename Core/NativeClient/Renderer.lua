@@ -43,6 +43,11 @@ local Renderer = {
 			// Padding needs to be updated whenever the struct changes!
 			uint8_t padding[6];
 		} scenewide_uniform_t;
+		typedef struct PerMeshData {
+			float translation[2]; // 8
+			float padding[6]; // 32
+			// Total size must be at least minUniformBufferOffsetAlignment bytes large (with 16 byte alignment)
+		} mesh_uniform_t;
 	]],
 	clearColorRGBA = { Color.GREY.red, Color.GREY.green, Color.GREY.blue, 0 },
 	renderPipelines = {},
@@ -54,6 +59,10 @@ ffi.cdef(Renderer.cdefs)
 
 assert(
 	ffi.sizeof("scenewide_uniform_t") % 16 == 0,
+	"Structs in uniform address space must be aligned to a 16 byte boundary (as per the WebGPU specification)"
+)
+assert(
+	ffi.sizeof("mesh_uniform_t") % 16 == 0,
 	"Structs in uniform address space must be aligned to a 16 byte boundary (as per the WebGPU specification)"
 )
 
