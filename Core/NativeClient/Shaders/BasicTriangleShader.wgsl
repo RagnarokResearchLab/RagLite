@@ -2,10 +2,8 @@ struct PerSceneData {
     view: mat4x4f,
     perspectiveProjection: mat4x4f,
     color: vec4f,
-    time: f32,
-	padding: f32,
-	padding: f32,
-	padding: f32,
+	viewportWidth: f32,
+	viewportHeight: f32,
 };
 
 @group(0) @binding(0) var<uniform> uPerSceneData: PerSceneData;
@@ -55,7 +53,7 @@ fn vs_main(in: VertexInput) -> VertexOutput {
 	));
 
 	// Rotate the object
-	let angle1 = 5.0 * uPerSceneData.time;
+	let angle1 = 5.0;
 	let c1 = cos(angle1);
 	let s1 = sin(angle1);
 	let R1 = transpose(mat4x4<f32>(

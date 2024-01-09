@@ -31,15 +31,17 @@ local Color = require("Core.NativeClient.DebugDraw.Color")
 
 local Renderer = {
 	cdefs = [[
-		// Must match the struct defined in the shader
+		// Total struct size must align to 16 byte boundary
+		// See https://gpuweb.github.io/gpuweb/wgsl/#address-space-layout-constraints
+		// Layouts must match the structs defined in the shaders
 		typedef struct PerSceneData {
 			Matrix4D view;
 			Matrix4D perspectiveProjection;
 			float color[4];
-			float time;
-			// Total struct size must align to 16 byte boundary
-			// See https://gpuweb.github.io/gpuweb/wgsl/#address-space-layout-constraints
-			float padding[3]; // Needs to be updateds whenever the struct changes!
+			float viewportWidth;
+			float viewportHeight;
+			// Padding needs to be updated whenever the struct changes!
+			uint8_t padding[6];
 		} scenewide_uniform_t;
 	]],
 	clearColorRGBA = { Color.GREY.red, Color.GREY.green, Color.GREY.blue, 0 },
@@ -294,8 +296,8 @@ end
 
 function Renderer:UpdateUniformBuffer()
 	local aspectRatio = self.backingSurface:GetAspectRatio()
+	local viewportWidth, viewportHeight = self.backingSurface:GetViewportSize()
 
-	local currentTime = uv.hrtime() / 10E9
 	local perSceneUniformData = self.perSceneUniformData
 
 	local cameraWorldPosition = C_Camera.GetWorldPosition()
@@ -303,9 +305,10 @@ function Renderer:UpdateUniformBuffer()
 	local upVectorHint = Vector3D(0, 1, 0)
 	local perspective = C_Camera.GetPerspective()
 	perSceneUniformData.view = C_Camera.CreateOrbitalView(cameraWorldPosition, cameraTarget, upVectorHint)
+	perSceneUniformData.viewportWidth = viewportWidth
+	perSceneUniformData.viewportHeight = viewportHeight
 	perSceneUniformData.perspectiveProjection =
 		C_Camera.CreatePerspectiveProjection(perspective.fov, aspectRatio, perspective.nearZ, perspective.farZ)
-	perSceneUniformData.time = ffi.new("float", currentTime)
 	perSceneUniformData.color = ffi.new("float[4]", { 1.0, 1.0, 1.0, 1.0 })
 
 	Queue:WriteBuffer(
