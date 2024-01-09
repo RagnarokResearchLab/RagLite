@@ -11,6 +11,7 @@ local new = ffi.new
 local math_floor = math.floor
 
 local Texture = {
+	DEFAULT_TEXTURE_FORMAT = ffi.C.WGPUTextureFormat_RGBA8Unorm, -- TBD: WGPUTextureFormat_BGRA8UnormSrgb ?
 	MAX_TEXTURE_DIMENSION = 4096,
 	ERROR_DIMENSIONS_NOT_POWER_OF_TWO = "Texture dimensions should always be a power of two",
 	ERROR_DIMENSIONS_EXCEEDING_LIMIT = "Texture dimensions must not exceed the configured GPU limit",
@@ -53,12 +54,31 @@ function Texture:Construct(wgpuDevice, rgbaImageBytes, textureWidthInPixels, tex
 		},
 		mipLevelCount = 1, -- No need for mip-maps (deferred)
 		sampleCount = 1, -- MSAA isn't currently supported)
-		format = ffi.C.WGPUTextureFormat_RGBA8Unorm, -- TBD: WGPUTextureFormat_BGRA8UnormSrgb ?
+		format = Texture.DEFAULT_TEXTURE_FORMAT,
 		usage = bit.bor(ffi.C.WGPUTextureUsage_CopyDst, ffi.C.WGPUTextureUsage_TextureBinding),
 		viewFormatCount = 0, -- No texture view (for now)
 	})
 
 	local textureHandle = webgpu.bindings.wgpu_device_create_texture(wgpuDevice, textureDescriptor)
+	local bindGroup = self:CreateBindGroupForPipeline(textureHandle, BasicTriangleDrawingPipeline)
+
+	local instance = {
+		wgpuDevice = wgpuDevice,
+		wgpuTextureDescriptor = textureDescriptor,
+		wgpuTexture = textureHandle,
+		wgpuBindGroup = bindGroup,
+		width = textureWidthInPixels,
+		height = textureHeightInPixels,
+		rgbaImageBytes = rgbaImageBytes,
+	}
+
+	setmetatable(instance, self)
+
+	return instance
+end
+
+function Texture:CreateBindGroupForPipeline(textureHandle, renderPipeline)
+	local wgpuDevice = renderPipeline.wgpuDevice
 
 	-- Create readonly view that should be accessed by a sampler
 	local textureViewDescriptor = new("WGPUTextureViewDescriptor", {
@@ -68,25 +88,12 @@ function Texture:Construct(wgpuDevice, rgbaImageBytes, textureWidthInPixels, tex
 		baseMipLevel = 0,
 		mipLevelCount = 1,
 		dimension = ffi.C.WGPUTextureViewDimension_2D,
-		format = textureDescriptor.format,
+		format = Texture.DEFAULT_TEXTURE_FORMAT,
 	})
 	local textureView = webgpu.bindings.wgpu_texture_create_view(textureHandle, textureViewDescriptor)
 
 	-- Creating one sampler per texture is wasteful, but gives the most flexibility (revisit later, if needed)
-	local samplerDescriptor = new("WGPUSamplerDescriptor", {
-		label = "SharedTextureSampler",
-		addressModeU = ffi.C.WGPUAddressMode_ClampToEdge,
-		addressModeV = ffi.C.WGPUAddressMode_ClampToEdge,
-		addressModeW = ffi.C.WGPUAddressMode_ClampToEdge,
-		magFilter = ffi.C.WGPUFilterMode_Linear,
-		minFilter = ffi.C.WGPUFilterMode_Linear,
-		mipmapFilter = ffi.C.WGPUFilterMode_Linear,
-		lodMinClamp = 0.0,
-		lodMaxClamp = math.huge,
-		compare = ffi.C.WGPUCompareFunction_Undefined, -- Irrelevant (not a depth texture)
-		maxAnisotropy = 1, -- Might want to use clamped addressing with anisotropic filtering here?
-	})
-	local textureSampler = webgpu.bindings.wgpu_device_create_sampler(wgpuDevice, samplerDescriptor)
+	local textureSampler = self:CreateTrilinearSampler(wgpuDevice)
 
 	-- Assign texture view and sampler so that they can be bound to the pipeline (in the render loop)
 
@@ -101,35 +108,32 @@ function Texture:Construct(wgpuDevice, rgbaImageBytes, textureWidthInPixels, tex
 		}),
 	})
 
-	-- Depending on the pipeline to be initialized here is unfortunate, but I guess there's no other way?
 	local textureBindGroupDescriptor = new("WGPUBindGroupDescriptor")
-	textureBindGroupDescriptor.layout = BasicTriangleDrawingPipeline.wgpuMaterialBindGroupLayout
+	textureBindGroupDescriptor.layout = renderPipeline.wgpuMaterialBindGroupLayout
 
-	local wgpuMaterialBindGroupLayoutDescriptor = BasicTriangleDrawingPipeline.wgpuMaterialBindGroupLayoutDescriptor
-		or select(2, BasicTriangleDrawingPipeline:CreateMaterialBindGroupLayout(wgpuDevice))
+	local wgpuMaterialBindGroupLayoutDescriptor = renderPipeline.wgpuMaterialBindGroupLayoutDescriptor
+		or select(2, renderPipeline:CreateMaterialBindGroupLayout(wgpuDevice))
 	textureBindGroupDescriptor.entryCount = wgpuMaterialBindGroupLayoutDescriptor.entryCount
 	textureBindGroupDescriptor.entries = bindGroupEntries
 
-	local bindGroup = webgpu.bindings.wgpu_device_create_bind_group(wgpuDevice, textureBindGroupDescriptor)
+	return webgpu.bindings.wgpu_device_create_bind_group(wgpuDevice, textureBindGroupDescriptor)
+end
 
-	local instance = {
-		wgpuDevice = wgpuDevice,
-		wgpuTextureDescriptor = textureDescriptor,
-		wgpuTexture = textureHandle,
-		wgpuTextureView = textureView,
-		wgpuTextureViewDescriptor = textureViewDescriptor,
-		wgpuTextureSampler = textureSampler,
-		wgpuSamplerDescriptor = samplerDescriptor,
-		wgpuBindGroup = bindGroup,
-		wgpuBindGroupDescriptor = textureBindGroupDescriptor,
-		width = textureWidthInPixels,
-		height = textureHeightInPixels,
-		rgbaImageBytes = rgbaImageBytes,
-	}
-
-	setmetatable(instance, self)
-
-	return instance
+function Texture:CreateTrilinearSampler(wgpuDevice)
+	local samplerDescriptor = new("WGPUSamplerDescriptor", {
+		label = "SharedTextureSampler",
+		addressModeU = ffi.C.WGPUAddressMode_ClampToEdge,
+		addressModeV = ffi.C.WGPUAddressMode_ClampToEdge,
+		addressModeW = ffi.C.WGPUAddressMode_ClampToEdge,
+		magFilter = ffi.C.WGPUFilterMode_Linear,
+		minFilter = ffi.C.WGPUFilterMode_Linear,
+		mipmapFilter = ffi.C.WGPUFilterMode_Linear,
+		lodMinClamp = 0.0,
+		lodMaxClamp = math.huge,
+		compare = ffi.C.WGPUCompareFunction_Undefined, -- Irrelevant (not a depth texture)
+		maxAnisotropy = 1, -- Might want to use clamped addressing with anisotropic filtering here?
+	})
+	return webgpu.bindings.wgpu_device_create_sampler(wgpuDevice, samplerDescriptor)
 end
 
 function Texture:CopyImageBytesToGPU()

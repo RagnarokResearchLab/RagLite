@@ -49,7 +49,6 @@ function GPU:RequestLogicalDevice(adapter, options)
 
 	local supportedLimits = new("WGPUSupportedLimits")
 	webgpu.bindings.wgpu_adapter_get_limits(adapter, supportedLimits)
-	local numComponentsPerVertex = 3 -- sizeof(Vertex3D) = positions (x, y, z)
 
 	local deviceDescriptor = new("WGPUDeviceDescriptor", {
 		label = options.label,
@@ -65,20 +64,24 @@ function GPU:RequestLogicalDevice(adapter, options)
 				maxTextureArrayLayers = 1, -- For the depth/stencil texture
 				maxVertexAttributes = 3, -- Vertex positions, vertex colors, diffuse texture UVs
 				maxVertexBuffers = 3, -- Vertex positions, vertex colors, diffuse texture UVs
-				maxInterStageShaderComponents = 5, -- sizeof(VertexOutput\{#@builtins}) = #(vec3f color, vec2f diffuseTextureCoords)
-				maxBufferSize = self.MAX_VERTEX_COUNT * numComponentsPerVertex * ffi.sizeof("float"),
-				maxVertexBufferArrayStride = numComponentsPerVertex * ffi.sizeof("float"),
-				maxBindGroups = 2, -- Camera, material (increase for model transforms, later?)
+				maxInterStageShaderComponents = 6, -- #(vec3f color, vec2f diffuseTextureCoords, float alpha)
+				maxBufferSize = self.MAX_VERTEX_COUNT * 5 * ffi.sizeof("float"), -- #(vec3f position, vec2f transform)
+				maxVertexBufferArrayStride = 20, -- #(Rml::Vertex)
+				maxBindGroups = 3, -- Camera, material, transforms
 				maxUniformBuffersPerShaderStage = 1, -- Camera properties (increase for material, soon?)
 				maxSampledTexturesPerShaderStage = 1, -- Diffuse texture (increase for lightmaps, later?)
 				maxSamplersPerShaderStage = 1, -- Diffuse texture sampler (increase for lightmaps, later?)
-				maxUniformBufferBindingSize = 48 * ffi.sizeof("float"),
+				maxUniformBufferBindingSize = 65536, -- DEFAULT
 				maxBindingsPerBindGroup = 1, -- Max. allowed binding index
-				minStorageBufferOffsetAlignment = supportedLimits.limits.minStorageBufferOffsetAlignment,
-				minUniformBufferOffsetAlignment = supportedLimits.limits.minUniformBufferOffsetAlignment,
+				maxDynamicUniformBuffersPerPipelineLayout = 1,
+				minStorageBufferOffsetAlignment = 32,
+				minUniformBufferOffsetAlignment = 32,
 			},
 		}),
 	})
+
+	assert(supportedLimits.limits.minUniformBufferOffsetAlignment <= 32, "Dynamic uniform headaches will ensue")
+	self.minUniformBufferOffsetAlignment = supportedLimits.limits.minUniformBufferOffsetAlignment
 
 	local requestedDevice
 	local function onDeviceRequested(status, device, message, userdata)
@@ -107,6 +110,13 @@ function GPU:RequestLogicalDevice(adapter, options)
 	webgpu.bindings.wgpu_device_set_uncaptured_error_callback(requestedDevice, onDeviceError, nil)
 
 	return requestedDevice, deviceDescriptor
+end
+
+function GPU:GetAlignedDynamicUniformBufferStride(uniformStructSizeInBytes)
+	local step = self.minUniformBufferOffsetAlignment
+	-- More headaches if the dynamic uniforms (e.g., widget transforms) are smaller than the minimum stride...
+	local divide_and_ceil = uniformStructSizeInBytes / step + (uniformStructSizeInBytes % step == 0 and 0 or 1)
+	return step * divide_and_ceil
 end
 
 return GPU

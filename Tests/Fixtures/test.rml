@@ -1,0 +1,35 @@
+<rml>
+	<head>
+		<title>Demo</title>
+		<style>
+
+			body {
+				font-family: Roboto;
+				color: red;
+				font-size: 32dp;
+				position: fixed;
+
+				left: 0;
+				right: 0;
+				margin: 0;
+				display: block;
+			}
+
+			#PerformanceMetricsOverlay {
+				font-size: 24dp;
+				border-width: 2dp;
+				border-color: yellow;
+				border-radius: 5dp;
+				position: fixed;
+				right: 10dp;
+				top: 10dp;
+				padding: 5dp;
+				color: yellow;
+				display: block;
+			}
+		</style>
+	</head>
+	<body>
+		<div id="PerformanceMetricsOverlay">FPS: 60</div>
+	</body>
+</rml>

@@ -8,19 +8,20 @@ local binary_not = bit.bnot
 local new = ffi.new
 local sizeof = ffi.sizeof
 
-local BasicTriangleDrawingPipeline = {
+local WidgetDrawingPipeline = {
 	displayName = "Basic Triangle Drawing Pipeline",
-	WGSL_SHADER_SOURCE_LOCATION = "Core/NativeClient/Shaders/BasicTriangleShader.wgsl",
+	WGSL_SHADER_SOURCE_LOCATION = "Core/NativeClient/Shaders/UserInterfaceShader.wgsl",
+	MAX_WIDGET_COUNT = 2048, -- The default maxUniformBufferBindingSize allows for this many without optimizing further/removing padding/using other buffer types or even hardware instacing for the UI
 }
 
-function BasicTriangleDrawingPipeline:Construct(wgpuDeviceHandle, textureFormatID)
+function WidgetDrawingPipeline:Construct(wgpuDeviceHandle, textureFormatID)
 	printf("Creating render pipeline with texture format %d", tonumber(textureFormatID))
 	self.wgpuDevice = wgpuDeviceHandle
 
 	local sharedShaderModule = self:CreateShaderModule(wgpuDeviceHandle)
 	local renderPipelineDescriptor = new("WGPURenderPipelineDescriptor", {
 		vertex = {
-			bufferCount = 3, -- Vertex positions, colors, diffuse UVs
+			bufferCount = 1, -- Interleaved (Rml::Vertex format)
 			module = sharedShaderModule,
 			entryPoint = "vs_main",
 			constantCount = 0,
@@ -51,28 +52,6 @@ function BasicTriangleDrawingPipeline:Construct(wgpuDeviceHandle, textureFormatI
 				}),
 			}),
 		}),
-		depthStencil = new("WGPUDepthStencilState", {
-			format = ffi.C.WGPUTextureFormat_Depth24Plus,
-			depthWriteEnabled = true,
-			depthCompare = ffi.C.WGPUCompareFunction_Less,
-			stencilReadMask = 0,
-			stencilWriteMask = 0,
-			depthBias = 0,
-			depthBiasSlopeScale = 0,
-			depthBiasClamp = 0,
-			stencilFront = {
-				compare = ffi.C.WGPUCompareFunction_Always,
-				failOp = ffi.C.WGPUStencilOperation_Keep,
-				depthFailOp = ffi.C.WGPUStencilOperation_Keep,
-				passOp = ffi.C.WGPUStencilOperation_Keep,
-			},
-			stencilBack = {
-				compare = ffi.C.WGPUCompareFunction_Always,
-				failOp = ffi.C.WGPUStencilOperation_Keep,
-				depthFailOp = ffi.C.WGPUStencilOperation_Keep,
-				passOp = ffi.C.WGPUStencilOperation_Keep,
-			},
-		}),
 		multisample = {
 			count = 1, -- Samples per pixel (1 = currently disabled)
 			mask = binary_not(0), -- All bits enabled (bitmask = 0xFFFFFFFF)
@@ -82,18 +61,23 @@ function BasicTriangleDrawingPipeline:Construct(wgpuDeviceHandle, textureFormatI
 
 	-- Configure resource layout for the vertex shader
 	local cameraBindGroupLayout, cameraBindGroupLayoutDescriptor = self:CreateCameraBindGroupLayout(wgpuDeviceHandle)
+	local transformBindGroupLayout, transformBindGroupLayoutDescriptor =
+		self:CreateTransformBindGroupLayout(wgpuDeviceHandle)
 	local materialBindGroupLayout, materialBindGroupLayoutDescriptor =
 		self:CreateMaterialBindGroupLayout(wgpuDeviceHandle)
 	self.wgpuCameraBindGroupLayout = cameraBindGroupLayout
 	self.wgpuCameraBindGroupLayoutDescriptor = cameraBindGroupLayoutDescriptor
+	self.wgpuTransformBindGroupLayout = transformBindGroupLayout
+	self.wgpuTransformBindGroupLayoutDescriptor = transformBindGroupLayoutDescriptor
 	self.wgpuMaterialBindGroupLayout = materialBindGroupLayout
 	self.wgpuMaterialBindGroupLayoutDescriptor = materialBindGroupLayoutDescriptor
 
 	local pipelineLayoutDescriptor = new("WGPUPipelineLayoutDescriptor", {
-		bindGroupLayoutCount = 2,
-		bindGroupLayouts = new("WGPUBindGroupLayout[?]", 2, {
+		bindGroupLayoutCount = 3,
+		bindGroupLayouts = new("WGPUBindGroupLayout[?]", 3, {
 			cameraBindGroupLayout,
 			materialBindGroupLayout,
+			transformBindGroupLayout,
 		}),
 	})
 
@@ -103,7 +87,7 @@ function BasicTriangleDrawingPipeline:Construct(wgpuDeviceHandle, textureFormatI
 	return webgpu.bindings.wgpu_device_create_render_pipeline(wgpuDeviceHandle, renderPipelineDescriptor)
 end
 
-function BasicTriangleDrawingPipeline:CreateShaderModule(wgpuDeviceHandle)
+function WidgetDrawingPipeline:CreateShaderModule(wgpuDeviceHandle)
 	local shaderCodeDescriptor = new("WGPUShaderModuleWGSLDescriptor", {
 		code = C_FileSystem.ReadFile(self.WGSL_SHADER_SOURCE_LOCATION),
 		chain = {
@@ -117,48 +101,36 @@ function BasicTriangleDrawingPipeline:CreateShaderModule(wgpuDeviceHandle)
 	return Device:CreateShaderModule(wgpuDeviceHandle, shaderModuleDescriptor)
 end
 
-function BasicTriangleDrawingPipeline:CreateVertexBufferLayout()
+function WidgetDrawingPipeline:CreateVertexBufferLayout()
 	local vertexPositionsLayout = new("WGPUVertexBufferLayout", {
-		attributeCount = 1, -- Position
-		attributes = new("WGPUVertexAttribute", {
-			shaderLocation = 0, -- Pass as first argument
-			format = ffi.C.WGPUVertexFormat_Float32x3,
-			offset = 0,
+		attributeCount = 3, -- Position, color, uvs
+		attributes = new("WGPUVertexAttribute[?]", 3, {
+			{
+				shaderLocation = 0,
+				format = ffi.C.WGPUVertexFormat_Float32x2,
+				offset = 0,
+			},
+			{
+				shaderLocation = 1,
+				format = ffi.C.WGPUVertexFormat_Uint32,
+				offset = 2 * ffi.sizeof("float"),
+			},
+			{
+				shaderLocation = 2,
+				format = ffi.C.WGPUVertexFormat_Float32x2,
+				offset = 2 * ffi.sizeof("float") + 1 * ffi.sizeof("uint32_t"),
+			},
 		}),
-		arrayStride = 3 * sizeof("float"), -- sizeof(Vector3D) = position
+		arrayStride = 20, -- sizeof(Rml::Vertex)
 		stepMode = ffi.C.WGPUVertexStepMode_Vertex,
 	})
 
-	local vertexColorsLayout = new("WGPUVertexBufferLayout", {
-		attributeCount = 1, -- Color
-		attributes = new("WGPUVertexAttribute", {
-			shaderLocation = 1, -- Pass as second argument
-			format = ffi.C.WGPUVertexFormat_Float32x3, -- Vector3D (float) = RGB color
-			offset = 0,
-		}),
-		arrayStride = 3 * sizeof("float"), -- sizeof(Vector3D) = color
-		stepMode = ffi.C.WGPUVertexStepMode_Vertex,
-	})
-
-	local diffuseTexCoordsLayout = new("WGPUVertexBufferLayout", {
-		attributeCount = 1, -- UV
-		attributes = new("WGPUVertexAttribute", {
-			shaderLocation = 2, -- Pass as third argument
-			format = ffi.C.WGPUVertexFormat_Float32x2, -- Vector2D (float) = UV coords
-			offset = 0,
-		}),
-		arrayStride = 2 * sizeof("float"), -- sizeof(Vector2D) = uv
-		stepMode = ffi.C.WGPUVertexStepMode_Vertex,
-	})
-
-	return new("WGPUVertexBufferLayout[?]", 3, {
+	return new("WGPUVertexBufferLayout[?]", 1, {
 		vertexPositionsLayout,
-		vertexColorsLayout,
-		diffuseTexCoordsLayout,
 	})
 end
 
-function BasicTriangleDrawingPipeline:CreateCameraBindGroupLayout(wgpuDeviceHandle)
+function WidgetDrawingPipeline:CreateCameraBindGroupLayout(wgpuDeviceHandle)
 	local bindGroupLayoutDescriptor = new("WGPUBindGroupLayoutDescriptor", {
 		entryCount = 1,
 		entries = new("WGPUBindGroupLayoutEntry[?]", 2, {
@@ -193,7 +165,7 @@ function BasicTriangleDrawingPipeline:CreateCameraBindGroupLayout(wgpuDeviceHand
 	return bindGroupLayout, bindGroupLayoutDescriptor
 end
 
-function BasicTriangleDrawingPipeline:CreateMaterialBindGroupLayout(wgpuDeviceHandle)
+function WidgetDrawingPipeline:CreateMaterialBindGroupLayout(wgpuDeviceHandle)
 	local bindGroupLayoutDescriptor = new("WGPUBindGroupLayoutDescriptor", {
 		entryCount = 2,
 		entries = new("WGPUBindGroupLayoutEntry[?]", 2, {
@@ -222,7 +194,42 @@ function BasicTriangleDrawingPipeline:CreateMaterialBindGroupLayout(wgpuDeviceHa
 	return bindGroupLayout, bindGroupLayoutDescriptor
 end
 
-BasicTriangleDrawingPipeline.__call = BasicTriangleDrawingPipeline.Construct
-setmetatable(BasicTriangleDrawingPipeline, BasicTriangleDrawingPipeline)
+function WidgetDrawingPipeline:CreateTransformBindGroupLayout(wgpuDeviceHandle)
+	local bindGroupLayoutDescriptor = new("WGPUBindGroupLayoutDescriptor", {
+		entryCount = 1,
+		entries = new("WGPUBindGroupLayoutEntry[?]", 2, {
+			new("WGPUBindGroupLayoutEntry", {
+				binding = 0,
+				visibility = bit.bor(ffi.C.WGPUShaderStage_Vertex, ffi.C.WGPUShaderStage_Fragment),
+				buffer = {
+					type = ffi.C.WGPUBufferBindingType_Uniform,
+					hasDynamicOffset = true, -- Required to access transform slots in the preallocated buffer
+					minBindingSize = sizeof("mesh_uniform_t"), -- Only bind a part as it's offset for each object
+				},
+				sampler = {
+					type = ffi.C.WGPUSamplerBindingType_Undefined,
+				},
+				storageTexture = {
+					access = ffi.C.WGPUStorageTextureAccess_Undefined,
+					format = ffi.C.WGPUTextureFormat_Undefined,
+					viewDimension = ffi.C.WGPUTextureViewDimension_Undefined,
+				},
+				texture = {
+					multisampled = false,
+					sampleType = ffi.C.WGPUTextureSampleType_Undefined,
+					viewDimension = ffi.C.WGPUTextureViewDimension_Undefined,
+				},
+			}),
+		}),
+	})
 
-return BasicTriangleDrawingPipeline
+	local bindGroupLayout =
+		webgpu.bindings.wgpu_device_create_bind_group_layout(wgpuDeviceHandle, bindGroupLayoutDescriptor)
+
+	return bindGroupLayout, bindGroupLayoutDescriptor
+end
+
+WidgetDrawingPipeline.__call = WidgetDrawingPipeline.Construct
+setmetatable(WidgetDrawingPipeline, WidgetDrawingPipeline)
+
+return WidgetDrawingPipeline
