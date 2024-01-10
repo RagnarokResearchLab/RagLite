@@ -1,12 +1,10 @@
+local AnimatedWaterPlane = require("Core.FileFormats.RSW.AnimatedWaterPlane")
 local BinaryReader = require("Core.FileFormats.BinaryReader")
 
 local ffi = require("ffi")
 local uv = require("uv")
 
 local assert = assert
-local ffi_copy = ffi.copy
-local ffi_new = ffi.new
-local ffi_sizeof = ffi.sizeof
 local format = string.format
 local table_insert = table.insert
 local tonumber = tonumber
@@ -83,16 +81,6 @@ local RagnarokGND = {
 			int32_t north_surface_id;
 			int32_t east_surface_id;
 		} gnd_groundmesh_cube_t;
-
-		typedef struct gnd_water_plane {
-			float level;
-			int32_t water_type_id;
-			float waveform_amplitude;
-			float waveform_phase;
-			float surface_curvature_deg;
-			int32_t texture_cycling_interval;
-		} gnd_water_plane_t;
-
 	]],
 }
 
@@ -217,38 +205,43 @@ end
 
 function RagnarokGND:DecodeWaterPlanes()
 	if self.version < 1.8 then
-		self.waterPlanesCount = 0
-		self.waterGridU = 0
-		self.waterGridV = 0
-		return
+		return -- Legacy format: Water plane is stored in the RSW file instead
 	end
 
 	local reader = self.reader
+	local waterPlaneDefaults = {
+		normalizedSeaLevel = -1 * reader:GetFloat() * RagnarokGND.NORMALIZING_SCALE_FACTOR,
+		textureTypePrefix = reader:GetInt32(),
+		waveformAmplitudeScalingFactor = reader:GetFloat(),
+		waveformPhaseShiftInDegreesPerFrame = reader:GetFloat(),
+		waveformFrequencyInDegrees = reader:GetFloat(),
+		textureDisplayDurationInFrames = reader:GetInt32(),
+	}
 
-	if self.version >= 1.8 then
-		self.waterPlaneDefaults = reader:GetTypedArray("gnd_water_plane_t")
+	local waterGridSizeU = reader:GetUnsignedInt32()
+	local waterGridSizeV = reader:GetUnsignedInt32()
 
-		local gridSizeU = reader:GetUnsignedInt32()
-		local gridSizeV = reader:GetUnsignedInt32()
-
-		self.waterPlanesCount = gridSizeU * gridSizeV
-		self.waterGridU = gridSizeU
-		self.waterGridV = gridSizeV
-	end
-
-	for waterPlaneIndex = 0, self.waterGridU * self.waterGridV - 1, 1 do
-		if self.version == 1.8 then
-			local waterPlane = ffi_new("gnd_water_plane_t")
-			ffi_copy(waterPlane, self.waterPlaneDefaults, ffi_sizeof("gnd_water_plane_t"))
-			self.waterPlanes[waterPlaneIndex] = waterPlane
-
-			waterPlane.level = reader:GetFloat()
-		end
+	for waterPlaneIndex = 1, waterGridSizeU * waterGridSizeV, 1 do
+		local waterPlane = AnimatedWaterPlane(waterPlaneDefaults)
+		waterPlane.normalizedSeaLevel = -1 * reader:GetFloat() * RagnarokGND.NORMALIZING_SCALE_FACTOR
 
 		if self.version >= 1.9 then
-			self.waterPlanes[waterPlaneIndex] = reader:GetTypedArray("gnd_water_plane_t")
+			waterPlane = AnimatedWaterPlane({
+				normalizedSeaLevel = waterPlane.normalizedSeaLevel,
+				textureTypePrefix = reader:GetInt32(),
+				waveformAmplitudeScalingFactor = reader:GetFloat(),
+				waveformPhaseShiftInDegreesPerFrame = reader:GetFloat(),
+				waveformFrequencyInDegrees = reader:GetFloat(),
+				textureDisplayDurationInFrames = reader:GetInt32(),
+			})
 		end
+
+		table_insert(self.waterPlanes, waterPlane)
 	end
+
+	self.waterPlaneDefaults = waterPlaneDefaults
+	self.waterGridSizeU = waterGridSizeU
+	self.waterGridSizeV = waterGridSizeV
 end
 
 function RagnarokGND:GenerateGroundMeshSections()

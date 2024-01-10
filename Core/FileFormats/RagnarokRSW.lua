@@ -5,12 +5,12 @@ local tonumber = tonumber
 local ffi_string = ffi.string
 local tinsert = table.insert
 
+local AnimatedWaterPlane = require("Core.FileFormats.RSW.AnimatedWaterPlane")
 local BinaryReader = require("Core.FileFormats.BinaryReader")
 local RagnarokGND = require("Core.FileFormats.RagnarokGND")
 local QuadTreeRange = require("Core.FileFormats.RSW.QuadTreeRange")
 
 local RagnarokRSW = {
-	NUM_FRAMES_PER_TEXTURE_ANIMATION = 32, -- Highest possible frame ID
 	SCENE_OBJECT_TYPE_ANIMATED_PROP = 1,
 	SCENE_OBJECT_TYPE_DYNAMIC_LIGHT_SOURCE = 2,
 	SCENE_OBJECT_TYPE_SPATIAL_AUDIO_SOURCE = 3,
@@ -27,17 +27,7 @@ local RagnarokRSW = {
 			uint8_t version_minor;
 		} rsw_header_t;
 
-		// Should probably re-use the GND water type here (later)
-		typedef struct rsw_water_config_t {
-			float surface_level;
-			int32_t texture_type_prefix;
-			float waveform_amplitude;
-			float waveform_phase;
-			float waveform_frequency;
-			int32_t texture_cycling_interval;
-		} rsw_water_config_t;
-
-		// This also seems a bit redundant
+		// This seems a bit redundant?
 		typedef struct rsw_rgb_color_t {
 			float red;
 			float green;
@@ -122,6 +112,7 @@ local RagnarokRSW = {
 
 function RagnarokRSW:Construct()
 	local instance = {
+		waterPlanes = {},
 		animatedProps = {},
 		dynamicLightSources = {},
 		spatialAudioSources = {},
@@ -201,28 +192,23 @@ end
 
 function RagnarokRSW:DecodeWaterPlanes()
 	if self.version >= 2.6 then
-		return -- Moved to GND file
+		return -- Renewal format: Water plane has been moved to the GND file
 	end
 
-	local waterPlaneConfig = self.reader:GetTypedArray("rsw_water_config_t")
+	local reader = self.reader
+	local waterPlane = AnimatedWaterPlane({
+		normalizedSeaLevel = -1 * reader:GetFloat() * RagnarokGND.NORMALIZING_SCALE_FACTOR,
+		textureTypePrefix = reader:GetInt32(),
+		waveformAmplitudeScalingFactor = reader:GetFloat(),
+		waveformPhaseShiftInDegreesPerFrame = reader:GetFloat(),
+		waveformFrequencyInDegrees = reader:GetFloat(),
+		textureDisplayDurationInFrames = reader:GetInt32(),
+	})
 
-	self.waterPlane = {
-		-- Normalize geometry to ensure sizes remain proportionate in the renderer's coordinate system
-		normalizedSeaLevel = -1 * tonumber(waterPlaneConfig.surface_level) * RagnarokGND.NORMALIZING_SCALE_FACTOR,
-		textureTypePrefix = tonumber(waterPlaneConfig.texture_type_prefix),
-		waveformAmplitude = tonumber(waterPlaneConfig.waveform_amplitude),
-		waveformPhaseLength = tonumber(waterPlaneConfig.waveform_phase),
-		surfaceCurvatureOffset = tonumber(waterPlaneConfig.waveform_frequency),
-		numTextureCyclingIntervals = tonumber(waterPlaneConfig.texture_cycling_interval),
-	}
+	table.insert(self.waterPlanes, waterPlane)
 
-	-- Normalizing timings serves to decouple animation speed from the actual frame rate
-	local expectedFPS = 60
-	local framesPerAnimationCycle = self.waterPlane.numTextureCyclingIntervals
-		* RagnarokRSW.NUM_FRAMES_PER_TEXTURE_ANIMATION
-	local normalizedCycleTimeInSeconds = framesPerAnimationCycle / expectedFPS
-	local normalizedCycleTimeInMilliseconds = normalizedCycleTimeInSeconds * 1000
-	self.waterPlane.normalizedCycleTimeInMilliseconds = normalizedCycleTimeInMilliseconds
+	self.waterGridSizeU = 1
+	self.waterGridSizeV = 1
 end
 
 function RagnarokRSW:DecodeEnvironmentalLightSources()
