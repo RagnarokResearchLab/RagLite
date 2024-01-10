@@ -1,1 +1,1 @@
-stylua .
+stylua . --verbose
