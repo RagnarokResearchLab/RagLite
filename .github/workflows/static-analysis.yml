@@ -25,3 +25,9 @@ jobs:
 
       - name: Run luacheck
         run: chmod +x luacheck && ./luacheck .
+
+      - name: Install naga-cli
+        run: cargo install naga-cli
+
+      - name: Validate WGSL shaders
+        run: ./validate-shaders.sh
