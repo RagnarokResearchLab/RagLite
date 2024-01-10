@@ -74,7 +74,7 @@ There isn't much to see yet, but if you want to give it a try:
 	* You can also build it from source (see [docs](https://evo-lua.github.io/docs/how-to-guides/building-from-source) here; for advanced users)
 	* Linux users only: You may need to [install additional dependencies](https://evo-lua.github.io/docs/getting-started/installation#external-dependencies)
 1. Copy (or better yet, [symlink](https://en.wikipedia.org/wiki/Symbolic_link)) in a suitable asset container, e.g., `data.grf`
-1. Now you can start one of the core apps, e.g., via `./evo start-client.lua`
+1. Now you can start one of the core apps, e.g., via `./evo client.lua`
 1. Datamining or debugging tools can be run via `./evo Tools/<script>.lua`
 
 A window should pop up with a basic 3D scene being visible. Tools are CLI only.
@@ -86,7 +86,7 @@ To load a specific map, you can pass the `mapID` (unique scene identifier) to th
 ```sh
 # Valid scene IDs are any map that's listed in the DB/Maps.lua table
 # You can also directly load debug scenes (e.g., 'cube3d' or 'webgpu') this way
-./evo start-client.lua aldebaran
+./evo client.lua aldebaran
 ```
 
 If all you're seeing is the "hello world" fallback scene, then the map wasn't found in the database.
