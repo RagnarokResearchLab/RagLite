@@ -176,6 +176,355 @@ describe("RagnarokGND", function()
 		end)
 	end)
 
+	describe("GridCoordinatesToWorldPosition", function()
+		local gnd = RagnarokGND()
+		gnd.gridSizeU = 3
+		gnd.gridSizeV = 3
+		gnd.cubeGrid = ffi.new("gnd_groundmesh_cube_t[9]")
+
+		for cubeV = 1, 3, 1 do
+			for cubeU = 1, 3, 1 do
+				local cubeID = gnd:GridPositionToCubeID(cubeU, cubeV)
+				local cube = gnd.cubeGrid[cubeID]
+				local denormalizedAltitude = -1 * (42 + cubeID + 1) * 1 / RagnarokGND.NORMALIZING_SCALE_FACTOR
+				cube.southwest_corner_altitude = denormalizedAltitude
+				cube.southeast_corner_altitude = denormalizedAltitude
+				cube.northwest_corner_altitude = denormalizedAltitude
+				cube.northeast_corner_altitude = denormalizedAltitude
+			end
+		end
+
+		it("should return the normalized world position of the center", function()
+			local centerWorldPositions = {
+				gnd:GridCoordinatesToWorldPosition(1, 1).center,
+				gnd:GridCoordinatesToWorldPosition(2, 1).center,
+				gnd:GridCoordinatesToWorldPosition(3, 1).center,
+				gnd:GridCoordinatesToWorldPosition(1, 2).center,
+				gnd:GridCoordinatesToWorldPosition(2, 2).center,
+				gnd:GridCoordinatesToWorldPosition(3, 2).center,
+				gnd:GridCoordinatesToWorldPosition(1, 3).center,
+				gnd:GridCoordinatesToWorldPosition(2, 3).center,
+				gnd:GridCoordinatesToWorldPosition(3, 3).center,
+			}
+
+			local index = 1
+			local vertex = centerWorldPositions[index]
+			assertEquals(vertex.x, 1)
+			assertEquals(vertex.y, 42 + index)
+			assertEquals(vertex.z, 1)
+			index = index + 1
+			vertex = centerWorldPositions[index]
+			assertEquals(vertex.x, 3)
+			assertEquals(vertex.y, 42 + index)
+			assertEquals(vertex.z, 1)
+			index = index + 1
+			vertex = centerWorldPositions[index]
+			assertEquals(vertex.x, 5)
+			assertEquals(vertex.y, 42 + index)
+			assertEquals(vertex.z, 1)
+			index = index + 1
+			vertex = centerWorldPositions[index]
+			assertEquals(vertex.x, 1)
+			assertEquals(vertex.y, 42 + index)
+			assertEquals(vertex.z, 3)
+			index = index + 1
+			vertex = centerWorldPositions[index]
+			assertEquals(vertex.x, 3)
+			assertEquals(vertex.y, 42 + index)
+			assertEquals(vertex.z, 3)
+			index = index + 1
+			vertex = centerWorldPositions[index]
+			assertEquals(vertex.x, 5)
+			assertEquals(vertex.y, 42 + index)
+			assertEquals(vertex.z, 3)
+			index = index + 1
+			vertex = centerWorldPositions[index]
+			assertEquals(vertex.x, 1)
+			assertEquals(vertex.y, 42 + index)
+			assertEquals(vertex.z, 5)
+			index = index + 1
+			vertex = centerWorldPositions[index]
+			assertEquals(vertex.x, 3)
+			assertEquals(vertex.y, 42 + index)
+			assertEquals(vertex.z, 5)
+			index = index + 1
+			vertex = centerWorldPositions[index]
+			assertEquals(vertex.x, 5)
+			assertEquals(vertex.y, 42 + index)
+			assertEquals(vertex.z, 5)
+		end)
+
+		it("should return the normalized world position of the SW corner", function()
+			local southwestCornerWorldPositions = {
+				gnd:GridCoordinatesToWorldPosition(1, 1).bottomLeftCorner,
+				gnd:GridCoordinatesToWorldPosition(2, 1).bottomLeftCorner,
+				gnd:GridCoordinatesToWorldPosition(3, 1).bottomLeftCorner,
+				gnd:GridCoordinatesToWorldPosition(1, 2).bottomLeftCorner,
+				gnd:GridCoordinatesToWorldPosition(2, 2).bottomLeftCorner,
+				gnd:GridCoordinatesToWorldPosition(3, 2).bottomLeftCorner,
+				gnd:GridCoordinatesToWorldPosition(1, 3).bottomLeftCorner,
+				gnd:GridCoordinatesToWorldPosition(2, 3).bottomLeftCorner,
+				gnd:GridCoordinatesToWorldPosition(3, 3).bottomLeftCorner,
+			}
+
+			local index = 1
+			local vertex = southwestCornerWorldPositions[index]
+			assertEquals(vertex.x, 0)
+			assertEquals(vertex.y, 42 + index)
+			assertEquals(vertex.z, 0)
+			index = index + 1
+			vertex = southwestCornerWorldPositions[index]
+			assertEquals(vertex.x, 2)
+			assertEquals(vertex.y, 42 + index)
+			assertEquals(vertex.z, 0)
+			index = index + 1
+			vertex = southwestCornerWorldPositions[index]
+			assertEquals(vertex.x, 4)
+			assertEquals(vertex.y, 42 + index)
+			assertEquals(vertex.z, 0)
+			index = index + 1
+			vertex = southwestCornerWorldPositions[index]
+			assertEquals(vertex.x, 0)
+			assertEquals(vertex.y, 42 + index)
+			assertEquals(vertex.z, 2)
+			index = index + 1
+			vertex = southwestCornerWorldPositions[index]
+			assertEquals(vertex.x, 2)
+			assertEquals(vertex.y, 42 + index)
+			assertEquals(vertex.z, 2)
+			index = index + 1
+			vertex = southwestCornerWorldPositions[index]
+			assertEquals(vertex.x, 4)
+			assertEquals(vertex.y, 42 + index)
+			assertEquals(vertex.z, 2)
+			index = index + 1
+			vertex = southwestCornerWorldPositions[index]
+			assertEquals(vertex.x, 0)
+			assertEquals(vertex.y, 42 + index)
+			assertEquals(vertex.z, 4)
+			index = index + 1
+			vertex = southwestCornerWorldPositions[index]
+			assertEquals(vertex.x, 2)
+			assertEquals(vertex.y, 42 + index)
+			assertEquals(vertex.z, 4)
+			index = index + 1
+			vertex = southwestCornerWorldPositions[index]
+			assertEquals(vertex.x, 4)
+			assertEquals(vertex.y, 42 + index)
+			assertEquals(vertex.z, 4)
+		end)
+
+		it("should return the normalized world position of the SE corner", function()
+			local southeastCornerWorldPositions = {
+				gnd:GridCoordinatesToWorldPosition(1, 1).bottomRightCorner,
+				gnd:GridCoordinatesToWorldPosition(2, 1).bottomRightCorner,
+				gnd:GridCoordinatesToWorldPosition(3, 1).bottomRightCorner,
+				gnd:GridCoordinatesToWorldPosition(1, 2).bottomRightCorner,
+				gnd:GridCoordinatesToWorldPosition(2, 2).bottomRightCorner,
+				gnd:GridCoordinatesToWorldPosition(3, 2).bottomRightCorner,
+				gnd:GridCoordinatesToWorldPosition(1, 3).bottomRightCorner,
+				gnd:GridCoordinatesToWorldPosition(2, 3).bottomRightCorner,
+				gnd:GridCoordinatesToWorldPosition(3, 3).bottomRightCorner,
+			}
+
+			local index = 1
+			local vertex = southeastCornerWorldPositions[index]
+			assertEquals(vertex.x, 2)
+			assertEquals(vertex.y, 42 + index)
+			assertEquals(vertex.z, 0)
+			index = index + 1
+			vertex = southeastCornerWorldPositions[index]
+			assertEquals(vertex.x, 4)
+			assertEquals(vertex.y, 42 + index)
+			assertEquals(vertex.z, 0)
+			index = index + 1
+			vertex = southeastCornerWorldPositions[index]
+			assertEquals(vertex.x, 6)
+			assertEquals(vertex.y, 42 + index)
+			assertEquals(vertex.z, 0)
+			index = index + 1
+			vertex = southeastCornerWorldPositions[index]
+			assertEquals(vertex.x, 2)
+			assertEquals(vertex.y, 42 + index)
+			assertEquals(vertex.z, 2)
+			index = index + 1
+			vertex = southeastCornerWorldPositions[index]
+			assertEquals(vertex.x, 4)
+			assertEquals(vertex.y, 42 + index)
+			assertEquals(vertex.z, 2)
+			index = index + 1
+			vertex = southeastCornerWorldPositions[index]
+			assertEquals(vertex.x, 6)
+			assertEquals(vertex.y, 42 + index)
+			assertEquals(vertex.z, 2)
+			index = index + 1
+			vertex = southeastCornerWorldPositions[index]
+			assertEquals(vertex.x, 2)
+			assertEquals(vertex.y, 42 + index)
+			assertEquals(vertex.z, 4)
+			index = index + 1
+			vertex = southeastCornerWorldPositions[index]
+			assertEquals(vertex.x, 4)
+			assertEquals(vertex.y, 42 + index)
+			assertEquals(vertex.z, 4)
+			index = index + 1
+			vertex = southeastCornerWorldPositions[index]
+			assertEquals(vertex.x, 6)
+			assertEquals(vertex.y, 42 + index)
+			assertEquals(vertex.z, 4)
+		end)
+
+		it("should return the normalized world position of the NW corner", function()
+			local northwestCornerWorldPositions = {
+				gnd:GridCoordinatesToWorldPosition(1, 1).topLeftCorner,
+				gnd:GridCoordinatesToWorldPosition(2, 1).topLeftCorner,
+				gnd:GridCoordinatesToWorldPosition(3, 1).topLeftCorner,
+				gnd:GridCoordinatesToWorldPosition(1, 2).topLeftCorner,
+				gnd:GridCoordinatesToWorldPosition(2, 2).topLeftCorner,
+				gnd:GridCoordinatesToWorldPosition(3, 2).topLeftCorner,
+				gnd:GridCoordinatesToWorldPosition(1, 3).topLeftCorner,
+				gnd:GridCoordinatesToWorldPosition(2, 3).topLeftCorner,
+				gnd:GridCoordinatesToWorldPosition(3, 3).topLeftCorner,
+			}
+
+			local index = 1
+			local vertex = northwestCornerWorldPositions[index]
+			assertEquals(vertex.x, 0)
+			assertEquals(vertex.y, 42 + index)
+			assertEquals(vertex.z, 2)
+			index = index + 1
+			vertex = northwestCornerWorldPositions[index]
+			assertEquals(vertex.x, 2)
+			assertEquals(vertex.y, 42 + index)
+			assertEquals(vertex.z, 2)
+			index = index + 1
+			vertex = northwestCornerWorldPositions[index]
+			assertEquals(vertex.x, 4)
+			assertEquals(vertex.y, 42 + index)
+			assertEquals(vertex.z, 2)
+			index = index + 1
+			vertex = northwestCornerWorldPositions[index]
+			assertEquals(vertex.x, 0)
+			assertEquals(vertex.y, 42 + index)
+			assertEquals(vertex.z, 4)
+			index = index + 1
+			vertex = northwestCornerWorldPositions[index]
+			assertEquals(vertex.x, 2)
+			assertEquals(vertex.y, 42 + index)
+			assertEquals(vertex.z, 4)
+			index = index + 1
+			vertex = northwestCornerWorldPositions[index]
+			assertEquals(vertex.x, 4)
+			assertEquals(vertex.y, 42 + index)
+			assertEquals(vertex.z, 4)
+			index = index + 1
+			vertex = northwestCornerWorldPositions[index]
+			assertEquals(vertex.x, 0)
+			assertEquals(vertex.y, 42 + index)
+			assertEquals(vertex.z, 6)
+			index = index + 1
+			vertex = northwestCornerWorldPositions[index]
+			assertEquals(vertex.x, 2)
+			assertEquals(vertex.y, 42 + index)
+			assertEquals(vertex.z, 6)
+			index = index + 1
+			vertex = northwestCornerWorldPositions[index]
+			assertEquals(vertex.x, 4)
+			assertEquals(vertex.y, 42 + index)
+			assertEquals(vertex.z, 6)
+		end)
+
+		it("should return the normalized world position of the NE corner", function()
+			local northeastCornerWorldPositions = {
+				gnd:GridCoordinatesToWorldPosition(1, 1).topRightCorner,
+				gnd:GridCoordinatesToWorldPosition(2, 1).topRightCorner,
+				gnd:GridCoordinatesToWorldPosition(3, 1).topRightCorner,
+				gnd:GridCoordinatesToWorldPosition(1, 2).topRightCorner,
+				gnd:GridCoordinatesToWorldPosition(2, 2).topRightCorner,
+				gnd:GridCoordinatesToWorldPosition(3, 2).topRightCorner,
+				gnd:GridCoordinatesToWorldPosition(1, 3).topRightCorner,
+				gnd:GridCoordinatesToWorldPosition(2, 3).topRightCorner,
+				gnd:GridCoordinatesToWorldPosition(3, 3).topRightCorner,
+			}
+
+			local index = 1
+			local vertex = northeastCornerWorldPositions[index]
+			assertEquals(vertex.x, 2)
+			assertEquals(vertex.y, 42 + index)
+			assertEquals(vertex.z, 2)
+			index = index + 1
+			vertex = northeastCornerWorldPositions[index]
+			assertEquals(vertex.x, 4)
+			assertEquals(vertex.y, 42 + index)
+			assertEquals(vertex.z, 2)
+			index = index + 1
+			vertex = northeastCornerWorldPositions[index]
+			assertEquals(vertex.x, 6)
+			assertEquals(vertex.y, 42 + index)
+			assertEquals(vertex.z, 2)
+			index = index + 1
+			vertex = northeastCornerWorldPositions[index]
+			assertEquals(vertex.x, 2)
+			assertEquals(vertex.y, 42 + index)
+			assertEquals(vertex.z, 4)
+			index = index + 1
+			vertex = northeastCornerWorldPositions[index]
+			assertEquals(vertex.x, 4)
+			assertEquals(vertex.y, 42 + index)
+			assertEquals(vertex.z, 4)
+			index = index + 1
+			vertex = northeastCornerWorldPositions[index]
+			assertEquals(vertex.x, 6)
+			assertEquals(vertex.y, 42 + index)
+			assertEquals(vertex.z, 4)
+			index = index + 1
+			vertex = northeastCornerWorldPositions[index]
+			assertEquals(vertex.x, 2)
+			assertEquals(vertex.y, 42 + index)
+			assertEquals(vertex.z, 6)
+			index = index + 1
+			vertex = northeastCornerWorldPositions[index]
+			assertEquals(vertex.x, 4)
+			assertEquals(vertex.y, 42 + index)
+			assertEquals(vertex.z, 6)
+			index = index + 1
+			vertex = northeastCornerWorldPositions[index]
+			assertEquals(vertex.x, 6)
+			assertEquals(vertex.y, 42 + index)
+			assertEquals(vertex.z, 6)
+		end)
+
+		it("should fail if the given grid coordinates ae out of bounds", function()
+			assertFailure(function()
+				return gnd:GridCoordinatesToWorldPosition(4, 1)
+			end, "Grid position (4, 1) is out of bounds")
+
+			assertFailure(function()
+				return gnd:GridCoordinatesToWorldPosition(1, 4)
+			end, "Grid position (1, 4) is out of bounds")
+
+			assertFailure(function()
+				return gnd:GridCoordinatesToWorldPosition(1, -1)
+			end, "Grid position (1, -1) is out of bounds")
+
+			assertFailure(function()
+				return gnd:GridCoordinatesToWorldPosition(-1, 1)
+			end, "Grid position (-1, 1) is out of bounds")
+
+			assertFailure(function()
+				return gnd:GridCoordinatesToWorldPosition(1, 0)
+			end, "Grid position (1, 0) is out of bounds")
+
+			assertFailure(function()
+				return gnd:GridCoordinatesToWorldPosition(0, 1)
+			end, "Grid position (0, 1) is out of bounds")
+
+			assertFailure(function()
+				return gnd:GridCoordinatesToWorldPosition(0, 0)
+			end, "Grid position (0, 0) is out of bounds")
+		end)
+	end)
+
 	describe("GenerateGroundMeshSections", function()
 		it("should generate one ground mesh section per diffuse texture", function()
 			local gnd = RagnarokGND()
