@@ -196,7 +196,7 @@ function RagnarokRSW:DecodeWaterPlanes()
 	end
 
 	local reader = self.reader
-	local waterPlane = AnimatedWaterPlane({
+	local waterPlane = AnimatedWaterPlane(1, 1, {
 		normalizedSeaLevel = -1 * reader:GetFloat() * RagnarokGND.NORMALIZING_SCALE_FACTOR,
 		textureTypePrefix = reader:GetInt32(),
 		waveformAmplitudeScalingFactor = reader:GetFloat(),
@@ -207,8 +207,8 @@ function RagnarokRSW:DecodeWaterPlanes()
 
 	table.insert(self.waterPlanes, waterPlane)
 
-	self.waterGridSizeU = 1
-	self.waterGridSizeV = 1
+	self.numWaterPlanesU = 1
+	self.numWaterPlanesV = 1
 end
 
 function RagnarokRSW:DecodeEnvironmentalLightSources()
