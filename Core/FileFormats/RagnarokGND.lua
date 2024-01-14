@@ -319,6 +319,49 @@ function RagnarokGND:GridPositionToCubeID(gridU, gridV)
 	return (gridU - 1) + (gridV - 1) * self.gridSizeU
 end
 
+function RagnarokGND:GridCoordinatesToWorldPosition(gridU, gridV)
+	if gridU <= 0 or gridV <= 0 or gridU > self.gridSizeU or gridV > self.gridSizeV then
+		return nil, format("Grid position (%d, %d) is out of bounds", gridU, gridV)
+	end
+
+	local cubeID = self:GridPositionToCubeID(gridU, gridV)
+	local cube = self.cubeGrid[cubeID]
+
+	local bottomLeftCorner = {}
+	local bottomRightCorner = {}
+	local topLeftCorner = {}
+	local topRightCorner = {}
+
+	bottomLeftCorner.x = (gridU - 1) * RagnarokGND.GAT_TILES_PER_GND_SURFACE
+	bottomLeftCorner.y = -1 * cube.southwest_corner_altitude * self.NORMALIZING_SCALE_FACTOR
+	bottomLeftCorner.z = (gridV - 1) * RagnarokGND.GAT_TILES_PER_GND_SURFACE
+
+	bottomRightCorner.x = gridU * RagnarokGND.GAT_TILES_PER_GND_SURFACE
+	bottomRightCorner.y = -1 * cube.southeast_corner_altitude * self.NORMALIZING_SCALE_FACTOR
+	bottomRightCorner.z = (gridV - 1) * RagnarokGND.GAT_TILES_PER_GND_SURFACE
+
+	topLeftCorner.x = (gridU - 1) * RagnarokGND.GAT_TILES_PER_GND_SURFACE
+	topLeftCorner.y = -1 * cube.northwest_corner_altitude * self.NORMALIZING_SCALE_FACTOR
+	topLeftCorner.z = (gridV + 0) * RagnarokGND.GAT_TILES_PER_GND_SURFACE
+
+	topRightCorner.x = gridU * RagnarokGND.GAT_TILES_PER_GND_SURFACE
+	topRightCorner.y = -1 * cube.northeast_corner_altitude * self.NORMALIZING_SCALE_FACTOR
+	topRightCorner.z = gridV * RagnarokGND.GAT_TILES_PER_GND_SURFACE
+
+	local center = {}
+	center.x = (bottomRightCorner.x + bottomLeftCorner.x) / 2
+	center.y = (bottomLeftCorner.y + bottomRightCorner.y + topLeftCorner.y + topRightCorner.y) / 4
+	center.z = (topRightCorner.z + bottomLeftCorner.z) / 2
+
+	return {
+		center = center,
+		bottomLeftCorner = bottomLeftCorner,
+		bottomRightCorner = bottomRightCorner,
+		topLeftCorner = topLeftCorner,
+		topRightCorner = topRightCorner,
+	}
+end
+
 function RagnarokGND:GenerateSurfaceGeometry(surfaceConstructionInfo)
 	local gridU = surfaceConstructionInfo.gridU
 	local gridV = surfaceConstructionInfo.gridV
