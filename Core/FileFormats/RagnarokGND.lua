@@ -12,6 +12,7 @@ local tonumber = tonumber
 local RagnarokGND = {
 	GAT_TILES_PER_GND_SURFACE = 2,
 	DEFAULT_GEOMETRY_SCALE_FACTOR = 10,
+	TEXTURED_SURFACE_SIZE_IN_PIXELS = 64, -- 2 GAT tiles at 32 pixels each (grid.tga texture dimensions)
 	SURFACE_DIRECTION_UP = 0,
 	SURFACE_DIRECTION_EAST = 1,
 	SURFACE_DIRECTION_NORTH = 2,
