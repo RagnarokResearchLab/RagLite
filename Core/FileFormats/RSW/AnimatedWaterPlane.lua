@@ -1,3 +1,5 @@
+local Mesh = require("Core.NativeClient.WebGPU.Mesh")
+
 require("table.new")
 
 local math_ceil = math.ceil
@@ -21,13 +23,7 @@ function AnimatedWaterPlane:Construct(tileSlotU, tileSlotV, surfaceProperties)
 			maxU = 0,
 			maxV = 0,
 		},
-		-- These estimates need refinement (see https://github.com/RagnarokResearchLab/RagLite/issues/281)
-		surfaceGeometry = {
-			vertexPositions = table.new(75000, 0),
-			triangleConnections = table.new(10000, 0),
-			vertexColors = table.new(10000, 0),
-			diffuseTextureCoords = table.new(10000, 0),
-		},
+		surfaceGeometry = Mesh(format("AnimatedWaterPlane%dx%d", tileSlotU or 1, tileSlotV or 1)),
 		normalizedSeaLevel = surfaceProperties.normalizedSeaLevel or 0,
 		textureTypePrefix = surfaceProperties.textureTypePrefix or 1,
 		waveformAmplitudeScalingFactor = surfaceProperties.waveformAmplitudeScalingFactor or 1,
@@ -35,6 +31,12 @@ function AnimatedWaterPlane:Construct(tileSlotU, tileSlotV, surfaceProperties)
 		waveformFrequencyInDegrees = surfaceProperties.waveformFrequencyInDegrees or 50,
 		textureDisplayDurationInFrames = surfaceProperties.textureDisplayDurationInFrames or 3,
 	}
+
+	-- These estimates need refinement (see https://github.com/RagnarokResearchLab/RagLite/issues/281)
+	instance.surfaceGeometry.vertexPositions = table.new(75000, 0)
+	instance.surfaceGeometry.triangleConnections = table.new(10000, 0)
+	instance.surfaceGeometry.vertexColors = table.new(10000, 0)
+	instance.surfaceGeometry.diffuseTextureCoords = table.new(10000, 0)
 
 	setmetatable(instance, self)
 

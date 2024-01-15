@@ -1,4 +1,5 @@
 local Color = require("Core.NativeClient.DebugDraw.Color")
+local Mesh = require("Core.NativeClient.WebGPU.Mesh")
 local Vector3D = require("Core.VectorMath.Vector3D")
 
 local ipairs = ipairs
@@ -38,52 +39,42 @@ function Pyramid:Construct(creationOptions)
 		{ 1, 2, 3, 4 }, -- Base
 	}
 
-	local vertexPositions = {}
-	local vertexColors = {}
-	local vertexIndices = {}
+	local pyramidMesh = Mesh("Pyramid")
 
 	for faceIndex, face in ipairs(faceIndices) do
 		local faceColor = faceColors[faceIndex]
 		for _, vertexIndex in ipairs(face) do
 			local vertex = cornerVertices[vertexIndex]
-			tinsert(vertexPositions, vertex.x)
-			tinsert(vertexPositions, vertex.y)
-			tinsert(vertexPositions, vertex.z)
+			tinsert(pyramidMesh.vertexPositions, vertex.x)
+			tinsert(pyramidMesh.vertexPositions, vertex.y)
+			tinsert(pyramidMesh.vertexPositions, vertex.z)
 
-			tinsert(vertexColors, faceColor.red)
-			tinsert(vertexColors, faceColor.green)
-			tinsert(vertexColors, faceColor.blue)
+			tinsert(pyramidMesh.vertexColors, faceColor.red)
+			tinsert(pyramidMesh.vertexColors, faceColor.green)
+			tinsert(pyramidMesh.vertexColors, faceColor.blue)
 		end
 
-		local baseIndex = (#vertexPositions / 3) - #face
+		local baseIndex = (#pyramidMesh.vertexPositions / 3) - #face
 		if #face == 4 then -- Base of the pyramid
-			tinsert(vertexIndices, baseIndex)
-			tinsert(vertexIndices, baseIndex + 1)
-			tinsert(vertexIndices, baseIndex + 2)
-			tinsert(vertexIndices, baseIndex)
-			tinsert(vertexIndices, baseIndex + 2)
-			tinsert(vertexIndices, baseIndex + 3)
+			tinsert(pyramidMesh.triangleConnections, baseIndex)
+			tinsert(pyramidMesh.triangleConnections, baseIndex + 1)
+			tinsert(pyramidMesh.triangleConnections, baseIndex + 2)
+			tinsert(pyramidMesh.triangleConnections, baseIndex)
+			tinsert(pyramidMesh.triangleConnections, baseIndex + 2)
+			tinsert(pyramidMesh.triangleConnections, baseIndex + 3)
 		else -- One of the sides
-			tinsert(vertexIndices, baseIndex)
-			tinsert(vertexIndices, baseIndex + 1)
-			tinsert(vertexIndices, baseIndex + 2)
+			tinsert(pyramidMesh.triangleConnections, baseIndex)
+			tinsert(pyramidMesh.triangleConnections, baseIndex + 1)
+			tinsert(pyramidMesh.triangleConnections, baseIndex + 2)
 		end
 	end
 
-	local diffuseTexCoords = {}
-	for _ = 1, #vertexPositions / 3 do
-		tinsert(diffuseTexCoords, 0)
-		tinsert(diffuseTexCoords, 0)
+	for _ = 1, #pyramidMesh.vertexPositions / 3 do
+		tinsert(pyramidMesh.diffuseTextureCoords, 0)
+		tinsert(pyramidMesh.diffuseTextureCoords, 0)
 	end
 
-	local mesh = {
-		vertexPositions = vertexPositions,
-		vertexColors = vertexColors,
-		triangleConnections = vertexIndices,
-		diffuseTextureCoords = diffuseTexCoords,
-	}
-
-	return mesh
+	return pyramidMesh
 end
 
 Pyramid.__call = Pyramid.Construct

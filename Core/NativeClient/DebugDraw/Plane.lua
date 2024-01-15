@@ -1,3 +1,4 @@
+local Mesh = require("Core.NativeClient.WebGPU.Mesh")
 local Vector3D = require("Core.VectorMath.Vector3D")
 
 local ipairs = ipairs
@@ -29,45 +30,35 @@ function Plane:Construct(creationOptions)
 
 	local faceColor = { red = 0.5, green = 0.5, blue = 0.5 }
 
-	local vertexPositions = {}
-	local vertexColors = {}
-	local vertexIndices = {}
-	local diffuseTextureCoords = {}
+	local planeMesh = Mesh("Plane")
 
 	for index, vertex in ipairs(cornerVertices) do
-		tinsert(vertexPositions, vertex.x)
-		tinsert(vertexPositions, vertex.y)
-		tinsert(vertexPositions, vertex.z)
+		tinsert(planeMesh.vertexPositions, vertex.x)
+		tinsert(planeMesh.vertexPositions, vertex.y)
+		tinsert(planeMesh.vertexPositions, vertex.z)
 
-		tinsert(vertexColors, faceColor.red)
-		tinsert(vertexColors, faceColor.green)
-		tinsert(vertexColors, faceColor.blue)
+		tinsert(planeMesh.vertexColors, faceColor.red)
+		tinsert(planeMesh.vertexColors, faceColor.green)
+		tinsert(planeMesh.vertexColors, faceColor.blue)
 
 		-- WebGPU coordinates start at the top left, but I'd rather use normalized Uvs for everything
 		local wgpuTextureCoordinate = {
 			u = normalizedDiffuseTextureCoords[index][1],
 			v = 1 - normalizedDiffuseTextureCoords[index][2],
 		}
-		tinsert(diffuseTextureCoords, wgpuTextureCoordinate.u)
-		tinsert(diffuseTextureCoords, wgpuTextureCoordinate.v)
+		tinsert(planeMesh.diffuseTextureCoords, wgpuTextureCoordinate.u)
+		tinsert(planeMesh.diffuseTextureCoords, wgpuTextureCoordinate.v)
 	end
 
-	tinsert(vertexIndices, 0)
-	tinsert(vertexIndices, 1)
-	tinsert(vertexIndices, 2)
+	tinsert(planeMesh.triangleConnections, 0)
+	tinsert(planeMesh.triangleConnections, 1)
+	tinsert(planeMesh.triangleConnections, 2)
 
-	tinsert(vertexIndices, 2)
-	tinsert(vertexIndices, 3)
-	tinsert(vertexIndices, 0)
+	tinsert(planeMesh.triangleConnections, 2)
+	tinsert(planeMesh.triangleConnections, 3)
+	tinsert(planeMesh.triangleConnections, 0)
 
-	local mesh = {
-		vertexPositions = vertexPositions,
-		vertexColors = vertexColors,
-		triangleConnections = vertexIndices,
-		diffuseTextureCoords = diffuseTextureCoords,
-	}
-
-	return mesh
+	return planeMesh
 end
 
 Plane.__call = Plane.Construct

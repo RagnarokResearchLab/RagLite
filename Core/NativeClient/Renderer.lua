@@ -344,7 +344,8 @@ function Renderer:DrawMesh(renderPass, mesh)
 
 	RenderPassEncoder:SetBindGroup(renderPass, 0, self.uniforms.perScene.bindGroup, 0, nil)
 
-	if not mesh.diffuseTexture then
+	-- Needs streamlining (later)
+	if not rawget(mesh, "diffuseTexture") then
 		-- The pipeline layout is kept identical (for simplicity's sake... ironic, considering how complicated this already is)
 		RenderPassEncoder:SetBindGroup(renderPass, 1, self.dummyTexture.wgpuBindGroup, 0, nil)
 	else
@@ -439,6 +440,7 @@ function Renderer:SubmitCommandBuffer(commandEncoder)
 end
 
 function Renderer:UploadMeshGeometry(mesh)
+	printf("Uploading geometry for mesh %s", mesh.displayName)
 	local positions = mesh.vertexPositions
 	local colors = mesh.vertexColors
 	local indices = mesh.triangleConnections
@@ -522,10 +524,11 @@ function Renderer:ValidateGeometry(mesh)
 end
 
 function Renderer:DestroyMeshGeometry(mesh)
-	Buffer:Destroy(mesh.vertexBuffer)
-	Buffer:Destroy(mesh.colorBuffer)
-	Buffer:Destroy(mesh.indexBuffer)
-	Buffer:Destroy(mesh.diffuseTexCoordsBuffer)
+	-- Needs streamlining (later)
+	Buffer:Destroy(rawget(mesh, "vertexBuffer"))
+	Buffer:Destroy(rawget(mesh, "colorBuffer"))
+	Buffer:Destroy(rawget(mesh, "indexBuffer"))
+	Buffer:Destroy(rawget(mesh, "diffuseTexCoordsBuffer"))
 
 	self.meshes = {}
 end
@@ -740,7 +743,8 @@ function Renderer:LoadSceneObjects(scene)
 	for index, mesh in ipairs(scene.meshes) do
 		self:UploadMeshGeometry(mesh)
 
-		if mesh.diffuseTexture then
+		-- Needs streamlining (later)
+		if rawget(mesh, "diffuseTexture") then
 			self:DebugDumpTextures(mesh, format("diffuse-texture-%s-%03d-in.png", scene.mapID, index))
 			mesh.diffuseTexture = self:CreateTextureImage(
 				mesh.diffuseTexture.rgbaImageBytes,

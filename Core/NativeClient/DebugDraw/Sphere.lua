@@ -1,3 +1,5 @@
+local Mesh = require("Core.NativeClient.WebGPU.Mesh")
+
 local math_cos = math.cos
 local math_pi = math.pi
 local math_sin = math.sin
@@ -15,9 +17,7 @@ function Sphere:Construct(creationOptions)
 	local stacks = segments
 	local slices = segments
 
-	local vertexPositions = {}
-	local vertexColors = {}
-	local vertexIndices = {}
+	local sphereMesh = Mesh("Sphere")
 
 	for i = 0, stacks do
 		local theta = i * math_pi / stacks
@@ -33,17 +33,17 @@ function Sphere:Construct(creationOptions)
 			local y = radius * cosTheta
 			local z = radius * sinPhi * sinTheta
 
-			tinsert(vertexPositions, x + translation.x)
-			tinsert(vertexPositions, y + translation.y)
-			tinsert(vertexPositions, z + translation.z)
+			tinsert(sphereMesh.vertexPositions, x + translation.x)
+			tinsert(sphereMesh.vertexPositions, y + translation.y)
+			tinsert(sphereMesh.vertexPositions, z + translation.z)
 
 			local red = (sinTheta + 1) / 2
 			local green = (sinPhi + 1) / 2
 			local blue = (cosTheta + 1) / 2
 
-			tinsert(vertexColors, red)
-			tinsert(vertexColors, green)
-			tinsert(vertexColors, blue)
+			tinsert(sphereMesh.vertexColors, red)
+			tinsert(sphereMesh.vertexColors, green)
+			tinsert(sphereMesh.vertexColors, blue)
 		end
 	end
 
@@ -52,30 +52,22 @@ function Sphere:Construct(creationOptions)
 			local first = (i * (slices + 1)) + j
 			local second = first + slices + 1
 
-			tinsert(vertexIndices, first)
-			tinsert(vertexIndices, second)
-			tinsert(vertexIndices, first + 1)
+			tinsert(sphereMesh.triangleConnections, first)
+			tinsert(sphereMesh.triangleConnections, second)
+			tinsert(sphereMesh.triangleConnections, first + 1)
 
-			tinsert(vertexIndices, second)
-			tinsert(vertexIndices, second + 1)
-			tinsert(vertexIndices, first + 1)
+			tinsert(sphereMesh.triangleConnections, second)
+			tinsert(sphereMesh.triangleConnections, second + 1)
+			tinsert(sphereMesh.triangleConnections, first + 1)
 		end
 	end
 
-	local diffuseTexCoords = {}
-	for _ = 1, #vertexPositions / 3 do
-		tinsert(diffuseTexCoords, 0)
-		tinsert(diffuseTexCoords, 0)
+	for _ = 1, #sphereMesh.vertexPositions / 3 do
+		tinsert(sphereMesh.diffuseTextureCoords, 0)
+		tinsert(sphereMesh.diffuseTextureCoords, 0)
 	end
 
-	local mesh = {
-		vertexPositions = vertexPositions,
-		vertexColors = vertexColors,
-		triangleConnections = vertexIndices,
-		diffuseTextureCoords = diffuseTexCoords,
-	}
-
-	return mesh
+	return sphereMesh
 end
 
 Sphere.__call = Sphere.Construct
