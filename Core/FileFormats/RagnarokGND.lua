@@ -12,6 +12,7 @@ local tonumber = tonumber
 local RagnarokGND = {
 	GAT_TILES_PER_GND_SURFACE = 2,
 	DEFAULT_GEOMETRY_SCALE_FACTOR = 10,
+	TEXTURED_SURFACE_SIZE_IN_PIXELS = 64, -- 2 GAT tiles at 32 pixels each (grid.tga texture dimensions)
 	SURFACE_DIRECTION_UP = 0,
 	SURFACE_DIRECTION_EAST = 1,
 	SURFACE_DIRECTION_NORTH = 2,
@@ -205,6 +206,8 @@ end
 
 function RagnarokGND:DecodeWaterPlanes()
 	if self.version < 1.8 then
+		self.numWaterPlanesU = 1
+		self.numWaterPlanesV = 1
 		return -- Legacy format: Water plane is stored in the RSW file instead
 	end
 
@@ -218,30 +221,32 @@ function RagnarokGND:DecodeWaterPlanes()
 		textureDisplayDurationInFrames = reader:GetInt32(),
 	}
 
-	local waterGridSizeU = reader:GetUnsignedInt32()
-	local waterGridSizeV = reader:GetUnsignedInt32()
+	local numWaterPlanesU = reader:GetUnsignedInt32()
+	local numWaterPlanesV = reader:GetUnsignedInt32()
 
-	for waterPlaneIndex = 1, waterGridSizeU * waterGridSizeV, 1 do
-		local waterPlane = AnimatedWaterPlane(waterPlaneDefaults)
-		waterPlane.normalizedSeaLevel = -1 * reader:GetFloat() * RagnarokGND.NORMALIZING_SCALE_FACTOR
+	for waterPlaneV = 1, numWaterPlanesV, 1 do
+		for waterPlaneU = 1, numWaterPlanesU, 1 do
+			local waterPlane = AnimatedWaterPlane(waterPlaneU, waterPlaneV, waterPlaneDefaults)
+			waterPlane.normalizedSeaLevel = -1 * reader:GetFloat() * RagnarokGND.NORMALIZING_SCALE_FACTOR
 
-		if self.version >= 1.9 then
-			waterPlane = AnimatedWaterPlane({
-				normalizedSeaLevel = waterPlane.normalizedSeaLevel,
-				textureTypePrefix = reader:GetInt32(),
-				waveformAmplitudeScalingFactor = reader:GetFloat(),
-				waveformPhaseShiftInDegreesPerFrame = reader:GetFloat(),
-				waveformFrequencyInDegrees = reader:GetFloat(),
-				textureDisplayDurationInFrames = reader:GetInt32(),
-			})
+			if self.version >= 1.9 then
+				waterPlane = AnimatedWaterPlane(waterPlaneU, waterPlaneV, {
+					normalizedSeaLevel = waterPlane.normalizedSeaLevel,
+					textureTypePrefix = reader:GetInt32(),
+					waveformAmplitudeScalingFactor = reader:GetFloat(),
+					waveformPhaseShiftInDegreesPerFrame = reader:GetFloat(),
+					waveformFrequencyInDegrees = reader:GetFloat(),
+					textureDisplayDurationInFrames = reader:GetInt32(),
+				})
+			end
+
+			table_insert(self.waterPlanes, waterPlane)
 		end
-
-		table_insert(self.waterPlanes, waterPlane)
 	end
 
 	self.waterPlaneDefaults = waterPlaneDefaults
-	self.waterGridSizeU = waterGridSizeU
-	self.waterGridSizeV = waterGridSizeV
+	self.numWaterPlanesU = numWaterPlanesU
+	self.numWaterPlanesV = numWaterPlanesV
 end
 
 function RagnarokGND:GenerateGroundMeshSections()

@@ -1,6 +1,10 @@
 local RagnarokGND = require("Core.FileFormats.RagnarokGND")
 local RagnarokGRF = require("Core.FileFormats.RagnarokGRF")
+local RagnarokRSW = require("Core.FileFormats.RagnarokRSW")
 
+local uv = require("uv")
+
+local format = string.format
 local table_insert = table.insert
 
 local RagnarokMap = {
@@ -28,6 +32,11 @@ function RagnarokMap:Construct(mapID, fileSystem)
 		table_insert(scene.meshes, groundMeshSection)
 	end
 
+	local waterPlanes = self:LoadWaterSurface(mapID)
+	for segmentID, waterPlane in ipairs(waterPlanes) do
+		table_insert(scene.meshes, waterPlane.surfaceGeometry)
+	end
+
 	printf("[RagnarokMap] Entering world %s (%s)", mapID, scene.displayName)
 
 	return scene
@@ -38,8 +47,8 @@ function RagnarokMap:LoadTerrainGeometry(mapID)
 	local gndName = mapID .. ".gnd"
 	local gndBytes = self:FetchResourceByID(gndName)
 	gnd:DecodeFileContents(gndBytes)
-	local groundMeshSections = gnd:GenerateGroundMeshSections()
 
+	local groundMeshSections = gnd:GenerateGroundMeshSections()
 	for sectionID, groundMeshSection in pairs(groundMeshSections) do
 		local texturePath = "texture/" .. gnd.diffuseTexturePaths[sectionID]
 		local normalizedTextureImagePath = RagnarokGRF:DecodeFileName(texturePath)
@@ -61,6 +70,78 @@ function RagnarokMap:LoadTerrainGeometry(mapID)
 	end
 
 	return groundMeshSections
+end
+
+function RagnarokMap:LoadWaterSurface(mapID)
+	-- Water planes may be defined by either RSW or GND file (depending on the version used)
+	local gnd = RagnarokGND()
+	local gndName = mapID .. ".gnd"
+	local gndBytes = self:FetchResourceByID(gndName)
+	gnd:DecodeFileContents(gndBytes)
+
+	local rsw = RagnarokRSW()
+	local rswName = mapID .. ".rsw"
+	local rswBytes = self:FetchResourceByID(rswName)
+	rsw:DecodeFileContents(rswBytes)
+
+	local waterPlanes = (#gnd.waterPlanes > 0) and gnd.waterPlanes or rsw.waterPlanes
+	printf(
+		"[RagnarokMap] Loading water surface consisting of %d water plane(s) mapped to the %dx%d cube grid",
+		#waterPlanes,
+		gnd.gridSizeU,
+		gnd.gridSizeV
+	)
+
+	for planeID, waterPlane in ipairs(waterPlanes) do
+		local animationFrameID = 0 -- Texture animation is NYI (will have to update this later)
+		local normalizedTextureImagePath =
+			format("texture/워터/water%d%02d.jpg", waterPlane.textureTypePrefix, animationFrameID)
+
+		local textureImageBytes = self:FetchResourceByID(normalizedTextureImagePath)
+		local rgbaImageBytes, width, height = C_ImageProcessing.DecodeFileContents(textureImageBytes)
+
+		printf(
+			"[RagnarokMap] Loading water plane %d with diffuse texture %s (%d x %d)",
+			planeID,
+			normalizedTextureImagePath,
+			width,
+			height
+		)
+		waterPlane.surfaceGeometry.diffuseTexture = {
+			rgbaImageBytes = rgbaImageBytes,
+			width = width,
+			height = height,
+		}
+	end
+
+	local startTime = uv.hrtime()
+	for waterPlaneID = 1, #waterPlanes, 1 do
+		local waterPlane = waterPlanes[waterPlaneID]
+		printf(
+			"Generating geometry for water plane %d within grid coordinates (%d, %d) to (%d, %d)",
+			waterPlaneID,
+			waterPlane.surfaceRegion.minU,
+			waterPlane.surfaceRegion.minV,
+			waterPlane.surfaceRegion.maxU,
+			waterPlane.surfaceRegion.maxV
+		)
+		waterPlane:AlignWithGroundMesh(gnd)
+		for gridV = waterPlane.surfaceRegion.minV, waterPlane.surfaceRegion.maxV do
+			for gridU = waterPlane.surfaceRegion.minU, waterPlane.surfaceRegion.maxU do
+				waterPlane:GenerateWaterVertices(gnd, gridU, gridV)
+			end
+		end
+	end
+
+	local endTime = uv.hrtime()
+	local geometryGenerationTimeInMilliseconds = (endTime - startTime) / 10E5
+	printf(
+		"[RagnarokMap] Finished generating surface geometry for %d water plane segment(s) in %.2f ms",
+		#waterPlanes,
+		geometryGenerationTimeInMilliseconds
+	)
+
+	return waterPlanes
 end
 
 function RagnarokMap:FetchResourceByID(resourceID)
