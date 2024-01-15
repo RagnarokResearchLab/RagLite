@@ -21,6 +21,7 @@ function Cylinder:Construct(creationOptions)
 	local vertexPositions = {}
 	local vertexColors = {}
 	local vertexIndices = {}
+	local diffuseTexCoords = {}
 
 	for i = 0, segments - 1 do
 		local angle = i * 2 * math.pi / segments
@@ -86,10 +87,16 @@ function Cylinder:Construct(creationOptions)
 		tinsert(vertexIndices, nextBaseIndex + 1)
 	end
 
+	for _ = 1, #vertexPositions / 3 do
+		tinsert(diffuseTexCoords, 0)
+		tinsert(diffuseTexCoords, 0)
+	end
+
 	local mesh = {
 		vertexPositions = vertexPositions,
 		vertexColors = vertexColors,
 		triangleConnections = vertexIndices,
+		diffuseTextureCoords = diffuseTexCoords,
 	}
 
 	return mesh

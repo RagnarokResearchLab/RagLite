@@ -86,8 +86,6 @@ function Renderer:InitializeWithGLFW(nativeWindowHandle)
 
 	-- Default texture that is multiplicatively neutral (use with untextured geometry to keep things simple)
 	Renderer:CreateDummyTexture()
-	-- Untextured geometry still needs to bind a UV buffer since we only have a single pipeline (hacky...)
-	Renderer:CreateDummyTextureCoordinatesBuffer()
 
 	Renderer:CreateUserInterface()
 end
@@ -337,8 +335,7 @@ function Renderer:DrawMesh(renderPass, mesh)
 	local vertexBufferSize = #mesh.vertexPositions * ffi.sizeof("float")
 	local colorBufferSize = #mesh.vertexColors * ffi.sizeof("float")
 	local indexBufferSize = #mesh.triangleConnections * ffi.sizeof("uint32_t")
-	local diffuseTexCoordsBufferSize = mesh.diffuseTextureCoords and (#mesh.diffuseTextureCoords * ffi.sizeof("float"))
-		or GPU.MAX_VERTEX_COUNT
+	local diffuseTexCoordsBufferSize = #mesh.diffuseTextureCoords * ffi.sizeof("float") or GPU.MAX_VERTEX_COUNT
 
 	RenderPassEncoder:SetVertexBuffer(renderPass, 0, mesh.vertexBuffer, 0, vertexBufferSize)
 	RenderPassEncoder:SetVertexBuffer(renderPass, 1, mesh.colorBuffer, 0, colorBufferSize)
@@ -468,17 +465,14 @@ function Renderer:UploadMeshGeometry(mesh)
 	printf("Uploading geometry: %d triangle indices (%s)", indexCount, filesize(triangleIndexBufferSize))
 	local triangleIndicesBuffer = Buffer:CreateIndexBuffer(self.wgpuDevice, indices)
 
-	local diffuseTextureCoordinatesBuffer = self.dummyTexCoordsBuffer
-	if mesh.diffuseTextureCoords then
-		local diffuseTextureCoordsCount = #mesh.diffuseTextureCoords / 2
-		local diffuseTextureCoordsBufferSize = #mesh.diffuseTextureCoords * ffi.sizeof("float")
-		printf(
-			"Uploading geometry: %d diffuse texture coordinates (%s)",
-			diffuseTextureCoordsCount,
-			filesize(diffuseTextureCoordsBufferSize)
-		)
-		diffuseTextureCoordinatesBuffer = Buffer:CreateVertexBuffer(self.wgpuDevice, mesh.diffuseTextureCoords)
-	end
+	local diffuseTextureCoordsCount = #mesh.diffuseTextureCoords / 2
+	local diffuseTextureCoordsBufferSize = #mesh.diffuseTextureCoords * ffi.sizeof("float")
+	printf(
+		"Uploading geometry: %d diffuse texture coordinates (%s)",
+		diffuseTextureCoordsCount,
+		filesize(diffuseTextureCoordsBufferSize)
+	)
+	local diffuseTextureCoordinatesBuffer = Buffer:CreateVertexBuffer(self.wgpuDevice, mesh.diffuseTextureCoords)
 
 	mesh.vertexBuffer = vertexBuffer
 	mesh.colorBuffer = vertexColorsBuffer
@@ -531,10 +525,7 @@ function Renderer:DestroyMeshGeometry(mesh)
 	Buffer:Destroy(mesh.vertexBuffer)
 	Buffer:Destroy(mesh.colorBuffer)
 	Buffer:Destroy(mesh.indexBuffer)
-	if mesh.diffuseTexCoordsBuffer ~= self.dummyTexCoordsBuffer then
-		-- Don't destroy this, it might still be used by other meshes
-		Buffer:Destroy(mesh.diffuseTexCoordsBuffer)
-	end
+	Buffer:Destroy(mesh.diffuseTexCoordsBuffer)
 
 	self.meshes = {}
 end
@@ -743,16 +734,6 @@ function Renderer:CreateTextureImage(rgbaImageBytes, width, height)
 end
 
 require("table.new")
-
-function Renderer:CreateDummyTextureCoordinatesBuffer()
-	local maxAllowedVerticesPerMesh = GPU.MAX_VERTEX_COUNT -- A bit wasteful, but it's a one-of anyway...
-	local bufferSize = maxAllowedVerticesPerMesh * ffi.sizeof("float") * 2 -- One UV set per vertex
-	printf("Creating default UV buffer with %d entries (%s)", maxAllowedVerticesPerMesh, string.filesize(bufferSize))
-
-	local dummyCoords = table.new(maxAllowedVerticesPerMesh, 0)
-	local buffer = Buffer:CreateVertexBuffer(self.wgpuDevice, dummyCoords)
-	self.dummyTexCoordsBuffer = buffer
-end
 
 function Renderer:LoadSceneObjects(scene)
 	printf("Loading scene objects for [[%s]]", scene.displayName)

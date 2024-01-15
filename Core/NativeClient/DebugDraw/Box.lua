@@ -47,6 +47,7 @@ function Box:Construct(creationOptions)
 	local vertexPositions = {}
 	local vertexColors = {}
 	local vertexIndices = {}
+	local diffuseTexCoords = {}
 
 	for faceID, face in ipairs(faceIndices) do
 		local faceColor = faceColors[faceID]
@@ -70,10 +71,16 @@ function Box:Construct(creationOptions)
 		tinsert(vertexIndices, baseIndex + 3)
 	end
 
+	for _ = 1, #vertexPositions / 3 do
+		tinsert(diffuseTexCoords, 0)
+		tinsert(diffuseTexCoords, 0)
+	end
+
 	local mesh = {
 		vertexPositions = vertexPositions,
 		vertexColors = vertexColors,
 		triangleConnections = vertexIndices,
+		diffuseTextureCoords = diffuseTexCoords,
 	}
 
 	return mesh

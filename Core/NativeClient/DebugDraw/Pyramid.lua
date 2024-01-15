@@ -70,10 +70,17 @@ function Pyramid:Construct(creationOptions)
 		end
 	end
 
+	local diffuseTexCoords = {}
+	for _ = 1, #vertexPositions / 3 do
+		tinsert(diffuseTexCoords, 0)
+		tinsert(diffuseTexCoords, 0)
+	end
+
 	local mesh = {
 		vertexPositions = vertexPositions,
 		vertexColors = vertexColors,
 		triangleConnections = vertexIndices,
+		diffuseTextureCoords = diffuseTexCoords,
 	}
 
 	return mesh

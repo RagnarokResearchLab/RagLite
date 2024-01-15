@@ -183,10 +183,17 @@ function WorldAxis:Construct()
 		2 * ARROWHEAD_VERTEX_COUNT + 14,
 	}
 
+	local diffuseTexCoords = {}
+	for _ = 1, #vertexPositions / 3 do
+		table.insert(diffuseTexCoords, 0)
+		table.insert(diffuseTexCoords, 0)
+	end
+
 	local mesh = {
 		vertexPositions = vertexPositions,
 		vertexColors = vertexColors,
 		triangleConnections = vertexIndices,
+		diffuseTextureCoords = diffuseTexCoords,
 	}
 
 	return mesh
