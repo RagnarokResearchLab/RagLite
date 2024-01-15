@@ -50,6 +50,9 @@ for index, filePath in ipairs(waterTexturePaths) do
 
 	local rgbaImageBytes, width, height = C_ImageProcessing.DecodeFileContents(fileContents)
 
+	assert(width == height, "Unexpected rectangular water texture: " .. filePath)
+	assert(width == 128 or width == 256, "Unexpected texture size: " .. width)
+
 	local textureInfo = {
 		name = filePath,
 		filesize = string.filesize(#rgbaImageBytes),
