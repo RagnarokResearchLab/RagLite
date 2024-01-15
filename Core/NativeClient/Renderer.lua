@@ -57,6 +57,14 @@ local Renderer = {
 	meshes = {},
 	DEBUG_DISCARDED_BACKGROUND_PIXELS = false, -- This is really slow (disk I/O); don't enable unless necessary
 	numWidgetTransformsUsedThisFrame = 0,
+	errorStrings = {
+		INVALID_VERTEX_BUFFER = "Cannot upload geometry with invalid vertex buffer",
+		INVALID_INDEX_BUFFER = "Cannot upload geometry with invalid index buffer",
+		INVALID_COLOR_BUFFER = "Cannot upload geometry with invalid color buffer",
+		INVALID_UV_BUFFER = "Cannot upload geometry with invalid diffuse texture coordinates buffer",
+		INCOMPLETE_COLOR_BUFFER = "Cannot upload geometry with missing or incomplete vertex colors",
+		INCOMPLETE_UV_BUFFER = "Cannot upload geometry with missing or incomplete diffuse texture coordinates ",
+	},
 }
 
 ffi.cdef(Renderer.cdefs)
@@ -439,10 +447,14 @@ function Renderer:UploadMeshGeometry(mesh)
 	local indices = mesh.triangleConnections
 
 	local vertexCount = #positions / 3
-	local triangleIndicesCount = #indices
+	local indexCount = #indices
 	local numVertexColors = #colors / 3
-	assert(vertexCount == numVertexColors, "Cannot upload geometry with missing or incomplete vertex colors")
-	assert(triangleIndicesCount % 3 == 0, "Cannot upload geometry with incomplete triangles")
+
+	if vertexCount == 0 or indexCount == 0 then
+		return
+	end
+
+	self:ValidateGeometry(mesh)
 
 	local vertexBufferSize = #positions * ffi.sizeof("float")
 	printf("Uploading geometry: %d vertex positions (%s)", vertexCount, filesize(vertexBufferSize))
@@ -453,20 +465,15 @@ function Renderer:UploadMeshGeometry(mesh)
 	local vertexColorsBuffer = Buffer:CreateVertexBuffer(self.wgpuDevice, colors)
 
 	local triangleIndexBufferSize = #indices * ffi.sizeof("uint16_t")
-	printf("Uploading geometry: %d triangle indices (%s)", triangleIndicesCount, filesize(triangleIndexBufferSize))
+	printf("Uploading geometry: %d triangle indices (%s)", indexCount, filesize(triangleIndexBufferSize))
 	local triangleIndicesBuffer = Buffer:CreateIndexBuffer(self.wgpuDevice, indices)
 
 	local diffuseTextureCoordinatesBuffer = self.dummyTexCoordsBuffer
 	if mesh.diffuseTextureCoords then
-		local diffuseTextureCoordsCount = #mesh.diffuseTextureCoords
-		assert(
-			diffuseTextureCoordsCount == vertexCount * 2,
-			"Cannot upload geometry with incomplete diffuse texture coords"
-		)
-
+		local diffuseTextureCoordsCount = #mesh.diffuseTextureCoords / 2
 		local diffuseTextureCoordsBufferSize = #mesh.diffuseTextureCoords * ffi.sizeof("float")
 		printf(
-			"Uploading geometry: %d diffuse UVs (%s)",
+			"Uploading geometry: %d diffuse texture coordinates (%s)",
 			diffuseTextureCoordsCount,
 			filesize(diffuseTextureCoordsBufferSize)
 		)
@@ -479,6 +486,45 @@ function Renderer:UploadMeshGeometry(mesh)
 	mesh.diffuseTexCoordsBuffer = diffuseTextureCoordinatesBuffer
 
 	table.insert(self.meshes, mesh)
+end
+
+function Renderer:ValidateGeometry(mesh)
+	local positions = mesh.vertexPositions
+	local colors = mesh.vertexColors
+	local indices = mesh.triangleConnections
+
+	local vertexCount = #positions / 3
+	local indexCount = #indices
+	local numVertexColors = #colors / 3
+
+	if #positions % 3 ~= 0 then
+		error(self.errorStrings.INVALID_VERTEX_BUFFER, 0)
+	end
+
+	if #colors % 3 ~= 0 then
+		error(self.errorStrings.INVALID_COLOR_BUFFER, 0)
+	end
+
+	if indexCount % 3 ~= 0 then
+		error(self.errorStrings.INVALID_INDEX_BUFFER, 0)
+	end
+
+	if vertexCount ~= numVertexColors then
+		error(self.errorStrings.INCOMPLETE_COLOR_BUFFER, 0)
+	end
+
+	if not mesh.diffuseTextureCoords then
+		return
+	end
+
+	local diffuseTextureCoordsCount = #mesh.diffuseTextureCoords / 2
+	if (diffuseTextureCoordsCount * 2) % 2 ~= 0 then
+		error(self.errorStrings.INVALID_UV_BUFFER, 0)
+	end
+
+	if vertexCount ~= diffuseTextureCoordsCount then
+		error(self.errorStrings.INCOMPLETE_UV_BUFFER, 0)
+	end
 end
 
 function Renderer:DestroyMeshGeometry(mesh)

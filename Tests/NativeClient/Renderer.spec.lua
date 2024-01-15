@@ -226,6 +226,88 @@ describe("Renderer", function()
 			assertEquals(events[index].payload.size, expectedBufferSize)
 			assertEqualArrayContents(events[index].payload.data, planeMesh.diffuseTextureCoords)
 		end)
+
+		it("should throw if the geometry contains an insufficient number of vertex positions", function()
+			local mesh = table.copy(planeMesh)
+			mesh.vertexPositions = { 0, 1 }
+			local expectedErrorMessage = Renderer.errorStrings.INVALID_VERTEX_BUFFER
+			local function uploadIncompleteMeshGeometry()
+				Renderer:UploadMeshGeometry(mesh)
+			end
+			assertThrows(uploadIncompleteMeshGeometry, expectedErrorMessage)
+		end)
+
+		it("should throw if the geometry contains an insufficient number of vertex indices", function()
+			local mesh = table.copy(planeMesh)
+			mesh.triangleConnections = { 0, 1 }
+			local expectedErrorMessage = Renderer.errorStrings.INVALID_INDEX_BUFFER
+			local function uploadIncompleteMeshGeometry()
+				Renderer:UploadMeshGeometry(mesh)
+			end
+			assertThrows(uploadIncompleteMeshGeometry, expectedErrorMessage)
+		end)
+
+		it("should throw if the geometry contains an insufficient number of vertex colors", function()
+			local mesh = table.copy(planeMesh)
+			mesh.vertexColors = { 0, 1 }
+			local expectedErrorMessage = Renderer.errorStrings.INVALID_COLOR_BUFFER
+			local function uploadIncompleteMeshGeometry()
+				Renderer:UploadMeshGeometry(mesh)
+			end
+			assertThrows(uploadIncompleteMeshGeometry, expectedErrorMessage)
+		end)
+
+		it("should throw if the geometry contains more vertex positions than colors", function()
+			local mesh = table.copy(planeMesh)
+			mesh.vertexColors = {}
+			local expectedErrorMessage = Renderer.errorStrings.INCOMPLETE_COLOR_BUFFER
+			local function uploadIncompleteMeshGeometry()
+				Renderer:UploadMeshGeometry(mesh)
+			end
+			assertThrows(uploadIncompleteMeshGeometry, expectedErrorMessage)
+		end)
+
+		it("should throw if the geometry contains an insufficient number of diffuse texture coordinates", function()
+			local mesh = table.copy(planeMesh)
+			mesh.diffuseTextureCoords = { 1, 2, 3 }
+			local expectedErrorMessage = Renderer.errorStrings.INVALID_UV_BUFFER
+			local function uploadIncompleteMeshGeometry()
+				Renderer:UploadMeshGeometry(mesh)
+			end
+			assertThrows(uploadIncompleteMeshGeometry, expectedErrorMessage)
+		end)
+
+		it("should throw if the geometry contains more vertex positions than diffuse texture coordinates", function()
+			local mesh = table.copy(planeMesh)
+			mesh.diffuseTextureCoords = {}
+			local expectedErrorMessage = Renderer.errorStrings.INCOMPLETE_UV_BUFFER
+			local function uploadIncompleteMeshGeometry()
+				Renderer:UploadMeshGeometry(mesh)
+			end
+			assertThrows(uploadIncompleteMeshGeometry, expectedErrorMessage)
+		end)
+
+		it("should skip geometry that contains no vertex position", function()
+			local mesh = table.copy(planeMesh)
+			mesh.vertexPositions = {}
+
+			Renderer:UploadMeshGeometry(mesh)
+			assertEquals(#Renderer.meshes, 0)
+
+			local events = etrace.filter()
+			assertEquals(#events, 0)
+		end)
+
+		it("should skip geometry that contains no triangles", function()
+			local mesh = table.copy(planeMesh)
+			mesh.triangleConnections = {}
+
+			Renderer:UploadMeshGeometry(mesh)
+			assertEquals(#Renderer.meshes, 0)
+
+			local events = etrace.filter()
+			assertEquals(#events, 0)
+		end)
 	end)
 
 	describe("DestroyMeshGeometry", function()
