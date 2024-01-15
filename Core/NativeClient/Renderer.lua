@@ -666,7 +666,7 @@ function Renderer:EnableDepthBuffer()
 end
 
 function Renderer:CreateDebugTexture()
-	local textureFilePath = path.join("Core", "NativeClient", "DebugDraw", "DebugTexture256.png")
+	local textureFilePath = path.join("Core", "NativeClient", "Assets", "DebugTexture256.png")
 	local pngFileContents = C_FileSystem.ReadFile(textureFilePath)
 	local rgbaImageBytes = C_ImageProcessing.DecodeFileContents(pngFileContents)
 	local debugTexture = Texture(self.wgpuDevice, rgbaImageBytes, 256, 256)
