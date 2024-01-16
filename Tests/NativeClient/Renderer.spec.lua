@@ -3,10 +3,13 @@ local ffi = require("ffi")
 local miniz = require("miniz")
 
 local Plane = require("Core.NativeClient.DebugDraw.Plane")
+local Mesh = require("Core.NativeClient.WebGPU.Mesh")
 local Renderer = require("Core.NativeClient.Renderer")
-
 local Buffer = require("Core.NativeClient.WebGPU.Buffer")
 local VirtualGPU = require("Core.NativeClient.WebGPU.VirtualGPU")
+local GroundMeshMaterial = require("Core.NativeClient.WebGPU.GroundMeshMaterial")
+local UnlitMeshMaterial = require("Core.NativeClient.WebGPU.UnlitMeshMaterial")
+local WaterSurfaceMaterial = require("Core.NativeClient.WebGPU.WaterSurfaceMaterial")
 
 local planeMesh = Plane()
 
@@ -361,6 +364,42 @@ describe("Renderer", function()
 				end, Renderer.DestroyMeshGeometry, 42)
 				assertEquals(#Renderer.meshes, 0)
 			end)
+		end)
+	end)
+
+	describe("SortMeshesByMaterial", function()
+		it("should return a sorted list containing all provided meshes indexed by their material", function()
+			local waterPlane = Mesh("SortMeshesByMaterialFakeWaterPlane")
+			waterPlane.material = WaterSurfaceMaterial
+			local plane = Plane("SortMeshesByMaterialTestPlane")
+			plane.material = UnlitMeshMaterial
+			local mesh = Mesh("SortMeshesByMaterialTestMesh")
+			mesh.material = UnlitMeshMaterial
+			local ground = Plane("SortMeshesByMaterialFakeGroundMesh")
+			ground.material = GroundMeshMaterial
+
+			local meshes = {
+				ground,
+				waterPlane,
+				plane,
+				mesh,
+			}
+			local meshsSortedByMaterial = Renderer:SortMeshesByMaterial(meshes)
+
+			assertEquals(meshsSortedByMaterial[GroundMeshMaterial], { ground })
+			assertEquals(meshsSortedByMaterial[UnlitMeshMaterial], { plane, mesh })
+			assertEquals(meshsSortedByMaterial[WaterSurfaceMaterial], { waterPlane })
+		end)
+
+		it("should throw if encountering a mesh without an assigned material", function()
+			local plane = Plane()
+			plane.material = nil
+
+			local expectedErrorMessage =
+				format("%s %s (%s)", Renderer.errorStrings.INVALID_MATERIAL, plane.uniqueID, plane.displayName)
+			assertThrows(function()
+				Renderer:SortMeshesByMaterial({ plane })
+			end, expectedErrorMessage)
 		end)
 	end)
 end)
