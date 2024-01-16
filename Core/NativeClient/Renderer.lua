@@ -57,7 +57,6 @@ local Renderer = {
 		} mesh_uniform_t;
 	]],
 	clearColorRGBA = { Color.GREY.red, Color.GREY.green, Color.GREY.blue, 0 },
-	renderPipelines = {},
 	userInterfaceTextureBindGroups = {},
 	meshes = {},
 	DEBUG_DISCARDED_BACKGROUND_PIXELS = false, -- This is really slow (disk I/O); don't enable unless necessary
