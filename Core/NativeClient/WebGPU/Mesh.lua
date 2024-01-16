@@ -1,3 +1,5 @@
+local UnlitMeshMaterial = require("Core.NativeClient.WebGPU.UnlitMeshMaterial")
+
 local uuid = require("uuid")
 
 local Mesh = {}
@@ -11,6 +13,7 @@ function Mesh:Construct(name)
 		triangleConnections = {},
 		vertexColors = {},
 		diffuseTextureCoords = {},
+		material = UnlitMeshMaterial,
 	}
 
 	setmetatable(instance, self)

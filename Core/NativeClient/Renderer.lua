@@ -17,6 +17,9 @@ local Queue = require("Core.NativeClient.WebGPU.Queue")
 local RenderPassEncoder = require("Core.NativeClient.WebGPU.RenderPassEncoder")
 local Surface = require("Core.NativeClient.WebGPU.Surface")
 local Texture = require("Core.NativeClient.WebGPU.Texture")
+local GroundMeshMaterial = require("Core.NativeClient.WebGPU.GroundMeshMaterial")
+local UnlitMeshMaterial = require("Core.NativeClient.WebGPU.UnlitMeshMaterial")
+local WaterSurfaceMaterial = require("Core.NativeClient.WebGPU.WaterSurfaceMaterial")
 
 local _ = require("Core.VectorMath.Matrix4D") -- Only needed for the cdefs right now
 local Vector3D = require("Core.VectorMath.Vector3D")
@@ -24,10 +27,12 @@ local C_Camera = require("Core.NativeClient.C_Camera")
 
 local assert = assert
 local ipairs = ipairs
+local rawget = rawget
 
 local ffi_new = ffi.new
 local format = string.format
 local filesize = string.filesize
+local table_insert = table.insert
 
 local Color = require("Core.NativeClient.DebugDraw.Color")
 
@@ -64,6 +69,7 @@ local Renderer = {
 		INVALID_UV_BUFFER = "Cannot upload geometry with invalid diffuse texture coordinates buffer",
 		INCOMPLETE_COLOR_BUFFER = "Cannot upload geometry with missing or incomplete vertex colors",
 		INCOMPLETE_UV_BUFFER = "Cannot upload geometry with missing or incomplete diffuse texture coordinates ",
+		INVALID_MATERIAL = "Invalid material assigned to mesh",
 	},
 }
 
@@ -112,9 +118,13 @@ function Renderer:CreatePipelineConfigurations()
 	-- Need to compute the preferred texture format first
 	self.backingSurface:UpdateConfiguration()
 
-	-- This is just a placeholder; eventually there should be real pipelines here
-	self.meshGeometryRenderingPipeline =
+	UnlitMeshMaterial.assignedRenderingPipeline =
 		BasicTriangleDrawingPipeline(self.wgpuDevice, self.backingSurface.preferredTextureFormat)
+	GroundMeshMaterial.assignedRenderingPipeline =
+		BasicTriangleDrawingPipeline(self.wgpuDevice, self.backingSurface.preferredTextureFormat)
+	WaterSurfaceMaterial.assignedRenderingPipeline =
+		BasicTriangleDrawingPipeline(self.wgpuDevice, self.backingSurface.preferredTextureFormat)
+
 	self.userInterfaceRenderingPipeline =
 		WidgetDrawingPipeline(self.wgpuDevice, self.backingSurface.preferredTextureFormat)
 end
@@ -146,6 +156,26 @@ function Renderer:CreateUserInterface()
 	rml.bindings.rml_document_show(document)
 end
 
+function Renderer:SortMeshesByMaterial(meshes)
+	local meshesSortedByMaterial = {
+		[UnlitMeshMaterial] = {},
+		[WaterSurfaceMaterial] = {},
+		[GroundMeshMaterial] = {},
+	}
+
+	for index, mesh in ipairs(meshes) do
+		-- Needs streamlining (later)
+		if not rawget(mesh, "material") then
+			local errorMessage =
+				format("%s %s (%s)", self.errorStrings.INVALID_MATERIAL, mesh.uniqueID, mesh.displayName)
+			error(errorMessage, 0)
+		end
+		table_insert(meshesSortedByMaterial[mesh.material], mesh)
+	end
+
+	return meshesSortedByMaterial
+end
+
 function Renderer:RenderNextFrame()
 	etrace.clear()
 	local nextTextureView = self.backingSurface:AcquireTextureView()
@@ -158,9 +188,13 @@ function Renderer:RenderNextFrame()
 		self:ResetScissorRectangle(renderPass)
 		self:UpdateScenewideUniformBuffer()
 
-		RenderPassEncoder:SetPipeline(renderPass, self.meshGeometryRenderingPipeline)
-		for _, mesh in ipairs(self.meshes) do
-			self:DrawMesh(renderPass, mesh)
+		local meshesByMaterial = self:SortMeshesByMaterial(self.meshes)
+		for material, meshes in pairs(meshesByMaterial) do
+			-- Should skip this if there aren't any meshes (wasteful to switch for no reason)?
+			RenderPassEncoder:SetPipeline(renderPass, material.assignedRenderingPipeline)
+			for _, mesh in ipairs(self.meshes) do
+				self:DrawMesh(renderPass, mesh)
+			end
 		end
 
 		RenderPassEncoder:End(renderPass)
