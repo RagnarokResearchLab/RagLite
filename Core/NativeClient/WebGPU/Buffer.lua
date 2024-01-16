@@ -28,7 +28,6 @@ function Buffer:CreateVertexBuffer(wgpuDevice, entries)
 	local bufferDescriptor = ffi.new("WGPUBufferDescriptor", {
 		size = alignedBufferSizeInBytes,
 		usage = Buffer.VERTEX_BUFFER_FLAGS,
-		mappedAtCreation = false,
 	})
 
 	local buffer = webgpu.bindings.wgpu_device_create_buffer(wgpuDevice, bufferDescriptor)
@@ -50,7 +49,6 @@ function Buffer:CreateIndexBuffer(wgpuDevice, indices)
 	local bufferDescriptor = ffi.new("WGPUBufferDescriptor", {
 		size = alignedBufferSizeInBytes,
 		usage = Buffer.INDEX_BUFFER_FLAGS,
-		mappedAtCreation = false,
 	})
 
 	local buffer = webgpu.bindings.wgpu_device_create_buffer(wgpuDevice, bufferDescriptor)
