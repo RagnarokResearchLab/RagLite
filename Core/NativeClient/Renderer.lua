@@ -185,7 +185,9 @@ function Renderer:RenderNextFrame()
 	do
 		local renderPass = self:BeginRenderPass(commandEncoder, nextTextureView)
 		self:ResetScissorRectangle(renderPass)
+
 		self:UpdateScenewideUniformBuffer()
+		RenderPassEncoder:SetBindGroup(renderPass, 0, self.uniforms.perScene.bindGroup, 0, nil)
 
 		local meshesByMaterial = self:SortMeshesByMaterial(self.meshes)
 		for material, meshes in pairs(meshesByMaterial) do
@@ -374,8 +376,6 @@ function Renderer:DrawMesh(renderPass, mesh)
 	RenderPassEncoder:SetVertexBuffer(renderPass, 1, mesh.colorBuffer, 0, colorBufferSize)
 	RenderPassEncoder:SetVertexBuffer(renderPass, 2, mesh.diffuseTexCoordsBuffer, 0, diffuseTexCoordsBufferSize)
 	RenderPassEncoder:SetIndexBuffer(renderPass, mesh.indexBuffer, ffi.C.WGPUIndexFormat_Uint32, 0, indexBufferSize)
-
-	RenderPassEncoder:SetBindGroup(renderPass, 0, self.uniforms.perScene.bindGroup, 0, nil)
 
 	-- Needs streamlining (later)
 	if not rawget(mesh, "diffuseTexture") then
