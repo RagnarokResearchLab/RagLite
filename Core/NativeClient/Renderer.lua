@@ -582,7 +582,6 @@ function Renderer:CreateUniformBuffers()
 		ffi.new("WGPUBufferDescriptor", {
 			size = ffi.sizeof("scenewide_uniform_t"),
 			usage = bit.bor(ffi.C.WGPUBufferUsage_CopyDst, ffi.C.WGPUBufferUsage_Uniform),
-			mappedAtCreation = false,
 		})
 	)
 	local cameraBindGroupDescriptor = ffi.new("WGPUBindGroupDescriptor", {
@@ -601,7 +600,6 @@ function Renderer:CreateUniformBuffers()
 		ffi.new("WGPUBufferDescriptor", {
 			size = ffi.sizeof("mesh_uniform_t") * WidgetDrawingPipeline.MAX_WIDGET_COUNT,
 			usage = bit.bor(ffi.C.WGPUBufferUsage_CopyDst, ffi.C.WGPUBufferUsage_Uniform),
-			mappedAtCreation = false,
 		})
 	)
 	local transformBindGroupDescriptor = ffi.new("WGPUBindGroupDescriptor", {

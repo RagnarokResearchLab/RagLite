@@ -161,27 +161,13 @@ end
 function BasicTriangleDrawingPipeline:CreateCameraBindGroupLayout(wgpuDeviceHandle)
 	local bindGroupLayoutDescriptor = new("WGPUBindGroupLayoutDescriptor", {
 		entryCount = 1,
-		entries = new("WGPUBindGroupLayoutEntry[?]", 2, {
+		entries = new("WGPUBindGroupLayoutEntry[?]", 1, {
 			new("WGPUBindGroupLayoutEntry", {
 				binding = 0,
 				visibility = bit.bor(ffi.C.WGPUShaderStage_Vertex, ffi.C.WGPUShaderStage_Fragment),
 				buffer = {
 					type = ffi.C.WGPUBufferBindingType_Uniform,
-					hasDynamicOffset = false,
 					minBindingSize = sizeof("scenewide_uniform_t"),
-				},
-				sampler = {
-					type = ffi.C.WGPUSamplerBindingType_Undefined,
-				},
-				storageTexture = {
-					access = ffi.C.WGPUStorageTextureAccess_Undefined,
-					format = ffi.C.WGPUTextureFormat_Undefined,
-					viewDimension = ffi.C.WGPUTextureViewDimension_Undefined,
-				},
-				texture = {
-					multisampled = false,
-					sampleType = ffi.C.WGPUTextureSampleType_Undefined,
-					viewDimension = ffi.C.WGPUTextureViewDimension_Undefined,
 				},
 			}),
 		}),
@@ -203,7 +189,6 @@ function BasicTriangleDrawingPipeline:CreateMaterialBindGroupLayout(wgpuDeviceHa
 				texture = {
 					sampleType = ffi.C.WGPUTextureSampleType_Float,
 					viewDimension = ffi.C.WGPUTextureViewDimension_2D,
-					multisampled = false,
 				},
 			}),
 			new("WGPUBindGroupLayoutEntry", {
