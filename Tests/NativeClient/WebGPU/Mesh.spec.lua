@@ -1,4 +1,5 @@
 local Mesh = require("Core.NativeClient.WebGPU.Mesh")
+local UnlitMeshMaterial = require("Core.NativeClient.WebGPU.UnlitMeshMaterial")
 
 local uuid = require("uuid")
 
@@ -26,6 +27,11 @@ describe("Mesh", function()
 			assertEquals(mesh.triangleConnections, {})
 			assertEquals(mesh.vertexColors, {})
 			assertEquals(mesh.diffuseTextureCoords, {})
+		end)
+
+		it("should assign a material that uses the default rendering pipeline", function()
+			local mesh = Mesh()
+			assertEquals(mesh.material, UnlitMeshMaterial)
 		end)
 	end)
 
