@@ -1,4 +1,5 @@
 local Color = require("Core.NativeClient.DebugDraw.Color")
+local Mesh = require("Core.NativeClient.WebGPU.Mesh")
 
 local MATH_PI = math.pi
 local math_cos = math.cos
@@ -19,62 +20,59 @@ function Cone:Construct(creationOptions)
 	local tipColor = Color.BLUE
 	local baseColor = Color.RED
 
-	local vertexPositions = {}
-	local vertexColors = {}
-	local vertexIndices = {}
+	local coneMesh = Mesh("Cone")
 
-	local baseCenterIndex = #vertexPositions / 3
-	tinsert(vertexPositions, 0 + translation.x)
-	tinsert(vertexPositions, 0 + translation.y)
-	tinsert(vertexPositions, 0 + translation.z)
+	local baseCenterIndex = #coneMesh.vertexPositions / 3
+	tinsert(coneMesh.vertexPositions, 0 + translation.x)
+	tinsert(coneMesh.vertexPositions, 0 + translation.y)
+	tinsert(coneMesh.vertexPositions, 0 + translation.z)
 
-	tinsert(vertexColors, baseColor.red)
-	tinsert(vertexColors, baseColor.green)
-	tinsert(vertexColors, baseColor.blue)
+	tinsert(coneMesh.vertexColors, baseColor.red)
+	tinsert(coneMesh.vertexColors, baseColor.green)
+	tinsert(coneMesh.vertexColors, baseColor.blue)
 
 	for i = 0, segments - 1 do
 		local angle = i * 2 * MATH_PI / segments
 		local x = radius * math_cos(angle)
 		local z = radius * math_sin(angle)
 
-		tinsert(vertexPositions, x + translation.x)
-		tinsert(vertexPositions, 0 + translation.y)
-		tinsert(vertexPositions, z + translation.z)
+		tinsert(coneMesh.vertexPositions, x + translation.x)
+		tinsert(coneMesh.vertexPositions, 0 + translation.y)
+		tinsert(coneMesh.vertexPositions, z + translation.z)
 
-		tinsert(vertexColors, baseColor.red)
-		tinsert(vertexColors, baseColor.green)
-		tinsert(vertexColors, baseColor.blue)
+		tinsert(coneMesh.vertexColors, baseColor.red)
+		tinsert(coneMesh.vertexColors, baseColor.green)
+		tinsert(coneMesh.vertexColors, baseColor.blue)
 
 		local nextIndex = baseCenterIndex + ((i + 1) % segments) + 1
-		tinsert(vertexIndices, baseCenterIndex)
-		tinsert(vertexIndices, nextIndex)
-		tinsert(vertexIndices, baseCenterIndex + i + 1)
+		tinsert(coneMesh.triangleConnections, baseCenterIndex)
+		tinsert(coneMesh.triangleConnections, nextIndex)
+		tinsert(coneMesh.triangleConnections, baseCenterIndex + i + 1)
 	end
 
-	local tipIndex = #vertexPositions / 3
-	tinsert(vertexPositions, 0 + translation.x)
-	tinsert(vertexPositions, height + translation.y)
-	tinsert(vertexPositions, 0 + translation.z)
+	local tipIndex = #coneMesh.vertexPositions / 3
+	tinsert(coneMesh.vertexPositions, 0 + translation.x)
+	tinsert(coneMesh.vertexPositions, height + translation.y)
+	tinsert(coneMesh.vertexPositions, 0 + translation.z)
 
-	tinsert(vertexColors, tipColor.red)
-	tinsert(vertexColors, tipColor.green)
-	tinsert(vertexColors, tipColor.blue)
+	tinsert(coneMesh.vertexColors, tipColor.red)
+	tinsert(coneMesh.vertexColors, tipColor.green)
+	tinsert(coneMesh.vertexColors, tipColor.blue)
 
 	for i = 0, segments - 1 do
 		local baseIndex = baseCenterIndex + i + 1
 		local nextBaseIndex = baseCenterIndex + ((i + 1) % segments) + 1
-		tinsert(vertexIndices, tipIndex)
-		tinsert(vertexIndices, nextBaseIndex)
-		tinsert(vertexIndices, baseIndex)
+		tinsert(coneMesh.triangleConnections, tipIndex)
+		tinsert(coneMesh.triangleConnections, nextBaseIndex)
+		tinsert(coneMesh.triangleConnections, baseIndex)
 	end
 
-	local mesh = {
-		vertexPositions = vertexPositions,
-		vertexColors = vertexColors,
-		triangleConnections = vertexIndices,
-	}
+	for _ = 1, #coneMesh.vertexPositions / 3 do
+		tinsert(coneMesh.diffuseTextureCoords, 0)
+		tinsert(coneMesh.diffuseTextureCoords, 0)
+	end
 
-	return mesh
+	return coneMesh
 end
 
 Cone.__call = Cone.Construct

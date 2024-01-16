@@ -1,4 +1,5 @@
 local Color = require("Core.NativeClient.DebugDraw.Color")
+local Mesh = require("Core.NativeClient.WebGPU.Mesh")
 
 local math_cos = math.cos
 local math_sin = math.sin
@@ -18,81 +19,77 @@ function Cylinder:Construct(creationOptions)
 	local mantleColor = Color.RED
 	local baseColor = Color.YELLOW
 
-	local vertexPositions = {}
-	local vertexColors = {}
-	local vertexIndices = {}
-
+	local cylinderMesh = Mesh("Cylinder")
 	for i = 0, segments - 1 do
 		local angle = i * 2 * math.pi / segments
 		local x = radius * math_cos(angle)
 		local z = radius * math_sin(angle)
 
-		tinsert(vertexPositions, x + translation.x)
-		tinsert(vertexPositions, height + translation.y)
-		tinsert(vertexPositions, z + translation.z)
+		tinsert(cylinderMesh.vertexPositions, x + translation.x)
+		tinsert(cylinderMesh.vertexPositions, height + translation.y)
+		tinsert(cylinderMesh.vertexPositions, z + translation.z)
 
-		tinsert(vertexPositions, x + translation.x)
-		tinsert(vertexPositions, translation.y)
-		tinsert(vertexPositions, z + translation.z)
+		tinsert(cylinderMesh.vertexPositions, x + translation.x)
+		tinsert(cylinderMesh.vertexPositions, translation.y)
+		tinsert(cylinderMesh.vertexPositions, z + translation.z)
 
-		tinsert(vertexColors, mantleColor.red)
-		tinsert(vertexColors, mantleColor.green)
-		tinsert(vertexColors, mantleColor.blue)
+		tinsert(cylinderMesh.vertexColors, mantleColor.red)
+		tinsert(cylinderMesh.vertexColors, mantleColor.green)
+		tinsert(cylinderMesh.vertexColors, mantleColor.blue)
 
-		tinsert(vertexColors, mantleColor.red)
-		tinsert(vertexColors, mantleColor.green)
-		tinsert(vertexColors, mantleColor.blue)
+		tinsert(cylinderMesh.vertexColors, mantleColor.red)
+		tinsert(cylinderMesh.vertexColors, mantleColor.green)
+		tinsert(cylinderMesh.vertexColors, mantleColor.blue)
 
 		local baseIndex = i * 2
 		local nextBaseIndex = (i + 1) % segments * 2
 
-		tinsert(vertexIndices, baseIndex)
-		tinsert(vertexIndices, nextBaseIndex)
-		tinsert(vertexIndices, baseIndex + 1)
+		tinsert(cylinderMesh.triangleConnections, baseIndex)
+		tinsert(cylinderMesh.triangleConnections, nextBaseIndex)
+		tinsert(cylinderMesh.triangleConnections, baseIndex + 1)
 
-		tinsert(vertexIndices, nextBaseIndex)
-		tinsert(vertexIndices, nextBaseIndex + 1)
-		tinsert(vertexIndices, baseIndex + 1)
+		tinsert(cylinderMesh.triangleConnections, nextBaseIndex)
+		tinsert(cylinderMesh.triangleConnections, nextBaseIndex + 1)
+		tinsert(cylinderMesh.triangleConnections, baseIndex + 1)
 	end
 
-	local centerTopIndex = #vertexPositions / 3
-	tinsert(vertexPositions, 0 + translation.x)
-	tinsert(vertexPositions, height + translation.y)
-	tinsert(vertexPositions, 0 + translation.z)
+	local centerTopIndex = #cylinderMesh.vertexPositions / 3
+	tinsert(cylinderMesh.vertexPositions, 0 + translation.x)
+	tinsert(cylinderMesh.vertexPositions, height + translation.y)
+	tinsert(cylinderMesh.vertexPositions, 0 + translation.z)
 
-	tinsert(vertexColors, baseColor.red)
-	tinsert(vertexColors, baseColor.green)
-	tinsert(vertexColors, baseColor.blue)
+	tinsert(cylinderMesh.vertexColors, baseColor.red)
+	tinsert(cylinderMesh.vertexColors, baseColor.green)
+	tinsert(cylinderMesh.vertexColors, baseColor.blue)
 
-	local centerBottomIndex = #vertexPositions / 3
-	tinsert(vertexPositions, 0 + translation.x)
-	tinsert(vertexPositions, translation.y)
-	tinsert(vertexPositions, 0 + translation.z)
+	local centerBottomIndex = #cylinderMesh.vertexPositions / 3
+	tinsert(cylinderMesh.vertexPositions, 0 + translation.x)
+	tinsert(cylinderMesh.vertexPositions, translation.y)
+	tinsert(cylinderMesh.vertexPositions, 0 + translation.z)
 
-	tinsert(vertexColors, baseColor.red)
-	tinsert(vertexColors, baseColor.green)
-	tinsert(vertexColors, baseColor.blue)
+	tinsert(cylinderMesh.vertexColors, baseColor.red)
+	tinsert(cylinderMesh.vertexColors, baseColor.green)
+	tinsert(cylinderMesh.vertexColors, baseColor.blue)
 
 	for i = 0, segments - 1 do
 		local baseIndex = i * 2
 		local nextBaseIndex = (i + 1) % segments * 2
 
-		tinsert(vertexIndices, centerTopIndex)
-		tinsert(vertexIndices, nextBaseIndex)
-		tinsert(vertexIndices, baseIndex)
+		tinsert(cylinderMesh.triangleConnections, centerTopIndex)
+		tinsert(cylinderMesh.triangleConnections, nextBaseIndex)
+		tinsert(cylinderMesh.triangleConnections, baseIndex)
 
-		tinsert(vertexIndices, centerBottomIndex)
-		tinsert(vertexIndices, baseIndex + 1)
-		tinsert(vertexIndices, nextBaseIndex + 1)
+		tinsert(cylinderMesh.triangleConnections, centerBottomIndex)
+		tinsert(cylinderMesh.triangleConnections, baseIndex + 1)
+		tinsert(cylinderMesh.triangleConnections, nextBaseIndex + 1)
 	end
 
-	local mesh = {
-		vertexPositions = vertexPositions,
-		vertexColors = vertexColors,
-		triangleConnections = vertexIndices,
-	}
+	for _ = 1, #cylinderMesh.vertexPositions / 3 do
+		tinsert(cylinderMesh.diffuseTextureCoords, 0)
+		tinsert(cylinderMesh.diffuseTextureCoords, 0)
+	end
 
-	return mesh
+	return cylinderMesh
 end
 
 Cylinder.__call = Cylinder.Construct

@@ -1,5 +1,6 @@
 local AnimatedWaterPlane = require("Core.FileFormats.RSW.AnimatedWaterPlane")
 local BinaryReader = require("Core.FileFormats.BinaryReader")
+local Mesh = require("Core.NativeClient.WebGPU.Mesh")
 
 local ffi = require("ffi")
 local uv = require("uv")
@@ -164,12 +165,7 @@ function RagnarokGND:DecodeTexturePaths()
 		local windowsPathString = self.reader:GetNullTerminatedString(self.texturePathLength)
 		table_insert(self.diffuseTexturePaths, windowsPathString)
 
-		local groundMeshSection = {
-			vertexPositions = {},
-			vertexColors = {},
-			triangleConnections = {},
-			diffuseTextureCoords = {},
-		}
+		local groundMeshSection = Mesh("GroundMeshSection" .. textureIndex)
 		table_insert(self.groundMeshSections, groundMeshSection)
 	end
 end

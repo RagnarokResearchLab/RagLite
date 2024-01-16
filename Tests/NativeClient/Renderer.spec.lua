@@ -326,12 +326,13 @@ describe("Renderer", function()
 			Renderer:DestroyMeshGeometry(planeMesh)
 			local events = etrace.filter()
 
-			assertEquals(#events, 3)
+			assertEquals(#events, 4)
 
 			-- It's technically possible that the wrong buffers are destroyed here, but eh...
 			assertEquals(events[1].name, "GPU_BUFFER_DESTROY")
 			assertEquals(events[2].name, "GPU_BUFFER_DESTROY")
 			assertEquals(events[3].name, "GPU_BUFFER_DESTROY")
+			assertEquals(events[4].name, "GPU_BUFFER_DESTROY")
 			-- Default texture coordinates shouldn't be destroyed (implicit)
 		end)
 	end)

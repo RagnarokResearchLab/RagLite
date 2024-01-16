@@ -1,4 +1,5 @@
 local Color = require("Core.NativeClient.DebugDraw.Color")
+local Mesh = require("Core.NativeClient.WebGPU.Mesh")
 local Vector3D = require("Core.VectorMath.Vector3D")
 
 local ipairs = ipairs
@@ -44,39 +45,36 @@ function Box:Construct(creationOptions)
 		{ 2, 3, 7, 6 }, -- Right
 	}
 
-	local vertexPositions = {}
-	local vertexColors = {}
-	local vertexIndices = {}
+	local boxMesh = Mesh("Box")
 
 	for faceID, face in ipairs(faceIndices) do
 		local faceColor = faceColors[faceID]
 		for _, index in ipairs(face) do
 			local vertex = cornerVertices[index]
-			tinsert(vertexPositions, vertex.x)
-			tinsert(vertexPositions, vertex.y)
-			tinsert(vertexPositions, vertex.z)
+			tinsert(boxMesh.vertexPositions, vertex.x)
+			tinsert(boxMesh.vertexPositions, vertex.y)
+			tinsert(boxMesh.vertexPositions, vertex.z)
 
-			tinsert(vertexColors, faceColor.red)
-			tinsert(vertexColors, faceColor.green)
-			tinsert(vertexColors, faceColor.blue)
+			tinsert(boxMesh.vertexColors, faceColor.red)
+			tinsert(boxMesh.vertexColors, faceColor.green)
+			tinsert(boxMesh.vertexColors, faceColor.blue)
 		end
 
 		local baseIndex = (faceID - 1) * 4
-		tinsert(vertexIndices, baseIndex)
-		tinsert(vertexIndices, baseIndex + 1)
-		tinsert(vertexIndices, baseIndex + 2)
-		tinsert(vertexIndices, baseIndex)
-		tinsert(vertexIndices, baseIndex + 2)
-		tinsert(vertexIndices, baseIndex + 3)
+		tinsert(boxMesh.triangleConnections, baseIndex)
+		tinsert(boxMesh.triangleConnections, baseIndex + 1)
+		tinsert(boxMesh.triangleConnections, baseIndex + 2)
+		tinsert(boxMesh.triangleConnections, baseIndex)
+		tinsert(boxMesh.triangleConnections, baseIndex + 2)
+		tinsert(boxMesh.triangleConnections, baseIndex + 3)
 	end
 
-	local mesh = {
-		vertexPositions = vertexPositions,
-		vertexColors = vertexColors,
-		triangleConnections = vertexIndices,
-	}
+	for _ = 1, #boxMesh.vertexPositions / 3 do
+		tinsert(boxMesh.diffuseTextureCoords, 0)
+		tinsert(boxMesh.diffuseTextureCoords, 0)
+	end
 
-	return mesh
+	return boxMesh
 end
 
 Box.__call = Box.Construct

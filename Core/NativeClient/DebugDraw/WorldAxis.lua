@@ -1,8 +1,12 @@
+local Mesh = require("Core.NativeClient.WebGPU.Mesh")
+
 local WorldAxis = {}
 
 function WorldAxis:Construct()
+	local mesh = Mesh("WorldAxis")
+
 	local ARROWHEAD_VERTEX_COUNT = 3
-	local vertexPositions = {
+	mesh.vertexPositions = {
 		-- X-Axis Visualization
 		0.0,
 		0.0,
@@ -73,7 +77,7 @@ function WorldAxis:Construct()
 		2.25, -- Arrowhead.Tip
 	}
 
-	local vertexColors = {
+	mesh.vertexColors = {
 		-- X-Axis (Red)
 		1.0,
 		0.0,
@@ -146,7 +150,7 @@ function WorldAxis:Construct()
 		1.0, -- Arrowhead
 	}
 
-	local vertexIndices = {
+	mesh.triangleConnections = {
 		-- X Axis
 		0,
 		1,
@@ -183,11 +187,10 @@ function WorldAxis:Construct()
 		2 * ARROWHEAD_VERTEX_COUNT + 14,
 	}
 
-	local mesh = {
-		vertexPositions = vertexPositions,
-		vertexColors = vertexColors,
-		triangleConnections = vertexIndices,
-	}
+	for _ = 1, #mesh.vertexPositions / 3 do
+		table.insert(mesh.diffuseTextureCoords, 0)
+		table.insert(mesh.diffuseTextureCoords, 0)
+	end
 
 	return mesh
 end
