@@ -440,7 +440,6 @@ function Renderer:SubmitCommandBuffer(commandEncoder)
 end
 
 function Renderer:UploadMeshGeometry(mesh)
-	printf("Uploading geometry for mesh %s", mesh.displayName)
 	local positions = mesh.vertexPositions
 	local colors = mesh.vertexColors
 	local indices = mesh.triangleConnections
@@ -450,8 +449,10 @@ function Renderer:UploadMeshGeometry(mesh)
 	local numVertexColors = #colors / 3
 
 	if vertexCount == 0 or indexCount == 0 then
+		printf("Skipping geometry upload for mesh %s (%s)", mesh.uniqueID, mesh.displayName)
 		return
 	end
+	printf("Uploading geometry for mesh %s (%s)", mesh.uniqueID, mesh.displayName)
 
 	self:ValidateGeometry(mesh)
 
