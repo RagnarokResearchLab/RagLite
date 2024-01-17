@@ -5,7 +5,7 @@ local webgpu = require("webgpu")
 local assert = assert
 local tonumber = tonumber
 
-local ffi_new = ffi.new
+local new = ffi.new
 
 local Surface = {}
 
@@ -16,9 +16,9 @@ function Surface:Construct(wgpuInstance, wgpuAdapter, wgpuDevice, glfwWindow)
 	self.glfwWindow = glfwWindow
 
 	self.wgpuSurface = glfw.bindings.glfw_get_wgpu_surface(wgpuInstance, glfwWindow)
-	self.wgpuSurfaceConfiguration = ffi_new("WGPUSurfaceConfiguration")
-	self.wgpuSurfaceTexture = ffi_new("WGPUSurfaceTexture")
-	self.wgpuTextureViewDescriptor = ffi_new("WGPUTextureViewDescriptor")
+	self.wgpuSurfaceConfiguration = new("WGPUSurfaceConfiguration")
+	self.wgpuSurfaceTexture = new("WGPUSurfaceTexture")
+	self.wgpuTextureViewDescriptor = new("WGPUTextureViewDescriptor")
 
 	return self
 end
@@ -78,8 +78,8 @@ function Surface:GetAspectRatio()
 	return self.wgpuSurfaceConfiguration.width / self.wgpuSurfaceConfiguration.height
 end
 
-local contentWidthInPixels = ffi_new("int[1]")
-local contentHeightInPixels = ffi_new("int[1]")
+local contentWidthInPixels = new("int[1]")
+local contentHeightInPixels = new("int[1]")
 function Surface:GetViewportSize()
 	-- Should probably differentiate between window and frame buffer here for high-DPI (later)
 	glfw.bindings.glfw_get_window_size(self.glfwWindow, contentWidthInPixels, contentHeightInPixels)

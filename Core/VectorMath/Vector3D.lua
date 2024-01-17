@@ -2,7 +2,7 @@ local ffi = require("ffi")
 local transform = require("transform")
 
 local format = format
-local ffi_new = ffi.new
+local new = ffi.new
 local math_sqrt = math.sqrt
 local transform_bold = transform.bold
 
@@ -27,7 +27,7 @@ function Vector3D:__tostring()
 end
 
 function Vector3D:Add(anotherVector)
-	local result = ffi_new("Vector3D")
+	local result = new("Vector3D")
 	result.x = self.x + anotherVector.x
 	result.y = self.y + anotherVector.y
 	result.z = self.z + anotherVector.z
@@ -35,7 +35,7 @@ function Vector3D:Add(anotherVector)
 end
 
 function Vector3D:Subtract(anotherVector)
-	local result = ffi_new("Vector3D")
+	local result = new("Vector3D")
 	result.x = self.x - anotherVector.x
 	result.y = self.y - anotherVector.y
 	result.z = self.z - anotherVector.z

@@ -8,9 +8,9 @@ local uv = require("uv")
 local printf = printf
 local tonumber = tonumber
 
-local ffi_cast = ffi.cast
-local ffi_new = ffi.new
-local ffi_sizeof = ffi.sizeof
+local cast = ffi.cast
+local new = ffi.new
+local sizeof = ffi.sizeof
 local uv_hrtime = uv.hrtime
 
 local RagnarokSPR = {}
@@ -71,12 +71,12 @@ end
 function RagnarokSPR:DecodeColorPalette()
 	local reader = self.reader
 
-	self.paletteStartOffset = reader.endOfFilePointer - ffi_sizeof("spr_palette_t")
+	self.paletteStartOffset = reader.endOfFilePointer - sizeof("spr_palette_t")
 	self.palette = reader:GetTypedArray("spr_palette_t")
 end
 
 function RagnarokSPR:DecompressRunLengthEncodedBytes(compressedBuffer, decompressedBuffer)
-	local compressedBytes = ffi_cast("uint8_t*", compressedBuffer:ref())
+	local compressedBytes = cast("uint8_t*", compressedBuffer:ref())
 	local isDecompressingRunOfZeroes = false
 
 	for byteIndex = 0, #compressedBuffer - 1 do
@@ -85,13 +85,13 @@ function RagnarokSPR:DecompressRunLengthEncodedBytes(compressedBuffer, decompres
 		if isDecompressingRunOfZeroes then
 			local numZeroesToAdd = currentByte - 1
 			if numZeroesToAdd > 0 then
-				decompressedBuffer:putcdata(ffi_new("uint8_t[?]", numZeroesToAdd), numZeroesToAdd)
+				decompressedBuffer:putcdata(new("uint8_t[?]", numZeroesToAdd), numZeroesToAdd)
 			elseif numZeroesToAdd < 0 then
 				error(format("Encountered zero-length run at index %s (not an RLE-encoded image?)", byteIndex), 0)
 			end
 			isDecompressingRunOfZeroes = false
 		else
-			decompressedBuffer:putcdata(ffi_new("uint8_t[1]", currentByte), 1)
+			decompressedBuffer:putcdata(new("uint8_t[1]", currentByte), 1)
 			if currentByte == 0 then
 				isDecompressingRunOfZeroes = true
 			end
@@ -109,7 +109,7 @@ function RagnarokSPR:ApplyColorPalette(indexedColorImageBytes, palette)
 
 	local startPointer = indexedColorImageBytes:ref()
 
-	local paletteIndices = ffi_cast("uint8_t*", startPointer)
+	local paletteIndices = cast("uint8_t*", startPointer)
 
 	for byteIndex = 0, #indexedColorImageBytes - 1, 1 do
 		local paletteIndex = tonumber(paletteIndices[byteIndex])
@@ -119,7 +119,7 @@ function RagnarokSPR:ApplyColorPalette(indexedColorImageBytes, palette)
 		else
 			paletteColor.alpha = 255 -- BMP alpha is not supported (except for the background color)
 		end
-		rgbaImageBytes:putcdata(paletteColor, ffi_sizeof(paletteColor))
+		rgbaImageBytes:putcdata(paletteColor, sizeof(paletteColor))
 	end
 
 	return rgbaImageBytes
@@ -187,7 +187,7 @@ function RagnarokSPR:DecodeTrueColorImages()
 		return -- No TGA segment present
 	end
 
-	local image = ffi_new("stbi_image_t")
+	local image = new("stbi_image_t")
 	image.channels = 4
 
 	local reader = self.reader
@@ -199,7 +199,7 @@ function RagnarokSPR:DecodeTrueColorImages()
 		local pixelBuffer = buffer.new(pixelBufferSize)
 
 		local abgrPixelBytes = reader:GetTypedArray("uint8_t", pixelBufferSize)
-		local abgrPixelArray = ffi_cast("stbi_pixelbuffer_t", abgrPixelBytes) -- TBD redundant, can remove?
+		local abgrPixelArray = cast("stbi_pixelbuffer_t", abgrPixelBytes) -- TBD redundant, can remove?
 		image.data = abgrPixelArray
 
 		stbi.bindings.stbi_abgr_to_rgba(image)

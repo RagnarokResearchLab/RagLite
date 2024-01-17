@@ -5,6 +5,7 @@ local glfw = require("glfw")
 local webgpu = require("webgpu")
 
 local new = ffi.new
+local ffi_string = ffi.string
 
 local GPU = {
 	MAX_VERTEX_COUNT = 200000, -- Should be configurable (later)
@@ -91,7 +92,7 @@ function GPU:RequestLogicalDevice(adapter, options)
 				format(
 					"Failed to request logical WebGPU device (status: %s)\n%s",
 					tonumber(status),
-					ffi.string(message)
+					ffi_string(message)
 				)
 			)
 		end
@@ -103,7 +104,7 @@ function GPU:RequestLogicalDevice(adapter, options)
 	assert(requestedDevice, "onDeviceRequested did not trigger, but it should have")
 
 	local function onDeviceError(errorType, message, userdata)
-		local errorDetails = format("Type: %s, Message: %s", tonumber(errorType), ffi.string(message))
+		local errorDetails = format("Type: %s, Message: %s", tonumber(errorType), ffi_string(message))
 		error("Uncaptured device error - " .. errorDetails)
 	end
 
