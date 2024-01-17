@@ -3,6 +3,7 @@ local ffi = require("ffi")
 local webgpu = require("webgpu")
 
 local Device = require("Core.NativeClient.WebGPU.Device")
+local UniformBuffer = require("Core.NativeClient.WebGPU.UniformBuffer")
 
 local binary_not = bit.bnot
 local new = ffi.new
@@ -81,18 +82,15 @@ function BasicTriangleDrawingPipeline:Construct(wgpuDeviceHandle, textureFormatI
 	})
 
 	-- Configure resource layout for the vertex shader
-	local cameraBindGroupLayout, cameraBindGroupLayoutDescriptor = self:CreateCameraBindGroupLayout(wgpuDeviceHandle)
 	local materialBindGroupLayout, materialBindGroupLayoutDescriptor =
 		self:CreateMaterialBindGroupLayout(wgpuDeviceHandle)
-	self.wgpuCameraBindGroupLayout = cameraBindGroupLayout
-	self.wgpuCameraBindGroupLayoutDescriptor = cameraBindGroupLayoutDescriptor
 	self.wgpuMaterialBindGroupLayout = materialBindGroupLayout
 	self.wgpuMaterialBindGroupLayoutDescriptor = materialBindGroupLayoutDescriptor
 
 	local pipelineLayoutDescriptor = new("WGPUPipelineLayoutDescriptor", {
 		bindGroupLayoutCount = 2,
 		bindGroupLayouts = new("WGPUBindGroupLayout[?]", 2, {
-			cameraBindGroupLayout,
+			UniformBuffer.cameraBindGroupLayout,
 			materialBindGroupLayout,
 		}),
 	})
@@ -156,27 +154,6 @@ function BasicTriangleDrawingPipeline:CreateVertexBufferLayout()
 		vertexColorsLayout,
 		diffuseTexCoordsLayout,
 	})
-end
-
-function BasicTriangleDrawingPipeline:CreateCameraBindGroupLayout(wgpuDeviceHandle)
-	local bindGroupLayoutDescriptor = new("WGPUBindGroupLayoutDescriptor", {
-		entryCount = 1,
-		entries = new("WGPUBindGroupLayoutEntry[?]", 1, {
-			new("WGPUBindGroupLayoutEntry", {
-				binding = 0,
-				visibility = bit.bor(ffi.C.WGPUShaderStage_Vertex, ffi.C.WGPUShaderStage_Fragment),
-				buffer = {
-					type = ffi.C.WGPUBufferBindingType_Uniform,
-					minBindingSize = sizeof("scenewide_uniform_t"),
-				},
-			}),
-		}),
-	})
-
-	local bindGroupLayout =
-		webgpu.bindings.wgpu_device_create_bind_group_layout(wgpuDeviceHandle, bindGroupLayoutDescriptor)
-
-	return bindGroupLayout, bindGroupLayoutDescriptor
 end
 
 function BasicTriangleDrawingPipeline:CreateMaterialBindGroupLayout(wgpuDeviceHandle)

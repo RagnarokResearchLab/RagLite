@@ -4,6 +4,8 @@ local webgpu = require("webgpu")
 
 local Device = require("Core.NativeClient.WebGPU.Device")
 
+local UniformBuffer = require("Core.NativeClient.WebGPU.UniformBuffer")
+
 local binary_not = bit.bnot
 local new = ffi.new
 local sizeof = ffi.sizeof
@@ -60,13 +62,10 @@ function WidgetDrawingPipeline:Construct(wgpuDeviceHandle, textureFormatID)
 	})
 
 	-- Configure resource layout for the vertex shader
-	local cameraBindGroupLayout, cameraBindGroupLayoutDescriptor = self:CreateCameraBindGroupLayout(wgpuDeviceHandle)
 	local transformBindGroupLayout, transformBindGroupLayoutDescriptor =
 		self:CreateTransformBindGroupLayout(wgpuDeviceHandle)
 	local materialBindGroupLayout, materialBindGroupLayoutDescriptor =
 		self:CreateMaterialBindGroupLayout(wgpuDeviceHandle)
-	self.wgpuCameraBindGroupLayout = cameraBindGroupLayout
-	self.wgpuCameraBindGroupLayoutDescriptor = cameraBindGroupLayoutDescriptor
 	self.wgpuTransformBindGroupLayout = transformBindGroupLayout
 	self.wgpuTransformBindGroupLayoutDescriptor = transformBindGroupLayoutDescriptor
 	self.wgpuMaterialBindGroupLayout = materialBindGroupLayout
@@ -75,7 +74,7 @@ function WidgetDrawingPipeline:Construct(wgpuDeviceHandle, textureFormatID)
 	local pipelineLayoutDescriptor = new("WGPUPipelineLayoutDescriptor", {
 		bindGroupLayoutCount = 3,
 		bindGroupLayouts = new("WGPUBindGroupLayout[?]", 3, {
-			cameraBindGroupLayout,
+			UniformBuffer.cameraBindGroupLayout,
 			materialBindGroupLayout,
 			transformBindGroupLayout,
 		}),
@@ -128,27 +127,6 @@ function WidgetDrawingPipeline:CreateVertexBufferLayout()
 	return new("WGPUVertexBufferLayout[?]", 1, {
 		vertexPositionsLayout,
 	})
-end
-
-function WidgetDrawingPipeline:CreateCameraBindGroupLayout(wgpuDeviceHandle)
-	local bindGroupLayoutDescriptor = new("WGPUBindGroupLayoutDescriptor", {
-		entryCount = 1,
-		entries = new("WGPUBindGroupLayoutEntry[?]", 1, {
-			new("WGPUBindGroupLayoutEntry", {
-				binding = 0,
-				visibility = bit.bor(ffi.C.WGPUShaderStage_Vertex, ffi.C.WGPUShaderStage_Fragment),
-				buffer = {
-					type = ffi.C.WGPUBufferBindingType_Uniform,
-					minBindingSize = sizeof("scenewide_uniform_t"),
-				},
-			}),
-		}),
-	})
-
-	local bindGroupLayout =
-		webgpu.bindings.wgpu_device_create_bind_group_layout(wgpuDeviceHandle, bindGroupLayoutDescriptor)
-
-	return bindGroupLayout, bindGroupLayoutDescriptor
 end
 
 function WidgetDrawingPipeline:CreateMaterialBindGroupLayout(wgpuDeviceHandle)
