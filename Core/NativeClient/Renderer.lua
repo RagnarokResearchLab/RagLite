@@ -7,7 +7,6 @@ local validation = require("validation")
 local webgpu = require("webgpu")
 
 local GPU = require("Core.NativeClient.WebGPU.GPU")
-local BasicTriangleDrawingPipeline = require("Core.NativeClient.WebGPU.BasicTriangleDrawingPipeline")
 local WidgetDrawingPipeline = require("Core.NativeClient.WebGPU.WidgetDrawingPipeline")
 
 local Buffer = require("Core.NativeClient.WebGPU.Buffer")
@@ -17,12 +16,12 @@ local Queue = require("Core.NativeClient.WebGPU.Queue")
 local RenderPassEncoder = require("Core.NativeClient.WebGPU.RenderPassEncoder")
 local Surface = require("Core.NativeClient.WebGPU.Surface")
 local Texture = require("Core.NativeClient.WebGPU.Texture")
+local UniformBuffer = require("Core.NativeClient.WebGPU.UniformBuffer")
 local GroundMeshMaterial = require("Core.NativeClient.WebGPU.GroundMeshMaterial")
 local UnlitMeshMaterial = require("Core.NativeClient.WebGPU.UnlitMeshMaterial")
 local UserInterfaceMaterial = require("Core.NativeClient.WebGPU.UserInterfaceMaterial")
 local WaterSurfaceMaterial = require("Core.NativeClient.WebGPU.WaterSurfaceMaterial")
 
-local _ = require("Core.VectorMath.Matrix4D") -- Only needed for the cdefs right now
 local Vector3D = require("Core.VectorMath.Vector3D")
 local C_Camera = require("Core.NativeClient.C_Camera")
 
@@ -38,25 +37,6 @@ local table_insert = table.insert
 local Color = require("Core.NativeClient.DebugDraw.Color")
 
 local Renderer = {
-	cdefs = [[
-		// Total struct size must align to 16 byte boundary
-		// See https://gpuweb.github.io/gpuweb/wgsl/#address-space-layout-constraints
-		// Layouts must match the structs defined in the shaders
-		typedef struct PerSceneData {
-			Matrix4D view;
-			Matrix4D perspectiveProjection;
-			float color[4];
-			float viewportWidth;
-			float viewportHeight;
-			// Padding needs to be updated whenever the struct changes!
-			uint8_t padding[6];
-		} scenewide_uniform_t;
-		typedef struct PerMeshData {
-			float translation[2]; // 8
-			float padding[6]; // 32
-			// Total size must be at least minUniformBufferOffsetAlignment bytes large (with 16 byte alignment)
-		} mesh_uniform_t;
-	]],
 	clearColorRGBA = { Color.GREY.red, Color.GREY.green, Color.GREY.blue, 0 },
 	userInterfaceTextureBindGroups = {},
 	meshes = {},
@@ -72,17 +52,6 @@ local Renderer = {
 		INVALID_MATERIAL = "Invalid material assigned to mesh",
 	},
 }
-
-ffi.cdef(Renderer.cdefs)
-
-assert(
-	ffi.sizeof("scenewide_uniform_t") % 16 == 0,
-	"Structs in uniform address space must be aligned to a 16 byte boundary (as per the WebGPU specification)"
-)
-assert(
-	ffi.sizeof("mesh_uniform_t") % 16 == 0,
-	"Structs in uniform address space must be aligned to a 16 byte boundary (as per the WebGPU specification)"
-)
 
 function Renderer:InitializeWithGLFW(nativeWindowHandle)
 	Renderer:CreateGraphicsContext(nativeWindowHandle)
@@ -118,6 +87,10 @@ function Renderer:CompileMaterials()
 	-- Need to compute the preferred texture format first
 	self.backingSurface:UpdateConfiguration()
 	local outputTextureFormat = self.backingSurface.preferredTextureFormat
+
+	-- Camera and viewport uniforms shouldn't be owned by any one material, but all pipeline layouts depend on them
+	UniformBuffer:CreateCameraBindGroupLayout(self.wgpuDevice)
+	self.cameraViewportUniform = UniformBuffer:CreateCameraAndViewportUniform(self.wgpuDevice)
 
 	UnlitMeshMaterial:Compile(self.wgpuDevice, outputTextureFormat)
 	GroundMeshMaterial:Compile(self.wgpuDevice, outputTextureFormat)
@@ -184,7 +157,7 @@ function Renderer:RenderNextFrame()
 		self:ResetScissorRectangle(renderPass)
 
 		self:UpdateScenewideUniformBuffer()
-		RenderPassEncoder:SetBindGroup(renderPass, 0, self.uniforms.perScene.bindGroup, 0, nil)
+		RenderPassEncoder:SetBindGroup(renderPass, 0, self.cameraViewportUniform.bindGroup, 0, nil)
 
 		local meshesByMaterial = self:SortMeshesByMaterial(self.meshes)
 		for material, meshes in pairs(meshesByMaterial) do
@@ -200,7 +173,7 @@ function Renderer:RenderNextFrame()
 
 	do
 		local uiRenderPass = self:BeginUserInterfaceRenderPass(commandEncoder, nextTextureView)
-		RenderPassEncoder:SetBindGroup(uiRenderPass, 0, self.uniforms.perScene.bindGroup, 0, nil)
+		RenderPassEncoder:SetBindGroup(uiRenderPass, 0, self.cameraViewportUniform.bindGroup, 0, nil)
 		RenderPassEncoder:SetPipeline(uiRenderPass, UserInterfaceMaterial.assignedRenderingPipeline)
 
 		self.numWidgetTransformsUsedThisFrame = 0
@@ -572,24 +545,6 @@ function Renderer:UploadTextureImage(texture)
 end
 
 function Renderer:CreateUniformBuffers()
-	local scenewideUniformBuffer = Device:CreateBuffer(
-		self.wgpuDevice,
-		ffi.new("WGPUBufferDescriptor", {
-			size = ffi.sizeof("scenewide_uniform_t"),
-			usage = bit.bor(ffi.C.WGPUBufferUsage_CopyDst, ffi.C.WGPUBufferUsage_Uniform),
-		})
-	)
-	local cameraBindGroupDescriptor = ffi.new("WGPUBindGroupDescriptor", {
-		layout = BasicTriangleDrawingPipeline.wgpuCameraBindGroupLayout,
-		entryCount = BasicTriangleDrawingPipeline.wgpuCameraBindGroupLayoutDescriptor.entryCount,
-		entries = ffi.new("WGPUBindGroupEntry", {
-			binding = 0,
-			buffer = scenewideUniformBuffer,
-			offset = 0,
-			size = ffi.sizeof("scenewide_uniform_t"),
-		}),
-	})
-
 	local meshSpecificUniformBuffer = Device:CreateBuffer(
 		self.wgpuDevice,
 		ffi.new("WGPUBufferDescriptor", {
@@ -610,12 +565,6 @@ function Renderer:CreateUniformBuffers()
 	})
 
 	self.uniforms = {
-		perScene = {
-			bindGroupDescriptor = cameraBindGroupDescriptor,
-			bindGroup = Device:CreateBindGroup(self.wgpuDevice, cameraBindGroupDescriptor),
-			buffer = scenewideUniformBuffer,
-			data = ffi.new("scenewide_uniform_t"),
-		},
 		-- Should create the per-material buffer here, as well?
 		perMesh = {
 			bindGroupDescriptor = transformBindGroupDescriptor,
@@ -630,7 +579,7 @@ function Renderer:UpdateScenewideUniformBuffer()
 	local aspectRatio = self.backingSurface:GetAspectRatio()
 	local viewportWidth, viewportHeight = self.backingSurface:GetViewportSize()
 
-	local perSceneUniformData = self.uniforms.perScene.data
+	local perSceneUniformData = self.cameraViewportUniform.data
 
 	local cameraWorldPosition = C_Camera.GetWorldPosition()
 	local cameraTarget = C_Camera.GetTargetPosition()
@@ -645,7 +594,7 @@ function Renderer:UpdateScenewideUniformBuffer()
 
 	Queue:WriteBuffer(
 		Device:GetQueue(self.wgpuDevice),
-		self.uniforms.perScene.buffer,
+		self.cameraViewportUniform.buffer,
 		0,
 		perSceneUniformData,
 		ffi.sizeof(perSceneUniformData)
