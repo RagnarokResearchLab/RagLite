@@ -88,6 +88,9 @@ function Renderer:CreateGraphicsContext(nativeWindowHandle)
 end
 
 function Renderer:CompileMaterials(outputTextureFormat)
+	-- Since there's (probably) no need for fancy sampling techniques, just re-use one for all materials
+	Texture:CreateSharedTrilinearSampler(self.wgpuDevice)
+
 	-- Camera and viewport uniforms shouldn't be owned by any one material, but all pipeline layouts depend on them
 	UniformBuffer:CreateCameraBindGroupLayout(self.wgpuDevice)
 	self.cameraViewportUniform = UniformBuffer:CreateCameraAndViewportUniform(self.wgpuDevice)

@@ -93,11 +93,7 @@ function Texture:CreateBindGroupForPipeline(textureHandle, renderPipeline)
 	})
 	local textureView = webgpu.bindings.wgpu_texture_create_view(textureHandle, textureViewDescriptor)
 
-	-- Creating one sampler per texture is wasteful, but gives the most flexibility (revisit later, if needed)
-	local textureSampler = self:CreateTrilinearSampler(wgpuDevice)
-
 	-- Assign texture view and sampler so that they can be bound to the pipeline (in the render loop)
-
 	local bindGroupEntries = new("WGPUBindGroupEntry[?]", 2, {
 		new("WGPUBindGroupEntry", {
 			binding = 0,
@@ -105,7 +101,7 @@ function Texture:CreateBindGroupForPipeline(textureHandle, renderPipeline)
 		}),
 		new("WGPUBindGroupEntry", {
 			binding = 1,
-			sampler = textureSampler,
+			sampler = self.sharedTrilinearSampler,
 		}),
 	})
 
@@ -119,9 +115,9 @@ function Texture:CreateBindGroupForPipeline(textureHandle, renderPipeline)
 	return webgpu.bindings.wgpu_device_create_bind_group(wgpuDevice, textureBindGroupDescriptor)
 end
 
-function Texture:CreateTrilinearSampler(wgpuDevice)
+function Texture:CreateSharedTrilinearSampler(wgpuDevice)
 	local samplerDescriptor = new("WGPUSamplerDescriptor", {
-		label = "SharedTextureSampler",
+		label = "SharedTrilinearTextureSampler",
 		addressModeU = ffi.C.WGPUAddressMode_ClampToEdge,
 		addressModeV = ffi.C.WGPUAddressMode_ClampToEdge,
 		addressModeW = ffi.C.WGPUAddressMode_ClampToEdge,
@@ -133,7 +129,9 @@ function Texture:CreateTrilinearSampler(wgpuDevice)
 		compare = ffi.C.WGPUCompareFunction_Undefined, -- Irrelevant (not a depth texture)
 		maxAnisotropy = 1, -- Might want to use clamped addressing with anisotropic filtering here?
 	})
-	return webgpu.bindings.wgpu_device_create_sampler(wgpuDevice, samplerDescriptor)
+
+	printf("[Texture] Registering shared sampler: %s", ffi.string(samplerDescriptor.label))
+	self.sharedTrilinearSampler = webgpu.bindings.wgpu_device_create_sampler(wgpuDevice, samplerDescriptor)
 end
 
 function Texture:CopyImageBytesToGPU()

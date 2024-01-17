@@ -10,7 +10,9 @@ local VirtualGPU = {
 		GPU_TEXTURE_WRITE = true,
 	},
 	virtualizedBindings = {
-		wgpu_device_create_sampler = function(...) end,
+		wgpu_device_create_sampler = function(...)
+			return ffi.new("WGPUSampler")
+		end,
 		wgpu_device_create_texture = function(...)
 			return ffi.new("WGPUTexture")
 		end,
