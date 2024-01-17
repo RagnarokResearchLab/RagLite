@@ -11,7 +11,7 @@ local new = ffi.new
 local sizeof = ffi.sizeof
 
 local WidgetDrawingPipeline = {
-	displayName = "Basic Triangle Drawing Pipeline",
+	displayName = "WidgetDrawingPipeline",
 	WGSL_SHADER_SOURCE_LOCATION = "Core/NativeClient/Shaders/UserInterfaceShader.wgsl",
 	MAX_WIDGET_COUNT = 2048, -- The default maxUniformBufferBindingSize allows for this many without optimizing further/removing padding/using other buffer types or even hardware instacing for the UI
 }
@@ -64,18 +64,14 @@ function WidgetDrawingPipeline:Construct(wgpuDeviceHandle, textureFormatID)
 	-- Configure resource layout for the vertex shader
 	local transformBindGroupLayout, transformBindGroupLayoutDescriptor =
 		self:CreateTransformBindGroupLayout(wgpuDeviceHandle)
-	local materialBindGroupLayout, materialBindGroupLayoutDescriptor =
-		self:CreateMaterialBindGroupLayout(wgpuDeviceHandle)
 	self.wgpuTransformBindGroupLayout = transformBindGroupLayout
 	self.wgpuTransformBindGroupLayoutDescriptor = transformBindGroupLayoutDescriptor
-	self.wgpuMaterialBindGroupLayout = materialBindGroupLayout
-	self.wgpuMaterialBindGroupLayoutDescriptor = materialBindGroupLayoutDescriptor
 
 	local pipelineLayoutDescriptor = new("WGPUPipelineLayoutDescriptor", {
 		bindGroupLayoutCount = 3,
 		bindGroupLayouts = new("WGPUBindGroupLayout[?]", 3, {
 			UniformBuffer.cameraBindGroupLayout,
-			materialBindGroupLayout,
+			UniformBuffer.materialBindGroupLayout,
 			transformBindGroupLayout,
 		}),
 	})
@@ -127,34 +123,6 @@ function WidgetDrawingPipeline:CreateVertexBufferLayout()
 	return new("WGPUVertexBufferLayout[?]", 1, {
 		vertexPositionsLayout,
 	})
-end
-
-function WidgetDrawingPipeline:CreateMaterialBindGroupLayout(wgpuDeviceHandle)
-	local bindGroupLayoutDescriptor = new("WGPUBindGroupLayoutDescriptor", {
-		entryCount = 2,
-		entries = new("WGPUBindGroupLayoutEntry[?]", 2, {
-			new("WGPUBindGroupLayoutEntry", {
-				binding = 0,
-				visibility = ffi.C.WGPUShaderStage_Fragment,
-				texture = {
-					sampleType = ffi.C.WGPUTextureSampleType_Float,
-					viewDimension = ffi.C.WGPUTextureViewDimension_2D,
-				},
-			}),
-			new("WGPUBindGroupLayoutEntry", {
-				binding = 1,
-				visibility = ffi.C.WGPUShaderStage_Fragment,
-				sampler = {
-					type = ffi.C.WGPUSamplerBindingType_Filtering,
-				},
-			}),
-		}),
-	})
-
-	local bindGroupLayout =
-		webgpu.bindings.wgpu_device_create_bind_group_layout(wgpuDeviceHandle, bindGroupLayoutDescriptor)
-
-	return bindGroupLayout, bindGroupLayoutDescriptor
 end
 
 function WidgetDrawingPipeline:CreateTransformBindGroupLayout(wgpuDeviceHandle)

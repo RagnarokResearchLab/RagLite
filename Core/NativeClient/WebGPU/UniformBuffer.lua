@@ -85,6 +85,36 @@ function UniformBuffer:CreateCameraAndViewportUniform(wgpuDevice)
 	return instance
 end
 
+function UniformBuffer:CreateMaterialBindGroupLayouts(wgpuDevice)
+	local bindGroupLayoutDescriptor = new("WGPUBindGroupLayoutDescriptor", {
+		entryCount = 2,
+		entries = new("WGPUBindGroupLayoutEntry[?]", 2, {
+			new("WGPUBindGroupLayoutEntry", {
+				binding = 0,
+				visibility = ffi.C.WGPUShaderStage_Fragment,
+				texture = {
+					sampleType = ffi.C.WGPUTextureSampleType_Float,
+					viewDimension = ffi.C.WGPUTextureViewDimension_2D,
+				},
+			}),
+			new("WGPUBindGroupLayoutEntry", {
+				binding = 1,
+				visibility = ffi.C.WGPUShaderStage_Fragment,
+				sampler = {
+					type = ffi.C.WGPUSamplerBindingType_Filtering,
+				},
+			}),
+		}),
+	})
+
+	-- Texture arrays (wgpu extension) for water surface textures should be added here
+
+	local bindGroupLayout = webgpu.bindings.wgpu_device_create_bind_group_layout(wgpuDevice, bindGroupLayoutDescriptor)
+
+	self.materialBindGroupLayout = bindGroupLayout
+	self.materialBindGroupLayoutDescriptor = bindGroupLayoutDescriptor -- Need to keep it around for the entryCount
+end
+
 UniformBuffer.__call = UniformBuffer.Construct
 UniformBuffer.__index = UniformBuffer
 setmetatable(UniformBuffer, UniformBuffer)

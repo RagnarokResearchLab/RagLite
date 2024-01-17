@@ -55,7 +55,11 @@ local Renderer = {
 
 function Renderer:InitializeWithGLFW(nativeWindowHandle)
 	Renderer:CreateGraphicsContext(nativeWindowHandle)
-	Renderer:CompileMaterials()
+
+	-- Need to compute the preferred texture format first
+	self.backingSurface:UpdateConfiguration()
+	Renderer:CompileMaterials(self.backingSurface.preferredTextureFormat)
+
 	Renderer:CreateUniformBuffers()
 	Renderer:EnableDepthBuffer()
 
@@ -83,14 +87,16 @@ function Renderer:CreateGraphicsContext(nativeWindowHandle)
 	self.backingSurface = Surface(instance, adapter, device, nativeWindowHandle)
 end
 
-function Renderer:CompileMaterials()
-	-- Need to compute the preferred texture format first
-	self.backingSurface:UpdateConfiguration()
-	local outputTextureFormat = self.backingSurface.preferredTextureFormat
+function Renderer:CompileMaterials(outputTextureFormat)
+	-- Since there's (probably) no need for fancy sampling techniques, just re-use one for all materials
+	Texture:CreateSharedTrilinearSampler(self.wgpuDevice)
 
 	-- Camera and viewport uniforms shouldn't be owned by any one material, but all pipeline layouts depend on them
 	UniformBuffer:CreateCameraBindGroupLayout(self.wgpuDevice)
 	self.cameraViewportUniform = UniformBuffer:CreateCameraAndViewportUniform(self.wgpuDevice)
+
+	-- Material uniforms are indeed owned by the various materials, but there's only a few shared layouts
+	UniformBuffer:CreateMaterialBindGroupLayouts(self.wgpuDevice)
 
 	UnlitMeshMaterial:Compile(self.wgpuDevice, outputTextureFormat)
 	GroundMeshMaterial:Compile(self.wgpuDevice, outputTextureFormat)

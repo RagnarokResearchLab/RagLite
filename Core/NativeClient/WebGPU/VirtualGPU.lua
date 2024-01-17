@@ -10,12 +10,16 @@ local VirtualGPU = {
 		GPU_TEXTURE_WRITE = true,
 	},
 	virtualizedBindings = {
-		wgpu_device_create_sampler = function(...) end,
+		wgpu_device_create_sampler = function(...)
+			return ffi.new("WGPUSampler")
+		end,
 		wgpu_device_create_texture = function(...)
 			return ffi.new("WGPUTexture")
 		end,
 		wgpu_texture_create_view = function(...) end,
-		wgpu_device_create_bind_group_layout = function(...) end,
+		wgpu_device_create_bind_group_layout = function(...)
+			return ffi.new("WGPUBindGroupLayout")
+		end,
 		wgpu_device_create_bind_group = function(...) end,
 		wgpu_device_get_queue = function(...)
 			return ffi.new("WGPUQueue")
@@ -48,6 +52,15 @@ local VirtualGPU = {
 			etrace.record("GPU_BUFFER_DESTROY", {
 				buffer = buffer,
 			})
+		end,
+		wgpu_device_create_shader_module = function(...)
+			return ffi.new("WGPUShaderModule")
+		end,
+		wgpu_device_create_pipeline_layout = function(...)
+			return ffi.new("WGPUPipelineLayout")
+		end,
+		wgpu_device_create_render_pipeline = function(...)
+			return ffi.new("WGPURenderPipeline")
 		end,
 	},
 }
