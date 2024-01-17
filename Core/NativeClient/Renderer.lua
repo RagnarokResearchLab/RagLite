@@ -19,6 +19,7 @@ local Surface = require("Core.NativeClient.WebGPU.Surface")
 local Texture = require("Core.NativeClient.WebGPU.Texture")
 local GroundMeshMaterial = require("Core.NativeClient.WebGPU.GroundMeshMaterial")
 local UnlitMeshMaterial = require("Core.NativeClient.WebGPU.UnlitMeshMaterial")
+local UserInterfaceMaterial = require("Core.NativeClient.WebGPU.UserInterfaceMaterial")
 local WaterSurfaceMaterial = require("Core.NativeClient.WebGPU.WaterSurfaceMaterial")
 
 local _ = require("Core.VectorMath.Matrix4D") -- Only needed for the cdefs right now
@@ -123,8 +124,7 @@ function Renderer:CreatePipelineConfigurations()
 		BasicTriangleDrawingPipeline(self.wgpuDevice, self.backingSurface.preferredTextureFormat)
 	WaterSurfaceMaterial.assignedRenderingPipeline =
 		BasicTriangleDrawingPipeline(self.wgpuDevice, self.backingSurface.preferredTextureFormat)
-
-	self.userInterfaceRenderingPipeline =
+	UserInterfaceMaterial.assignedRenderingPipeline =
 		WidgetDrawingPipeline(self.wgpuDevice, self.backingSurface.preferredTextureFormat)
 end
 
@@ -204,7 +204,7 @@ function Renderer:RenderNextFrame()
 	do
 		local uiRenderPass = self:BeginUserInterfaceRenderPass(commandEncoder, nextTextureView)
 		RenderPassEncoder:SetBindGroup(uiRenderPass, 0, self.uniforms.perScene.bindGroup, 0, nil)
-		RenderPassEncoder:SetPipeline(uiRenderPass, self.userInterfaceRenderingPipeline)
+		RenderPassEncoder:SetPipeline(uiRenderPass, UserInterfaceMaterial.assignedRenderingPipeline)
 
 		self.numWidgetTransformsUsedThisFrame = 0
 		rml.bindings.rml_context_update(self.rmlContext)
