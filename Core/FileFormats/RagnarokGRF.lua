@@ -12,7 +12,7 @@ local tonumber = tonumber
 local bit_band = bit.band
 local bit_rshift = bit.rshift
 local string_filesize = string.filesize
-local ffi_cast = ffi.cast
+local cast = ffi.cast
 local sizeof = ffi.sizeof
 local ffi_string = ffi.string
 local format = string.format
@@ -105,7 +105,7 @@ end
 function RagnarokGRF:DecodeHeader()
 	local headerSize = sizeof("grf_header_t")
 	local headerBytes = self.fileHandle:read(headerSize)
-	local header = ffi_cast("grf_header_t*", headerBytes)
+	local header = cast("grf_header_t*", headerBytes)
 
 	self.signature = ffi_string(header.signature)
 	if self.signature ~= "Master of Magic" then
@@ -137,7 +137,7 @@ function RagnarokGRF:DecodeTableHeader()
 
 	local tableSize = sizeof("grf_file_table_t")
 	local tableHeaderBytes = self.fileHandle:read(tableSize)
-	local tableHeader = ffi_cast("grf_file_table_t*", tableHeaderBytes)
+	local tableHeader = cast("grf_file_table_t*", tableHeaderBytes)
 
 	self.fileTable.compressedSizeInBytes = tonumber(tableHeader.compressed_size)
 	self.fileTable.decompressedSizeInBytes = tonumber(tableHeader.decompressed_size)
@@ -147,7 +147,7 @@ function RagnarokGRF:DecodeFileEntries()
 	local compressedTableBytes = self.fileHandle:read(self.fileTable.compressedSizeInBytes)
 	local decompressedTableBytes = zlib.inflate()(compressedTableBytes)
 
-	local movingConversionPointer = ffi_cast("char*", decompressedTableBytes)
+	local movingConversionPointer = cast("char*", decompressedTableBytes)
 
 	local entries = table.new(self.fileCount, 0)
 
@@ -157,7 +157,7 @@ function RagnarokGRF:DecodeFileEntries()
 		movingConversionPointer = movingConversionPointer + numProcessedBytesToSkip + 1 -- \0 terminator
 
 		-- Some redundancy could be removed here to reduce memory pressure, but it enables faster lookups
-		local entry = ffi_cast("grf_file_entry_t*", movingConversionPointer)
+		local entry = cast("grf_file_entry_t*", movingConversionPointer)
 		local fileEntry = {
 			name = normalizedCaseInsensitiveFilePath,
 			compressedSizeInBytes = tonumber(entry.compressed_size),

@@ -8,7 +8,7 @@ local uv = require("uv")
 local printf = printf
 local tonumber = tonumber
 
-local ffi_cast = ffi.cast
+local cast = ffi.cast
 local new = ffi.new
 local sizeof = ffi.sizeof
 local uv_hrtime = uv.hrtime
@@ -76,7 +76,7 @@ function RagnarokSPR:DecodeColorPalette()
 end
 
 function RagnarokSPR:DecompressRunLengthEncodedBytes(compressedBuffer, decompressedBuffer)
-	local compressedBytes = ffi_cast("uint8_t*", compressedBuffer:ref())
+	local compressedBytes = cast("uint8_t*", compressedBuffer:ref())
 	local isDecompressingRunOfZeroes = false
 
 	for byteIndex = 0, #compressedBuffer - 1 do
@@ -109,7 +109,7 @@ function RagnarokSPR:ApplyColorPalette(indexedColorImageBytes, palette)
 
 	local startPointer = indexedColorImageBytes:ref()
 
-	local paletteIndices = ffi_cast("uint8_t*", startPointer)
+	local paletteIndices = cast("uint8_t*", startPointer)
 
 	for byteIndex = 0, #indexedColorImageBytes - 1, 1 do
 		local paletteIndex = tonumber(paletteIndices[byteIndex])
@@ -199,7 +199,7 @@ function RagnarokSPR:DecodeTrueColorImages()
 		local pixelBuffer = buffer.new(pixelBufferSize)
 
 		local abgrPixelBytes = reader:GetTypedArray("uint8_t", pixelBufferSize)
-		local abgrPixelArray = ffi_cast("stbi_pixelbuffer_t", abgrPixelBytes) -- TBD redundant, can remove?
+		local abgrPixelArray = cast("stbi_pixelbuffer_t", abgrPixelBytes) -- TBD redundant, can remove?
 		image.data = abgrPixelArray
 
 		stbi.bindings.stbi_abgr_to_rgba(image)

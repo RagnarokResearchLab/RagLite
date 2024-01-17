@@ -1,6 +1,6 @@
 local ffi = require("ffi")
 
-local ffi_cast = ffi.cast
+local cast = ffi.cast
 local ffi_copy = ffi.copy
 local new = ffi.new
 local sizeof = ffi.sizeof
@@ -29,7 +29,7 @@ function RagnarokPAL:DecodeFileContents(fileContents)
 	end
 
 	local bufferAreaStartPointer = fileContents:ref()
-	local paletteBytes = ffi_cast("spr_palette_t*", bufferAreaStartPointer + paletteStartOffset)
+	local paletteBytes = cast("spr_palette_t*", bufferAreaStartPointer + paletteStartOffset)
 
 	-- Must copy to create a GC anchor here before the buffer is collected (probably not a big deal?)
 	local bmpColorPalette = new("spr_palette_t[1]", paletteBytes[0])

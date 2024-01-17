@@ -1,6 +1,6 @@
 local ffi = require("ffi")
 
-local ffi_cast = ffi.cast
+local cast = ffi.cast
 local sizeof = ffi.sizeof
 local ffi_string = ffi.string
 local type = type
@@ -73,7 +73,7 @@ function BinaryReader:GetUnsafePointer(numBytesToRead)
 		error(errorMessage, 0)
 	end
 
-	local cdataPointer = ffi_cast("uint8_t*", self.readOnlyBuffer) + self.virtualFilePointer
+	local cdataPointer = cast("uint8_t*", self.readOnlyBuffer) + self.virtualFilePointer
 	self.virtualFilePointer = self.virtualFilePointer + numBytesToRead
 
 	return cdataPointer
@@ -82,11 +82,11 @@ end
 function BinaryReader:GetTypedArray(cTypeName, numElements)
 	numElements = numElements or 1
 	local cdataPointer = self:GetUnsafePointer(sizeof(cTypeName) * numElements)
-	return ffi_cast(cTypeName .. "*", cdataPointer) -- Slightly inefficient (GC), but oh well
+	return cast(cTypeName .. "*", cdataPointer) -- Slightly inefficient (GC), but oh well
 end
 
 function BinaryReader:GetChar()
-	local cdataPointer = ffi_cast("char*", self:GetUnsafePointer(1))
+	local cdataPointer = cast("char*", self:GetUnsafePointer(1))
 	return tonumber(cdataPointer[0])
 end
 
@@ -111,52 +111,52 @@ function BinaryReader:GetCountedString(numBytesToRead)
 end
 
 function BinaryReader:GetFloat()
-	local cdataPointer = ffi_cast("float*", self:GetUnsafePointer(4))
+	local cdataPointer = cast("float*", self:GetUnsafePointer(4))
 	return tonumber(cdataPointer[0])
 end
 
 function BinaryReader:GetDouble()
-	local cdataPointer = ffi_cast("double*", self:GetUnsafePointer(8))
+	local cdataPointer = cast("double*", self:GetUnsafePointer(8))
 	return tonumber(cdataPointer[0])
 end
 
 function BinaryReader:GetInt64()
-	local cdataPointer = ffi_cast("int64_t*", self:GetUnsafePointer(8))
+	local cdataPointer = cast("int64_t*", self:GetUnsafePointer(8))
 	return tonumber(cdataPointer[0])
 end
 
 function BinaryReader:GetUnsignedInt64()
-	local cdataPointer = ffi_cast("uint64_t*", self:GetUnsafePointer(8))
+	local cdataPointer = cast("uint64_t*", self:GetUnsafePointer(8))
 	return tonumber(cdataPointer[0])
 end
 
 function BinaryReader:GetInt32()
-	local cdataPointer = ffi_cast("int32_t*", self:GetUnsafePointer(4))
+	local cdataPointer = cast("int32_t*", self:GetUnsafePointer(4))
 	return tonumber(cdataPointer[0])
 end
 
 function BinaryReader:GetUnsignedInt32()
-	local cdataPointer = ffi_cast("uint32_t*", self:GetUnsafePointer(4))
+	local cdataPointer = cast("uint32_t*", self:GetUnsafePointer(4))
 	return tonumber(cdataPointer[0])
 end
 
 function BinaryReader:GetInt16()
-	local cdataPointer = ffi_cast("int16_t*", self:GetUnsafePointer(2))
+	local cdataPointer = cast("int16_t*", self:GetUnsafePointer(2))
 	return tonumber(cdataPointer[0])
 end
 
 function BinaryReader:GetUnsignedInt16()
-	local cdataPointer = ffi_cast("uint16_t*", self:GetUnsafePointer(2))
+	local cdataPointer = cast("uint16_t*", self:GetUnsafePointer(2))
 	return tonumber(cdataPointer[0])
 end
 
 function BinaryReader:GetInt8()
-	local cdataPointer = ffi_cast("int8_t*", self:GetUnsafePointer(1))
+	local cdataPointer = cast("int8_t*", self:GetUnsafePointer(1))
 	return tonumber(cdataPointer[0])
 end
 
 function BinaryReader:GetUnsignedInt8()
-	local cdataPointer = ffi_cast("uint8_t*", self:GetUnsafePointer(1))
+	local cdataPointer = cast("uint8_t*", self:GetUnsafePointer(1))
 	return tonumber(cdataPointer[0])
 end
 
