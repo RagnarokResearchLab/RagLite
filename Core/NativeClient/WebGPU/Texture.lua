@@ -1,5 +1,6 @@
 local Color = require("Core.NativeClient.DebugDraw.Color")
 local BasicTriangleDrawingPipeline = require("Core.NativeClient.WebGPU.BasicTriangleDrawingPipeline")
+local UniformBuffer = require("Core.NativeClient.WebGPU.UniformBuffer")
 
 local bit = require("bit")
 local ffi = require("ffi")
@@ -109,10 +110,9 @@ function Texture:CreateBindGroupForPipeline(textureHandle, renderPipeline)
 	})
 
 	local textureBindGroupDescriptor = new("WGPUBindGroupDescriptor")
-	textureBindGroupDescriptor.layout = renderPipeline.wgpuMaterialBindGroupLayout
+	textureBindGroupDescriptor.layout = UniformBuffer.materialBindGroupLayout
 
-	local wgpuMaterialBindGroupLayoutDescriptor = renderPipeline.wgpuMaterialBindGroupLayoutDescriptor
-		or select(2, renderPipeline:CreateMaterialBindGroupLayout(wgpuDevice))
+	local wgpuMaterialBindGroupLayoutDescriptor = UniformBuffer.materialBindGroupLayoutDescriptor
 	textureBindGroupDescriptor.entryCount = wgpuMaterialBindGroupLayoutDescriptor.entryCount
 	textureBindGroupDescriptor.entries = bindGroupEntries
 

@@ -9,6 +9,7 @@ local Buffer = require("Core.NativeClient.WebGPU.Buffer")
 local VirtualGPU = require("Core.NativeClient.WebGPU.VirtualGPU")
 local GroundMeshMaterial = require("Core.NativeClient.WebGPU.GroundMeshMaterial")
 local UnlitMeshMaterial = require("Core.NativeClient.WebGPU.UnlitMeshMaterial")
+local Texture = require("Core.NativeClient.WebGPU.Texture")
 local WaterSurfaceMaterial = require("Core.NativeClient.WebGPU.WaterSurfaceMaterial")
 
 local planeMesh = Plane()
@@ -22,6 +23,10 @@ local function assertEqualArrayContents(arrayBuffer, arrayTable)
 end
 
 VirtualGPU:Enable()
+
+-- Can't upload textures (even to the virtualized GPU) without setting up bind groups first
+Renderer:CompileMaterials(Texture.DEFAULT_TEXTURE_FORMAT)
+
 -- The renderer wasn't designed to be testable, so a few hacks are currently required...
 Renderer.wgpuDevice = ffi.new("WGPUDevice")
 describe("Renderer", function()
