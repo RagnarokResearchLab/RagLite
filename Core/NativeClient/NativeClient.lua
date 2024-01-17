@@ -40,7 +40,7 @@ end
 
 function NativeClient:Stop()
 	glfw.bindings.glfw_destroy_window(self.mainWindow)
-	glfw.bindings.glfw_terminate()
+	-- glfw.bindings.glfw_terminate()
 end
 
 function NativeClient:CreateMainWindow()
