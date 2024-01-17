@@ -2,7 +2,7 @@ local ffi = require("ffi")
 
 local ffi_cast = ffi.cast
 local ffi_copy = ffi.copy
-local ffi_new = ffi.new
+local new = ffi.new
 local ffi_sizeof = ffi.sizeof
 
 local RagnarokPAL = {
@@ -32,8 +32,8 @@ function RagnarokPAL:DecodeFileContents(fileContents)
 	local paletteBytes = ffi_cast("spr_palette_t*", bufferAreaStartPointer + paletteStartOffset)
 
 	-- Must copy to create a GC anchor here before the buffer is collected (probably not a big deal?)
-	local bmpColorPalette = ffi_new("spr_palette_t[1]", paletteBytes[0])
-	local newColors = ffi_new("spr_palette_t")
+	local bmpColorPalette = new("spr_palette_t[1]", paletteBytes[0])
+	local newColors = new("spr_palette_t")
 
 	ffi_copy(newColors, bmpColorPalette[0], ffi_sizeof("spr_palette_t"))
 	return newColors

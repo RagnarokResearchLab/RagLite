@@ -1,7 +1,7 @@
 local ffi = require("ffi")
 local transform = require("transform")
 
-local ffi_new = ffi.new
+local new = ffi.new
 local format = string.format
 local transform_bold = transform.bold
 
@@ -59,7 +59,7 @@ function Matrix4D:__tostring()
 end
 
 function Matrix4D:CreateIdentity()
-	local identityMatrix = ffi_new("Matrix4D")
+	local identityMatrix = new("Matrix4D")
 
 	identityMatrix.x1, identityMatrix.y2, identityMatrix.z3, identityMatrix.w4 = 1, 1, 1, 1
 

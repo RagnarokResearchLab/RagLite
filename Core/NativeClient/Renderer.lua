@@ -29,7 +29,7 @@ local assert = assert
 local ipairs = ipairs
 local rawget = rawget
 
-local ffi_new = ffi.new
+local new = ffi.new
 local format = string.format
 local filesize = string.filesize
 local table_insert = table.insert
@@ -179,7 +179,7 @@ function Renderer:RenderNextFrame()
 	etrace.clear()
 	local nextTextureView = self.backingSurface:AcquireTextureView()
 
-	local commandEncoderDescriptor = ffi_new("WGPUCommandEncoderDescriptor")
+	local commandEncoderDescriptor = new("WGPUCommandEncoderDescriptor")
 	local commandEncoder = Device:CreateCommandEncoder(self.wgpuDevice, commandEncoderDescriptor)
 
 	do
@@ -320,11 +320,11 @@ end
 
 function Renderer:BeginRenderPass(commandEncoder, nextTextureView)
 	-- Clearing is a built-in mechanism of the render pass
-	local renderPassColorAttachment = ffi_new("WGPURenderPassColorAttachment", {
+	local renderPassColorAttachment = new("WGPURenderPassColorAttachment", {
 		view = nextTextureView,
 		loadOp = ffi.C.WGPULoadOp_Clear,
 		storeOp = ffi.C.WGPUStoreOp_Store,
-		clearValue = ffi_new("WGPUColor", self.clearColorRGBA),
+		clearValue = new("WGPUColor", self.clearColorRGBA),
 	})
 
 	-- Enable Z buffering in the fragment stage
@@ -341,7 +341,7 @@ function Renderer:BeginRenderPass(commandEncoder, nextTextureView)
 		stencilReadOnly = true,
 	})
 
-	local renderPassDescriptor = ffi_new("WGPURenderPassDescriptor", {
+	local renderPassDescriptor = new("WGPURenderPassDescriptor", {
 		colorAttachmentCount = 1,
 		colorAttachments = renderPassColorAttachment,
 		depthStencilAttachment = depthStencilAttachment,
@@ -351,14 +351,14 @@ function Renderer:BeginRenderPass(commandEncoder, nextTextureView)
 end
 
 function Renderer:BeginUserInterfaceRenderPass(commandEncoder, nextTextureView)
-	local renderPassColorAttachment = ffi_new("WGPURenderPassColorAttachment", {
+	local renderPassColorAttachment = new("WGPURenderPassColorAttachment", {
 		view = nextTextureView,
 		loadOp = ffi.C.WGPULoadOp_Load, -- Preserve existing framebuffer content
 		storeOp = ffi.C.WGPUStoreOp_Store,
-		clearValue = ffi_new("WGPUColor", self.clearColorRGBA),
+		clearValue = new("WGPUColor", self.clearColorRGBA),
 	})
 
-	local renderPassDescriptor = ffi_new("WGPURenderPassDescriptor", {
+	local renderPassDescriptor = new("WGPURenderPassDescriptor", {
 		colorAttachmentCount = 1,
 		colorAttachments = renderPassColorAttachment,
 		-- Depth/stencil testing is omitted since it isn't needed for UI rendering
@@ -462,12 +462,12 @@ function Renderer:DrawWidget(renderPass, compiledWidgetGeometry, offsetU, offset
 end
 
 function Renderer:SubmitCommandBuffer(commandEncoder)
-	local commandBufferDescriptor = ffi_new("WGPUCommandBufferDescriptor")
+	local commandBufferDescriptor = new("WGPUCommandBufferDescriptor")
 	local commandBuffer = CommandEncoder:Finish(commandEncoder, commandBufferDescriptor)
 
 	-- The WebGPU API expects an array here, but currently this renderer only supports a single buffer (to keep things simple)
 	local queue = Device:GetQueue(self.wgpuDevice)
-	local commandBuffers = ffi_new("WGPUCommandBuffer[1]", commandBuffer)
+	local commandBuffers = new("WGPUCommandBuffer[1]", commandBuffer)
 	Queue:Submit(queue, 1, commandBuffers)
 end
 

@@ -9,7 +9,7 @@ local printf = printf
 local tonumber = tonumber
 
 local ffi_cast = ffi.cast
-local ffi_new = ffi.new
+local new = ffi.new
 local ffi_sizeof = ffi.sizeof
 local uv_hrtime = uv.hrtime
 
@@ -85,13 +85,13 @@ function RagnarokSPR:DecompressRunLengthEncodedBytes(compressedBuffer, decompres
 		if isDecompressingRunOfZeroes then
 			local numZeroesToAdd = currentByte - 1
 			if numZeroesToAdd > 0 then
-				decompressedBuffer:putcdata(ffi_new("uint8_t[?]", numZeroesToAdd), numZeroesToAdd)
+				decompressedBuffer:putcdata(new("uint8_t[?]", numZeroesToAdd), numZeroesToAdd)
 			elseif numZeroesToAdd < 0 then
 				error(format("Encountered zero-length run at index %s (not an RLE-encoded image?)", byteIndex), 0)
 			end
 			isDecompressingRunOfZeroes = false
 		else
-			decompressedBuffer:putcdata(ffi_new("uint8_t[1]", currentByte), 1)
+			decompressedBuffer:putcdata(new("uint8_t[1]", currentByte), 1)
 			if currentByte == 0 then
 				isDecompressingRunOfZeroes = true
 			end
@@ -187,7 +187,7 @@ function RagnarokSPR:DecodeTrueColorImages()
 		return -- No TGA segment present
 	end
 
-	local image = ffi_new("stbi_image_t")
+	local image = new("stbi_image_t")
 	image.channels = 4
 
 	local reader = self.reader

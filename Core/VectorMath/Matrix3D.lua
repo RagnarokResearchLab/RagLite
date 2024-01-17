@@ -1,7 +1,7 @@
 local ffi = require("ffi")
 local transform = require("transform")
 
-local ffi_new = ffi.new
+local new = ffi.new
 local format = string.format
 local math_cos = math.cos
 local math_sin = math.sin
@@ -46,7 +46,7 @@ function Matrix3D:__tostring()
 end
 
 function Matrix3D:CreateIdentity()
-	local identityMatrix = ffi_new("Matrix3D")
+	local identityMatrix = new("Matrix3D")
 
 	identityMatrix.x1, identityMatrix.y2, identityMatrix.z3 = 1, 1, 1
 
@@ -60,7 +60,7 @@ end
 function Matrix3D:CreateAxisRotationX(rotationAngleInDegrees)
 	local rotationAngleInRadians = deg2rad(rotationAngleInDegrees)
 
-	local rotationMatrix = ffi_new("Matrix3D")
+	local rotationMatrix = new("Matrix3D")
 
 	rotationMatrix.x1 = 1
 	rotationMatrix.y2 = math_cos(rotationAngleInRadians)
@@ -74,7 +74,7 @@ end
 function Matrix3D:CreateAxisRotationY(rotationAngleInDegrees)
 	local rotationAngleInRadians = deg2rad(rotationAngleInDegrees)
 
-	local rotationMatrix = ffi_new("Matrix3D")
+	local rotationMatrix = new("Matrix3D")
 
 	rotationMatrix.x1 = math_cos(rotationAngleInRadians)
 	rotationMatrix.x3 = -math_sin(rotationAngleInRadians)
