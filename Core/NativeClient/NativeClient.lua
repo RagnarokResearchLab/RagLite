@@ -39,8 +39,10 @@ function NativeClient:Start(loginSceneID)
 end
 
 function NativeClient:Stop()
+	-- wgpuDeviceDestroy
+	require("webgpu").bindings.wgpu_device_destroy(Renderer.wgpuDevice)
 	glfw.bindings.glfw_destroy_window(self.mainWindow)
-	-- glfw.bindings.glfw_terminate()
+	glfw.bindings.glfw_terminate()
 end
 
 function NativeClient:CreateMainWindow()
