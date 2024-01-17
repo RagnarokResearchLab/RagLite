@@ -203,6 +203,7 @@ function Renderer:RenderNextFrame()
 
 	do
 		local uiRenderPass = self:BeginUserInterfaceRenderPass(commandEncoder, nextTextureView)
+		RenderPassEncoder:SetBindGroup(uiRenderPass, 0, self.uniforms.perScene.bindGroup, 0, nil)
 		RenderPassEncoder:SetPipeline(uiRenderPass, self.userInterfaceRenderingPipeline)
 
 		self.numWidgetTransformsUsedThisFrame = 0
@@ -431,8 +432,6 @@ function Renderer:DrawWidget(renderPass, compiledWidgetGeometry, offsetU, offset
 		0,
 		indexBufferSize
 	)
-
-	RenderPassEncoder:SetBindGroup(renderPass, 0, self.uniforms.perScene.bindGroup, 0, nil)
 
 	if compiledWidgetGeometry.texture == ffi.NULL then
 		RenderPassEncoder:SetBindGroup(renderPass, 1, self.dummyTexture.wgpuBindGroup, 0, nil)
