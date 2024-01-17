@@ -4,11 +4,9 @@ local UserInterfaceMaterial = {
 	displayName = "UserInterfaceMaterial",
 }
 
-function UserInterfaceMaterial:Compile(graphicsContext)
+function UserInterfaceMaterial:Compile(wgpuDevice, textureFormat)
 	printf("Compiling material: %s", self.displayName)
-
-	self.assignedRenderingPipeline =
-		WidgetDrawingPipeline(graphicsContext.wgpuDevice, graphicsContext.wgpuSurface.preferredTextureFormat)
+	self.assignedRenderingPipeline = WidgetDrawingPipeline(wgpuDevice, textureFormat)
 end
 
 return UserInterfaceMaterial

@@ -86,7 +86,7 @@ assert(
 
 function Renderer:InitializeWithGLFW(nativeWindowHandle)
 	Renderer:CreateGraphicsContext(nativeWindowHandle)
-	Renderer:CreatePipelineConfigurations()
+	Renderer:CompileMaterials()
 	Renderer:CreateUniformBuffers()
 	Renderer:EnableDepthBuffer()
 
@@ -114,18 +114,15 @@ function Renderer:CreateGraphicsContext(nativeWindowHandle)
 	self.backingSurface = Surface(instance, adapter, device, nativeWindowHandle)
 end
 
-function Renderer:CreatePipelineConfigurations()
+function Renderer:CompileMaterials()
 	-- Need to compute the preferred texture format first
 	self.backingSurface:UpdateConfiguration()
+	local outputTextureFormat = self.backingSurface.preferredTextureFormat
 
-	UnlitMeshMaterial.assignedRenderingPipeline =
-		BasicTriangleDrawingPipeline(self.wgpuDevice, self.backingSurface.preferredTextureFormat)
-	GroundMeshMaterial.assignedRenderingPipeline =
-		BasicTriangleDrawingPipeline(self.wgpuDevice, self.backingSurface.preferredTextureFormat)
-	WaterSurfaceMaterial.assignedRenderingPipeline =
-		BasicTriangleDrawingPipeline(self.wgpuDevice, self.backingSurface.preferredTextureFormat)
-	UserInterfaceMaterial.assignedRenderingPipeline =
-		WidgetDrawingPipeline(self.wgpuDevice, self.backingSurface.preferredTextureFormat)
+	UnlitMeshMaterial:Compile(self.wgpuDevice, outputTextureFormat)
+	GroundMeshMaterial:Compile(self.wgpuDevice, outputTextureFormat)
+	WaterSurfaceMaterial:Compile(self.wgpuDevice, outputTextureFormat)
+	UserInterfaceMaterial:Compile(self.wgpuDevice, outputTextureFormat)
 end
 
 function Renderer:CreateUserInterface()
