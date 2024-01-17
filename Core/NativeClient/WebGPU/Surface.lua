@@ -49,7 +49,7 @@ function Surface:UpdateConfiguration()
 	assert(viewportHeight > 0, "Viewport height should be set")
 	surfaceConfiguration.width = viewportWidth
 	surfaceConfiguration.height = viewportHeight
-	surfaceConfiguration.presentMode = ffi.C.WGPUPresentMode_Fifo
+	surfaceConfiguration.presentMode = ffi.C.WGPUPresentMode_Immediate -- NoVsync
 
 	webgpu.bindings.wgpu_surface_configure(self.wgpuSurface, surfaceConfiguration)
 end
