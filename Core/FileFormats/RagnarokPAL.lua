@@ -3,7 +3,7 @@ local ffi = require("ffi")
 local ffi_cast = ffi.cast
 local ffi_copy = ffi.copy
 local new = ffi.new
-local ffi_sizeof = ffi.sizeof
+local sizeof = ffi.sizeof
 
 local RagnarokPAL = {
 	cdefs = [[
@@ -22,7 +22,7 @@ local RagnarokPAL = {
 
 function RagnarokPAL:DecodeFileContents(fileContents)
 	local endOfFileOffset = #fileContents
-	local paletteStartOffset = endOfFileOffset - ffi_sizeof("spr_palette_t")
+	local paletteStartOffset = endOfFileOffset - sizeof("spr_palette_t")
 
 	if type(fileContents) == "string" then -- Can't use Lua strings as a buffer directly
 		fileContents = buffer.new(#fileContents):put(fileContents)
@@ -35,7 +35,7 @@ function RagnarokPAL:DecodeFileContents(fileContents)
 	local bmpColorPalette = new("spr_palette_t[1]", paletteBytes[0])
 	local newColors = new("spr_palette_t")
 
-	ffi_copy(newColors, bmpColorPalette[0], ffi_sizeof("spr_palette_t"))
+	ffi_copy(newColors, bmpColorPalette[0], sizeof("spr_palette_t"))
 	return newColors
 end
 

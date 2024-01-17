@@ -1,7 +1,7 @@
 local ffi = require("ffi")
 
 local ffi_cast = ffi.cast
-local ffi_sizeof = ffi.sizeof
+local sizeof = ffi.sizeof
 local ffi_string = ffi.string
 local type = type
 
@@ -81,7 +81,7 @@ end
 
 function BinaryReader:GetTypedArray(cTypeName, numElements)
 	numElements = numElements or 1
-	local cdataPointer = self:GetUnsafePointer(ffi_sizeof(cTypeName) * numElements)
+	local cdataPointer = self:GetUnsafePointer(sizeof(cTypeName) * numElements)
 	return ffi_cast(cTypeName .. "*", cdataPointer) -- Slightly inefficient (GC), but oh well
 end
 

@@ -13,7 +13,7 @@ local bit_band = bit.band
 local bit_rshift = bit.rshift
 local string_filesize = string.filesize
 local ffi_cast = ffi.cast
-local ffi_sizeof = ffi.sizeof
+local sizeof = ffi.sizeof
 local ffi_string = ffi.string
 local format = string.format
 local string_lower = string.lower
@@ -103,7 +103,7 @@ function RagnarokGRF:DecodeArchiveMetadata()
 end
 
 function RagnarokGRF:DecodeHeader()
-	local headerSize = ffi_sizeof("grf_header_t")
+	local headerSize = sizeof("grf_header_t")
 	local headerBytes = self.fileHandle:read(headerSize)
 	local header = ffi_cast("grf_header_t*", headerBytes)
 
@@ -135,7 +135,7 @@ end
 function RagnarokGRF:DecodeTableHeader()
 	self.fileHandle:seek("set", self.fileTableOffsetRelativeToHeader + RagnarokGRF.HEADER_SIZE_IN_BYTES)
 
-	local tableSize = ffi_sizeof("grf_file_table_t")
+	local tableSize = sizeof("grf_file_table_t")
 	local tableHeaderBytes = self.fileHandle:read(tableSize)
 	local tableHeader = ffi_cast("grf_file_table_t*", tableHeaderBytes)
 
@@ -169,7 +169,7 @@ function RagnarokGRF:DecodeFileEntries()
 		entries[#entries + 1] = fileEntry
 		entries[normalizedCaseInsensitiveFilePath] = fileEntry
 
-		movingConversionPointer = movingConversionPointer + ffi_sizeof("grf_file_entry_t")
+		movingConversionPointer = movingConversionPointer + sizeof("grf_file_entry_t")
 	end
 
 	self.fileTable.entries = entries
@@ -344,6 +344,6 @@ function RagnarokGRF:MakeFileSystem(name)
 end
 
 ffi.cdef(RagnarokGRF.cdefs)
-assert(RagnarokGRF.HEADER_SIZE_IN_BYTES == ffi_sizeof("grf_header_t")) -- Basic sanity check
+assert(RagnarokGRF.HEADER_SIZE_IN_BYTES == sizeof("grf_header_t")) -- Basic sanity check
 
 return RagnarokGRF

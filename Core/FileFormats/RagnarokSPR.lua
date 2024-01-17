@@ -10,7 +10,7 @@ local tonumber = tonumber
 
 local ffi_cast = ffi.cast
 local new = ffi.new
-local ffi_sizeof = ffi.sizeof
+local sizeof = ffi.sizeof
 local uv_hrtime = uv.hrtime
 
 local RagnarokSPR = {}
@@ -71,7 +71,7 @@ end
 function RagnarokSPR:DecodeColorPalette()
 	local reader = self.reader
 
-	self.paletteStartOffset = reader.endOfFilePointer - ffi_sizeof("spr_palette_t")
+	self.paletteStartOffset = reader.endOfFilePointer - sizeof("spr_palette_t")
 	self.palette = reader:GetTypedArray("spr_palette_t")
 end
 
@@ -119,7 +119,7 @@ function RagnarokSPR:ApplyColorPalette(indexedColorImageBytes, palette)
 		else
 			paletteColor.alpha = 255 -- BMP alpha is not supported (except for the background color)
 		end
-		rgbaImageBytes:putcdata(paletteColor, ffi_sizeof(paletteColor))
+		rgbaImageBytes:putcdata(paletteColor, sizeof(paletteColor))
 	end
 
 	return rgbaImageBytes
