@@ -81,6 +81,12 @@ end
 function Texture:CreateBindGroupForPipeline(textureHandle, renderPipeline)
 	local wgpuDevice = renderPipeline.wgpuDevice
 
+	printf(
+		"[Texture] Creating new bind group for texture %p and pipeline %s",
+		textureHandle,
+		renderPipeline.displayName
+	)
+
 	-- Create readonly view that should be accessed by a sampler
 	local textureViewDescriptor = new("WGPUTextureViewDescriptor", {
 		aspect = ffi.C.WGPUTextureAspect_All,

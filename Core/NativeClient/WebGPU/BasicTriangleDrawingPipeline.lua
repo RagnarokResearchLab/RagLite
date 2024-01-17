@@ -10,7 +10,7 @@ local new = ffi.new
 local sizeof = ffi.sizeof
 
 local BasicTriangleDrawingPipeline = {
-	displayName = "Basic Triangle Drawing Pipeline",
+	displayName = "BasicTriangleDrawingPipeline",
 	WGSL_SHADER_SOURCE_LOCATION = "Core/NativeClient/Shaders/BasicTriangleShader.wgsl",
 }
 
