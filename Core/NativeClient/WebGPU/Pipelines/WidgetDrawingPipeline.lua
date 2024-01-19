@@ -11,7 +11,7 @@ local new = ffi.new
 local sizeof = ffi.sizeof
 
 local WidgetDrawingPipeline = {
-	WGSL_SHADER_SOURCE_LOCATION = "Core/NativeClient/Shaders/UserInterfaceShader.wgsl",
+	WGSL_SHADER_SOURCE_LOCATION = "Core/NativeClient/WebGPU/Shaders/UserInterfaceShader.wgsl",
 	MAX_WIDGET_COUNT = 2048, -- The default maxUniformBufferBindingSize allows for this many without optimizing further/removing padding/using other buffer types or even hardware instacing for the UI
 }
 
