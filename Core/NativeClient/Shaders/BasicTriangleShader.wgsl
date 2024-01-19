@@ -31,10 +31,6 @@ struct PerSceneData {
 const MATH_PI = 3.14159266;
 const DEBUG_ALPHA_OFFSET = 0.0; // Set to non-zero value (e.g., 0.2) to make transparent background pixels visible
 
-fn deg2rad(angleInDegrees: f32) -> f32 {
-	return angleInDegrees * MATH_PI / 180.0;
-}
-
 @vertex
 fn vs_main(in: VertexInput) -> VertexOutput {
 	var position = in.position;
