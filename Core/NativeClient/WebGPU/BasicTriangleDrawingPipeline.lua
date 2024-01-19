@@ -10,7 +10,6 @@ local new = ffi.new
 local sizeof = ffi.sizeof
 
 local BasicTriangleDrawingPipeline = {
-	displayName = "BasicTriangleDrawingPipeline",
 	WGSL_SHADER_SOURCE_LOCATION = "Core/NativeClient/Shaders/BasicTriangleShader.wgsl",
 }
 
@@ -93,7 +92,18 @@ function BasicTriangleDrawingPipeline:Construct(wgpuDeviceHandle, textureFormatI
 	renderPipelineDescriptor.layout =
 		webgpu.bindings.wgpu_device_create_pipeline_layout(wgpuDeviceHandle, pipelineLayoutDescriptor)
 
-	return webgpu.bindings.wgpu_device_create_render_pipeline(wgpuDeviceHandle, renderPipelineDescriptor)
+	local wgpuPipeline = webgpu.bindings.wgpu_device_create_render_pipeline(wgpuDeviceHandle, renderPipelineDescriptor)
+
+	local instance = {
+		wgpuPipeline = wgpuPipeline,
+	}
+
+	local inheritanceLookupMetatable = {
+		__index = self,
+	}
+	setmetatable(instance, inheritanceLookupMetatable)
+
+	return instance
 end
 
 function BasicTriangleDrawingPipeline:CreateShaderModule(wgpuDeviceHandle)

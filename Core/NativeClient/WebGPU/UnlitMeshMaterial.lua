@@ -1,12 +1,11 @@
 local BasicTriangleDrawingPipeline = require("Core.NativeClient.WebGPU.BasicTriangleDrawingPipeline")
+local InvisibleBaseMaterial = require("Core.NativeClient.WebGPU.InvisibleBaseMaterial")
 
 local UnlitMeshMaterial = {
-	displayName = "UnlitMeshMaterial",
+	pipeline = BasicTriangleDrawingPipeline,
 }
 
-function UnlitMeshMaterial:Compile(wgpuDevice, textureFormat)
-	printf("Compiling material: %s", self.displayName)
-	self.assignedRenderingPipeline = BasicTriangleDrawingPipeline(wgpuDevice, textureFormat)
-end
+class("UnlitMeshMaterial", UnlitMeshMaterial)
+extend(UnlitMeshMaterial, InvisibleBaseMaterial)
 
 return UnlitMeshMaterial

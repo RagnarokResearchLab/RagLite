@@ -1,12 +1,11 @@
 local BasicTriangleDrawingPipeline = require("Core.NativeClient.WebGPU.BasicTriangleDrawingPipeline")
+local InvisibleBaseMaterial = require("Core.NativeClient.WebGPU.InvisibleBaseMaterial")
 
 local WaterSurfaceMaterial = {
-	displayName = "WaterSurfaceMaterial",
+	pipeline = BasicTriangleDrawingPipeline,
 }
 
-function WaterSurfaceMaterial:Compile(wgpuDevice, textureFormat)
-	printf("Compiling material: %s", self.displayName)
-	self.assignedRenderingPipeline = BasicTriangleDrawingPipeline(wgpuDevice, textureFormat)
-end
+class("WaterSurfaceMaterial", WaterSurfaceMaterial)
+extend(WaterSurfaceMaterial, InvisibleBaseMaterial)
 
 return WaterSurfaceMaterial

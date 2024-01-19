@@ -2,6 +2,7 @@ local bit = require("bit")
 local etrace = require("etrace")
 local ffi = require("ffi")
 local interop = require("interop")
+local oop = require("oop")
 local rml = require("rml")
 local validation = require("validation")
 local webgpu = require("webgpu")
@@ -29,6 +30,7 @@ local assert = assert
 local ipairs = ipairs
 local rawget = rawget
 
+local instanceof = oop.instanceof
 local new = ffi.new
 local format = string.format
 local filesize = string.filesize
@@ -50,6 +52,16 @@ local Renderer = {
 		INCOMPLETE_COLOR_BUFFER = "Cannot upload geometry with missing or incomplete vertex colors",
 		INCOMPLETE_UV_BUFFER = "Cannot upload geometry with missing or incomplete diffuse texture coordinates ",
 		INVALID_MATERIAL = "Invalid material assigned to mesh",
+	},
+	supportedMaterials = {
+		-- The order doesn't really matter, as long as it's consistently used
+		UnlitMeshMaterial,
+		GroundMeshMaterial,
+		WaterSurfaceMaterial,
+		-- Reverse lookup table built in (no problem as it's skipped by ipairs)
+		[UnlitMeshMaterial] = 1,
+		[GroundMeshMaterial] = 2,
+		[WaterSurfaceMaterial] = 3,
 	},
 }
 
@@ -130,22 +142,30 @@ function Renderer:CreateUserInterface()
 	assert(document ~= ffi.NULL, "Failed to load default RML document " .. RML_TEST_FILE_PATH)
 	rml.bindings.rml_document_show(document)
 end
+local function assertMeshHasMaterial(mesh)
+	if not rawget(mesh, "material") then
+		local errorMessage =
+			format("%s %s (%s)", Renderer.errorStrings.INVALID_MATERIAL, mesh.uniqueID, mesh.displayName)
+		error(errorMessage, 0)
+	end
+end
 
 function Renderer:SortMeshesByMaterial(meshes)
-	local meshesSortedByMaterial = {
-		[UnlitMeshMaterial] = {},
-		[WaterSurfaceMaterial] = {},
-		[GroundMeshMaterial] = {},
-	}
+	local meshesSortedByMaterial = {}
+
+	for materialIndex, material in ipairs(Renderer.supportedMaterials) do
+		meshesSortedByMaterial[materialIndex] = {}
+	end
 
 	for index, mesh in ipairs(meshes) do
-		-- Needs streamlining (later)
-		if not rawget(mesh, "material") then
-			local errorMessage =
-				format("%s %s (%s)", self.errorStrings.INVALID_MATERIAL, mesh.uniqueID, mesh.displayName)
-			error(errorMessage, 0)
+		assertMeshHasMaterial(mesh) -- Should do this when creating the geometry, probably?
+
+		-- This might look scary in a hot loop, but there really won't be all that many materials
+		for materialIndex, material in ipairs(Renderer.supportedMaterials) do
+			if instanceof(mesh.material, material) then
+				table_insert(meshesSortedByMaterial[materialIndex], mesh)
+			end
 		end
-		table_insert(meshesSortedByMaterial[mesh.material], mesh)
 	end
 
 	return meshesSortedByMaterial
@@ -166,9 +186,10 @@ function Renderer:RenderNextFrame()
 		RenderPassEncoder:SetBindGroup(renderPass, 0, self.cameraViewportUniform.bindGroup, 0, nil)
 
 		local meshesByMaterial = self:SortMeshesByMaterial(self.meshes)
-		for material, meshes in pairs(meshesByMaterial) do
+		for materialIndex, meshes in pairs(meshesByMaterial) do
+			local material = self.supportedMaterials[materialIndex]
 			-- Should skip this if there aren't any meshes (wasteful to switch for no reason)?
-			RenderPassEncoder:SetPipeline(renderPass, material.assignedRenderingPipeline)
+			RenderPassEncoder:SetPipeline(renderPass, material.assignedRenderingPipeline.wgpuPipeline)
 			for _, mesh in ipairs(self.meshes) do
 				self:DrawMesh(renderPass, mesh)
 			end
@@ -180,7 +201,7 @@ function Renderer:RenderNextFrame()
 	do
 		local uiRenderPass = self:BeginUserInterfaceRenderPass(commandEncoder, nextTextureView)
 		RenderPassEncoder:SetBindGroup(uiRenderPass, 0, self.cameraViewportUniform.bindGroup, 0, nil)
-		RenderPassEncoder:SetPipeline(uiRenderPass, UserInterfaceMaterial.assignedRenderingPipeline)
+		RenderPassEncoder:SetPipeline(uiRenderPass, UserInterfaceMaterial.assignedRenderingPipeline.wgpuPipeline)
 
 		self.numWidgetTransformsUsedThisFrame = 0
 		rml.bindings.rml_context_update(self.rmlContext)

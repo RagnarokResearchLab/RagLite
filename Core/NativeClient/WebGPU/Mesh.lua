@@ -13,7 +13,7 @@ function Mesh:Construct(name)
 		triangleConnections = {},
 		vertexColors = {},
 		diffuseTextureCoords = {},
-		material = UnlitMeshMaterial,
+		material = UnlitMeshMaterial(name and (name .. "Material") or globallyUniqueID),
 	}
 
 	setmetatable(instance, self)

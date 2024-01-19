@@ -35,6 +35,7 @@ local specFiles = {
 	"Tests/NativeClient/DebugDraw/Sphere.spec.lua",
 	"Tests/NativeClient/WebGPU/Mesh.spec.lua",
 	"Tests/NativeClient/WebGPU/GroundMeshMaterial.spec.lua",
+	"Tests/NativeClient/WebGPU/InvisibleBaseMaterial.spec.lua",
 	"Tests/NativeClient/WebGPU/UnlitMeshMaterial.spec.lua",
 	"Tests/NativeClient/WebGPU/WaterSurfaceMaterial.spec.lua",
 	"Tests/NativeClient/WebGPU/UserInterfaceMaterial.spec.lua",

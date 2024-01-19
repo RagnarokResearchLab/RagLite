@@ -11,7 +11,6 @@ local new = ffi.new
 local sizeof = ffi.sizeof
 
 local WidgetDrawingPipeline = {
-	displayName = "WidgetDrawingPipeline",
 	WGSL_SHADER_SOURCE_LOCATION = "Core/NativeClient/Shaders/UserInterfaceShader.wgsl",
 	MAX_WIDGET_COUNT = 2048, -- The default maxUniformBufferBindingSize allows for this many without optimizing further/removing padding/using other buffer types or even hardware instacing for the UI
 }
@@ -79,8 +78,21 @@ function WidgetDrawingPipeline:Construct(wgpuDeviceHandle, textureFormatID)
 	renderPipelineDescriptor.layout =
 		webgpu.bindings.wgpu_device_create_pipeline_layout(wgpuDeviceHandle, pipelineLayoutDescriptor)
 
-	return webgpu.bindings.wgpu_device_create_render_pipeline(wgpuDeviceHandle, renderPipelineDescriptor)
+	local wgpuPipeline = webgpu.bindings.wgpu_device_create_render_pipeline(wgpuDeviceHandle, renderPipelineDescriptor)
+
+	local instance = {
+		wgpuPipeline = wgpuPipeline,
+	}
+
+	local inheritanceLookupMetatable = {
+		__index = self,
+	}
+	setmetatable(instance, inheritanceLookupMetatable)
+
+	return instance
 end
+
+class("WidgetDrawingPipeline", WidgetDrawingPipeline)
 
 function WidgetDrawingPipeline:CreateShaderModule(wgpuDeviceHandle)
 	local shaderCodeDescriptor = new("WGPUShaderModuleWGSLDescriptor", {
