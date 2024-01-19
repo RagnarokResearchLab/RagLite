@@ -10,7 +10,7 @@ local new = ffi.new
 local sizeof = ffi.sizeof
 
 local BasicTriangleDrawingPipeline = {
-	WGSL_SHADER_SOURCE_LOCATION = "Core/NativeClient/Shaders/BasicTriangleShader.wgsl",
+	WGSL_SHADER_SOURCE_LOCATION = "Core/NativeClient/WebGPU/Shaders/BasicTriangleShader.wgsl",
 }
 
 function BasicTriangleDrawingPipeline:Construct(wgpuDeviceHandle, textureFormatID)
