@@ -1,4 +1,4 @@
-local BasicTriangleDrawingPipeline = require("Core.NativeClient.WebGPU.Pipelines.BasicTriangleDrawingPipeline")
+local WaterPlaneDrawingPipeline = require("Core.NativeClient.WebGPU.Pipelines.WaterPlaneDrawingPipeline")
 local WaterSurfaceMaterial = require("Core.NativeClient.WebGPU.Materials.WaterSurfaceMaterial")
 local VirtualGPU = require("Core.NativeClient.WebGPU.VirtualGPU")
 
@@ -6,7 +6,7 @@ VirtualGPU:Enable()
 
 describe("WaterSurfaceMaterial", function()
 	it("should use the default rendering pipeline configuration", function()
-		assertEquals(WaterSurfaceMaterial.pipeline, BasicTriangleDrawingPipeline)
+		assertEquals(WaterSurfaceMaterial.pipeline, WaterPlaneDrawingPipeline)
 	end)
 
 	describe("Compile", function()
@@ -20,8 +20,8 @@ describe("WaterSurfaceMaterial", function()
 			assertEquals(materialInstanceA.assignedRenderingPipeline, WaterSurfaceMaterial.assignedRenderingPipeline)
 			assertEquals(materialInstanceB.assignedRenderingPipeline, WaterSurfaceMaterial.assignedRenderingPipeline)
 
-			assertTrue(instanceof(materialInstanceA.assignedRenderingPipeline, BasicTriangleDrawingPipeline))
-			assertTrue(instanceof(materialInstanceB.assignedRenderingPipeline, BasicTriangleDrawingPipeline))
+			assertTrue(instanceof(materialInstanceA.assignedRenderingPipeline, WaterPlaneDrawingPipeline))
+			assertTrue(instanceof(materialInstanceB.assignedRenderingPipeline, WaterPlaneDrawingPipeline))
 		end)
 	end)
 end)
