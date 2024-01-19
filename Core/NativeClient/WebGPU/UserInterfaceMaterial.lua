@@ -1,12 +1,11 @@
 local WidgetDrawingPipeline = require("Core.NativeClient.WebGPU.WidgetDrawingPipeline")
+local InvisibleBaseMaterial = require("Core.NativeClient.WebGPU.InvisibleBaseMaterial")
 
 local UserInterfaceMaterial = {
-	displayName = "UserInterfaceMaterial",
+	pipeline = WidgetDrawingPipeline,
 }
 
-function UserInterfaceMaterial:Compile(wgpuDevice, textureFormat)
-	printf("Compiling material: %s", self.displayName)
-	self.assignedRenderingPipeline = WidgetDrawingPipeline(wgpuDevice, textureFormat)
-end
+class("UserInterfaceMaterial", UserInterfaceMaterial)
+extend(UserInterfaceMaterial, InvisibleBaseMaterial)
 
 return UserInterfaceMaterial

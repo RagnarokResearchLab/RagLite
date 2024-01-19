@@ -31,7 +31,7 @@ describe("Mesh", function()
 
 		it("should assign a material that uses the default rendering pipeline", function()
 			local mesh = Mesh()
-			assertEquals(mesh.material, UnlitMeshMaterial)
+			assertTrue(instanceof(mesh.material, UnlitMeshMaterial))
 		end)
 	end)
 

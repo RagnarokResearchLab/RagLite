@@ -377,11 +377,11 @@ describe("Renderer", function()
 			local waterPlane = Mesh("SortMeshesByMaterialFakeWaterPlane")
 			waterPlane.material = WaterSurfaceMaterial
 			local plane = Plane("SortMeshesByMaterialTestPlane")
-			plane.material = UnlitMeshMaterial
+			plane.material = UnlitMeshMaterial()
 			local mesh = Mesh("SortMeshesByMaterialTestMesh")
-			mesh.material = UnlitMeshMaterial
+			mesh.material = UnlitMeshMaterial()
 			local ground = Plane("SortMeshesByMaterialFakeGroundMesh")
-			ground.material = GroundMeshMaterial
+			ground.material = GroundMeshMaterial()
 
 			local meshes = {
 				ground,
@@ -391,9 +391,9 @@ describe("Renderer", function()
 			}
 			local meshsSortedByMaterial = Renderer:SortMeshesByMaterial(meshes)
 
-			assertEquals(meshsSortedByMaterial[GroundMeshMaterial], { ground })
-			assertEquals(meshsSortedByMaterial[UnlitMeshMaterial], { plane, mesh })
-			assertEquals(meshsSortedByMaterial[WaterSurfaceMaterial], { waterPlane })
+			assertEquals(meshsSortedByMaterial[Renderer.supportedMaterials[UnlitMeshMaterial]], { plane, mesh })
+			assertEquals(meshsSortedByMaterial[Renderer.supportedMaterials[GroundMeshMaterial]], { ground })
+			assertEquals(meshsSortedByMaterial[Renderer.supportedMaterials[WaterSurfaceMaterial]], { waterPlane })
 		end)
 
 		it("should throw if encountering a mesh without an assigned material", function()
