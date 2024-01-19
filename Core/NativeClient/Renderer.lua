@@ -8,7 +8,7 @@ local validation = require("validation")
 local webgpu = require("webgpu")
 
 local GPU = require("Core.NativeClient.WebGPU.GPU")
-local WidgetDrawingPipeline = require("Core.NativeClient.WebGPU.WidgetDrawingPipeline")
+local WidgetDrawingPipeline = require("Core.NativeClient.WebGPU.Pipelines.WidgetDrawingPipeline")
 
 local Buffer = require("Core.NativeClient.WebGPU.Buffer")
 local CommandEncoder = require("Core.NativeClient.WebGPU.CommandEncoder")

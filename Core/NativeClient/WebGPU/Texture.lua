@@ -1,5 +1,5 @@
 local Color = require("Core.NativeClient.DebugDraw.Color")
-local BasicTriangleDrawingPipeline = require("Core.NativeClient.WebGPU.BasicTriangleDrawingPipeline")
+local BasicTriangleDrawingPipeline = require("Core.NativeClient.WebGPU.Pipelines.BasicTriangleDrawingPipeline")
 local UniformBuffer = require("Core.NativeClient.WebGPU.UniformBuffer")
 
 local bit = require("bit")
