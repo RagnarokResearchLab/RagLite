@@ -218,6 +218,7 @@ end
 function NativeClient:CURSOR_MOVED(eventID, payload)
 	local shouldProcessEvent = rml.bindings.rml_process_cursor_pos_callback(
 		Renderer.rmlContext,
+		self.mainWindow,
 		payload.cursor_move_details.x,
 		payload.cursor_move_details.y,
 		0
