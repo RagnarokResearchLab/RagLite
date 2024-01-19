@@ -1,5 +1,5 @@
 local BasicTriangleDrawingPipeline = require("Core.NativeClient.WebGPU.BasicTriangleDrawingPipeline")
-local InvisibleBaseMaterial = require("Core.NativeClient.WebGPU.InvisibleBaseMaterial")
+local InvisibleBaseMaterial = require("Core.NativeClient.WebGPU.Materials.InvisibleBaseMaterial")
 local VirtualGPU = require("Core.NativeClient.WebGPU.VirtualGPU")
 
 local uuid = require("uuid")
