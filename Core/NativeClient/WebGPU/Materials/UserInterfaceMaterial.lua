@@ -1,4 +1,4 @@
-local WidgetDrawingPipeline = require("Core.NativeClient.WebGPU.WidgetDrawingPipeline")
+local WidgetDrawingPipeline = require("Core.NativeClient.WebGPU.Pipelines.WidgetDrawingPipeline")
 local InvisibleBaseMaterial = require("Core.NativeClient.WebGPU.Materials.InvisibleBaseMaterial")
 
 local UserInterfaceMaterial = {
