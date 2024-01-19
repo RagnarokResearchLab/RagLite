@@ -1,4 +1,4 @@
-local UnlitMeshMaterial = require("Core.NativeClient.WebGPU.UnlitMeshMaterial")
+local UnlitMeshMaterial = require("Core.NativeClient.WebGPU.Materials.UnlitMeshMaterial")
 
 local uuid = require("uuid")
 

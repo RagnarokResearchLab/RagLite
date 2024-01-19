@@ -1,5 +1,5 @@
 local BasicTriangleDrawingPipeline = require("Core.NativeClient.WebGPU.BasicTriangleDrawingPipeline")
-local WaterSurfaceMaterial = require("Core.NativeClient.WebGPU.WaterSurfaceMaterial")
+local WaterSurfaceMaterial = require("Core.NativeClient.WebGPU.Materials.WaterSurfaceMaterial")
 local VirtualGPU = require("Core.NativeClient.WebGPU.VirtualGPU")
 
 VirtualGPU:Enable()

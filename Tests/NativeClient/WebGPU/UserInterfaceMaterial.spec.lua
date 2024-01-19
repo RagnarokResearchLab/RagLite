@@ -1,5 +1,5 @@
 local WidgetDrawingPipeline = require("Core.NativeClient.WebGPU.WidgetDrawingPipeline")
-local UserInterfaceMaterial = require("Core.NativeClient.WebGPU.UserInterfaceMaterial")
+local UserInterfaceMaterial = require("Core.NativeClient.WebGPU.Materials.UserInterfaceMaterial")
 local VirtualGPU = require("Core.NativeClient.WebGPU.VirtualGPU")
 
 VirtualGPU:Enable()

@@ -7,10 +7,10 @@ local Mesh = require("Core.NativeClient.WebGPU.Mesh")
 local Renderer = require("Core.NativeClient.Renderer")
 local Buffer = require("Core.NativeClient.WebGPU.Buffer")
 local VirtualGPU = require("Core.NativeClient.WebGPU.VirtualGPU")
-local GroundMeshMaterial = require("Core.NativeClient.WebGPU.GroundMeshMaterial")
-local UnlitMeshMaterial = require("Core.NativeClient.WebGPU.UnlitMeshMaterial")
+local GroundMeshMaterial = require("Core.NativeClient.WebGPU.Materials.GroundMeshMaterial")
+local UnlitMeshMaterial = require("Core.NativeClient.WebGPU.Materials.UnlitMeshMaterial")
 local Texture = require("Core.NativeClient.WebGPU.Texture")
-local WaterSurfaceMaterial = require("Core.NativeClient.WebGPU.WaterSurfaceMaterial")
+local WaterSurfaceMaterial = require("Core.NativeClient.WebGPU.Materials.WaterSurfaceMaterial")
 
 local planeMesh = Plane()
 
