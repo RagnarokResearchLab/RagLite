@@ -1,4 +1,5 @@
 local Mesh = require("Core.NativeClient.WebGPU.Mesh")
+local WaterSurfaceMaterial = require("Core.NativeClient.WebGPU.Materials.WaterSurfaceMaterial")
 
 require("table.new")
 
@@ -14,6 +15,7 @@ local AnimatedWaterPlane = {
 function AnimatedWaterPlane:Construct(tileSlotU, tileSlotV, surfaceProperties)
 	surfaceProperties = surfaceProperties or {}
 
+	local name = format("AnimatedWaterPlane%dx%d", tileSlotU or 1, tileSlotV or 1)
 	local instance = {
 		surfaceRegion = {
 			tileSlotU = tileSlotU or 1,
@@ -23,7 +25,7 @@ function AnimatedWaterPlane:Construct(tileSlotU, tileSlotV, surfaceProperties)
 			maxU = 0,
 			maxV = 0,
 		},
-		surfaceGeometry = Mesh(format("AnimatedWaterPlane%dx%d", tileSlotU or 1, tileSlotV or 1)),
+		surfaceGeometry = Mesh(name),
 		normalizedSeaLevel = surfaceProperties.normalizedSeaLevel or 0,
 		textureTypePrefix = surfaceProperties.textureTypePrefix or 1,
 		waveformAmplitudeScalingFactor = surfaceProperties.waveformAmplitudeScalingFactor or 1,
@@ -37,6 +39,8 @@ function AnimatedWaterPlane:Construct(tileSlotU, tileSlotV, surfaceProperties)
 	instance.surfaceGeometry.triangleConnections = table.new(10000, 0)
 	instance.surfaceGeometry.vertexColors = table.new(10000, 0)
 	instance.surfaceGeometry.diffuseTextureCoords = table.new(10000, 0)
+
+	instance.surfaceGeometry.material = WaterSurfaceMaterial(name .. "Material")
 
 	setmetatable(instance, self)
 
