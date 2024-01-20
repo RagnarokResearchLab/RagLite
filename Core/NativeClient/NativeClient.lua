@@ -40,7 +40,7 @@ end
 
 function NativeClient:Stop()
 	-- wgpuDeviceDestroy
-	require("rml").bindings.rml_context_destroy(Renderer.rmlContext)
+	-- require("rml").bindings.rml_context_destroy(Renderer.rmlContext)
 	require("webgpu").bindings.wgpu_device_destroy(Renderer.wgpuDevice)
 	require("webgpu").bindings.wgpu_instance_release(Renderer.wgpuInstance)
 	glfw.bindings.glfw_destroy_window(self.mainWindow)
