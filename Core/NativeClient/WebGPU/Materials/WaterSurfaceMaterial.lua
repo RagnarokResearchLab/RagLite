@@ -3,6 +3,11 @@ local InvisibleBaseMaterial = require("Core.NativeClient.WebGPU.Materials.Invisi
 
 local WaterSurfaceMaterial = {
 	pipeline = WaterPlaneDrawingPipeline,
+	diffuseColor = {
+		red = 1,
+		green = 1,
+		blue = 1,
+	},
 	opacity = 144 / 255, -- Source: Borf
 }
 

@@ -42,6 +42,10 @@ function AnimatedWaterPlane:Construct(tileSlotU, tileSlotV, surfaceProperties)
 
 	instance.surfaceGeometry.material = WaterSurfaceMaterial(name .. "Material")
 
+	if self:IsLavaTexture(instance.textureTypePrefix) then
+		instance.surfaceGeometry.material.opacity = 1 -- Lava should be fully opaque (see mag_dun01)
+	end
+
 	setmetatable(instance, self)
 
 	return instance
@@ -59,11 +63,16 @@ function AnimatedWaterPlane:GetExpectedTextureDimensions(textureTypeID)
 	textureTypeID = textureTypeID or self.textureTypePrefix
 
 	-- I guess one could query the texture dimensions here, but that seems excessively paranoid...
-	if textureTypeID == 4 or textureTypeID == 6 then -- Lava (Classic or Renewal)
+	if self:IsLavaTexture(textureTypeID) then
 		return 256
 	else
 		return 128
 	end
+end
+
+function AnimatedWaterPlane:IsLavaTexture(textureTypeID)
+	textureTypeID = textureTypeID or self.textureTypePrefix
+	return (textureTypeID == 4 or textureTypeID == 6)
 end
 
 function AnimatedWaterPlane:AlignWithGroundMesh(gnd)
