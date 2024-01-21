@@ -186,7 +186,7 @@ function Renderer:RenderNextFrame(deltaTime)
 		local renderPass = self:BeginRenderPass(commandEncoder, nextTextureView)
 		self:ResetScissorRectangle(renderPass)
 
-		self:UpdateScenewideUniformBuffer()
+		self:UpdateScenewideUniformBuffer(deltaTime)
 		RenderPassEncoder:SetBindGroup(renderPass, 0, self.cameraViewportUniform.bindGroup, 0, nil)
 
 		local meshesByMaterial = self:SortMeshesByMaterial(self.meshes)
@@ -620,7 +620,7 @@ function Renderer:CreateUniformBuffers()
 	}
 end
 
-function Renderer:UpdateScenewideUniformBuffer()
+function Renderer:UpdateScenewideUniformBuffer(deltaTime)
 	local aspectRatio = self.backingSurface:GetAspectRatio()
 	local viewportWidth, viewportHeight = self.backingSurface:GetViewportSize()
 
@@ -636,6 +636,7 @@ function Renderer:UpdateScenewideUniformBuffer()
 	perSceneUniformData.perspectiveProjection =
 		C_Camera.CreatePerspectiveProjection(perspective.fov, aspectRatio, perspective.nearZ, perspective.farZ)
 	perSceneUniformData.color = ffi.new("float[4]", { 1.0, 1.0, 1.0, 1.0 })
+	perSceneUniformData.deltaTime = deltaTime
 
 	Queue:WriteBuffer(
 		Device:GetQueue(self.wgpuDevice),

@@ -15,13 +15,14 @@ local UniformBuffer = {
 		// See https://gpuweb.github.io/gpuweb/wgsl/#address-space-layout-constraints
 		// Layouts must match the structs defined in the shaders
 		typedef struct PerSceneData {
-			Matrix4D view;
-			Matrix4D perspectiveProjection;
-			float color[4];
-			float viewportWidth;
-			float viewportHeight;
+			Matrix4D view; // 64
+			Matrix4D perspectiveProjection; // 128
+			float color[4]; // 144
+			float viewportWidth; // 148
+			float viewportHeight; // 152
+			float deltaTime; // 156
 			// Padding needs to be updated whenever the struct changes!
-			uint8_t padding[6];
+			float padding; // 160
 		} scenewide_uniform_t;
 		typedef struct PerMaterialData {
 			float materialOpacity; // 4
