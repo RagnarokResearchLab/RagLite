@@ -25,6 +25,11 @@ jobs:
     runs-on: windows-latest
 
     steps:
+      - name: Disable autocrlf # Messes up everything on Windows since fixtures are saved with \n
+        run: |
+          git config --global core.autocrlf false
+          git config --global core.eol lf
+
       - name: Check out Git repository
         uses: actions/checkout@v4
 
