@@ -1,5 +1,3 @@
-package.path = "?.lua"
-
 local NativeClient = require("Core.NativeClient.NativeClient")
 
 if arg[1] == "--etrace" then
