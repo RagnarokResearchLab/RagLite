@@ -575,7 +575,7 @@ describe("RagnarokGND", function()
 			-- Leaving this here because the snapshot likely needs to be recreated once lightmaps/normals are needed
 			-- C_FileSystem.WriteFile(path.join("Tests", "Fixtures", "Snapshots", "gnd-geometry.json"), jsonDump)
 			local snapshot = C_FileSystem.ReadFile(path.join("Tests", "Fixtures", "Snapshots", "gnd-geometry.json"))
-			assertEquals(json.parse(jsonDump), json.parse(snapshot)) -- Workaround for encoding issues in the CI :/
+			assertEquals(jsonDump, snapshot)
 		end)
 	end)
 end)
