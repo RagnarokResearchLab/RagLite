@@ -14,6 +14,8 @@ local Vector3D = require("Core.VectorMath.Vector3D")
 local RagnarokGRF = require("Core.FileFormats.RagnarokGRF")
 local RagnarokMap = require("Core.FileFormats.RagnarokMap")
 
+local PerformanceMetricsOverlay = require("Core.NativeClient.Interface.PerformanceMetricsOverlay")
+
 local tonumber = tonumber
 
 local NativeClient = {
@@ -39,6 +41,7 @@ function NativeClient:Start(loginSceneID)
 end
 
 function NativeClient:Stop()
+	self.fpsDisplayTicker:stop()
 	glfw.bindings.glfw_destroy_window(self.mainWindow)
 	glfw.bindings.glfw_terminate()
 end
@@ -84,11 +87,49 @@ function NativeClient:CreateMainWindow()
 end
 
 function NativeClient:StartRenderLoop()
+	PerformanceMetricsOverlay:StartMeasuring()
+
+	-- Should probably replace with RML data binding or a similar approach later?
+	self.fpsDisplayTicker = C_Timer.NewTicker(2500, function()
+		print(PerformanceMetricsOverlay:GetFormattedMetricsString())
+		PerformanceMetricsOverlay:StartMeasuring()
+	end)
+
 	while glfw.bindings.glfw_window_should_close(self.mainWindow) == 0 do
+		local libuvPollingStartTime = uv.hrtime()
 		uv.run("nowait")
+		local uvPollingTime = uv.hrtime() - libuvPollingStartTime
+
+		local glfwPollingStartTime = uv.hrtime()
 		glfw.bindings.glfw_poll_events()
+		local glfwPollingTime = uv.hrtime() - glfwPollingStartTime
+
+		local replayStartTime = uv.hrtime()
 		self:ProcessWindowEvents()
-		Renderer:RenderNextFrame()
+		local replayTime = uv.hrtime() - replayStartTime
+
+		local frameStartTime = uv.hrtime()
+		local cpuFrameTime, worldRenderTime, uiRenderTime, commandSubmissionTime = Renderer:RenderNextFrame()
+		local frameEndTime = uv.hrtime()
+
+		local frameTimeInMilliseconds = (frameEndTime - frameStartTime) / 10E5
+		local sample = {
+			Frame = frameTimeInMilliseconds,
+			Render = cpuFrameTime / 10E5,
+			World = worldRenderTime / 10E5,
+			UI = uiRenderTime / 10E5,
+			Submit = commandSubmissionTime / 10E5,
+			UV = uvPollingTime / 10E5,
+			GLFW = (glfwPollingTime + replayTime) / 10E5,
+			"Frame",
+			"Render",
+			"World",
+			"UI",
+			"Submit",
+			"UV",
+			"GLFW",
+		}
+		PerformanceMetricsOverlay:AddSample(sample)
 	end
 end
 

@@ -4,6 +4,7 @@ local ffi = require("ffi")
 local interop = require("interop")
 local oop = require("oop")
 local rml = require("rml")
+local uv = require("uv")
 local validation = require("validation")
 local webgpu = require("webgpu")
 
@@ -173,11 +174,14 @@ end
 
 function Renderer:RenderNextFrame()
 	etrace.clear()
+
+	-- Blocking call in VSYNC present mode, so timing this isn't particularly helpful
 	local nextTextureView = self.backingSurface:AcquireTextureView()
 
 	local commandEncoderDescriptor = new("WGPUCommandEncoderDescriptor")
 	local commandEncoder = Device:CreateCommandEncoder(self.wgpuDevice, commandEncoderDescriptor)
 
+	local worldRenderPassStartTime = uv.hrtime()
 	do
 		local renderPass = self:BeginRenderPass(commandEncoder, nextTextureView)
 		self:ResetScissorRectangle(renderPass)
@@ -197,7 +201,8 @@ function Renderer:RenderNextFrame()
 
 		RenderPassEncoder:End(renderPass)
 	end
-
+	local worldRenderPassTime = uv.hrtime() - worldRenderPassStartTime
+	local uiRenderPassStartTime = uv.hrtime()
 	do
 		local uiRenderPass = self:BeginUserInterfaceRenderPass(commandEncoder, nextTextureView)
 		RenderPassEncoder:SetBindGroup(uiRenderPass, 0, self.cameraViewportUniform.bindGroup, 0, nil)
@@ -212,9 +217,16 @@ function Renderer:RenderNextFrame()
 
 		RenderPassEncoder:End(uiRenderPass)
 	end
+	local uiRenderPassTime = uv.hrtime() - uiRenderPassStartTime
 
+	local commandSubmitStartTime = uv.hrtime()
 	self:SubmitCommandBuffer(commandEncoder)
+	local commandSubmissionTime = uv.hrtime() - commandSubmitStartTime
+
 	self.backingSurface:PresentNextFrame()
+
+	local totalFrameTime = worldRenderPassTime + uiRenderPassTime + commandSubmissionTime
+	return totalFrameTime, worldRenderPassTime, uiRenderPassTime, commandSubmissionTime
 end
 
 local rmlEventNames = {
