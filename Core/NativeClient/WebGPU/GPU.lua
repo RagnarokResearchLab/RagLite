@@ -73,7 +73,7 @@ function GPU:RequestLogicalDevice(adapter, options)
 				maxSampledTexturesPerShaderStage = 1, -- Diffuse texture (increase for lightmaps, later?)
 				maxSamplersPerShaderStage = 1, -- Diffuse texture sampler (increase for lightmaps, later?)
 				maxUniformBufferBindingSize = 65536, -- DEFAULT
-				maxBindingsPerBindGroup = 1, -- Max. allowed binding index
+				maxBindingsPerBindGroup = 2, -- Max. allowed binding index
 				maxDynamicUniformBuffersPerPipelineLayout = 1,
 				minStorageBufferOffsetAlignment = 32,
 				minUniformBufferOffsetAlignment = 32,

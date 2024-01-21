@@ -1,4 +1,6 @@
 local BasicTriangleDrawingPipeline = require("Core.NativeClient.WebGPU.Pipelines.BasicTriangleDrawingPipeline")
+local Device = require("Core.NativeClient.WebGPU.Device")
+local Queue = require("Core.NativeClient.WebGPU.Queue")
 local Texture = require("Core.NativeClient.WebGPU.Texture")
 local UniformBuffer = require("Core.NativeClient.WebGPU.UniformBuffer")
 
@@ -33,12 +35,23 @@ function InvisibleBaseMaterial:Compile(wgpuDevice, textureFormat)
 	self.textureFormat = textureFormat
 end
 
-function InvisibleBaseMaterial:AssignDiffuseTexture(texture)
-	self.diffuseTextureBindGroup = self:CreateDiffuseTextureBindGroup(texture)
+function InvisibleBaseMaterial:AssignDiffuseTexture(texture, wgpuTexture)
+	self.materialPropertiesUniform = UniformBuffer:CreateMaterialPropertiesUniform(self.wgpuDevice)
+	self.diffuseTextureBindGroup = self:CreateMaterialPropertiesBindGroup(texture, wgpuTexture)
 	self.diffuseTexture = texture
 end
 
-function InvisibleBaseMaterial:CreateDiffuseTextureBindGroup(texture, wgpuTexture)
+function InvisibleBaseMaterial:UpdateMaterialPropertiesUniform()
+	Queue:WriteBuffer(
+		Device:GetQueue(self.wgpuDevice),
+		self.materialPropertiesUniform.buffer,
+		0,
+		self.materialPropertiesUniform.data,
+		ffi.sizeof(self.materialPropertiesUniform.data)
+	)
+end
+
+function InvisibleBaseMaterial:CreateMaterialPropertiesBindGroup(texture, wgpuTexture)
 	local wgpuDevice = self.wgpuDevice
 	wgpuTexture = wgpuTexture or texture.wgpuTexture -- Ugly hack; needs streamlining (for UI textures)
 
@@ -57,7 +70,7 @@ function InvisibleBaseMaterial:CreateDiffuseTextureBindGroup(texture, wgpuTextur
 	local textureView = webgpu.bindings.wgpu_texture_create_view(wgpuTexture, textureViewDescriptor)
 
 	-- Assign texture view and sampler so that they can be bound to the pipeline (in the render loop)
-	local bindGroupEntries = new("WGPUBindGroupEntry[?]", 2, {
+	local bindGroupEntries = new("WGPUBindGroupEntry[?]", 3, {
 		new("WGPUBindGroupEntry", {
 			binding = 0,
 			textureView = textureView,
@@ -65,6 +78,12 @@ function InvisibleBaseMaterial:CreateDiffuseTextureBindGroup(texture, wgpuTextur
 		new("WGPUBindGroupEntry", {
 			binding = 1,
 			sampler = Texture.sharedTrilinearSampler,
+		}),
+		new("WGPUBindGroupEntry", {
+			binding = 2,
+			buffer = self.materialPropertiesUniform.buffer,
+			offset = 0,
+			size = ffi.sizeof("material_uniform_t"),
 		}),
 	})
 

@@ -302,7 +302,7 @@ end
 function Renderer:TEXTURE_GENERATION_EVENT(eventID, payload)
 	local wgpuTexture = ffi.cast("WGPUTexture", payload.texture_generation_details.texture)
 	-- Should allocate a bind group for the UserInterfaceMaterial instance here, not the texture itself?
-	local bindGroup = UserInterfaceMaterial:CreateDiffuseTextureBindGroup(self.wgpuDevice, wgpuTexture)
+	local bindGroup = UserInterfaceMaterial:CreateMaterialPropertiesBindGroup(self.wgpuDevice, wgpuTexture)
 
 	local wgpuTexturePointer = tonumber(ffi.cast("intptr_t", wgpuTexture))
 	self.userInterfaceTextureBindGroups[wgpuTexturePointer] = bindGroup
@@ -683,7 +683,7 @@ function Renderer:CreateDummyTexture()
 	local blankTexture = Renderer:CreateBlankTexture()
 	self.dummyTexture = blankTexture
 	-- Can't use this dummy texture for nonstandard materials? For now it seems OK, may need to fix later
-	self.dummyTexture.wgpuBindGroup = UnlitMeshMaterial:CreateDiffuseTextureBindGroup(self.dummyTexture)
+	self.dummyTexture.wgpuBindGroup = UnlitMeshMaterial:CreateMaterialPropertiesBindGroup(self.dummyTexture)
 	Renderer:UploadTextureImage(blankTexture)
 end
 
