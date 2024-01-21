@@ -1,6 +1,4 @@
 local Color = require("Core.NativeClient.DebugDraw.Color")
-local BasicTriangleDrawingPipeline = require("Core.NativeClient.WebGPU.Pipelines.BasicTriangleDrawingPipeline")
-local UniformBuffer = require("Core.NativeClient.WebGPU.UniformBuffer")
 
 local bit = require("bit")
 local ffi = require("ffi")
@@ -61,13 +59,11 @@ function Texture:Construct(wgpuDevice, rgbaImageBytes, textureWidthInPixels, tex
 	})
 
 	local textureHandle = webgpu.bindings.wgpu_device_create_texture(wgpuDevice, textureDescriptor)
-	local bindGroup = self:CreateBindGroupForPipeline(textureHandle, BasicTriangleDrawingPipeline)
 
 	local instance = {
 		wgpuDevice = wgpuDevice,
 		wgpuTextureDescriptor = textureDescriptor,
 		wgpuTexture = textureHandle,
-		wgpuBindGroup = bindGroup,
 		width = textureWidthInPixels,
 		height = textureHeightInPixels,
 		rgbaImageBytes = rgbaImageBytes,
@@ -76,49 +72,6 @@ function Texture:Construct(wgpuDevice, rgbaImageBytes, textureWidthInPixels, tex
 	setmetatable(instance, self)
 
 	return instance
-end
-
-function Texture:CreateBindGroupForPipeline(textureHandle, renderPipeline)
-	local wgpuDevice = renderPipeline.wgpuDevice
-
-	printf(
-		"[Texture] Creating new bind group for texture %p and pipeline %s",
-		textureHandle,
-		renderPipeline.displayName
-	)
-
-	-- Create readonly view that should be accessed by a sampler
-	local textureViewDescriptor = new("WGPUTextureViewDescriptor", {
-		aspect = ffi.C.WGPUTextureAspect_All,
-		baseArrayLayer = 0,
-		arrayLayerCount = 1,
-		baseMipLevel = 0,
-		mipLevelCount = 1,
-		dimension = ffi.C.WGPUTextureViewDimension_2D,
-		format = Texture.DEFAULT_TEXTURE_FORMAT,
-	})
-	local textureView = webgpu.bindings.wgpu_texture_create_view(textureHandle, textureViewDescriptor)
-
-	-- Assign texture view and sampler so that they can be bound to the pipeline (in the render loop)
-	local bindGroupEntries = new("WGPUBindGroupEntry[?]", 2, {
-		new("WGPUBindGroupEntry", {
-			binding = 0,
-			textureView = textureView,
-		}),
-		new("WGPUBindGroupEntry", {
-			binding = 1,
-			sampler = self.sharedTrilinearSampler,
-		}),
-	})
-
-	local textureBindGroupDescriptor = new("WGPUBindGroupDescriptor")
-	textureBindGroupDescriptor.layout = UniformBuffer.materialBindGroupLayout
-
-	local wgpuMaterialBindGroupLayoutDescriptor = UniformBuffer.materialBindGroupLayoutDescriptor
-	textureBindGroupDescriptor.entryCount = wgpuMaterialBindGroupLayoutDescriptor.entryCount
-	textureBindGroupDescriptor.entries = bindGroupEntries
-
-	return webgpu.bindings.wgpu_device_create_bind_group(wgpuDevice, textureBindGroupDescriptor)
 end
 
 function Texture:CreateSharedTrilinearSampler(wgpuDevice)

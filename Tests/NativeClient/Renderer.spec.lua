@@ -30,7 +30,7 @@ Renderer:CompileMaterials(Texture.DEFAULT_TEXTURE_FORMAT)
 -- The renderer wasn't designed to be testable, so a few hacks are currently required...
 Renderer.wgpuDevice = ffi.new("WGPUDevice")
 describe("Renderer", function()
-	describe("CreateTextureImage", function()
+	describe("CreateTextureFromImage", function()
 		before(function()
 			etrace.clear() -- Discard submitted textures in between tests
 		end)
@@ -38,7 +38,7 @@ describe("Renderer", function()
 		it("should upload the image data to the GPU", function()
 			local rgbaImageBytes, width, height = string.rep("\255\0\0\255", 256 * 256), 256, 256
 
-			Renderer:CreateTextureImage(rgbaImageBytes, width, height)
+			Renderer:CreateTextureFromImage(rgbaImageBytes, width, height)
 
 			local events = etrace.filter("GPU_TEXTURE_WRITE")
 			local payload = events[1].payload
@@ -115,7 +115,7 @@ describe("Renderer", function()
 			local function assertRendererDiscardsTransparentPixelsOnUpload(rgbaImageBytes, expectedResult)
 				etrace.clear()
 
-				Renderer:CreateTextureImage(rgbaImageBytes, IMAGE_WIDTH, IMAGE_HEIGHT)
+				Renderer:CreateTextureFromImage(rgbaImageBytes, IMAGE_WIDTH, IMAGE_HEIGHT)
 				local events = etrace.filter("GPU_TEXTURE_WRITE")
 				local payload = events[1].payload
 
