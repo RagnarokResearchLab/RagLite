@@ -172,7 +172,7 @@ function Renderer:SortMeshesByMaterial(meshes)
 	return meshesSortedByMaterial
 end
 
-function Renderer:RenderNextFrame()
+function Renderer:RenderNextFrame(deltaTime)
 	etrace.clear()
 
 	-- Blocking call in VSYNC present mode, so timing this isn't particularly helpful
