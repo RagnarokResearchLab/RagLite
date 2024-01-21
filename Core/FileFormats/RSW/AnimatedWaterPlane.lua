@@ -1,3 +1,4 @@
+local KeyframeAnimation = require("Core.NativeClient.KeyframeAnimation")
 local Mesh = require("Core.NativeClient.WebGPU.Mesh")
 local WaterSurfaceMaterial = require("Core.NativeClient.WebGPU.Materials.WaterSurfaceMaterial")
 
@@ -32,6 +33,10 @@ function AnimatedWaterPlane:Construct(tileSlotU, tileSlotV, surfaceProperties)
 		waveformPhaseShiftInDegreesPerFrame = surfaceProperties.waveformPhaseShiftInDegreesPerFrame or 2,
 		waveformFrequencyInDegrees = surfaceProperties.waveformFrequencyInDegrees or 50,
 		textureDisplayDurationInFrames = surfaceProperties.textureDisplayDurationInFrames or 3,
+		cyclingTextureAnimation = KeyframeAnimation(
+			name .. "CyclingTextureAnimation",
+			AnimatedWaterPlane.TEXTURE_ANIMATION_SPEED_IN_FRAMES_PER_SECOND
+		),
 	}
 
 	-- These estimates need refinement (see https://github.com/RagnarokResearchLab/RagLite/issues/281)

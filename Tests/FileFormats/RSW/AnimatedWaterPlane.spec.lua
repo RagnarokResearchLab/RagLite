@@ -1,4 +1,5 @@
 local AnimatedWaterPlane = require("Core.FileFormats.RSW.AnimatedWaterPlane")
+local KeyframeAnimation = require("Core.NativeClient.KeyframeAnimation")
 local RagnarokGND = require("Core.FileFormats.RagnarokGND")
 local WaterSurfaceMaterial = require("Core.NativeClient.WebGPU.Materials.WaterSurfaceMaterial")
 
@@ -315,6 +316,18 @@ describe("AnimatedWaterPlane", function()
 				textureTypePrefix = 6,
 			})
 			assertEquals(plane.surfaceGeometry.material.opacity, 1)
+		end)
+
+		it("should create a keyframed animation for the texture type ID", function()
+			local plane = AnimatedWaterPlane(2, 3)
+			assertEquals(plane.cyclingTextureAnimation.displayName, "AnimatedWaterPlane2x3CyclingTextureAnimation")
+			assertFalse(plane.cyclingTextureAnimation.isPlaying)
+			assertEquals(plane.cyclingTextureAnimation.currentFrame, 0)
+			assertEquals(
+				plane.cyclingTextureAnimation.framesPerSecond,
+				AnimatedWaterPlane.TEXTURE_ANIMATION_SPEED_IN_FRAMES_PER_SECOND
+			)
+			assertTrue(instanceof(plane.cyclingTextureAnimation, KeyframeAnimation))
 		end)
 	end)
 end)
