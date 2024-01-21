@@ -131,6 +131,12 @@ function RagnarokMap:LoadWaterSurface(mapID)
 				waterPlane:GenerateWaterVertices(gnd, gridU, gridV)
 			end
 		end
+
+		if waterPlane:IsLavaTexture() then
+			waterPlane.surfaceGeometry.material.diffuseColor.red = rsw.ambientLight.diffuseColor.red
+			waterPlane.surfaceGeometry.material.diffuseColor.green = rsw.ambientLight.diffuseColor.green
+			waterPlane.surfaceGeometry.material.diffuseColor.blue = rsw.ambientLight.diffuseColor.blue
+		end
 	end
 
 	local endTime = uv.hrtime()

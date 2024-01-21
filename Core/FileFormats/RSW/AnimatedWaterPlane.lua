@@ -71,6 +71,7 @@ function AnimatedWaterPlane:GetExpectedTextureDimensions(textureTypeID)
 end
 
 function AnimatedWaterPlane:IsLavaTexture(textureTypeID)
+	textureTypeID = textureTypeID or self.textureTypePrefix
 	return (textureTypeID == 4 or textureTypeID == 6)
 end
 
