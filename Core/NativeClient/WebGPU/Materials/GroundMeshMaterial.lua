@@ -3,6 +3,7 @@ local InvisibleBaseMaterial = require("Core.NativeClient.WebGPU.Materials.Invisi
 
 local GroundMeshMaterial = {
 	pipeline = BasicTriangleDrawingPipeline,
+	opacity = 1,
 }
 
 class("GroundMeshMaterial", GroundMeshMaterial)

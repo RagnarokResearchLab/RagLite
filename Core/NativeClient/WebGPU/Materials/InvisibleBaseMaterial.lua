@@ -9,6 +9,12 @@ local ffi = require("ffi")
 local webgpu = require("webgpu")
 
 local InvisibleBaseMaterial = {
+	diffuseColor = {
+		red = 1,
+		green = 1,
+		blue = 1,
+	},
+	opacity = 0.05, -- Not actually zero to avoid a debugging nightmare if this is accidentally used
 	-- No mesh is expected to actually use the material, but all others should default to this pipeline
 	pipeline = BasicTriangleDrawingPipeline,
 }
@@ -42,6 +48,12 @@ function InvisibleBaseMaterial:AssignDiffuseTexture(texture, wgpuTexture)
 end
 
 function InvisibleBaseMaterial:UpdateMaterialPropertiesUniform()
+	-- Should only send if the data has actually changed? (optimize later)
+	self.materialPropertiesUniform.data.diffuseRed = self.diffuseColor.red
+	self.materialPropertiesUniform.data.diffuseGreen = self.diffuseColor.green
+	self.materialPropertiesUniform.data.diffuseBlue = self.diffuseColor.blue
+	self.materialPropertiesUniform.data.materialOpacity = self.opacity
+
 	Queue:WriteBuffer(
 		Device:GetQueue(self.wgpuDevice),
 		self.materialPropertiesUniform.buffer,

@@ -437,8 +437,12 @@ function Renderer:DrawWidget(renderPass, compiledWidgetGeometry, offsetU, offset
 		local wgpuTexture = ffi.cast("WGPUTexture", compiledWidgetGeometry.texture)
 		local wgpuTexturePointer = tonumber(ffi.cast("intptr_t", wgpuTexture))
 		local materialInstance = self.userInterfaceTexturesToMaterial[wgpuTexturePointer]
-		local textureBindGroup = self.userInterfaceTexturesToMaterial[wgpuTexturePointer].diffuseTextureBindGroup
+		local textureBindGroup = materialInstance.diffuseTextureBindGroup
 		assert(textureBindGroup, "No relevant bind group found for RML texture: " .. tostring(wgpuTexture))
+
+		-- This seems to cause issues if multiple meshes use the same texture (=material instance) - fix later
+		-- The material data is only written once per pass, so a dynamic uniform buffer would have to be used
+		materialInstance:UpdateMaterialPropertiesUniform()
 		RenderPassEncoder:SetBindGroup(renderPass, 1, textureBindGroup, 0, nil)
 	end
 
