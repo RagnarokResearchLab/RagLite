@@ -297,5 +297,24 @@ describe("AnimatedWaterPlane", function()
 			local plane = AnimatedWaterPlane()
 			assertTrue(instanceof(plane.surfaceGeometry.material, WaterSurfaceMaterial))
 		end)
+
+		it("should set the material opacity to 56% for regular water surfaces", function()
+			local plane = AnimatedWaterPlane()
+			assertEquals(plane.surfaceGeometry.material.opacity, 144 / 255)
+		end)
+
+		it("should set the material opacity to 100% for Classic lava surfaces", function()
+			local plane = AnimatedWaterPlane(1, 1, {
+				textureTypePrefix = 4,
+			})
+			assertEquals(plane.surfaceGeometry.material.opacity, 1)
+		end)
+
+		it("should set the material opacity to 100% for Renewal lava surfaces", function()
+			local plane = AnimatedWaterPlane(1, 1, {
+				textureTypePrefix = 6,
+			})
+			assertEquals(plane.surfaceGeometry.material.opacity, 1)
+		end)
 	end)
 end)
