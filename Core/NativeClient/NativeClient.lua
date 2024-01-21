@@ -109,7 +109,9 @@ function NativeClient:StartRenderLoop()
 		local replayTime = uv.hrtime() - replayStartTime
 
 		local frameStartTime = uv.hrtime()
-		local cpuFrameTime, worldRenderTime, uiRenderTime, commandSubmissionTime = Renderer:RenderNextFrame()
+		local deltaTime = self.lastFrameStartTime and (frameStartTime - self.lastFrameStartTime) or 0
+		self.lastFrameStartTime = frameStartTime
+		local cpuFrameTime, worldRenderTime, uiRenderTime, commandSubmissionTime = Renderer:RenderNextFrame(deltaTime)
 		local frameEndTime = uv.hrtime()
 
 		local frameTimeInMilliseconds = (frameEndTime - frameStartTime) / 10E5
