@@ -1,5 +1,3 @@
-package.path = "?.lua"
-
 require("Core.RuntimeExtensions.C_Runtime")
 
 local specFiles = {
