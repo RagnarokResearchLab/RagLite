@@ -40,7 +40,7 @@ local Color = require("Core.NativeClient.DebugDraw.Color")
 
 local Renderer = {
 	clearColorRGBA = { Color.GREY.red, Color.GREY.green, Color.GREY.blue, 0 },
-	userInterfaceTextureBindGroups = {},
+	userInterfaceTexturesToMaterial = {},
 	meshes = {},
 	DEBUG_DISCARDED_BACKGROUND_PIXELS = false, -- This is really slow (disk I/O); don't enable unless necessary
 	numWidgetTransformsUsedThisFrame = 0,
@@ -301,11 +301,11 @@ end
 
 function Renderer:TEXTURE_GENERATION_EVENT(eventID, payload)
 	local wgpuTexture = ffi.cast("WGPUTexture", payload.texture_generation_details.texture)
-	-- Should allocate a bind group for the UserInterfaceMaterial instance here, not the texture itself?
-	local bindGroup = UserInterfaceMaterial:CreateMaterialPropertiesBindGroup(self.wgpuDevice, wgpuTexture)
-
 	local wgpuTexturePointer = tonumber(ffi.cast("intptr_t", wgpuTexture))
-	self.userInterfaceTextureBindGroups[wgpuTexturePointer] = bindGroup
+	local materialInstance =
+		UserInterfaceMaterial("GeneratedUserInterfaceTextureMaterial" .. format("%p", wgpuTexturePointer))
+	materialInstance:AssignDiffuseTexture(nil, wgpuTexture) -- Hacky, fix later (streamline Texture constructors)
+	self.userInterfaceTexturesToMaterial[wgpuTexturePointer] = materialInstance
 end
 
 function Renderer:TEXTURE_RELEASE_EVENT(eventID, payload)
@@ -377,9 +377,11 @@ function Renderer:DrawMesh(renderPass, mesh)
 	RenderPassEncoder:SetIndexBuffer(renderPass, mesh.indexBuffer, ffi.C.WGPUIndexFormat_Uint32, 0, indexBufferSize)
 
 	if not rawget(mesh.material, "diffuseTexture") then
-		RenderPassEncoder:SetBindGroup(renderPass, 1, self.dummyTexture.wgpuBindGroup, 0, nil)
+		RenderPassEncoder:SetBindGroup(renderPass, 1, self.dummyTextureMaterial.diffuseTextureBindGroup, 0, nil)
+		self.dummyTextureMaterial:UpdateMaterialPropertiesUniform() -- Wasteful, should only do it once?
 	else
 		RenderPassEncoder:SetBindGroup(renderPass, 1, mesh.material.diffuseTextureBindGroup, 0, nil)
+		mesh.material:UpdateMaterialPropertiesUniform()
 	end
 
 	local instanceCount = 1
@@ -430,11 +432,12 @@ function Renderer:DrawWidget(renderPass, compiledWidgetGeometry, offsetU, offset
 	)
 
 	if compiledWidgetGeometry.texture == ffi.NULL then
-		RenderPassEncoder:SetBindGroup(renderPass, 1, self.dummyTexture.wgpuBindGroup, 0, nil)
+		RenderPassEncoder:SetBindGroup(renderPass, 1, self.dummyTextureMaterial.diffuseTextureBindGroup, 0, nil)
 	else
 		local wgpuTexture = ffi.cast("WGPUTexture", compiledWidgetGeometry.texture)
 		local wgpuTexturePointer = tonumber(ffi.cast("intptr_t", wgpuTexture))
-		local textureBindGroup = self.userInterfaceTextureBindGroups[wgpuTexturePointer]
+		local materialInstance = self.userInterfaceTexturesToMaterial[wgpuTexturePointer]
+		local textureBindGroup = self.userInterfaceTexturesToMaterial[wgpuTexturePointer].diffuseTextureBindGroup
 		assert(textureBindGroup, "No relevant bind group found for RML texture: " .. tostring(wgpuTexture))
 		RenderPassEncoder:SetBindGroup(renderPass, 1, textureBindGroup, 0, nil)
 	end
@@ -681,10 +684,12 @@ end
 function Renderer:CreateDummyTexture()
 	-- 1x1 white so the pipeline layout doesn't need to be modified (ugly hack, but it's probably the simplest approach)
 	local blankTexture = Renderer:CreateBlankTexture()
-	self.dummyTexture = blankTexture
 	-- Can't use this dummy texture for nonstandard materials? For now it seems OK, may need to fix later
-	self.dummyTexture.wgpuBindGroup = UnlitMeshMaterial:CreateMaterialPropertiesBindGroup(self.dummyTexture)
+	local dummyTextureMaterial = UnlitMeshMaterial("DummyTextureMaterial")
+	dummyTextureMaterial:AssignDiffuseTexture(blankTexture)
 	Renderer:UploadTextureImage(blankTexture)
+
+	self.dummyTextureMaterial = dummyTextureMaterial
 end
 
 -- Should probably move this to the runtime for efficiency (needs benchmarking)
