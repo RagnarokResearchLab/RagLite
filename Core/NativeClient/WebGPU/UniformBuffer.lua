@@ -23,6 +23,13 @@ local UniformBuffer = {
 			// Padding needs to be updated whenever the struct changes!
 			uint8_t padding[6];
 		} scenewide_uniform_t;
+		typedef struct PerMaterialData {
+			float materialOpacity; // 4
+			float diffuseRed; // 8
+			float diffuseGreen; // 12
+			float diffuseBlue; // 16
+			// Padding needs to be updated whenever the struct changes!
+		} material_uniform_t;
 		typedef struct PerMeshData {
 			float translation[2]; // 8
 			float padding[6]; // 32
@@ -87,8 +94,8 @@ end
 
 function UniformBuffer:CreateMaterialBindGroupLayouts(wgpuDevice)
 	local bindGroupLayoutDescriptor = new("WGPUBindGroupLayoutDescriptor", {
-		entryCount = 2,
-		entries = new("WGPUBindGroupLayoutEntry[?]", 2, {
+		entryCount = 3,
+		entries = new("WGPUBindGroupLayoutEntry[?]", 3, {
 			new("WGPUBindGroupLayoutEntry", {
 				binding = 0,
 				visibility = ffi.C.WGPUShaderStage_Fragment,
@@ -104,6 +111,14 @@ function UniformBuffer:CreateMaterialBindGroupLayouts(wgpuDevice)
 					type = ffi.C.WGPUSamplerBindingType_Filtering,
 				},
 			}),
+			new("WGPUBindGroupLayoutEntry", {
+				binding = 2,
+				visibility = UniformBuffer.DEFAULT_SHADER_STAGE_VISIBILITY_FLAGS,
+				buffer = {
+					type = ffi.C.WGPUBufferBindingType_Uniform,
+					minBindingSize = sizeof("material_uniform_t"),
+				},
+			}),
 		}),
 	})
 
@@ -115,6 +130,24 @@ function UniformBuffer:CreateMaterialBindGroupLayouts(wgpuDevice)
 	self.materialBindGroupLayoutDescriptor = bindGroupLayoutDescriptor -- Need to keep it around for the entryCount
 end
 
+function UniformBuffer:CreateMaterialPropertiesUniform(wgpuDevice) -- TODO test that one is created per material type
+	local materialPropertiesUniformBuffer = Device:CreateBuffer(
+		wgpuDevice,
+		ffi.new("WGPUBufferDescriptor", {
+			size = ffi.sizeof("material_uniform_t"),
+			usage = bit.bor(ffi.C.WGPUBufferUsage_CopyDst, ffi.C.WGPUBufferUsage_Uniform),
+		})
+	)
+	local instance = {
+		buffer = materialPropertiesUniformBuffer,
+		data = ffi.new("material_uniform_t"),
+	}
+
+	setmetatable(instance, self)
+
+	return instance
+end
+
 UniformBuffer.__call = UniformBuffer.Construct
 UniformBuffer.__index = UniformBuffer
 setmetatable(UniformBuffer, UniformBuffer)
@@ -123,6 +156,10 @@ ffi.cdef(UniformBuffer.cdefs)
 
 assert(
 	ffi.sizeof("scenewide_uniform_t") % 16 == 0,
+	"Structs in uniform address space must be aligned to a 16 byte boundary (as per the WebGPU specification)"
+)
+assert(
+	ffi.sizeof("material_uniform_t") % 16 == 0,
 	"Structs in uniform address space must be aligned to a 16 byte boundary (as per the WebGPU specification)"
 )
 assert(

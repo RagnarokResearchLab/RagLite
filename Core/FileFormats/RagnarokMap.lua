@@ -62,7 +62,7 @@ function RagnarokMap:LoadTerrainGeometry(mapID)
 			width,
 			height
 		)
-		groundMeshSection.diffuseTexture = {
+		groundMeshSection.diffuseTextureImage = {
 			rgbaImageBytes = rgbaImageBytes,
 			width = width,
 			height = height,
@@ -107,7 +107,7 @@ function RagnarokMap:LoadWaterSurface(mapID)
 			width,
 			height
 		)
-		waterPlane.surfaceGeometry.diffuseTexture = {
+		waterPlane.surfaceGeometry.diffuseTextureImage = {
 			rgbaImageBytes = rgbaImageBytes,
 			width = width,
 			height = height,

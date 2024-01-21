@@ -23,10 +23,19 @@ struct PerSceneData {
 var<uniform> uPerSceneData: PerSceneData;
 
 // MaterialBindGroup: Updated once per unique mesh material
+struct PerMaterialData {
+	materialOpacity: f32,
+	diffuseRed: f32,
+	diffuseGreen: f32,
+	diffuseBlue: f32,
+};
+
 @group(1) @binding(0)
 var diffuseTexture: texture_2d<f32>;
 @group(1) @binding(1)
 var diffuseTextureSampler: sampler;
+@group(1) @binding(2)
+var<uniform> uMaterialInstanceData: PerMaterialData;
 
 // InstanceBindGroup: Updated once per mesh instance
 struct WidgetTransform {
@@ -70,7 +79,9 @@ fn vs_main(in: VertexInput) -> VertexOutput {
 fn fs_main(in: VertexOutput) -> @location(0) vec4f {
 	let textureCoords = in.diffuseTextureCoords;
 	let diffuseTextureColor = textureSample(diffuseTexture, diffuseTextureSampler, textureCoords);
-	let finalColor = in.color * diffuseTextureColor;
+	// Should use material properties here, but first the handling of material instances needs fixing
+	// Currently the same buffer is used when RML assigns the same texture, which won't work
+	let finalColor = in.color * diffuseTextureColor * vec4f(1.0, 1.0, 1.0, 1.0);
 
 	// Gamma-correction:
 	// WebGPU assumes that the colors output by the fragment shader are given in linear space

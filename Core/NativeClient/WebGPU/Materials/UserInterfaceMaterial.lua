@@ -3,6 +3,7 @@ local InvisibleBaseMaterial = require("Core.NativeClient.WebGPU.Materials.Invisi
 
 local UserInterfaceMaterial = {
 	pipeline = WidgetDrawingPipeline,
+	opacity = 1,
 }
 
 class("UserInterfaceMaterial", UserInterfaceMaterial)

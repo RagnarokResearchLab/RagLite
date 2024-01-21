@@ -40,7 +40,7 @@ local Color = require("Core.NativeClient.DebugDraw.Color")
 
 local Renderer = {
 	clearColorRGBA = { Color.GREY.red, Color.GREY.green, Color.GREY.blue, 0 },
-	userInterfaceTextureBindGroups = {},
+	userInterfaceTexturesToMaterial = {},
 	meshes = {},
 	DEBUG_DISCARDED_BACKGROUND_PIXELS = false, -- This is really slow (disk I/O); don't enable unless necessary
 	numWidgetTransformsUsedThisFrame = 0,
@@ -301,10 +301,11 @@ end
 
 function Renderer:TEXTURE_GENERATION_EVENT(eventID, payload)
 	local wgpuTexture = ffi.cast("WGPUTexture", payload.texture_generation_details.texture)
-	local bindGroup = Texture:CreateBindGroupForPipeline(wgpuTexture, WidgetDrawingPipeline)
-
 	local wgpuTexturePointer = tonumber(ffi.cast("intptr_t", wgpuTexture))
-	self.userInterfaceTextureBindGroups[wgpuTexturePointer] = bindGroup
+	local materialInstance =
+		UserInterfaceMaterial("GeneratedUserInterfaceTextureMaterial" .. format("%p", wgpuTexturePointer))
+	materialInstance:AssignDiffuseTexture(nil, wgpuTexture) -- Hacky, fix later (streamline Texture constructors)
+	self.userInterfaceTexturesToMaterial[wgpuTexturePointer] = materialInstance
 end
 
 function Renderer:TEXTURE_RELEASE_EVENT(eventID, payload)
@@ -375,12 +376,12 @@ function Renderer:DrawMesh(renderPass, mesh)
 	RenderPassEncoder:SetVertexBuffer(renderPass, 2, mesh.diffuseTexCoordsBuffer, 0, diffuseTexCoordsBufferSize)
 	RenderPassEncoder:SetIndexBuffer(renderPass, mesh.indexBuffer, ffi.C.WGPUIndexFormat_Uint32, 0, indexBufferSize)
 
-	-- Needs streamlining (later)
-	if not rawget(mesh, "diffuseTexture") then
-		-- The pipeline layout is kept identical (for simplicity's sake... ironic, considering how complicated this already is)
-		RenderPassEncoder:SetBindGroup(renderPass, 1, self.dummyTexture.wgpuBindGroup, 0, nil)
+	if not rawget(mesh.material, "diffuseTexture") then
+		RenderPassEncoder:SetBindGroup(renderPass, 1, self.dummyTextureMaterial.diffuseTextureBindGroup, 0, nil)
+		self.dummyTextureMaterial:UpdateMaterialPropertiesUniform() -- Wasteful, should only do it once?
 	else
-		RenderPassEncoder:SetBindGroup(renderPass, 1, mesh.diffuseTexture.wgpuBindGroup, 0, nil)
+		RenderPassEncoder:SetBindGroup(renderPass, 1, mesh.material.diffuseTextureBindGroup, 0, nil)
+		mesh.material:UpdateMaterialPropertiesUniform()
 	end
 
 	local instanceCount = 1
@@ -431,12 +432,17 @@ function Renderer:DrawWidget(renderPass, compiledWidgetGeometry, offsetU, offset
 	)
 
 	if compiledWidgetGeometry.texture == ffi.NULL then
-		RenderPassEncoder:SetBindGroup(renderPass, 1, self.dummyTexture.wgpuBindGroup, 0, nil)
+		RenderPassEncoder:SetBindGroup(renderPass, 1, self.dummyTextureMaterial.diffuseTextureBindGroup, 0, nil)
 	else
 		local wgpuTexture = ffi.cast("WGPUTexture", compiledWidgetGeometry.texture)
 		local wgpuTexturePointer = tonumber(ffi.cast("intptr_t", wgpuTexture))
-		local textureBindGroup = self.userInterfaceTextureBindGroups[wgpuTexturePointer]
+		local materialInstance = self.userInterfaceTexturesToMaterial[wgpuTexturePointer]
+		local textureBindGroup = materialInstance.diffuseTextureBindGroup
 		assert(textureBindGroup, "No relevant bind group found for RML texture: " .. tostring(wgpuTexture))
+
+		-- This seems to cause issues if multiple meshes use the same texture (=material instance) - fix later
+		-- The material data is only written once per pass, so a dynamic uniform buffer would have to be used
+		materialInstance:UpdateMaterialPropertiesUniform()
 		RenderPassEncoder:SetBindGroup(renderPass, 1, textureBindGroup, 0, nil)
 	end
 
@@ -682,8 +688,12 @@ end
 function Renderer:CreateDummyTexture()
 	-- 1x1 white so the pipeline layout doesn't need to be modified (ugly hack, but it's probably the simplest approach)
 	local blankTexture = Renderer:CreateBlankTexture()
-	self.dummyTexture = blankTexture -- Should probably use materials here?
+	-- Can't use this dummy texture for nonstandard materials? For now it seems OK, may need to fix later
+	local dummyTextureMaterial = UnlitMeshMaterial("DummyTextureMaterial")
+	dummyTextureMaterial:AssignDiffuseTexture(blankTexture)
 	Renderer:UploadTextureImage(blankTexture)
+
+	self.dummyTextureMaterial = dummyTextureMaterial
 end
 
 -- Should probably move this to the runtime for efficiency (needs benchmarking)
@@ -725,7 +735,7 @@ local function discardTransparentPixels(rgbaImageBytes, width, height, discardRa
 	return rgbaImageBuffer:tostring()
 end
 
-function Renderer:CreateTextureImage(rgbaImageBytes, width, height)
+function Renderer:CreateTextureFromImage(rgbaImageBytes, width, height)
 	local inclusiveTransparentPixelRanges = {
 		red = { from = 254, to = 255 },
 		green = { from = 0, to = 3 },
@@ -747,16 +757,15 @@ function Renderer:LoadSceneObjects(scene)
 	for index, mesh in ipairs(scene.meshes) do
 		self:UploadMeshGeometry(mesh)
 
-		-- Needs streamlining (later)
-		if rawget(mesh, "diffuseTexture") then
+		if rawget(mesh, "diffuseTextureImage") then
 			self:DebugDumpTextures(mesh, format("diffuse-texture-%s-%03d-in.png", scene.mapID, index))
-			mesh.diffuseTexture = self:CreateTextureImage(
-				mesh.diffuseTexture.rgbaImageBytes,
-				mesh.diffuseTexture.width,
-				mesh.diffuseTexture.height
+			local wgpuTextureHandle = self:CreateTextureFromImage(
+				mesh.diffuseTextureImage.rgbaImageBytes,
+				mesh.diffuseTextureImage.width,
+				mesh.diffuseTextureImage.height
 			)
 			self:DebugDumpTextures(mesh, format("diffuse-texture-%s-%03d-out.png", scene.mapID, index))
-			self:UploadTextureImage(mesh.diffuseTexture)
+			mesh.material:AssignDiffuseTexture(wgpuTextureHandle)
 		end
 	end
 end
@@ -770,14 +779,17 @@ function Renderer:DebugDumpTextures(mesh, fileName)
 		return
 	end
 
-	local diffuseTexture = mesh.diffuseTexture
-	if not diffuseTexture then
+	local diffuseTextureImage = mesh.diffuseTextureImage
+	if not diffuseTextureImage then
 		return
 	end
 
 	C_FileSystem.MakeDirectoryTree("Exports")
-	local pngBytes =
-		C_ImageProcessing.EncodePNG(diffuseTexture.rgbaImageBytes, diffuseTexture.width, diffuseTexture.height)
+	local pngBytes = C_ImageProcessing.EncodePNG(
+		diffuseTextureImage.rgbaImageBytes,
+		diffuseTextureImage.width,
+		diffuseTextureImage.height
+	)
 	C_FileSystem.WriteFile(path.join("Exports", fileName), pngBytes)
 end
 

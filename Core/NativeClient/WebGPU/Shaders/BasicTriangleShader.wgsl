@@ -22,8 +22,17 @@ struct PerSceneData {
 @group(0) @binding(0) var<uniform> uPerSceneData: PerSceneData;
 
 // MaterialBindGroup: Updated once per unique mesh material
+struct PerMaterialData {
+	materialOpacity: f32,
+	diffuseRed: f32,
+	diffuseGreen: f32,
+	diffuseBlue: f32,
+};
+
 @group(1) @binding(0) var diffuseTexture: texture_2d<f32>;
 @group(1) @binding(1) var diffuseTextureSampler: sampler;
+@group(1) @binding(2)
+var<uniform> uMaterialInstanceData: PerMaterialData;
 
 // InstanceBindGroup: Updated once per mesh instance
 // NYI (only for RML UI widgets)
@@ -100,11 +109,12 @@ fn vs_main(in: VertexInput) -> VertexOutput {
 fn fs_main(in: VertexOutput) -> @location(0) vec4f {
 	let textureCoords = in.diffuseTextureCoords;
 	let diffuseTextureColor = textureSample(diffuseTexture, diffuseTextureSampler, textureCoords);
-	let finalColor = in.color * diffuseTextureColor.rgb * uPerSceneData.color.rgb;
+	let materialColor = vec4f(uMaterialInstanceData.diffuseRed, uMaterialInstanceData.diffuseGreen, uMaterialInstanceData.diffuseBlue, uMaterialInstanceData.materialOpacity);
+	let finalColor = in.color * diffuseTextureColor.rgb * uPerSceneData.color.rgb * materialColor.rgb;
 
 	// Gamma-correction:
 	// WebGPU assumes that the colors output by the fragment shader are given in linear space
 	// When setting the surface format to BGRA8UnormSrgb it performs a linear to sRGB conversion
 	let gammaCorrectedColor = pow(finalColor.rgb, vec3f(2.2));
-	return vec4f(gammaCorrectedColor, uPerSceneData.color.a * diffuseTextureColor.a + DEBUG_ALPHA_OFFSET);
+	return vec4f(gammaCorrectedColor, uPerSceneData.color.a * diffuseTextureColor.a * materialColor.a + DEBUG_ALPHA_OFFSET);
 }

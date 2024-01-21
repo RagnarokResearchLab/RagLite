@@ -1,8 +1,9 @@
-local BasicTriangleDrawingPipeline = require("Core.NativeClient.WebGPU.Pipelines.BasicTriangleDrawingPipeline")
+local WaterPlaneDrawingPipeline = require("Core.NativeClient.WebGPU.Pipelines.WaterPlaneDrawingPipeline")
 local InvisibleBaseMaterial = require("Core.NativeClient.WebGPU.Materials.InvisibleBaseMaterial")
 
 local WaterSurfaceMaterial = {
-	pipeline = BasicTriangleDrawingPipeline,
+	pipeline = WaterPlaneDrawingPipeline,
+	opacity = 144 / 255, -- Source: Borf
 }
 
 class("WaterSurfaceMaterial", WaterSurfaceMaterial)
