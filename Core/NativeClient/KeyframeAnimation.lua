@@ -4,7 +4,7 @@ function KeyframeAnimation:Construct(numAnimationFrames)
 	numAnimationFrames = numAnimationFrames or 1
 
 	local instance = {
-		currentAnimationFrame = 0,
+		currentAnimationFrame = 1,
 		accumulatedDeltaTimeInMilliseconds = 0,
 		frameDisplayDurationInMilliseconds = 50, -- 3 frames at 16.67 ms per frame
 		numAnimationFrames = numAnimationFrames,
@@ -31,7 +31,7 @@ function KeyframeAnimation:UpdateWithDeltaTime(deltaTime)
 	self.currentAnimationFrame = self.currentAnimationFrame + numFramesToAdvance
 
 	-- Can't advance frames partially since animation frames are always integers
-	self.currentAnimationFrame = self.currentAnimationFrame % self.numAnimationFrames
+	self.currentAnimationFrame = (self.currentAnimationFrame - 1) % self.numAnimationFrames + 1
 	self.accumulatedDeltaTimeInMilliseconds = self.accumulatedDeltaTimeInMilliseconds
 		- (numFramesToAdvance * self.frameDisplayDurationInMilliseconds)
 end

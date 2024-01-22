@@ -196,7 +196,7 @@ function Renderer:RenderNextFrame(deltaTime)
 			RenderPassEncoder:SetPipeline(renderPass, material.assignedRenderingPipeline.wgpuPipeline)
 			for _, mesh in ipairs(self.meshes) do
 				for index, animation in ipairs(mesh.keyframeAnimations) do
-					animation:UpdateWithDeltaTime(deltaTime)
+					animation:UpdateWithDeltaTime(deltaTime / 10E5)
 				end
 				self:DrawMesh(renderPass, mesh)
 			end

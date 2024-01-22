@@ -4,7 +4,7 @@ describe("KeyframeAnimation", function()
 	describe("Construct", function()
 		it("should initialize the animation at the first frame", function()
 			local animation = KeyframeAnimation()
-			assertEquals(animation.currentAnimationFrame, 0)
+			assertEquals(animation.currentAnimationFrame, 1)
 		end)
 
 		it("should set the animation length if one was passed", function()
@@ -45,19 +45,19 @@ describe("KeyframeAnimation", function()
 			animation.frameDisplayDurationInMilliseconds = 1000 -- Something large
 			animation:UpdateWithDeltaTime(50) -- Something smaller
 
-			assertEquals(animation.currentAnimationFrame, 0)
+			assertEquals(animation.currentAnimationFrame, 1)
 			assertEquals(animation.accumulatedDeltaTimeInMilliseconds, 50)
 		end)
 
 		it("should advance the animation if the delta time is equal to the set frame duration", function()
 			local animation = KeyframeAnimation(2) -- Needs to have more than one frame to advance
 			assertEquals(animation.accumulatedDeltaTimeInMilliseconds, 0)
-			assertEquals(animation.currentAnimationFrame, 0)
+			assertEquals(animation.currentAnimationFrame, 1)
 
 			animation.frameDisplayDurationInMilliseconds = 1000 -- Something large
 			animation:UpdateWithDeltaTime(1000) -- The same value
 
-			assertEquals(animation.currentAnimationFrame, 1)
+			assertEquals(animation.currentAnimationFrame, 2)
 			assertEquals(animation.accumulatedDeltaTimeInMilliseconds, 0)
 		end)
 
@@ -69,10 +69,10 @@ describe("KeyframeAnimation", function()
 
 			animation:UpdateWithDeltaTime(1500) -- Larger, but not a whole new frame
 			assertEquals(animation.accumulatedDeltaTimeInMilliseconds, 500)
-			assertEquals(animation.currentAnimationFrame, 1) -- Should actually have advanced 1.5 frames
+			assertEquals(animation.currentAnimationFrame, 2) -- Should actually have advanced 1.5 frames
 
 			animation:UpdateWithDeltaTime(1500)
-			assertEquals(animation.currentAnimationFrame, 3) -- Should have advanced 1.5 more frames
+			assertEquals(animation.currentAnimationFrame, 4) -- Should have advanced 1.5 more frames
 			assertEquals(animation.accumulatedDeltaTimeInMilliseconds, 0)
 		end)
 
@@ -92,16 +92,16 @@ describe("KeyframeAnimation", function()
 			local animation = KeyframeAnimation()
 
 			animation.frameDisplayDurationInMilliseconds = 0
-			assertEquals(animation.currentAnimationFrame, 0)
+			assertEquals(animation.currentAnimationFrame, 1)
 
 			animation:UpdateWithDeltaTime(100)
-			assertEquals(animation.currentAnimationFrame, 0)
+			assertEquals(animation.currentAnimationFrame, 1)
 
 			animation:UpdateWithDeltaTime(10000)
-			assertEquals(animation.currentAnimationFrame, 0)
+			assertEquals(animation.currentAnimationFrame, 1)
 
 			animation:UpdateWithDeltaTime(10000000)
-			assertEquals(animation.currentAnimationFrame, 0)
+			assertEquals(animation.currentAnimationFrame, 1)
 		end)
 	end)
 end)

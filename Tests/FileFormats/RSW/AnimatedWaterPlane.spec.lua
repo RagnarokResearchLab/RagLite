@@ -335,7 +335,7 @@ describe("AnimatedWaterPlane", function()
 
 		it("should create a keyframed animation for the texture cycling", function()
 			local plane = AnimatedWaterPlane(2, 3)
-			assertEquals(plane.cyclingTextureAnimation.currentAnimationFrame, 0)
+			assertEquals(plane.cyclingTextureAnimation.currentAnimationFrame, 1)
 			assertEquals(
 				plane.cyclingTextureAnimation.numAnimationFrames,
 				AnimatedWaterPlane.NUM_FRAMES_PER_TEXTURE_ANIMATION
