@@ -21,11 +21,17 @@ function WaterSurfaceMaterial:Construct(...)
 	return self.super.Construct(self, ...)
 end
 
-function WaterSurfaceMaterial:CreateMaterialPropertiesBindGroup(texture, wgpuTexture)
-	local wgpuDevice = self.wgpuDevice
-	wgpuTexture = wgpuTexture or texture.wgpuTexture -- Ugly hack; needs streamlining (for UI textures)
+function WaterSurfaceMaterial:AssignDiffuseTextureArray(textureArray)
+	self.materialPropertiesUniform = UniformBuffer:CreateMaterialPropertiesUniform(self.wgpuDevice)
+	self.diffuseTextureBindGroup = self:CreateMaterialPropertiesBindGroup(textureArray)
+	self.diffuseTextureArray = textureArray
+end
 
-	printf("[WaterSurfaceMaterial] Creating new bind group for texture %p", wgpuTexture)
+function WaterSurfaceMaterial:CreateMaterialPropertiesBindGroup(textureArray)
+	local wgpuDevice = self.wgpuDevice
+
+	printf("[WaterSurfaceMaterial] Creating new bind group for texture array of size %d", #textureArray)
+	assert(#textureArray == GPU.MAX_TEXTURE_ARRAY_SIZE, "Incomplete texture array encountered")
 
 	-- Create readonly view that should be accessed by a sampler
 	local textureViewDescriptor = new("WGPUTextureViewDescriptor", {
@@ -40,6 +46,7 @@ function WaterSurfaceMaterial:CreateMaterialPropertiesBindGroup(texture, wgpuTex
 	local textureViews = ffi.new("WGPUTextureView[?]", GPU.MAX_TEXTURE_ARRAY_SIZE)
 	-- Should be replaced with views for the different water textures and not the same one
 	for index = 1, GPU.MAX_TEXTURE_ARRAY_SIZE, 1 do
+		local wgpuTexture = textureArray[index].wgpuTexture
 		local textureView = webgpu.bindings.wgpu_texture_create_view(wgpuTexture, textureViewDescriptor)
 		textureViews[index - 1] = textureView
 	end

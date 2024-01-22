@@ -1,3 +1,4 @@
+local AnimatedWaterPlane = require("Core.FileFormats.RSW.AnimatedWaterPlane")
 local RagnarokGND = require("Core.FileFormats.RagnarokGND")
 local RagnarokGRF = require("Core.FileFormats.RagnarokGRF")
 local RagnarokRSW = require("Core.FileFormats.RagnarokRSW")
@@ -93,25 +94,24 @@ function RagnarokMap:LoadWaterSurface(mapID)
 	)
 
 	for planeID, waterPlane in ipairs(waterPlanes) do
-		local animationFrameID = 0 -- Texture animation is NYI (will have to update this later)
-		local normalizedTextureImagePath =
-			format("texture/워터/water%d%02d.jpg", waterPlane.textureTypePrefix, animationFrameID)
+		waterPlane.surfaceGeometry.diffuseTextureImages = {}
+		for animationFrameID = 0, AnimatedWaterPlane.NUM_FRAMES_PER_TEXTURE_ANIMATION - 1, 1 do
+			local normalizedTextureImagePath =
+				format("texture/워터/water%d%02d.jpg", waterPlane.textureTypePrefix, animationFrameID)
 
-		local textureImageBytes = self:FetchResourceByID(normalizedTextureImagePath)
-		local rgbaImageBytes, width, height = C_ImageProcessing.DecodeFileContents(textureImageBytes)
-
+			local textureImageBytes = self:FetchResourceByID(normalizedTextureImagePath)
+			local rgbaImageBytes, width, height = C_ImageProcessing.DecodeFileContents(textureImageBytes)
+			table_insert(waterPlane.surfaceGeometry.diffuseTextureImages, {
+				rgbaImageBytes = rgbaImageBytes,
+				width = width,
+				height = height,
+			})
+		end
 		printf(
-			"[RagnarokMap] Loading water plane %d with diffuse texture %s (%d x %d)",
+			"[RagnarokMap] Loading water plane %d with %d diffuse textures",
 			planeID,
-			normalizedTextureImagePath,
-			width,
-			height
+			#waterPlane.surfaceGeometry.diffuseTextureImages
 		)
-		waterPlane.surfaceGeometry.diffuseTextureImage = {
-			rgbaImageBytes = rgbaImageBytes,
-			width = width,
-			height = height,
-		}
 	end
 
 	local startTime = uv.hrtime()

@@ -391,12 +391,15 @@ function Renderer:DrawMesh(renderPass, mesh)
 	RenderPassEncoder:SetVertexBuffer(renderPass, 2, mesh.diffuseTexCoordsBuffer, 0, diffuseTexCoordsBufferSize)
 	RenderPassEncoder:SetIndexBuffer(renderPass, mesh.indexBuffer, ffi.C.WGPUIndexFormat_Uint32, 0, indexBufferSize)
 
-	if not rawget(mesh.material, "diffuseTexture") then
-		RenderPassEncoder:SetBindGroup(renderPass, 1, self.dummyTextureMaterial.diffuseTextureBindGroup, 0, nil)
-		self.dummyTextureMaterial:UpdateMaterialPropertiesUniform() -- Wasteful, should only do it once?
-	else
+	if rawget(mesh.material, "diffuseTexture") then
 		RenderPassEncoder:SetBindGroup(renderPass, 1, mesh.material.diffuseTextureBindGroup, 0, nil)
 		mesh.material:UpdateMaterialPropertiesUniform()
+	elseif rawget(mesh.material, "diffuseTextureArray") then -- Identical, for now - but that's likely to change
+		RenderPassEncoder:SetBindGroup(renderPass, 1, mesh.material.diffuseTextureBindGroup, 0, nil)
+		mesh.material:UpdateMaterialPropertiesUniform()
+	else
+		RenderPassEncoder:SetBindGroup(renderPass, 1, self.dummyTextureMaterial.diffuseTextureBindGroup, 0, nil)
+		self.dummyTextureMaterial:UpdateMaterialPropertiesUniform() -- Wasteful, should only do it once?
 	end
 
 	local instanceCount = 1
@@ -773,15 +776,25 @@ function Renderer:LoadSceneObjects(scene)
 	for index, mesh in ipairs(scene.meshes) do
 		self:UploadMeshGeometry(mesh)
 
-		if rawget(mesh, "diffuseTextureImage") then
-			self:DebugDumpTextures(mesh, format("diffuse-texture-%s-%03d-in.png", scene.mapID, index))
-			local wgpuTextureHandle = self:CreateTextureFromImage(
-				mesh.diffuseTextureImage.rgbaImageBytes,
-				mesh.diffuseTextureImage.width,
-				mesh.diffuseTextureImage.height
-			)
-			self:DebugDumpTextures(mesh, format("diffuse-texture-%s-%03d-out.png", scene.mapID, index))
-			mesh.material:AssignDiffuseTexture(wgpuTextureHandle)
+		local textureImage = rawget(mesh, "diffuseTextureImage")
+		local textureImages = rawget(mesh, "diffuseTextureImages") or {}
+		if textureImage then
+			textureImages = { textureImage }
+		end
+
+		local diffuseTextures = {}
+		for textureIndex = 1, #textureImages, 1 do
+			local image = textureImages[textureIndex]
+			self:DebugDumpTextures(mesh, format("diffuse-texture-%s-%03d-in.png", scene.mapID, textureIndex))
+			local wgpuTextureHandle = self:CreateTextureFromImage(image.rgbaImageBytes, image.width, image.height)
+			table_insert(diffuseTextures, wgpuTextureHandle)
+			self:DebugDumpTextures(mesh, format("diffuse-texture-%s-%03d-out.png", scene.mapID, textureIndex))
+		end
+
+		if #diffuseTextures == 1 then -- Regular material
+			mesh.material:AssignDiffuseTexture(diffuseTextures[1])
+		elseif #diffuseTextures > 1 then -- Water material (using texture array)
+			mesh.material:AssignDiffuseTextureArray(diffuseTextures)
 		end
 	end
 end
