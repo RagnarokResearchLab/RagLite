@@ -162,6 +162,7 @@ function UniformBuffer:CreateMaterialBindGroupLayouts(wgpuDevice)
 			}),
 		}),
 	})
+	self.waterMaterialBindGroupLayoutDescriptor = waterMaterialBindGroupLayoutDescriptor
 	self.waterMaterialBindGroupLayout =
 		webgpu.bindings.wgpu_device_create_bind_group_layout(wgpuDevice, waterMaterialBindGroupLayoutDescriptor)
 

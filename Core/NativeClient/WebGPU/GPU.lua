@@ -45,6 +45,16 @@ ffi.cdef([[
 		WGPUChainedStruct chain;
 		uint32_t count;
 	} WGPUBindGroupLayoutEntryExtras;
+
+	typedef struct WGPUBindGroupEntryExtras {
+		WGPUChainedStruct chain;
+		WGPUBuffer const * buffers;
+		size_t bufferCount;
+		WGPUSampler const * samplers;
+		size_t samplerCount;
+		WGPUTextureView const * textureViews;
+		size_t textureViewCount;
+	} WGPUBindGroupEntryExtras;
 ]])
 
 function GPU:CreateInstance()
