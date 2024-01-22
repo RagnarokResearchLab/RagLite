@@ -11,6 +11,10 @@ local GPU = {
 	MAX_VERTEX_COUNT = 200000, -- Should be configurable (later)
 }
 
+-- The FFI bindings don't provide enums for native extensions yet (requires a fix in the runtime)
+local WGPUNativeFeature_TextureBindingArray = 0x00030006
+local WGPUNativeFeature_SampledTextureAndStorageBufferArrayNonUniformIndexing = 0x00030007
+
 function GPU:CreateInstance()
 	local instanceDescriptor = new("WGPUInstanceDescriptor")
 	local instance = webgpu.bindings.wgpu_create_instance(instanceDescriptor)
@@ -56,7 +60,11 @@ function GPU:RequestLogicalDevice(adapter, options)
 		defaultQueue = {
 			label = options.defaultQueue.label,
 		},
-		requiredFeatureCount = options.requiredFeatureCount,
+		requiredFeatureCount = 2,
+		requiredFeatures = new("WGPUFeatureName[?]", 2, {
+			WGPUNativeFeature_TextureBindingArray,
+			WGPUNativeFeature_SampledTextureAndStorageBufferArrayNonUniformIndexing,
+		}),
 		requiredLimits = new("WGPURequiredLimits", {
 			limits = {
 				maxTextureDimension1D = 0,
@@ -110,13 +118,12 @@ function GPU:RequestLogicalDevice(adapter, options)
 
 	webgpu.bindings.wgpu_device_set_uncaptured_error_callback(requestedDevice, onDeviceError, nil)
 
-	-- The FFI bindings don't provide enums for native extensions yet (requires a fix in the runtime)
-	local WGPUNativeFeature_TextureBindingArray = 0x00030006
-	local WGPUNativeFeature_SampledTextureAndStorageBufferArrayNonUniformIndexing = 0x00030007
 	local canUseTextureArrays =
 		webgpu.bindings.wgpu_device_has_feature(requestedDevice, WGPUNativeFeature_TextureBindingArray)
-	local canUseNonUniformTextureArraySampler =
-		webgpu.bindings.wgpu_device_has_feature(requestedDevice, WGPUNativeFeature_TextureBindingArray)
+	local canUseNonUniformTextureArraySampler = webgpu.bindings.wgpu_device_has_feature(
+		requestedDevice,
+		WGPUNativeFeature_SampledTextureAndStorageBufferArrayNonUniformIndexing
+	)
 	-- If texture arrays work but non-uniform sampling doesn't, shaders will be more complicated -> Not supported
 	assert(canUseTextureArrays, "Device is unable to use texture arrays (which are currently required)")
 	assert(canUseNonUniformTextureArraySampler, "Device is unable to use non-uniform sampling for texture arrays")
