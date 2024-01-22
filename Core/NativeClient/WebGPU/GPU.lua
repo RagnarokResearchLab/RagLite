@@ -110,6 +110,17 @@ function GPU:RequestLogicalDevice(adapter, options)
 
 	webgpu.bindings.wgpu_device_set_uncaptured_error_callback(requestedDevice, onDeviceError, nil)
 
+	-- The FFI bindings don't provide enums for native extensions yet (requires a fix in the runtime)
+	local WGPUNativeFeature_TextureBindingArray = 0x00030006
+	local WGPUNativeFeature_SampledTextureAndStorageBufferArrayNonUniformIndexing = 0x00030007
+	local canUseTextureArrays =
+		webgpu.bindings.wgpu_device_has_feature(requestedDevice, WGPUNativeFeature_TextureBindingArray)
+	local canUseNonUniformTextureArraySampler =
+		webgpu.bindings.wgpu_device_has_feature(requestedDevice, WGPUNativeFeature_TextureBindingArray)
+	-- If texture arrays work but non-uniform sampling doesn't, shaders will be more complicated -> Not supported
+	assert(canUseTextureArrays, "Device is unable to use texture arrays (which are currently required)")
+	assert(canUseNonUniformTextureArraySampler, "Device is unable to use non-uniform sampling for texture arrays")
+
 	return requestedDevice, deviceDescriptor
 end
 
