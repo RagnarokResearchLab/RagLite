@@ -194,7 +194,7 @@ function Renderer:RenderNextFrame(deltaTime)
 			local material = self.supportedMaterials[materialIndex]
 			-- Should skip this if there aren't any meshes (wasteful to switch for no reason)?
 			RenderPassEncoder:SetPipeline(renderPass, material.assignedRenderingPipeline.wgpuPipeline)
-			for _, mesh in ipairs(self.meshes) do
+			for _, mesh in ipairs(meshes) do
 				for index, animation in ipairs(mesh.keyframeAnimations) do
 					animation:UpdateWithDeltaTime(deltaTime / 10E5)
 				end
