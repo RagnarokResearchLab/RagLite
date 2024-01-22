@@ -1,4 +1,5 @@
 local AnimatedWaterPlane = require("Core.FileFormats.RSW.AnimatedWaterPlane")
+local KeyframeAnimation = require("Core.NativeClient.KeyframeAnimation")
 local RagnarokGND = require("Core.FileFormats.RagnarokGND")
 local WaterSurfaceMaterial = require("Core.NativeClient.WebGPU.Materials.WaterSurfaceMaterial")
 
@@ -35,6 +36,21 @@ GND_WITH_MULTIPLE_WATER_PLANES.cubeGrid = ffi.new("gnd_groundmesh_cube_t[?]", 15
 local WATER_PLANE_REGIONS = dofile("Tests/Fixtures/Snapshots/water-plane-regions.lua")
 
 describe("AnimatedWaterPlane", function()
+	describe("GetTextureCyclingSpeed", function()
+		it("should return the texture cycling animation speed in milliseconds per frame", function()
+			assertEquals(AnimatedWaterPlane:GetTextureCyclingSpeed(0), 0)
+			assertEqualNumbers(AnimatedWaterPlane:GetTextureCyclingSpeed(1), 16.666666666667, 1E-3)
+			assertEqualNumbers(AnimatedWaterPlane:GetTextureCyclingSpeed(2), 33.333333333333, 1E-3)
+			assertEqualNumbers(AnimatedWaterPlane:GetTextureCyclingSpeed(3), 50, 1E-3)
+			assertEqualNumbers(AnimatedWaterPlane:GetTextureCyclingSpeed(4), 66.666666666667, 1E-3)
+			assertEqualNumbers(AnimatedWaterPlane:GetTextureCyclingSpeed(5), 83.333333333333, 1E-3)
+			assertEqualNumbers(AnimatedWaterPlane:GetTextureCyclingSpeed(6), 100, 1E-3)
+			assertEqualNumbers(AnimatedWaterPlane:GetTextureCyclingSpeed(7), 116.66666666667, 1E-3)
+			assertEqualNumbers(AnimatedWaterPlane:GetTextureCyclingSpeed(8), 133.33333333333, 1E-3)
+			assertEqualNumbers(AnimatedWaterPlane:GetTextureCyclingSpeed(9), 150, 1E-3)
+		end)
+	end)
+
 	describe("GetTextureAnimationDuration", function()
 		it("should return the texture cycling animation duration in milliseconds", function()
 			assertEquals(AnimatedWaterPlane:GetTextureAnimationDuration(0), 0)
@@ -315,6 +331,22 @@ describe("AnimatedWaterPlane", function()
 				textureTypePrefix = 6,
 			})
 			assertEquals(plane.surfaceGeometry.material.opacity, 1)
+		end)
+
+		it("should create a keyframed animation for the texture cycling", function()
+			local plane = AnimatedWaterPlane(2, 3)
+			assertEquals(plane.cyclingTextureAnimation.currentAnimationFrame, 1)
+			assertEquals(
+				plane.cyclingTextureAnimation.numAnimationFrames,
+				AnimatedWaterPlane.NUM_FRAMES_PER_TEXTURE_ANIMATION
+			)
+			assertEquals(plane.cyclingTextureAnimation.frameDisplayDurationInMilliseconds, 50)
+			assertTrue(instanceof(plane.cyclingTextureAnimation, KeyframeAnimation))
+		end)
+
+		it("should register the cycling texture animation for delta time updates with the Renderer", function()
+			local plane = AnimatedWaterPlane()
+			assertEquals(plane.surfaceGeometry.keyframeAnimations[1], plane.cyclingTextureAnimation)
 		end)
 	end)
 end)

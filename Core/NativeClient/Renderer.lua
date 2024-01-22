@@ -195,6 +195,9 @@ function Renderer:RenderNextFrame(deltaTime)
 			-- Should skip this if there aren't any meshes (wasteful to switch for no reason)?
 			RenderPassEncoder:SetPipeline(renderPass, material.assignedRenderingPipeline.wgpuPipeline)
 			for _, mesh in ipairs(self.meshes) do
+				for index, animation in ipairs(mesh.keyframeAnimations) do
+					animation:UpdateWithDeltaTime(deltaTime / 10E5)
+				end
 				self:DrawMesh(renderPass, mesh)
 			end
 		end
