@@ -10,7 +10,7 @@ local new = ffi.new
 local sizeof = ffi.sizeof
 
 local WaterPlaneDrawingPipeline = {
-	WGSL_SHADER_SOURCE_LOCATION = "Core/NativeClient/WebGPU/Shaders/BasicTriangleShader.wgsl",
+	WGSL_SHADER_SOURCE_LOCATION = "Core/NativeClient/WebGPU/Shaders/WaterSurfaceShader.wgsl",
 }
 
 function WaterPlaneDrawingPipeline:Construct(wgpuDeviceHandle, textureFormatID)
