@@ -1,3 +1,4 @@
+local KeyframeAnimation = require("Core.NativeClient.KeyframeAnimation")
 local Mesh = require("Core.NativeClient.WebGPU.Mesh")
 local WaterSurfaceMaterial = require("Core.NativeClient.WebGPU.Materials.WaterSurfaceMaterial")
 
@@ -34,6 +35,10 @@ function AnimatedWaterPlane:Construct(tileSlotU, tileSlotV, surfaceProperties)
 		textureDisplayDurationInFrames = surfaceProperties.textureDisplayDurationInFrames or 3,
 	}
 
+	instance.cyclingTextureAnimation = KeyframeAnimation(self.NUM_FRAMES_PER_TEXTURE_ANIMATION)
+	instance.cyclingTextureAnimation.frameDisplayDurationInMilliseconds =
+		self:GetTextureCyclingSpeed(instance.textureDisplayDurationInFrames)
+
 	-- These estimates need refinement (see https://github.com/RagnarokResearchLab/RagLite/issues/281)
 	instance.surfaceGeometry.vertexPositions = table.new(75000, 0)
 	instance.surfaceGeometry.triangleConnections = table.new(10000, 0)
@@ -51,7 +56,15 @@ function AnimatedWaterPlane:Construct(tileSlotU, tileSlotV, surfaceProperties)
 	return instance
 end
 
--- Normalizing timings serves to decouple animation speed from the actual frame rate
+function AnimatedWaterPlane:GetTextureCyclingSpeed(textureDisplayDurationInFrames)
+	local targetFPS = 60
+
+	local secondsPerFrame = textureDisplayDurationInFrames / targetFPS
+	local millisecondsPerFrame = secondsPerFrame * 1000
+
+	return millisecondsPerFrame
+end
+
 function AnimatedWaterPlane:GetTextureAnimationDuration(textureDisplayDurationInFrames)
 	local framesPerAnimationCycle = textureDisplayDurationInFrames * self.NUM_FRAMES_PER_TEXTURE_ANIMATION
 	local normalizedCycleTimeInSeconds = framesPerAnimationCycle / self.TEXTURE_ANIMATION_SPEED_IN_FRAMES_PER_SECOND
