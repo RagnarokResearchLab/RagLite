@@ -14,6 +14,7 @@ function Mesh:Construct(name)
 		vertexColors = {},
 		diffuseTextureCoords = {},
 		material = UnlitMeshMaterial(name and (name .. "Material") or globallyUniqueID),
+		keyframeAnimations = {},
 	}
 
 	setmetatable(instance, self)

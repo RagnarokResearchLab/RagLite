@@ -33,6 +33,11 @@ describe("Mesh", function()
 			local mesh = Mesh()
 			assertTrue(instanceof(mesh.material, UnlitMeshMaterial))
 		end)
+
+		it("should not register any animations with the rendering system", function()
+			local mesh = Mesh()
+			assertEquals(mesh.keyframeAnimations, {})
+		end)
 	end)
 
 	describe("__tostring", function()

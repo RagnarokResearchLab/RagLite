@@ -46,6 +46,7 @@ function AnimatedWaterPlane:Construct(tileSlotU, tileSlotV, surfaceProperties)
 	instance.surfaceGeometry.diffuseTextureCoords = table.new(10000, 0)
 
 	instance.surfaceGeometry.material = WaterSurfaceMaterial(name .. "Material")
+	table_insert(instance.surfaceGeometry.keyframeAnimations, instance.cyclingTextureAnimation)
 
 	if self:IsLavaTexture(instance.textureTypePrefix) then
 		instance.surfaceGeometry.material.opacity = 1 -- Lava should be fully opaque (see mag_dun01)
