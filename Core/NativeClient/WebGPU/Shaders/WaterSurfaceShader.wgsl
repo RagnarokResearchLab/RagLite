@@ -29,6 +29,9 @@ struct PerMaterialData {
 	diffuseGreen: f32,
 	diffuseBlue: f32,
 	textureIndex: u32,
+	waveformPhaseShift: u32, // Effectively the animation frame (clock)
+	waveformAmplitude: f32,
+	waveformFrequency: u32,
 };
 @group(1) @binding(0) var diffuseTextureArray: binding_array<texture_2d<f32>>;
 @group(1) @binding(1) var diffuseTextureSamplerArray: binding_array<sampler>;
@@ -40,6 +43,40 @@ var<uniform> uMaterialInstanceData: PerMaterialData;
 
 const MATH_PI = 3.14159266;
 const DEBUG_ALPHA_OFFSET = 0.0; // Set to non-zero value (e.g., 0.2) to make transparent background pixels visible
+
+fn degreesToRadians(degrees: i32) -> f32 {
+    return f32(degrees) * MATH_PI / 180.0;
+}
+
+fn getPhaseShift(offsetU : i32, offsetV : i32, relativeDistanceFromWaveCrest : i32) -> i32 {
+	let phaseShiftAtSamplingOrigin = i32(uMaterialInstanceData.waveformPhaseShift);
+	let phaseDeltaToSampledPoint = offsetU + offsetV + relativeDistanceFromWaveCrest;
+	let phaseShiftAtSampledPoint = phaseDeltaToSampledPoint * i32(uMaterialInstanceData.waveformFrequency);
+	return (phaseShiftAtSamplingOrigin + phaseShiftAtSampledPoint) % i32(360);
+}
+
+fn sampleWaveHeight(offsetU : i32, offsetV : i32, relativeDistanceFromWaveCrest : i32) -> f32 {
+	let phaseShiftAtSampledPointInDegrees = getPhaseShift(offsetU, offsetV, relativeDistanceFromWaveCrest);
+	let phaseShiftAtSampledPointInRadians = degreesToRadians(phaseShiftAtSampledPointInDegrees);
+
+	let waveHeightAtSamplingOrigin = sin(phaseShiftAtSampledPointInRadians) * uMaterialInstanceData.waveformAmplitude;
+	return waveHeightAtSamplingOrigin;
+}
+
+fn getNormalizedWaveOffset(worldPosition: vec3f) -> f32 {
+    let positionInPatternX = worldPosition.x % 8.0;
+    let positionInPatternZ = worldPosition.z % 8.0;
+
+    if (positionInPatternX == 0.0 && positionInPatternZ == 0.0) {
+        return 0.0; // Crest
+    } else if (positionInPatternX == 2.0 || positionInPatternZ == 2.0) {
+        return -1.0; // Left Trough
+    } else if (positionInPatternX == 6.0 || positionInPatternZ == 6.0) {
+        return 1.0; // Right Trough
+    } else {
+        return 0.0; // Crest
+    }
+}
 
 @vertex
 fn vs_main(in: VertexInput) -> VertexOutput {
@@ -94,8 +131,13 @@ fn vs_main(in: VertexInput) -> VertexOutput {
 		0.0, 0.0, 0.0, 1.0,
 	));
 
+	let waveSamplingOffset = getNormalizedWaveOffset(position);
+	var waveHeight = sampleWaveHeight(i32(position.x), i32(position.z), i32(waveSamplingOffset * 1.0));
+
+	position.y += waveHeight;
+
 	var out: VertexOutput;
-	var homogeneousPosition = vec4<f32>(in.position, 1.0);
+	var homogeneousPosition = vec4<f32>(position, 1.0);
 
 	let projectionMatrix = transpose(uPerSceneData.perspectiveProjection);
 	let viewMatrix = transpose(uPerSceneData.view);
