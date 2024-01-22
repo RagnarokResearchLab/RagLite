@@ -22,7 +22,7 @@ function WaterSurfaceMaterial:Construct(...)
 end
 
 function WaterSurfaceMaterial:AssignDiffuseTextureArray(textureArray)
-	self.materialPropertiesUniform = UniformBuffer:CreateMaterialPropertiesUniform(self.wgpuDevice)
+	self.materialPropertiesUniform = UniformBuffer:CreateWaterPropertiesUniform(self.wgpuDevice)
 	self.diffuseTextureBindGroup = self:CreateMaterialPropertiesBindGroup(textureArray)
 	self.diffuseTextureArray = textureArray
 end
@@ -84,7 +84,7 @@ function WaterSurfaceMaterial:CreateMaterialPropertiesBindGroup(textureArray)
 			binding = 2,
 			buffer = self.materialPropertiesUniform.buffer,
 			offset = 0,
-			size = ffi.sizeof("material_uniform_t"),
+			size = ffi.sizeof("water_uniform_t"),
 		}),
 	})
 

@@ -32,6 +32,15 @@ local UniformBuffer = {
 			float diffuseBlue; // 16
 			// Padding needs to be updated whenever the struct changes!
 		} material_uniform_t;
+		typedef struct WaterSurfaceUniform {
+			float materialOpacity; // 4
+			float diffuseRed; // 8
+			float diffuseGreen; // 12
+			float diffuseBlue; // 16
+			uint32_t textureIndex; // 20
+			// Padding needs to be updated whenever the struct changes!
+			float padding[3]; // 32
+		} water_uniform_t;
 		typedef struct PerMeshData {
 			float translation[2]; // 8
 			float padding[6]; // 32
@@ -157,7 +166,7 @@ function UniformBuffer:CreateMaterialBindGroupLayouts(wgpuDevice)
 				visibility = UniformBuffer.DEFAULT_SHADER_STAGE_VISIBILITY_FLAGS,
 				buffer = {
 					type = ffi.C.WGPUBufferBindingType_Uniform,
-					minBindingSize = sizeof("material_uniform_t"),
+					minBindingSize = sizeof("water_uniform_t"),
 				},
 			}),
 		}),
@@ -172,7 +181,7 @@ function UniformBuffer:CreateMaterialBindGroupLayouts(wgpuDevice)
 	self.materialBindGroupLayoutDescriptor = bindGroupLayoutDescriptor -- Need to keep it around for the entryCount
 end
 
-function UniformBuffer:CreateMaterialPropertiesUniform(wgpuDevice) -- TODO test that one is created per material type
+function UniformBuffer:CreateMaterialPropertiesUniform(wgpuDevice)
 	local materialPropertiesUniformBuffer = Device:CreateBuffer(
 		wgpuDevice,
 		ffi.new("WGPUBufferDescriptor", {
@@ -183,6 +192,24 @@ function UniformBuffer:CreateMaterialPropertiesUniform(wgpuDevice) -- TODO test 
 	local instance = {
 		buffer = materialPropertiesUniformBuffer,
 		data = ffi.new("material_uniform_t"),
+	}
+
+	setmetatable(instance, self)
+
+	return instance
+end
+
+function UniformBuffer:CreateWaterPropertiesUniform(wgpuDevice)
+	local materialPropertiesUniformBuffer = Device:CreateBuffer(
+		wgpuDevice,
+		ffi.new("WGPUBufferDescriptor", {
+			size = ffi.sizeof("water_uniform_t"),
+			usage = bit.bor(ffi.C.WGPUBufferUsage_CopyDst, ffi.C.WGPUBufferUsage_Uniform),
+		})
+	)
+	local instance = {
+		buffer = materialPropertiesUniformBuffer,
+		data = ffi.new("water_uniform_t"),
 	}
 
 	setmetatable(instance, self)
@@ -202,6 +229,10 @@ assert(
 )
 assert(
 	ffi.sizeof("material_uniform_t") % 16 == 0,
+	"Structs in uniform address space must be aligned to a 16 byte boundary (as per the WebGPU specification)"
+)
+assert(
+	ffi.sizeof("water_uniform_t") % 16 == 0,
 	"Structs in uniform address space must be aligned to a 16 byte boundary (as per the WebGPU specification)"
 )
 assert(
