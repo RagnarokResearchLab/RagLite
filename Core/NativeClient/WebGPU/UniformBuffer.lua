@@ -1,4 +1,5 @@
 local Device = require("Core.NativeClient.WebGPU.Device")
+local GPU = require("Core.NativeClient.WebGPU.GPU")
 local _ = require("Core.VectorMath.Matrix4D") -- Only needed for the cdefs right now
 
 local bit = require("bit")
@@ -124,6 +125,45 @@ function UniformBuffer:CreateMaterialBindGroupLayouts(wgpuDevice)
 	})
 
 	-- Texture arrays (wgpu extension) for water surface textures should be added here
+	local extras = new("WGPUBindGroupLayoutEntryExtras", {
+		count = GPU.MAX_TEXTURE_ARRAY_SIZE,
+		chain = {
+			sType = ffi.C.WGPUSType_BindGroupLayoutEntryExtras,
+		},
+	})
+
+	local waterMaterialBindGroupLayoutDescriptor = new("WGPUBindGroupLayoutDescriptor", {
+		entryCount = 3,
+		entries = new("WGPUBindGroupLayoutEntry[?]", 3, {
+			new("WGPUBindGroupLayoutEntry", {
+				binding = 0,
+				visibility = ffi.C.WGPUShaderStage_Fragment,
+				texture = {
+					sampleType = ffi.C.WGPUTextureSampleType_Float,
+					viewDimension = ffi.C.WGPUTextureViewDimension_2D,
+				},
+				nextInChain = extras.chain, -- Required to use texture arrays (native extension)
+			}),
+			new("WGPUBindGroupLayoutEntry", {
+				binding = 1,
+				visibility = ffi.C.WGPUShaderStage_Fragment,
+				sampler = {
+					type = ffi.C.WGPUSamplerBindingType_Filtering,
+				},
+				nextInChain = extras.chain, -- Required to use texture arrays (native extension)
+			}),
+			new("WGPUBindGroupLayoutEntry", {
+				binding = 2,
+				visibility = UniformBuffer.DEFAULT_SHADER_STAGE_VISIBILITY_FLAGS,
+				buffer = {
+					type = ffi.C.WGPUBufferBindingType_Uniform,
+					minBindingSize = sizeof("material_uniform_t"),
+				},
+			}),
+		}),
+	})
+	self.waterMaterialBindGroupLayout =
+		webgpu.bindings.wgpu_device_create_bind_group_layout(wgpuDevice, waterMaterialBindGroupLayoutDescriptor)
 
 	local bindGroupLayout = webgpu.bindings.wgpu_device_create_bind_group_layout(wgpuDevice, bindGroupLayoutDescriptor)
 

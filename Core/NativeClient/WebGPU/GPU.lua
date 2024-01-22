@@ -9,11 +9,43 @@ local ffi_string = ffi.string
 
 local GPU = {
 	MAX_VERTEX_COUNT = 200000, -- Should be configurable (later)
+	MAX_TEXTURE_ARRAY_SIZE = 32,
 }
 
 -- The FFI bindings don't provide enums for native extensions yet (requires a fix in the runtime)
-local WGPUNativeFeature_TextureBindingArray = 0x00030006
-local WGPUNativeFeature_SampledTextureAndStorageBufferArrayNonUniformIndexing = 0x00030007
+ffi.cdef([[
+	typedef enum WGPUNativeFeature {
+		WGPUNativeFeature_PushConstants = 0x00030001,
+		WGPUNativeFeature_TextureAdapterSpecificFormatFeatures = 0x00030002,
+		WGPUNativeFeature_MultiDrawIndirect = 0x00030003,
+		WGPUNativeFeature_MultiDrawIndirectCount = 0x00030004,
+		WGPUNativeFeature_VertexWritableStorage = 0x00030005,
+		WGPUNativeFeature_TextureBindingArray = 0x00030006,
+		WGPUNativeFeature_SampledTextureAndStorageBufferArrayNonUniformIndexing = 0x00030007,
+		WGPUNativeFeature_PipelineStatisticsQuery = 0x00030008,
+		WGPUNativeFeature_Force32 = 0x7FFFFFFF
+	} WGPUNativeFeature;
+
+	typedef enum WGPUNativeSType {
+		// Start at 0003 since that's allocated range for wgpu-native
+		WGPUSType_DeviceExtras = 0x00030001,
+		WGPUSType_RequiredLimitsExtras = 0x00030002,
+		WGPUSType_PipelineLayoutExtras = 0x00030003,
+		WGPUSType_ShaderModuleGLSLDescriptor = 0x00030004,
+		WGPUSType_SupportedLimitsExtras = 0x00030005,
+		WGPUSType_InstanceExtras = 0x00030006,
+		WGPUSType_BindGroupEntryExtras = 0x00030007,
+		WGPUSType_BindGroupLayoutEntryExtras = 0x00030008,
+		WGPUSType_QuerySetDescriptorExtras = 0x00030009,
+		WGPUSType_SurfaceConfigurationExtras = 0x0003000A,
+		WGPUNativeSType_Force32 = 0x7FFFFFFF
+	} WGPUNativeSType;
+
+	typedef struct WGPUBindGroupLayoutEntryExtras {
+		WGPUChainedStruct chain;
+		uint32_t count;
+	} WGPUBindGroupLayoutEntryExtras;
+]])
 
 function GPU:CreateInstance()
 	local instanceDescriptor = new("WGPUInstanceDescriptor")
@@ -62,8 +94,8 @@ function GPU:RequestLogicalDevice(adapter, options)
 		},
 		requiredFeatureCount = 2,
 		requiredFeatures = new("WGPUFeatureName[?]", 2, {
-			WGPUNativeFeature_TextureBindingArray,
-			WGPUNativeFeature_SampledTextureAndStorageBufferArrayNonUniformIndexing,
+			ffi.C.WGPUNativeFeature_TextureBindingArray,
+			ffi.C.WGPUNativeFeature_SampledTextureAndStorageBufferArrayNonUniformIndexing,
 		}),
 		requiredLimits = new("WGPURequiredLimits", {
 			limits = {
@@ -78,8 +110,8 @@ function GPU:RequestLogicalDevice(adapter, options)
 				maxVertexBufferArrayStride = 20, -- #(Rml::Vertex)
 				maxBindGroups = 3, -- Camera, material, transforms
 				maxUniformBuffersPerShaderStage = 1, -- Camera properties (increase for material, soon?)
-				maxSampledTexturesPerShaderStage = 1, -- Diffuse texture (increase for lightmaps, later?)
-				maxSamplersPerShaderStage = 1, -- Diffuse texture sampler (increase for lightmaps, later?)
+				maxSampledTexturesPerShaderStage = GPU.MAX_TEXTURE_ARRAY_SIZE,
+				maxSamplersPerShaderStage = GPU.MAX_TEXTURE_ARRAY_SIZE,
 				maxUniformBufferBindingSize = 65536, -- DEFAULT
 				maxBindingsPerBindGroup = 2, -- Max. allowed binding index
 				maxDynamicUniformBuffersPerPipelineLayout = 1,
@@ -119,10 +151,10 @@ function GPU:RequestLogicalDevice(adapter, options)
 	webgpu.bindings.wgpu_device_set_uncaptured_error_callback(requestedDevice, onDeviceError, nil)
 
 	local canUseTextureArrays =
-		webgpu.bindings.wgpu_device_has_feature(requestedDevice, WGPUNativeFeature_TextureBindingArray)
+		webgpu.bindings.wgpu_device_has_feature(requestedDevice, ffi.C.WGPUNativeFeature_TextureBindingArray)
 	local canUseNonUniformTextureArraySampler = webgpu.bindings.wgpu_device_has_feature(
 		requestedDevice,
-		WGPUNativeFeature_SampledTextureAndStorageBufferArrayNonUniformIndexing
+		ffi.C.WGPUNativeFeature_SampledTextureAndStorageBufferArrayNonUniformIndexing
 	)
 	-- If texture arrays work but non-uniform sampling doesn't, shaders will be more complicated -> Not supported
 	assert(canUseTextureArrays, "Device is unable to use texture arrays (which are currently required)")

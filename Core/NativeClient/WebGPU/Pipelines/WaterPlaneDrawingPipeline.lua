@@ -85,7 +85,7 @@ function WaterPlaneDrawingPipeline:Construct(wgpuDeviceHandle, textureFormatID)
 		bindGroupLayoutCount = 2,
 		bindGroupLayouts = new("WGPUBindGroupLayout[?]", 2, {
 			UniformBuffer.cameraBindGroupLayout,
-			UniformBuffer.materialBindGroupLayout,
+			UniformBuffer.waterMaterialBindGroupLayout,
 		}),
 	})
 
