@@ -38,8 +38,10 @@ local UniformBuffer = {
 			float diffuseGreen; // 12
 			float diffuseBlue; // 16
 			uint32_t textureIndex; // 20
+			uint32_t waveformPhaseShift; // 24
+			float waveformAmplitude; // 28
+			uint32_t waveformFrequency; // 32
 			// Padding needs to be updated whenever the struct changes!
-			float padding[3]; // 32
 		} water_uniform_t;
 		typedef struct PerMeshData {
 			float translation[2]; // 8

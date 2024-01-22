@@ -96,6 +96,29 @@ describe("AnimatedWaterPlane", function()
 			assertEquals(plane.cyclingTextureAnimation.currentAnimationFrame, 27) -- Lua indices start at one
 			assertEquals(plane.surfaceGeometry.material.textureArrayIndex, 26) -- Texture arrays start at zero
 		end)
+
+		it("should write the waveform animation to the material", function()
+			local plane = AnimatedWaterPlane()
+			assertEquals(plane.waveformAnimation.currentAnimationFrame, 1) -- Initial value
+			assertEquals(plane.surfaceGeometry.material.waveformPhaseShift, 0) -- Initial value
+			plane.waveformAnimation.currentAnimationFrame = 27 -- Write-through to the material system
+			plane:OnUpdate()
+			assertEquals(plane.waveformAnimation.currentAnimationFrame, 27) -- Lua indices start at one
+			assertEquals(plane.surfaceGeometry.material.waveformPhaseShift, 26)
+		end)
+
+		it("should write the waveform parameters to the material", function()
+			local plane = AnimatedWaterPlane(3, 8)
+			assertEquals(plane.surfaceGeometry.material.waveformFrequency, 50) -- Initial value
+			assertEquals(plane.surfaceGeometry.material.waveformAmplitude, 0) -- Initial value
+			plane.waveformFrequencyInDegrees = 25 -- Write-through to the material system
+			plane.waveformAmplitudeScalingFactor = 0.42 -- Write-through to the material system
+			plane:OnUpdate()
+			assertEquals(plane.waveformFrequencyInDegrees, 25)
+			assertEquals(plane.waveformAmplitudeScalingFactor, 0.42)
+			assertEquals(plane.surfaceGeometry.material.waveformFrequency, 25)
+			assertEquals(plane.surfaceGeometry.material.waveformAmplitude, 0.42)
+		end)
 	end)
 
 	describe("GetTextureDimensionsByWaterType", function()

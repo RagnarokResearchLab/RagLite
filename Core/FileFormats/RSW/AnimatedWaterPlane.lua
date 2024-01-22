@@ -101,6 +101,9 @@ end
 function AnimatedWaterPlane:OnUpdate(deltaTimeInMilliseconds)
 	-- The actual update is handled in the render loop; kind of messy, but will be reworked later
 	self.surfaceGeometry.material.textureArrayIndex = self.cyclingTextureAnimation.currentAnimationFrame - 1
+	self.surfaceGeometry.material.waveformPhaseShift = self.waveformAnimation.currentAnimationFrame - 1
+	self.surfaceGeometry.material.waveformAmplitude = self.waveformAmplitudeScalingFactor
+	self.surfaceGeometry.material.waveformFrequency = self.waveformFrequencyInDegrees
 end
 function AnimatedWaterPlane:GetExpectedTextureDimensions(textureTypeID)
 	textureTypeID = textureTypeID or self.textureTypePrefix
