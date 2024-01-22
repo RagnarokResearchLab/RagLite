@@ -44,6 +44,9 @@ function AnimatedWaterPlane:Construct(tileSlotU, tileSlotV, surfaceProperties)
 	instance.surfaceGeometry.triangleConnections = table.new(10000, 0)
 	instance.surfaceGeometry.vertexColors = table.new(10000, 0)
 	instance.surfaceGeometry.diffuseTextureCoords = table.new(10000, 0)
+	instance.surfaceGeometry.OnUpdate = function(surfaceGeometry, ...)
+		instance:OnUpdate(instance, ...)
+	end
 
 	instance.surfaceGeometry.material = WaterSurfaceMaterial(name .. "Material")
 	table_insert(instance.surfaceGeometry.keyframeAnimations, instance.cyclingTextureAnimation)
@@ -73,6 +76,10 @@ function AnimatedWaterPlane:GetTextureAnimationDuration(textureDisplayDurationIn
 	return normalizedCycleTimeInMilliseconds
 end
 
+function AnimatedWaterPlane:OnUpdate(deltaTimeInMilliseconds)
+	-- The actual update is handled in the render loop; kind of messy, but will be reworked later
+	self.surfaceGeometry.material.textureArrayIndex = self.cyclingTextureAnimation.currentAnimationFrame - 1
+end
 function AnimatedWaterPlane:GetExpectedTextureDimensions(textureTypeID)
 	textureTypeID = textureTypeID or self.textureTypePrefix
 

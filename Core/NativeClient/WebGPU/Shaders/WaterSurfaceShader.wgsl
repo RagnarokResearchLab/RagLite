@@ -28,13 +28,8 @@ struct PerMaterialData {
 	diffuseRed: f32,
 	diffuseGreen: f32,
 	diffuseBlue: f32,
+	textureIndex: u32,
 };
-// @group(0) @binding(0)
-// var texture_array_top: binding_array<texture_2d<f32>>;
-// @group(0) @binding(1)
-// var texture_array_bottom: binding_array<texture_2d<f32>>;
-// @group(0) @binding(2)
-// var sampler_array: binding_array<sampler>;
 @group(1) @binding(0) var diffuseTextureArray: binding_array<texture_2d<f32>>;
 @group(1) @binding(1) var diffuseTextureSamplerArray: binding_array<sampler>;
 @group(1) @binding(2)
@@ -116,8 +111,8 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4f {
 	let textureCoords = in.diffuseTextureCoords;
 
 	let mipLevel = 0.0; // Mipmaps aren't supported (and likely never will be)
-	let index = 0; // Should read from material properties (uniform buffer)
-	let diffuseTextureColor = textureSampleLevel(diffuseTextureArray[index], diffuseTextureSamplerArray[index], textureCoords, mipLevel);
+	let textureIndex = uMaterialInstanceData.textureIndex;
+	let diffuseTextureColor = textureSampleLevel(diffuseTextureArray[textureIndex], diffuseTextureSamplerArray[textureIndex], textureCoords, mipLevel);
 	let materialColor = vec4f(uMaterialInstanceData.diffuseRed, uMaterialInstanceData.diffuseGreen, uMaterialInstanceData.diffuseBlue, uMaterialInstanceData.materialOpacity);
 	let finalColor = in.color * diffuseTextureColor.rgb * uPerSceneData.color.rgb * materialColor.rgb;
 

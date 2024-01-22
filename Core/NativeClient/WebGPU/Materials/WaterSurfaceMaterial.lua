@@ -1,5 +1,7 @@
 local WaterPlaneDrawingPipeline = require("Core.NativeClient.WebGPU.Pipelines.WaterPlaneDrawingPipeline")
+local Device = require("Core.NativeClient.WebGPU.Device")
 local GPU = require("Core.NativeClient.WebGPU.GPU")
+local Queue = require("Core.NativeClient.WebGPU.Queue")
 local InvisibleBaseMaterial = require("Core.NativeClient.WebGPU.Materials.InvisibleBaseMaterial")
 local Texture = require("Core.NativeClient.WebGPU.Texture")
 local UniformBuffer = require("Core.NativeClient.WebGPU.UniformBuffer")
@@ -15,6 +17,7 @@ local WaterSurfaceMaterial = {
 		blue = 1,
 	},
 	opacity = 144 / 255, -- Source: Borf
+	textureArrayIndex = 0,
 }
 
 function WaterSurfaceMaterial:Construct(...)
@@ -96,6 +99,23 @@ function WaterSurfaceMaterial:CreateMaterialPropertiesBindGroup(textureArray)
 	textureBindGroupDescriptor.entries = bindGroupEntries
 
 	return webgpu.bindings.wgpu_device_create_bind_group(wgpuDevice, textureBindGroupDescriptor)
+end
+
+function WaterSurfaceMaterial:UpdateMaterialPropertiesUniform()
+	-- Should only send if the data has actually changed? (optimize later)
+	self.materialPropertiesUniform.data.diffuseRed = self.diffuseColor.red
+	self.materialPropertiesUniform.data.diffuseGreen = self.diffuseColor.green
+	self.materialPropertiesUniform.data.diffuseBlue = self.diffuseColor.blue
+	self.materialPropertiesUniform.data.materialOpacity = self.opacity
+	self.materialPropertiesUniform.data.textureIndex = self.textureArrayIndex
+
+	Queue:WriteBuffer(
+		Device:GetQueue(self.wgpuDevice),
+		self.materialPropertiesUniform.buffer,
+		0,
+		self.materialPropertiesUniform.data,
+		ffi.sizeof(self.materialPropertiesUniform.data)
+	)
 end
 
 class("WaterSurfaceMaterial", WaterSurfaceMaterial)

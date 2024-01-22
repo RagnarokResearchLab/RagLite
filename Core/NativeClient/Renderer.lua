@@ -199,6 +199,7 @@ function Renderer:RenderNextFrame(deltaTime)
 					animation:UpdateWithDeltaTime(deltaTime / 10E5)
 				end
 				self:DrawMesh(renderPass, mesh)
+				mesh:OnUpdate(deltaTime / 10E5)
 			end
 		end
 

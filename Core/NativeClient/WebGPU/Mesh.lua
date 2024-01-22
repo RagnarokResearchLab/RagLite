@@ -31,6 +31,11 @@ function Mesh:__tostring()
 	return debug.dump(meshInfo, { silent = true })
 end
 
+-- Should replace with an event, once a proper event system is implemented
+function Mesh:OnUpdate(deltaTimeInMilliseconds)
+	-- NOOP by default (for performance reasons; the JIT will almost certainly optimize this out)
+end
+
 Mesh.__call = Mesh.Construct
 Mesh.__index = Mesh
 setmetatable(Mesh, Mesh)
