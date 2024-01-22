@@ -2,11 +2,31 @@ local WidgetDrawingPipeline = require("Core.NativeClient.WebGPU.Pipelines.Widget
 local UserInterfaceMaterial = require("Core.NativeClient.WebGPU.Materials.UserInterfaceMaterial")
 local VirtualGPU = require("Core.NativeClient.WebGPU.VirtualGPU")
 
+local uuid = require("uuid")
+
 VirtualGPU:Enable()
 
 describe("UserInterfaceMaterial", function()
 	it("should use the UI rendering pipeline configuration", function()
 		assertEquals(UserInterfaceMaterial.pipeline, WidgetDrawingPipeline)
+	end)
+
+	describe("Construct", function()
+		it("should store the given display name if one was provided", function()
+			local material = UserInterfaceMaterial("Test123")
+			assertEquals(material.displayName, "Test123")
+		end)
+
+		it("should assign a unique ID to the returned material instance", function()
+			local material = UserInterfaceMaterial("Test123")
+			local isUUID = uuid.isCanonical(material.uniqueID)
+			assertTrue(isUUID)
+		end)
+
+		it("should use the unique ID as the display name if none was provided", function()
+			local material = UserInterfaceMaterial()
+			assertEquals(material.displayName, material.uniqueID)
+		end)
 	end)
 
 	describe("Compile", function()

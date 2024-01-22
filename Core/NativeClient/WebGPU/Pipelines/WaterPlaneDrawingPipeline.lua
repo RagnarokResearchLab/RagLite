@@ -10,7 +10,7 @@ local new = ffi.new
 local sizeof = ffi.sizeof
 
 local WaterPlaneDrawingPipeline = {
-	WGSL_SHADER_SOURCE_LOCATION = "Core/NativeClient/WebGPU/Shaders/BasicTriangleShader.wgsl",
+	WGSL_SHADER_SOURCE_LOCATION = "Core/NativeClient/WebGPU/Shaders/WaterSurfaceShader.wgsl",
 }
 
 function WaterPlaneDrawingPipeline:Construct(wgpuDeviceHandle, textureFormatID)
@@ -85,7 +85,7 @@ function WaterPlaneDrawingPipeline:Construct(wgpuDeviceHandle, textureFormatID)
 		bindGroupLayoutCount = 2,
 		bindGroupLayouts = new("WGPUBindGroupLayout[?]", 2, {
 			UniformBuffer.cameraBindGroupLayout,
-			UniformBuffer.materialBindGroupLayout,
+			UniformBuffer.waterMaterialBindGroupLayout,
 		}),
 	})
 
@@ -161,7 +161,6 @@ function WaterPlaneDrawingPipeline:CreateVertexBufferLayout()
 	})
 end
 
-WaterPlaneDrawingPipeline.__call = WaterPlaneDrawingPipeline.Construct
-setmetatable(WaterPlaneDrawingPipeline, WaterPlaneDrawingPipeline)
+class("WaterPlaneDrawingPipeline", WaterPlaneDrawingPipeline)
 
 return WaterPlaneDrawingPipeline

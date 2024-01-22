@@ -1,4 +1,5 @@
 local Device = require("Core.NativeClient.WebGPU.Device")
+local GPU = require("Core.NativeClient.WebGPU.GPU")
 local _ = require("Core.VectorMath.Matrix4D") -- Only needed for the cdefs right now
 
 local bit = require("bit")
@@ -31,6 +32,15 @@ local UniformBuffer = {
 			float diffuseBlue; // 16
 			// Padding needs to be updated whenever the struct changes!
 		} material_uniform_t;
+		typedef struct WaterSurfaceUniform {
+			float materialOpacity; // 4
+			float diffuseRed; // 8
+			float diffuseGreen; // 12
+			float diffuseBlue; // 16
+			uint32_t textureIndex; // 20
+			// Padding needs to be updated whenever the struct changes!
+			float padding[3]; // 32
+		} water_uniform_t;
 		typedef struct PerMeshData {
 			float translation[2]; // 8
 			float padding[6]; // 32
@@ -124,6 +134,46 @@ function UniformBuffer:CreateMaterialBindGroupLayouts(wgpuDevice)
 	})
 
 	-- Texture arrays (wgpu extension) for water surface textures should be added here
+	local extras = new("WGPUBindGroupLayoutEntryExtras", {
+		count = GPU.MAX_TEXTURE_ARRAY_SIZE,
+		chain = {
+			sType = ffi.C.WGPUSType_BindGroupLayoutEntryExtras,
+		},
+	})
+
+	local waterMaterialBindGroupLayoutDescriptor = new("WGPUBindGroupLayoutDescriptor", {
+		entryCount = 3,
+		entries = new("WGPUBindGroupLayoutEntry[?]", 3, {
+			new("WGPUBindGroupLayoutEntry", {
+				binding = 0,
+				visibility = ffi.C.WGPUShaderStage_Fragment,
+				texture = {
+					sampleType = ffi.C.WGPUTextureSampleType_Float,
+					viewDimension = ffi.C.WGPUTextureViewDimension_2D,
+				},
+				nextInChain = extras.chain, -- Required to use texture arrays (native extension)
+			}),
+			new("WGPUBindGroupLayoutEntry", {
+				binding = 1,
+				visibility = ffi.C.WGPUShaderStage_Fragment,
+				sampler = {
+					type = ffi.C.WGPUSamplerBindingType_Filtering,
+				},
+				nextInChain = extras.chain, -- Required to use texture arrays (native extension)
+			}),
+			new("WGPUBindGroupLayoutEntry", {
+				binding = 2,
+				visibility = UniformBuffer.DEFAULT_SHADER_STAGE_VISIBILITY_FLAGS,
+				buffer = {
+					type = ffi.C.WGPUBufferBindingType_Uniform,
+					minBindingSize = sizeof("water_uniform_t"),
+				},
+			}),
+		}),
+	})
+	self.waterMaterialBindGroupLayoutDescriptor = waterMaterialBindGroupLayoutDescriptor
+	self.waterMaterialBindGroupLayout =
+		webgpu.bindings.wgpu_device_create_bind_group_layout(wgpuDevice, waterMaterialBindGroupLayoutDescriptor)
 
 	local bindGroupLayout = webgpu.bindings.wgpu_device_create_bind_group_layout(wgpuDevice, bindGroupLayoutDescriptor)
 
@@ -131,7 +181,7 @@ function UniformBuffer:CreateMaterialBindGroupLayouts(wgpuDevice)
 	self.materialBindGroupLayoutDescriptor = bindGroupLayoutDescriptor -- Need to keep it around for the entryCount
 end
 
-function UniformBuffer:CreateMaterialPropertiesUniform(wgpuDevice) -- TODO test that one is created per material type
+function UniformBuffer:CreateMaterialPropertiesUniform(wgpuDevice)
 	local materialPropertiesUniformBuffer = Device:CreateBuffer(
 		wgpuDevice,
 		ffi.new("WGPUBufferDescriptor", {
@@ -142,6 +192,24 @@ function UniformBuffer:CreateMaterialPropertiesUniform(wgpuDevice) -- TODO test 
 	local instance = {
 		buffer = materialPropertiesUniformBuffer,
 		data = ffi.new("material_uniform_t"),
+	}
+
+	setmetatable(instance, self)
+
+	return instance
+end
+
+function UniformBuffer:CreateWaterPropertiesUniform(wgpuDevice)
+	local materialPropertiesUniformBuffer = Device:CreateBuffer(
+		wgpuDevice,
+		ffi.new("WGPUBufferDescriptor", {
+			size = ffi.sizeof("water_uniform_t"),
+			usage = bit.bor(ffi.C.WGPUBufferUsage_CopyDst, ffi.C.WGPUBufferUsage_Uniform),
+		})
+	)
+	local instance = {
+		buffer = materialPropertiesUniformBuffer,
+		data = ffi.new("water_uniform_t"),
 	}
 
 	setmetatable(instance, self)
@@ -161,6 +229,10 @@ assert(
 )
 assert(
 	ffi.sizeof("material_uniform_t") % 16 == 0,
+	"Structs in uniform address space must be aligned to a 16 byte boundary (as per the WebGPU specification)"
+)
+assert(
+	ffi.sizeof("water_uniform_t") % 16 == 0,
 	"Structs in uniform address space must be aligned to a 16 byte boundary (as per the WebGPU specification)"
 )
 assert(

@@ -38,6 +38,12 @@ describe("Mesh", function()
 			local mesh = Mesh()
 			assertEquals(mesh.keyframeAnimations, {})
 		end)
+
+		it("should create a hook for delta time updates", function()
+			-- Should replace with a proper event system later
+			local mesh = Mesh()
+			assertEquals(type(mesh.OnUpdate), "function")
+		end)
 	end)
 
 	describe("__tostring", function()

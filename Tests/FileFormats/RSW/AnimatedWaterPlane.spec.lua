@@ -65,6 +65,18 @@ describe("AnimatedWaterPlane", function()
 		end)
 	end)
 
+	describe("OnUpdate", function()
+		it("should write the cycling texture animation to the material", function()
+			local plane = AnimatedWaterPlane()
+			assertEquals(plane.cyclingTextureAnimation.currentAnimationFrame, 1) -- Initial value
+			assertEquals(plane.surfaceGeometry.material.textureArrayIndex, 0) -- Initial value
+			plane.cyclingTextureAnimation.currentAnimationFrame = 27 -- Write-through to the material system
+			plane:OnUpdate()
+			assertEquals(plane.cyclingTextureAnimation.currentAnimationFrame, 27) -- Lua indices start at one
+			assertEquals(plane.surfaceGeometry.material.textureArrayIndex, 26) -- Texture arrays start at zero
+		end)
+	end)
+
 	describe("GetTextureDimensionsByWaterType", function()
 		it("should return the texture dimensions for the given water type ID", function()
 			assertEquals(AnimatedWaterPlane:GetExpectedTextureDimensions(0), 128)

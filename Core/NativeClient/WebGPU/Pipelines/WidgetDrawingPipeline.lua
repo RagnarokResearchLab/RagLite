@@ -92,8 +92,6 @@ function WidgetDrawingPipeline:Construct(wgpuDeviceHandle, textureFormatID)
 	return instance
 end
 
-class("WidgetDrawingPipeline", WidgetDrawingPipeline)
-
 function WidgetDrawingPipeline:CreateShaderModule(wgpuDeviceHandle)
 	local shaderCodeDescriptor = new("WGPUShaderModuleWGSLDescriptor", {
 		code = C_FileSystem.ReadFile(self.WGSL_SHADER_SOURCE_LOCATION),
@@ -171,7 +169,6 @@ function WidgetDrawingPipeline:CreateTransformBindGroupLayout(wgpuDeviceHandle)
 	return bindGroupLayout, bindGroupLayoutDescriptor
 end
 
-WidgetDrawingPipeline.__call = WidgetDrawingPipeline.Construct
-setmetatable(WidgetDrawingPipeline, WidgetDrawingPipeline)
+class("WidgetDrawingPipeline", WidgetDrawingPipeline)
 
 return WidgetDrawingPipeline
