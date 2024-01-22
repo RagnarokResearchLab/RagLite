@@ -161,7 +161,6 @@ function BasicTriangleDrawingPipeline:CreateVertexBufferLayout()
 	})
 end
 
-BasicTriangleDrawingPipeline.__call = BasicTriangleDrawingPipeline.Construct
-setmetatable(BasicTriangleDrawingPipeline, BasicTriangleDrawingPipeline)
+class("BasicTriangleDrawingPipeline", BasicTriangleDrawingPipeline)
 
 return BasicTriangleDrawingPipeline

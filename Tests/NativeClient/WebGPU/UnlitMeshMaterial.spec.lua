@@ -2,11 +2,31 @@ local BasicTriangleDrawingPipeline = require("Core.NativeClient.WebGPU.Pipelines
 local UnlitMeshMaterial = require("Core.NativeClient.WebGPU.Materials.UnlitMeshMaterial")
 local VirtualGPU = require("Core.NativeClient.WebGPU.VirtualGPU")
 
+local uuid = require("uuid")
+
 VirtualGPU:Enable()
 
 describe("UnlitMeshMaterial", function()
 	it("should use the default rendering pipeline configuration", function()
 		assertEquals(UnlitMeshMaterial.pipeline, BasicTriangleDrawingPipeline)
+	end)
+
+	describe("Construct", function()
+		it("should store the given display name if one was provided", function()
+			local material = UnlitMeshMaterial("Test123")
+			assertEquals(material.displayName, "Test123")
+		end)
+
+		it("should assign a unique ID to the returned material instance", function()
+			local material = UnlitMeshMaterial("Test123")
+			local isUUID = uuid.isCanonical(material.uniqueID)
+			assertTrue(isUUID)
+		end)
+
+		it("should use the unique ID as the display name if none was provided", function()
+			local material = UnlitMeshMaterial()
+			assertEquals(material.displayName, material.uniqueID)
+		end)
 	end)
 
 	describe("Compile", function()

@@ -17,6 +17,10 @@ local WaterSurfaceMaterial = {
 	opacity = 144 / 255, -- Source: Borf
 }
 
+function WaterSurfaceMaterial:Construct(...)
+	return self.super.Construct(self, ...)
+end
+
 function WaterSurfaceMaterial:CreateMaterialPropertiesBindGroup(texture, wgpuTexture)
 	local wgpuDevice = self.wgpuDevice
 	wgpuTexture = wgpuTexture or texture.wgpuTexture -- Ugly hack; needs streamlining (for UI textures)

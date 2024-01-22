@@ -161,7 +161,6 @@ function WaterPlaneDrawingPipeline:CreateVertexBufferLayout()
 	})
 end
 
-WaterPlaneDrawingPipeline.__call = WaterPlaneDrawingPipeline.Construct
-setmetatable(WaterPlaneDrawingPipeline, WaterPlaneDrawingPipeline)
+class("WaterPlaneDrawingPipeline", WaterPlaneDrawingPipeline)
 
 return WaterPlaneDrawingPipeline

@@ -11,6 +11,10 @@ local GroundMeshMaterial = {
 	},
 }
 
+function GroundMeshMaterial:Construct(...)
+	return self.super.Construct(self, ...)
+end
+
 class("GroundMeshMaterial", GroundMeshMaterial)
 extend(GroundMeshMaterial, InvisibleBaseMaterial)
 

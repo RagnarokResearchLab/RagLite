@@ -11,6 +11,10 @@ local UserInterfaceMaterial = {
 	},
 }
 
+function UserInterfaceMaterial:Construct(...)
+	return self.super.Construct(self, ...)
+end
+
 class("UserInterfaceMaterial", UserInterfaceMaterial)
 extend(UserInterfaceMaterial, InvisibleBaseMaterial)
 

@@ -11,6 +11,10 @@ local UnlitMeshMaterial = {
 	},
 }
 
+function UnlitMeshMaterial:Construct(...)
+	return self.super.Construct(self, ...)
+end
+
 class("UnlitMeshMaterial", UnlitMeshMaterial)
 extend(UnlitMeshMaterial, InvisibleBaseMaterial)
 
