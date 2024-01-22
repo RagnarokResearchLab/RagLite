@@ -51,6 +51,27 @@ describe("AnimatedWaterPlane", function()
 		end)
 	end)
 
+	describe("GetWaveformCyclingSpeed", function()
+		it("should return the waveform animation speed in milliseconds per frame", function()
+			assertEquals(AnimatedWaterPlane:GetWaveformCyclingSpeed(0), 0)
+			assertEqualNumbers(AnimatedWaterPlane:GetWaveformCyclingSpeed(1), 6000 / 360, 1E-3)
+			assertEqualNumbers(AnimatedWaterPlane:GetWaveformCyclingSpeed(2), 3000 / 360, 1E-3)
+			assertEqualNumbers(AnimatedWaterPlane:GetWaveformCyclingSpeed(3), 2000 / 360, 1E-3)
+			assertEqualNumbers(AnimatedWaterPlane:GetWaveformCyclingSpeed(4), 4.1666666666667, 1E-3)
+			assertEqualNumbers(AnimatedWaterPlane:GetWaveformCyclingSpeed(5), 3.333333333333, 1E-3)
+			assertEqualNumbers(AnimatedWaterPlane:GetWaveformCyclingSpeed(6), 1000 / 360, 1E-3)
+			assertEqualNumbers(AnimatedWaterPlane:GetWaveformCyclingSpeed(7), 2.3809523809524, 1E-3)
+			assertEqualNumbers(AnimatedWaterPlane:GetWaveformCyclingSpeed(8), 2.0833333333333, 1E-3)
+			assertEqualNumbers(AnimatedWaterPlane:GetWaveformCyclingSpeed(9), 1.8518518518519, 1E-3)
+			assertEqualNumbers(AnimatedWaterPlane:GetWaveformCyclingSpeed(10), 1.6666666666667, 1E-3)
+			assertEqualNumbers(AnimatedWaterPlane:GetWaveformCyclingSpeed(60), 100 / 360, 1E-3)
+			assertEqualNumbers(AnimatedWaterPlane:GetWaveformCyclingSpeed(100), 0.16666666666667, 1E-3)
+			assertEqualNumbers(AnimatedWaterPlane:GetWaveformCyclingSpeed(180), 0.092592592592593, 1E-3)
+			assertEqualNumbers(AnimatedWaterPlane:GetWaveformCyclingSpeed(359), 0.046425255338904, 1E-3)
+			assertEqualNumbers(AnimatedWaterPlane:GetWaveformCyclingSpeed(360), 0.046296296296296, 1E-3)
+		end)
+	end)
+
 	describe("GetTextureAnimationDuration", function()
 		it("should return the texture cycling animation duration in milliseconds", function()
 			assertEquals(AnimatedWaterPlane:GetTextureAnimationDuration(0), 0)
@@ -74,6 +95,29 @@ describe("AnimatedWaterPlane", function()
 			plane:OnUpdate()
 			assertEquals(plane.cyclingTextureAnimation.currentAnimationFrame, 27) -- Lua indices start at one
 			assertEquals(plane.surfaceGeometry.material.textureArrayIndex, 26) -- Texture arrays start at zero
+		end)
+
+		it("should write the waveform animation to the material", function()
+			local plane = AnimatedWaterPlane()
+			assertEquals(plane.waveformAnimation.currentAnimationFrame, 1) -- Initial value
+			assertEquals(plane.surfaceGeometry.material.waveformPhaseShift, 0) -- Initial value
+			plane.waveformAnimation.currentAnimationFrame = 27 -- Write-through to the material system
+			plane:OnUpdate()
+			assertEquals(plane.waveformAnimation.currentAnimationFrame, 27) -- Lua indices start at one
+			assertEquals(plane.surfaceGeometry.material.waveformPhaseShift, 26)
+		end)
+
+		it("should write the waveform parameters to the material", function()
+			local plane = AnimatedWaterPlane(3, 8)
+			assertEquals(plane.surfaceGeometry.material.waveformFrequency, 50) -- Initial value
+			assertEquals(plane.surfaceGeometry.material.waveformAmplitude, 0) -- Initial value
+			plane.waveformFrequencyInDegrees = 25 -- Write-through to the material system
+			plane.waveformAmplitudeScalingFactor = 0.42 -- Write-through to the material system
+			plane:OnUpdate()
+			assertEquals(plane.waveformFrequencyInDegrees, 25)
+			assertEquals(plane.waveformAmplitudeScalingFactor, 0.42)
+			assertEquals(plane.surfaceGeometry.material.waveformFrequency, 25)
+			assertEquals(plane.surfaceGeometry.material.waveformAmplitude, 0.42)
 		end)
 	end)
 
@@ -359,6 +403,22 @@ describe("AnimatedWaterPlane", function()
 		it("should register the cycling texture animation for delta time updates with the Renderer", function()
 			local plane = AnimatedWaterPlane()
 			assertEquals(plane.surfaceGeometry.keyframeAnimations[1], plane.cyclingTextureAnimation)
+		end)
+
+		it("should create a keyframed animation for the waveform sampling", function()
+			local plane = AnimatedWaterPlane(2, 3)
+			assertEquals(plane.waveformAnimation.currentAnimationFrame, 1)
+			assertEquals(
+				plane.waveformAnimation.numAnimationFrames,
+				AnimatedWaterPlane.NUM_FRAMES_PER_WAVEFORM_ANIMATION
+			)
+			assertEqualNumbers(plane.waveformAnimation.frameDisplayDurationInMilliseconds, 8.3333333333333, 1E-3)
+			assertTrue(instanceof(plane.waveformAnimation, KeyframeAnimation))
+		end)
+
+		it("should register the waveform sampling animation for delta time updates with the Renderer", function()
+			local plane = AnimatedWaterPlane()
+			assertEquals(plane.surfaceGeometry.keyframeAnimations[2], plane.waveformAnimation)
 		end)
 	end)
 end)

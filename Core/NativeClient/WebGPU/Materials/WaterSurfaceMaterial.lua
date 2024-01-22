@@ -18,6 +18,9 @@ local WaterSurfaceMaterial = {
 	},
 	opacity = 144 / 255, -- Source: Borf
 	textureArrayIndex = 0,
+	waveformPhaseShift = 0,
+	waveformFrequency = 50,
+	waveformAmplitude = 0,
 }
 
 function WaterSurfaceMaterial:Construct(...)
@@ -108,6 +111,9 @@ function WaterSurfaceMaterial:UpdateMaterialPropertiesUniform()
 	self.materialPropertiesUniform.data.diffuseBlue = self.diffuseColor.blue
 	self.materialPropertiesUniform.data.materialOpacity = self.opacity
 	self.materialPropertiesUniform.data.textureIndex = self.textureArrayIndex
+	self.materialPropertiesUniform.data.waveformPhaseShift = self.waveformPhaseShift
+	self.materialPropertiesUniform.data.waveformAmplitude = self.waveformAmplitude
+	self.materialPropertiesUniform.data.waveformFrequency = self.waveformFrequency
 
 	Queue:WriteBuffer(
 		Device:GetQueue(self.wgpuDevice),

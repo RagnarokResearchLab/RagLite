@@ -11,6 +11,7 @@ local table_insert = table.insert
 local AnimatedWaterPlane = {
 	TEXTURE_ANIMATION_SPEED_IN_FRAMES_PER_SECOND = 60,
 	NUM_FRAMES_PER_TEXTURE_ANIMATION = 32, -- Highest possible frame ID
+	NUM_FRAMES_PER_WAVEFORM_ANIMATION = 360, -- Degrees on the unit circle
 	GEOMETRY_DEBUG_INSET = 0,
 }
 function AnimatedWaterPlane:Construct(tileSlotU, tileSlotV, surfaceProperties)
@@ -38,6 +39,9 @@ function AnimatedWaterPlane:Construct(tileSlotU, tileSlotV, surfaceProperties)
 	instance.cyclingTextureAnimation = KeyframeAnimation(self.NUM_FRAMES_PER_TEXTURE_ANIMATION)
 	instance.cyclingTextureAnimation.frameDisplayDurationInMilliseconds =
 		self:GetTextureCyclingSpeed(instance.textureDisplayDurationInFrames)
+	instance.waveformAnimation = KeyframeAnimation(self.NUM_FRAMES_PER_WAVEFORM_ANIMATION)
+	instance.waveformAnimation.frameDisplayDurationInMilliseconds =
+		self:GetWaveformCyclingSpeed(instance.waveformPhaseShiftInDegreesPerFrame)
 
 	-- These estimates need refinement (see https://github.com/RagnarokResearchLab/RagLite/issues/281)
 	instance.surfaceGeometry.vertexPositions = table.new(75000, 0)
@@ -50,6 +54,7 @@ function AnimatedWaterPlane:Construct(tileSlotU, tileSlotV, surfaceProperties)
 
 	instance.surfaceGeometry.material = WaterSurfaceMaterial(name .. "Material")
 	table_insert(instance.surfaceGeometry.keyframeAnimations, instance.cyclingTextureAnimation)
+	table_insert(instance.surfaceGeometry.keyframeAnimations, instance.waveformAnimation)
 
 	if self:IsLavaTexture(instance.textureTypePrefix) then
 		instance.surfaceGeometry.material.opacity = 1 -- Lava should be fully opaque (see mag_dun01)
@@ -69,6 +74,23 @@ function AnimatedWaterPlane:GetTextureCyclingSpeed(textureDisplayDurationInFrame
 	return millisecondsPerFrame
 end
 
+function AnimatedWaterPlane:GetWaveformCyclingSpeed(waveformPhaseShiftInDegreesPerFrame)
+	if waveformPhaseShiftInDegreesPerFrame == 0 then
+		-- Static animation = no updates are needed
+		return 0
+	end
+
+	local targetFPS = 60
+
+	local phaseShiftPerFrame = waveformPhaseShiftInDegreesPerFrame
+	local phaseShiftPerSecond = phaseShiftPerFrame * targetFPS
+
+	local phaseDurationInSeconds = 360 / phaseShiftPerSecond -- Moving around the unit circle
+	local phaseDurationInMilliseconds = phaseDurationInSeconds * 1000
+
+	return phaseDurationInMilliseconds / 360 -- 360 discrete steps per cycle (sampling is NOT continuous)
+end
+
 function AnimatedWaterPlane:GetTextureAnimationDuration(textureDisplayDurationInFrames)
 	local framesPerAnimationCycle = textureDisplayDurationInFrames * self.NUM_FRAMES_PER_TEXTURE_ANIMATION
 	local normalizedCycleTimeInSeconds = framesPerAnimationCycle / self.TEXTURE_ANIMATION_SPEED_IN_FRAMES_PER_SECOND
@@ -79,6 +101,9 @@ end
 function AnimatedWaterPlane:OnUpdate(deltaTimeInMilliseconds)
 	-- The actual update is handled in the render loop; kind of messy, but will be reworked later
 	self.surfaceGeometry.material.textureArrayIndex = self.cyclingTextureAnimation.currentAnimationFrame - 1
+	self.surfaceGeometry.material.waveformPhaseShift = self.waveformAnimation.currentAnimationFrame - 1
+	self.surfaceGeometry.material.waveformAmplitude = self.waveformAmplitudeScalingFactor
+	self.surfaceGeometry.material.waveformFrequency = self.waveformFrequencyInDegrees
 end
 function AnimatedWaterPlane:GetExpectedTextureDimensions(textureTypeID)
 	textureTypeID = textureTypeID or self.textureTypePrefix
