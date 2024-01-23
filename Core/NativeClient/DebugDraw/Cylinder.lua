@@ -87,6 +87,9 @@ function Cylinder:Construct(creationOptions)
 	for _ = 1, #cylinderMesh.vertexPositions / 3 do
 		tinsert(cylinderMesh.diffuseTextureCoords, 0)
 		tinsert(cylinderMesh.diffuseTextureCoords, 0)
+		tinsert(cylinderMesh.surfaceNormals, 0)
+		tinsert(cylinderMesh.surfaceNormals, 1) -- Placeholder (uses unlit material, anyway)
+		tinsert(cylinderMesh.surfaceNormals, 0)
 	end
 
 	return cylinderMesh

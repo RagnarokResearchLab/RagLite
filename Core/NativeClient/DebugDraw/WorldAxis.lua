@@ -190,6 +190,9 @@ function WorldAxis:Construct()
 	for _ = 1, #mesh.vertexPositions / 3 do
 		table.insert(mesh.diffuseTextureCoords, 0)
 		table.insert(mesh.diffuseTextureCoords, 0)
+		table.insert(mesh.surfaceNormals, 0)
+		table.insert(mesh.surfaceNormals, 1) -- Placeholder (uses unlit material, anyway)
+		table.insert(mesh.surfaceNormals, 0)
 	end
 
 	return mesh

@@ -72,6 +72,9 @@ function Box:Construct(creationOptions)
 	for _ = 1, #boxMesh.vertexPositions / 3 do
 		tinsert(boxMesh.diffuseTextureCoords, 0)
 		tinsert(boxMesh.diffuseTextureCoords, 0)
+		tinsert(boxMesh.surfaceNormals, 0)
+		tinsert(boxMesh.surfaceNormals, 1) -- Placeholder (uses unlit material, anyway)
+		tinsert(boxMesh.surfaceNormals, 0)
 	end
 
 	return boxMesh
