@@ -452,11 +452,26 @@ describe("Renderer", function()
 					blue = 42 / 255,
 					intensity = 1,
 				}
+				Renderer.directionalLight = {
+					red = 42 / 255,
+					green = 42 / 255,
+					blue = 42 / 255,
+					intensity = 1,
+					direction = { x = 1, y = -1, z = 1 },
+				}
 				Renderer:ResetScene()
 				assertEquals(Renderer.ambientLight.red, 1)
 				assertEquals(Renderer.ambientLight.green, 1)
 				assertEquals(Renderer.ambientLight.blue, 1)
 				assertEquals(Renderer.ambientLight.intensity, 1)
+
+				assertEquals(Renderer.directionalLight.red, 1)
+				assertEquals(Renderer.directionalLight.green, 1)
+				assertEquals(Renderer.directionalLight.blue, 1)
+				assertEquals(Renderer.directionalLight.intensity, 1)
+				assertEquals(Renderer.directionalLight.direction.x, 1)
+				assertEquals(Renderer.directionalLight.direction.y, -1)
+				assertEquals(Renderer.directionalLight.direction.z, 1)
 			end)
 		end)
 	end)
