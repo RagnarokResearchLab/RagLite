@@ -14,7 +14,7 @@ struct VertexOutput {
 struct PerSceneData {
 	view: mat4x4f,
 	perspectiveProjection: mat4x4f,
-	color: vec4f,
+	ambientLight: vec4f,
 	viewportWidth: f32,
 	viewportHeight: f32,
 	deltaTime: f32,

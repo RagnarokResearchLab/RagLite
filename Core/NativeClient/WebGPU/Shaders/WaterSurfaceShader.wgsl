@@ -14,7 +14,7 @@ struct VertexOutput {
 struct PerSceneData {
 	view: mat4x4f,
 	perspectiveProjection: mat4x4f,
-	color: vec4f,
+	ambientLight: vec4f,
 	viewportWidth: f32,
 	viewportHeight: f32,
 	deltaTime: f32,
@@ -156,11 +156,11 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4f {
 	let textureIndex = uMaterialInstanceData.textureIndex;
 	let diffuseTextureColor = textureSampleLevel(diffuseTextureArray[textureIndex], diffuseTextureSamplerArray[textureIndex], textureCoords, mipLevel);
 	let materialColor = vec4f(uMaterialInstanceData.diffuseRed, uMaterialInstanceData.diffuseGreen, uMaterialInstanceData.diffuseBlue, uMaterialInstanceData.materialOpacity);
-	let finalColor = in.color * diffuseTextureColor.rgb * uPerSceneData.color.rgb * materialColor.rgb;
+	let finalColor = in.color * diffuseTextureColor.rgb * materialColor.rgb;
 
 	// Gamma-correction:
 	// WebGPU assumes that the colors output by the fragment shader are given in linear space
 	// When setting the surface format to BGRA8UnormSrgb it performs a linear to sRGB conversion
 	let gammaCorrectedColor = pow(finalColor.rgb, vec3f(2.2));
-	return vec4f(gammaCorrectedColor, uPerSceneData.color.a * diffuseTextureColor.a * materialColor.a + DEBUG_ALPHA_OFFSET);
+	return vec4f(gammaCorrectedColor, diffuseTextureColor.a * materialColor.a + DEBUG_ALPHA_OFFSET);
 }

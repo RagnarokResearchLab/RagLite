@@ -642,7 +642,10 @@ function Renderer:UpdateScenewideUniformBuffer(deltaTime)
 	perSceneUniformData.viewportHeight = viewportHeight
 	perSceneUniformData.perspectiveProjection =
 		C_Camera.CreatePerspectiveProjection(perspective.fov, aspectRatio, perspective.nearZ, perspective.farZ)
-	perSceneUniformData.color = ffi.new("float[4]", { 1.0, 1.0, 1.0, 1.0 })
+	perSceneUniformData.ambientLightRed = 1
+	perSceneUniformData.ambientLightGreen = 1
+	perSceneUniformData.ambientLightBlue = 1
+	perSceneUniformData.ambientLightIntensity = 1
 	perSceneUniformData.deltaTime = deltaTime
 
 	Queue:WriteBuffer(

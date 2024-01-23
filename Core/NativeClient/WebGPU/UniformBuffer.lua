@@ -18,7 +18,10 @@ local UniformBuffer = {
 		typedef struct PerSceneData {
 			Matrix4D view; // 64
 			Matrix4D perspectiveProjection; // 128
-			float color[4]; // 144
+			float ambientLightRed; // 132
+			float ambientLightGreen; // 136
+			float ambientLightBlue; // 140
+			float ambientLightIntensity; // 144
 			float viewportWidth; // 148
 			float viewportHeight; // 152
 			float deltaTime; // 156
