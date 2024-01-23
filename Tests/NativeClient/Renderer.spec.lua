@@ -357,6 +357,42 @@ describe("Renderer", function()
 			Renderer:LoadSceneObjects(scene)
 		end)
 
+		it("should set the ambient light source to the scene's ambient color if one exists", function()
+			local scene = require("Core.NativeClient.DebugDraw.Scenes.cube3d")
+			scene.ambientLight = { red = 0.1, green = 0.2, blue = 0.3, intensity = 0.4 }
+
+			Renderer.ambientLight.red = 123 / 255
+			Renderer.ambientLight.green = 123 / 255
+			Renderer.ambientLight.blue = 123 / 255
+			Renderer.ambientLight.intensity = 0.5
+
+			Renderer:LoadSceneObjects(scene)
+
+			scene.ambientLight = nil
+			assertEquals(Renderer.ambientLight.red, 0.1)
+			assertEquals(Renderer.ambientLight.green, 0.2)
+			assertEquals(Renderer.ambientLight.blue, 0.3)
+			assertEquals(Renderer.ambientLight.intensity, 0.4)
+		end)
+
+		it("should set the ambient light source to its default color if the scene doesn't use it", function()
+			local scene = require("Core.NativeClient.DebugDraw.Scenes.cube3d")
+			assert(scene.ambientLight == nil, tostring(scene.ambientLight))
+
+			Renderer.ambientLight.red = 123 / 255
+			Renderer.ambientLight.green = 123 / 255
+			Renderer.ambientLight.blue = 123 / 255
+			Renderer.ambientLight.intensity = 0.5
+
+			Renderer:LoadSceneObjects(scene)
+
+			scene.ambientLight = nil
+			assertEquals(Renderer.ambientLight.red, 1)
+			assertEquals(Renderer.ambientLight.green, 1)
+			assertEquals(Renderer.ambientLight.blue, 1)
+			assertEquals(Renderer.ambientLight.intensity, 1)
+		end)
+
 		describe("ResetScene", function()
 			it("should remove all existing meshes from the scene", function()
 				local scene = require("Core.NativeClient.DebugDraw.Scenes.wgpu")
@@ -368,6 +404,20 @@ describe("Renderer", function()
 					Renderer:ResetScene()
 				end, Renderer.DestroyMeshGeometry, 42)
 				assertEquals(#Renderer.meshes, 0)
+			end)
+
+			it("should reset the scene lighting to its default values", function()
+				Renderer.ambientLight = {
+					red = 42 / 255,
+					green = 42 / 255,
+					blue = 42 / 255,
+					intensity = 1,
+				}
+				Renderer:ResetScene()
+				assertEquals(Renderer.ambientLight.red, 1)
+				assertEquals(Renderer.ambientLight.green, 1)
+				assertEquals(Renderer.ambientLight.blue, 1)
+				assertEquals(Renderer.ambientLight.intensity, 1)
 			end)
 		end)
 	end)

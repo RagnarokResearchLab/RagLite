@@ -1,4 +1,4 @@
-local BasicTriangleDrawingPipeline = require("Core.NativeClient.WebGPU.Pipelines.BasicTriangleDrawingPipeline")
+local GroundMeshDrawingPipeline = require("Core.NativeClient.WebGPU.Pipelines.GroundMeshDrawingPipeline")
 local GroundMeshMaterial = require("Core.NativeClient.WebGPU.Materials.GroundMeshMaterial")
 local VirtualGPU = require("Core.NativeClient.WebGPU.VirtualGPU")
 
@@ -7,8 +7,8 @@ local uuid = require("uuid")
 VirtualGPU:Enable()
 
 describe("GroundMeshMaterial", function()
-	it("should use the default rendering pipeline configuration", function()
-		assertEquals(GroundMeshMaterial.pipeline, BasicTriangleDrawingPipeline)
+	it("should use a dedicated rendering pipeline configuration", function()
+		assertEquals(GroundMeshMaterial.pipeline, GroundMeshDrawingPipeline)
 	end)
 
 	describe("Construct", function()
@@ -40,8 +40,8 @@ describe("GroundMeshMaterial", function()
 			assertEquals(materialInstanceA.assignedRenderingPipeline, GroundMeshMaterial.assignedRenderingPipeline)
 			assertEquals(materialInstanceB.assignedRenderingPipeline, GroundMeshMaterial.assignedRenderingPipeline)
 
-			assertTrue(instanceof(materialInstanceA.assignedRenderingPipeline, BasicTriangleDrawingPipeline))
-			assertTrue(instanceof(materialInstanceB.assignedRenderingPipeline, BasicTriangleDrawingPipeline))
+			assertTrue(instanceof(materialInstanceA.assignedRenderingPipeline, GroundMeshDrawingPipeline))
+			assertTrue(instanceof(materialInstanceB.assignedRenderingPipeline, GroundMeshDrawingPipeline))
 		end)
 	end)
 end)

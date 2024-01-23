@@ -103,6 +103,11 @@ describe("RagnarokMap", function()
 			assertEquals(map.meshes[3].vertexColors, waterPlanes[1].surfaceGeometry.vertexColors)
 			assertEquals(map.meshes[3].triangleConnections, waterPlanes[1].surfaceGeometry.triangleConnections)
 			assertEquals(map.meshes[3].diffuseTextureCoords, waterPlanes[1].surfaceGeometry.diffuseTextureCoords)
+
+			assertEqualNumbers(map.ambientLight.red, 0.80000001192093, 1E-3)
+			assertEqualNumbers(map.ambientLight.green, 0.80000001192093, 1E-3)
+			assertEqualNumbers(map.ambientLight.blue, 0.80000001192093, 1E-3)
+			assertEqualNumbers(map.ambientLight.intensity, 1, 1E-3)
 		end)
 
 		it("should set a default display name if the given map ID wasn't assigned one in the DB", function()

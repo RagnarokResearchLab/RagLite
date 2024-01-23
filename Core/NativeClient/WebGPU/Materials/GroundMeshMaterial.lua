@@ -1,8 +1,8 @@
-local BasicTriangleDrawingPipeline = require("Core.NativeClient.WebGPU.Pipelines.BasicTriangleDrawingPipeline")
+local GroundMeshDrawingPipeline = require("Core.NativeClient.WebGPU.Pipelines.GroundMeshDrawingPipeline")
 local InvisibleBaseMaterial = require("Core.NativeClient.WebGPU.Materials.InvisibleBaseMaterial")
 
 local GroundMeshMaterial = {
-	pipeline = BasicTriangleDrawingPipeline,
+	pipeline = GroundMeshDrawingPipeline,
 	opacity = 1,
 	diffuseColor = {
 		red = 1,

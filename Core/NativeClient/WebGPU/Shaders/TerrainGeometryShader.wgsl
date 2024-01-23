@@ -111,7 +111,7 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4f {
 	let textureCoords = in.diffuseTextureCoords;
 	let diffuseTextureColor = textureSample(diffuseTexture, diffuseTextureSampler, textureCoords);
 	let materialColor = vec4f(uMaterialInstanceData.diffuseRed, uMaterialInstanceData.diffuseGreen, uMaterialInstanceData.diffuseBlue, uMaterialInstanceData.materialOpacity);
-	let finalColor = in.color * diffuseTextureColor.rgb * materialColor.rgb;
+	let finalColor = in.color * diffuseTextureColor.rgb * uPerSceneData.ambientLight.rgb * materialColor.rgb;
 
 	// Gamma-correction:
 	// WebGPU assumes that the colors output by the fragment shader are given in linear space

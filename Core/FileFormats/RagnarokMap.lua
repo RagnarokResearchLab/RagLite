@@ -28,6 +28,8 @@ function RagnarokMap:Construct(mapID, fileSystem)
 		meshes = {},
 	}
 
+	self:LoadResources(mapID)
+
 	local groundMeshSections = self:LoadTerrainGeometry(mapID)
 	for sectionID, groundMeshSection in ipairs(groundMeshSections) do
 		table_insert(scene.meshes, groundMeshSection)
@@ -38,16 +40,36 @@ function RagnarokMap:Construct(mapID, fileSystem)
 		table_insert(scene.meshes, waterPlane.surfaceGeometry)
 	end
 
+	local ambient = {
+		red = self.rsw.ambientLight.diffuseColor.red,
+		green = self.rsw.ambientLight.diffuseColor.red,
+		blue = self.rsw.ambientLight.diffuseColor.red,
+		intensity = 1,
+	}
+	scene.ambientLight = ambient
+
 	printf("[RagnarokMap] Entering world %s (%s)", mapID, scene.displayName)
 
 	return scene
 end
 
-function RagnarokMap:LoadTerrainGeometry(mapID)
+function RagnarokMap:LoadResources(mapID)
+	local rsw = RagnarokRSW()
+	local rswName = mapID .. ".rsw"
+	local rswBytes = self:FetchResourceByID(rswName)
+	rsw:DecodeFileContents(rswBytes)
+
 	local gnd = RagnarokGND()
 	local gndName = mapID .. ".gnd"
 	local gndBytes = self:FetchResourceByID(gndName)
 	gnd:DecodeFileContents(gndBytes)
+
+	self.rsw = rsw
+	self.gnd = gnd
+end
+
+function RagnarokMap:LoadTerrainGeometry(mapID)
+	local gnd = self.gnd
 
 	local groundMeshSections = gnd:GenerateGroundMeshSections()
 	for sectionID, groundMeshSection in pairs(groundMeshSections) do
@@ -75,15 +97,8 @@ end
 
 function RagnarokMap:LoadWaterSurface(mapID)
 	-- Water planes may be defined by either RSW or GND file (depending on the version used)
-	local gnd = RagnarokGND()
-	local gndName = mapID .. ".gnd"
-	local gndBytes = self:FetchResourceByID(gndName)
-	gnd:DecodeFileContents(gndBytes)
-
-	local rsw = RagnarokRSW()
-	local rswName = mapID .. ".rsw"
-	local rswBytes = self:FetchResourceByID(rswName)
-	rsw:DecodeFileContents(rswBytes)
+	local gnd = self.gnd
+	local rsw = self.rsw
 
 	local waterPlanes = (#gnd.waterPlanes > 0) and gnd.waterPlanes or rsw.waterPlanes
 	printf(
