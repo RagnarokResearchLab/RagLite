@@ -38,11 +38,18 @@ local filesize = string.filesize
 local table_insert = table.insert
 
 local Color = require("Core.NativeClient.DebugDraw.Color")
+local DEFAULT_AMBIENT_COLOR = { red = 1, green = 1, blue = 1, intensity = 1 }
 
 local Renderer = {
 	clearColorRGBA = { Color.GREY.red, Color.GREY.green, Color.GREY.blue, 0 },
 	userInterfaceTexturesToMaterial = {},
 	meshes = {},
+	ambientLight = {
+		red = DEFAULT_AMBIENT_COLOR.red,
+		green = DEFAULT_AMBIENT_COLOR.green,
+		blue = DEFAULT_AMBIENT_COLOR.blue,
+		intensity = DEFAULT_AMBIENT_COLOR.intensity,
+	},
 	DEBUG_DISCARDED_BACKGROUND_PIXELS = false, -- This is really slow (disk I/O); don't enable unless necessary
 	numWidgetTransformsUsedThisFrame = 0,
 	errorStrings = {
@@ -642,10 +649,11 @@ function Renderer:UpdateScenewideUniformBuffer(deltaTime)
 	perSceneUniformData.viewportHeight = viewportHeight
 	perSceneUniformData.perspectiveProjection =
 		C_Camera.CreatePerspectiveProjection(perspective.fov, aspectRatio, perspective.nearZ, perspective.farZ)
-	perSceneUniformData.ambientLightRed = 1
-	perSceneUniformData.ambientLightGreen = 1
-	perSceneUniformData.ambientLightBlue = 1
-	perSceneUniformData.ambientLightIntensity = 1
+	assert(self.ambientLight.intensity == 1, "The ambient light must always be at full intensity")
+	perSceneUniformData.ambientLightRed = self.ambientLight.red
+	perSceneUniformData.ambientLightGreen = self.ambientLight.green
+	perSceneUniformData.ambientLightBlue = self.ambientLight.blue
+	perSceneUniformData.ambientLightIntensity = self.ambientLight.intensity
 	perSceneUniformData.deltaTime = deltaTime
 
 	Queue:WriteBuffer(
@@ -801,6 +809,15 @@ function Renderer:LoadSceneObjects(scene)
 			mesh.material:AssignDiffuseTextureArray(diffuseTextures)
 		end
 	end
+
+	if scene.ambientLight then
+		self.ambientLight = scene.ambientLight
+	else
+		self.ambientLight.red = DEFAULT_AMBIENT_COLOR.red
+		self.ambientLight.green = DEFAULT_AMBIENT_COLOR.green
+		self.ambientLight.blue = DEFAULT_AMBIENT_COLOR.blue
+		self.ambientLight.intensity = DEFAULT_AMBIENT_COLOR.intensity
+	end
 end
 
 function Renderer:DebugDumpTextures(mesh, fileName)
@@ -832,6 +849,11 @@ function Renderer:ResetScene()
 		-- Should also free textures here? (deferred until the Resources API is in)
 		self:DestroyMeshGeometry(mesh)
 	end
+
+	self.ambientLight.red = DEFAULT_AMBIENT_COLOR.red
+	self.ambientLight.green = DEFAULT_AMBIENT_COLOR.green
+	self.ambientLight.blue = DEFAULT_AMBIENT_COLOR.blue
+	self.ambientLight.intensity = DEFAULT_AMBIENT_COLOR.intensity
 end
 
 return Renderer

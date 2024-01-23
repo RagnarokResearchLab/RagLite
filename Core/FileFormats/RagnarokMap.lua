@@ -40,6 +40,14 @@ function RagnarokMap:Construct(mapID, fileSystem)
 		table_insert(scene.meshes, waterPlane.surfaceGeometry)
 	end
 
+	local ambient = {
+		red = self.rsw.ambientLight.diffuseColor.red,
+		green = self.rsw.ambientLight.diffuseColor.red,
+		blue = self.rsw.ambientLight.diffuseColor.red,
+		intensity = 1,
+	}
+	scene.ambientLight = ambient
+
 	printf("[RagnarokMap] Entering world %s (%s)", mapID, scene.displayName)
 
 	return scene
