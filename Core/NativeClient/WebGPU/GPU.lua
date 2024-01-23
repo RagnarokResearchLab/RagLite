@@ -113,9 +113,9 @@ function GPU:RequestLogicalDevice(adapter, options)
 				maxTextureDimension2D = Texture.MAX_TEXTURE_DIMENSION,
 				maxTextureDimension3D = 0,
 				maxTextureArrayLayers = 1, -- For the depth/stencil texture
-				maxVertexAttributes = 3, -- Vertex positions, vertex colors, diffuse texture UVs
-				maxVertexBuffers = 3, -- Vertex positions, vertex colors, diffuse texture UVs
-				maxInterStageShaderComponents = 6, -- #(vec3f color, vec2f diffuseTextureCoords, float alpha)
+				maxVertexAttributes = 4, -- Vertex positions, vertex colors, diffuse texture UVs, normals
+				maxVertexBuffers = 4, -- Vertex positions, vertex colors, diffuse texture UVs, normals
+				maxInterStageShaderComponents = 8, -- #(vec3f color, vec2f diffuseTextureCoords, float alpha), normal(vec3f)
 				maxBufferSize = self.MAX_VERTEX_COUNT * 5 * ffi.sizeof("float"), -- #(vec3f position, vec2f transform)
 				maxVertexBufferArrayStride = 20, -- #(Rml::Vertex)
 				maxBindGroups = 3, -- Camera, material, transforms

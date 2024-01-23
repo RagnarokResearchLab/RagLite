@@ -57,9 +57,11 @@ local Renderer = {
 		INVALID_INDEX_BUFFER = "Cannot upload geometry with invalid index buffer",
 		INVALID_COLOR_BUFFER = "Cannot upload geometry with invalid color buffer",
 		INVALID_UV_BUFFER = "Cannot upload geometry with invalid diffuse texture coordinates buffer",
+		INVALID_NORMAL_BUFFER = "Cannot upload geometry with invalid normal buffer",
 		INCOMPLETE_COLOR_BUFFER = "Cannot upload geometry with missing or incomplete vertex colors",
 		INCOMPLETE_UV_BUFFER = "Cannot upload geometry with missing or incomplete diffuse texture coordinates ",
 		INVALID_MATERIAL = "Invalid material assigned to mesh",
+		INCOMPLETE_NORMAL_BUFFER = "Cannot upload geometry with missing or incomplete surface normals ",
 	},
 	supportedMaterials = {
 		-- The order doesn't really matter, as long as it's consistently used
@@ -393,10 +395,12 @@ function Renderer:DrawMesh(renderPass, mesh)
 	local colorBufferSize = #mesh.vertexColors * ffi.sizeof("float")
 	local indexBufferSize = #mesh.triangleConnections * ffi.sizeof("uint32_t")
 	local diffuseTexCoordsBufferSize = #mesh.diffuseTextureCoords * ffi.sizeof("float") or GPU.MAX_VERTEX_COUNT
+	local surfaceNormalsBufferSize = #mesh.surfaceNormals * ffi.sizeof("float")
 
 	RenderPassEncoder:SetVertexBuffer(renderPass, 0, mesh.vertexBuffer, 0, vertexBufferSize)
 	RenderPassEncoder:SetVertexBuffer(renderPass, 1, mesh.colorBuffer, 0, colorBufferSize)
 	RenderPassEncoder:SetVertexBuffer(renderPass, 2, mesh.diffuseTexCoordsBuffer, 0, diffuseTexCoordsBufferSize)
+	RenderPassEncoder:SetVertexBuffer(renderPass, 3, mesh.surfaceNormalsBuffer, 0, surfaceNormalsBufferSize)
 	RenderPassEncoder:SetIndexBuffer(renderPass, mesh.indexBuffer, ffi.C.WGPUIndexFormat_Uint32, 0, indexBufferSize)
 
 	if rawget(mesh.material, "diffuseTexture") then
@@ -504,10 +508,12 @@ function Renderer:UploadMeshGeometry(mesh)
 	local positions = mesh.vertexPositions
 	local colors = mesh.vertexColors
 	local indices = mesh.triangleConnections
+	local normals = mesh.surfaceNormals
 
 	local vertexCount = #positions / 3
 	local indexCount = #indices
 	local numVertexColors = #colors / 3
+	local normalCount = #normals / 3
 
 	if vertexCount == 0 or indexCount == 0 then
 		printf("Skipping geometry upload for mesh %s (%s)", mesh.uniqueID, mesh.displayName)
@@ -538,10 +544,15 @@ function Renderer:UploadMeshGeometry(mesh)
 	)
 	local diffuseTextureCoordinatesBuffer = Buffer:CreateVertexBuffer(self.wgpuDevice, mesh.diffuseTextureCoords)
 
+	local normalBufferSize = normalCount * ffi.sizeof("float")
+	printf("Uploading geometry: %d surface normals (%s)", normalCount, filesize(normalBufferSize))
+	local surfaceNormalsBuffer = Buffer:CreateVertexBuffer(self.wgpuDevice, mesh.surfaceNormals)
+
 	mesh.vertexBuffer = vertexBuffer
 	mesh.colorBuffer = vertexColorsBuffer
 	mesh.indexBuffer = triangleIndicesBuffer
 	mesh.diffuseTexCoordsBuffer = diffuseTextureCoordinatesBuffer
+	mesh.surfaceNormalsBuffer = surfaceNormalsBuffer
 
 	table.insert(self.meshes, mesh)
 end
@@ -550,10 +561,12 @@ function Renderer:ValidateGeometry(mesh)
 	local positions = mesh.vertexPositions
 	local colors = mesh.vertexColors
 	local indices = mesh.triangleConnections
+	local normals = mesh.surfaceNormals
 
 	local vertexCount = #positions / 3
 	local indexCount = #indices
 	local numVertexColors = #colors / 3
+	local numSurfaceNormals = #normals / 3
 
 	if #positions % 3 ~= 0 then
 		error(self.errorStrings.INVALID_VERTEX_BUFFER, 0)
@@ -567,8 +580,16 @@ function Renderer:ValidateGeometry(mesh)
 		error(self.errorStrings.INVALID_INDEX_BUFFER, 0)
 	end
 
+	if #normals % 3 ~= 0 then
+		error(self.errorStrings.INVALID_NORMAL_BUFFER, 0)
+	end
+
 	if vertexCount ~= numVertexColors then
 		error(self.errorStrings.INCOMPLETE_COLOR_BUFFER, 0)
+	end
+
+	if vertexCount ~= numSurfaceNormals then
+		error(self.errorStrings.INCOMPLETE_NORMAL_BUFFER, 0)
 	end
 
 	if not mesh.diffuseTextureCoords then
@@ -591,6 +612,7 @@ function Renderer:DestroyMeshGeometry(mesh)
 	Buffer:Destroy(rawget(mesh, "colorBuffer"))
 	Buffer:Destroy(rawget(mesh, "indexBuffer"))
 	Buffer:Destroy(rawget(mesh, "diffuseTexCoordsBuffer"))
+	Buffer:Destroy(rawget(mesh, "surfaceNormalsBuffer"))
 
 	self.meshes = {}
 end
