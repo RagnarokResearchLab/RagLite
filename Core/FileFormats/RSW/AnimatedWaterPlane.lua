@@ -13,6 +13,7 @@ local AnimatedWaterPlane = {
 	NUM_FRAMES_PER_TEXTURE_ANIMATION = 32, -- Highest possible frame ID
 	NUM_FRAMES_PER_WAVEFORM_ANIMATION = 360, -- Degrees on the unit circle
 	GEOMETRY_DEBUG_INSET = 0,
+	MAX_TEXTURE_SIZE_IN_PIXELS = 256,
 }
 function AnimatedWaterPlane:Construct(tileSlotU, tileSlotV, surfaceProperties)
 	surfaceProperties = surfaceProperties or {}
@@ -104,16 +105,6 @@ function AnimatedWaterPlane:OnUpdate(deltaTimeInMilliseconds)
 	self.surfaceGeometry.material.waveformPhaseShift = self.waveformAnimation.currentAnimationFrame - 1
 	self.surfaceGeometry.material.waveformAmplitude = self.waveformAmplitudeScalingFactor
 	self.surfaceGeometry.material.waveformFrequency = self.waveformFrequencyInDegrees
-end
-function AnimatedWaterPlane:GetExpectedTextureDimensions(textureTypeID)
-	textureTypeID = textureTypeID or self.textureTypePrefix
-
-	-- I guess one could query the texture dimensions here, but that seems excessively paranoid...
-	if self:IsLavaTexture(textureTypeID) then
-		return 256
-	else
-		return 128
-	end
 end
 
 function AnimatedWaterPlane:IsLavaTexture(textureTypeID)
@@ -249,46 +240,27 @@ function AnimatedWaterPlane:GenerateWaterVertices(gnd, gridU, gridV)
 		table_insert(mesh.surfaceNormals, (gridV - 1)) -- Required for waveform sampling (can't compute from world position)
 	end
 
-	local textureSizeInPixels = self:GetExpectedTextureDimensions()
+	local textureSizeInPixels = AnimatedWaterPlane.MAX_TEXTURE_SIZE_IN_PIXELS
 	local surfaceSizeInPixels = gnd.TEXTURED_SURFACE_SIZE_IN_PIXELS
 
 	local numTextureSlices = textureSizeInPixels / surfaceSizeInPixels
-	local textureSliceU = (gridU - 1) % numTextureSlices + 1
-	local textureSliceV = (gridV - 1) % numTextureSlices + 1
-	local maxU = numTextureSlices
-	local maxV = numTextureSlices
-
-	local diffuseTextureCoords = self:ComputeNormalizedTextureCoordinates(textureSliceU, textureSliceV, maxU, maxV)
+	local sliceU = (gridU - 1) % numTextureSlices + 1
+	local sliceV = (gridV - 1) % numTextureSlices + 1
+	local maxSliceU = numTextureSlices
+	local maxSliceV = numTextureSlices
+	local diffuseTextureCoords = {
+		(sliceU - 1) / maxSliceU,
+		(sliceV - 1) / maxSliceV,
+		(sliceU - 0) / maxSliceU,
+		(sliceV - 1) / maxSliceV,
+		(sliceU - 1) / maxSliceU,
+		(sliceV - 0) / maxSliceV,
+		(sliceU - 0) / maxSliceU,
+		(sliceV - 0) / maxSliceV,
+	}
 	for index, coordinate in ipairs(diffuseTextureCoords) do
 		table_insert(mesh.diffuseTextureCoords, coordinate)
 	end
-end
-
-function AnimatedWaterPlane:ComputeNormalizedTextureCoordinates(sliceU, sliceV, maxSliceU, maxSliceV)
-	-- One of the various coordinate systems is inverted between DirectX and WebGPU (investigate later?)
-	local dxTexCoords = {
-		(sliceU - 1) / maxSliceU,
-		(sliceV - 1) / maxSliceV,
-		(sliceU - 0) / maxSliceU,
-		(sliceV - 1) / maxSliceV,
-		(sliceU - 1) / maxSliceU,
-		(sliceV - 0) / maxSliceV,
-		(sliceU - 0) / maxSliceU,
-		(sliceV - 0) / maxSliceV,
-	}
-
-	local wgpuTexCoords = {
-		dxTexCoords[1],
-		1 - dxTexCoords[2],
-		dxTexCoords[3],
-		1 - dxTexCoords[4],
-		dxTexCoords[5],
-		1 - dxTexCoords[6],
-		dxTexCoords[7],
-		1 - dxTexCoords[8],
-	}
-
-	return wgpuTexCoords
 end
 
 AnimatedWaterPlane.__call = AnimatedWaterPlane.Construct
