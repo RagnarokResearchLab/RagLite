@@ -159,11 +159,13 @@ function AnimatedWaterPlane:GenerateWaterVertices(gnd, gridU, gridV)
 	-- All corners above sea level: Water can't be seen from a regular camera position (looks glitched otherwise)
 	-- No corner above sea level: Terrain is completely submerged, must render water (and the underwater terrain)
 	-- One to three corners above sea level: Sloped terrain next to a body of water; must render here to look right
+	local maxWaveHeight = self.waveformAmplitudeScalingFactor
+	local maxWaterHeight = self.normalizedSeaLevel + maxWaveHeight
 	local isCornerAboveSeaLevel = {
-		southwest = (normalizedTerrainAltitude.southwest >= self.normalizedSeaLevel),
-		southeast = (normalizedTerrainAltitude.southeast >= self.normalizedSeaLevel),
-		northeast = (normalizedTerrainAltitude.northeast >= self.normalizedSeaLevel),
-		northwest = (normalizedTerrainAltitude.northwest >= self.normalizedSeaLevel),
+		southwest = (normalizedTerrainAltitude.southwest >= maxWaterHeight),
+		southeast = (normalizedTerrainAltitude.southeast >= maxWaterHeight),
+		northeast = (normalizedTerrainAltitude.northeast >= maxWaterHeight),
+		northwest = (normalizedTerrainAltitude.northwest >= maxWaterHeight),
 	}
 	local isTerrainAboveSeaLevel = isCornerAboveSeaLevel.southwest
 		and isCornerAboveSeaLevel.southeast

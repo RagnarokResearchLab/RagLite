@@ -1,7 +1,9 @@
 struct VertexInput {
+	@builtin(vertex_index) vertexIndex: u32,
 	@location(0) position: vec3f,
 	@location(1) color: vec3f,
 	@location(2) diffuseTextureCoords: vec2f,
+	@location(3) surfaceNormal: vec3f, // Here: Repurposed to store the grid position (actual normal is constant)
 };
 
 struct VertexOutput {
@@ -43,6 +45,11 @@ var<uniform> uMaterialInstanceData: PerMaterialData;
 
 const MATH_PI = 3.14159266;
 const DEBUG_ALPHA_OFFSET = 0.0; // Set to non-zero value (e.g., 0.2) to make transparent background pixels visible
+const NORMALIZING_SCALE_FACTOR = 0.2; // See RagnarokGND.NORMALIZING_SCALE_FACTOR
+const NUM_VERTICES_PER_WATER_SEGMENT = 4;
+const CORNER_SOUTHWEST = 0;
+const CORNER_NORTHEAST = 3;
+
 
 fn degreesToRadians(degrees: i32) -> f32 {
     return f32(degrees) * MATH_PI / 180.0;
@@ -59,24 +66,25 @@ fn sampleWaveHeight(offsetU : i32, offsetV : i32, relativeDistanceFromWaveCrest 
 	let phaseShiftAtSampledPointInDegrees = getPhaseShift(offsetU, offsetV, relativeDistanceFromWaveCrest);
 	let phaseShiftAtSampledPointInRadians = degreesToRadians(phaseShiftAtSampledPointInDegrees);
 
-	let waveHeightAtSamplingOrigin = sin(phaseShiftAtSampledPointInRadians) * uMaterialInstanceData.waveformAmplitude;
-	return waveHeightAtSamplingOrigin;
+	let waveHeightAtSampledPoint = sin(phaseShiftAtSampledPointInRadians) * uMaterialInstanceData.waveformAmplitude;
+	return waveHeightAtSampledPoint;
 }
 
-fn getNormalizedWaveOffset(worldPosition: vec3f) -> f32 {
-    let positionInPatternX = worldPosition.x % 8.0;
-    let positionInPatternZ = worldPosition.z % 8.0;
+fn getDistanceFromSamplingOrigin(vertexIndex : u32) -> i32 {
+	// Vertices are pushed in order SW, SE, NW, NE (repeating pattern for the entire grid)
+	let corner = i32(vertexIndex) % NUM_VERTICES_PER_WATER_SEGMENT;
+	var distanceFromWaveCrest = 0; // NW and SE corners (default)
 
-    if (positionInPatternX == 0.0 && positionInPatternZ == 0.0) {
-        return 0.0; // Crest
-    } else if (positionInPatternX == 2.0 || positionInPatternZ == 2.0) {
-        return -1.0; // Left Trough
-    } else if (positionInPatternX == 6.0 || positionInPatternZ == 6.0) {
-        return 1.0; // Right Trough
-    } else {
-        return 0.0; // Crest
-    }
+	if(corner == CORNER_SOUTHWEST) {
+		distanceFromWaveCrest = -1;
+	}
+	if(corner == CORNER_NORTHEAST) {
+		distanceFromWaveCrest = 1;
+	}
+
+	return distanceFromWaveCrest;
 }
+
 
 @vertex
 fn vs_main(in: VertexInput) -> VertexOutput {
@@ -131,10 +139,11 @@ fn vs_main(in: VertexInput) -> VertexOutput {
 		0.0, 0.0, 0.0, 1.0,
 	));
 
-	let waveSamplingOffset = getNormalizedWaveOffset(position);
-	var waveHeight = sampleWaveHeight(i32(position.x), i32(position.z), i32(waveSamplingOffset * 1.0));
+	let gridPosition = vec3i(i32(in.surfaceNormal.x), 0, i32(in.surfaceNormal.z)); // Here: normal.xz encodes grid.uv
+	let distanceFromWaveCrest = getDistanceFromSamplingOrigin(in.vertexIndex);
+	var denormalizedWaveHeight = sampleWaveHeight(gridPosition.x, gridPosition.z, distanceFromWaveCrest);
 
-	position.y += waveHeight;
+	position.y += denormalizedWaveHeight * NORMALIZING_SCALE_FACTOR;
 
 	var out: VertexOutput;
 	var homogeneousPosition = vec4<f32>(position, 1.0);
