@@ -72,6 +72,9 @@ function Pyramid:Construct(creationOptions)
 	for _ = 1, #pyramidMesh.vertexPositions / 3 do
 		tinsert(pyramidMesh.diffuseTextureCoords, 0)
 		tinsert(pyramidMesh.diffuseTextureCoords, 0)
+		tinsert(pyramidMesh.surfaceNormals, 0)
+		tinsert(pyramidMesh.surfaceNormals, 1) -- Placeholder (uses unlit material, anyway)
+		tinsert(pyramidMesh.surfaceNormals, 0)
 	end
 
 	return pyramidMesh

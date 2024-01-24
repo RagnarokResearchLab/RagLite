@@ -2,12 +2,12 @@ local bit = require("bit")
 local ffi = require("ffi")
 local webgpu = require("webgpu")
 
+local BasicTriangleDrawingPipeline = require("Core.NativeClient.WebGPU.Pipelines.BasicTriangleDrawingPipeline")
 local Device = require("Core.NativeClient.WebGPU.Device")
 local UniformBuffer = require("Core.NativeClient.WebGPU.UniformBuffer")
 
 local binary_not = bit.bnot
 local new = ffi.new
-local sizeof = ffi.sizeof
 
 local WaterPlaneDrawingPipeline = {
 	WGSL_SHADER_SOURCE_LOCATION = "Core/NativeClient/WebGPU/Shaders/WaterSurfaceShader.wgsl",
@@ -20,11 +20,11 @@ function WaterPlaneDrawingPipeline:Construct(wgpuDeviceHandle, textureFormatID)
 	local sharedShaderModule = self:CreateShaderModule(wgpuDeviceHandle)
 	local renderPipelineDescriptor = new("WGPURenderPipelineDescriptor", {
 		vertex = {
-			bufferCount = 3, -- Vertex positions, colors, diffuse UVs
+			bufferCount = 4, -- Vertex positions, colors, diffuse UVs, normals
 			module = sharedShaderModule,
 			entryPoint = "vs_main",
 			constantCount = 0,
-			buffers = self:CreateVertexBufferLayout(),
+			buffers = BasicTriangleDrawingPipeline:CreateVertexBufferLayout(),
 		},
 		primitive = {
 			topology = ffi.C.WGPUPrimitiveTopology_TriangleList,
@@ -118,47 +118,6 @@ function WaterPlaneDrawingPipeline:CreateShaderModule(wgpuDeviceHandle)
 	})
 
 	return Device:CreateShaderModule(wgpuDeviceHandle, shaderModuleDescriptor)
-end
-
-function WaterPlaneDrawingPipeline:CreateVertexBufferLayout()
-	local vertexPositionsLayout = new("WGPUVertexBufferLayout", {
-		attributeCount = 1, -- Position
-		attributes = new("WGPUVertexAttribute", {
-			shaderLocation = 0, -- Pass as first argument
-			format = ffi.C.WGPUVertexFormat_Float32x3,
-			offset = 0,
-		}),
-		arrayStride = 3 * sizeof("float"), -- sizeof(Vector3D) = position
-		stepMode = ffi.C.WGPUVertexStepMode_Vertex,
-	})
-
-	local vertexColorsLayout = new("WGPUVertexBufferLayout", {
-		attributeCount = 1, -- Color
-		attributes = new("WGPUVertexAttribute", {
-			shaderLocation = 1, -- Pass as second argument
-			format = ffi.C.WGPUVertexFormat_Float32x3, -- Vector3D (float) = RGB color
-			offset = 0,
-		}),
-		arrayStride = 3 * sizeof("float"), -- sizeof(Vector3D) = color
-		stepMode = ffi.C.WGPUVertexStepMode_Vertex,
-	})
-
-	local diffuseTexCoordsLayout = new("WGPUVertexBufferLayout", {
-		attributeCount = 1, -- UV
-		attributes = new("WGPUVertexAttribute", {
-			shaderLocation = 2, -- Pass as third argument
-			format = ffi.C.WGPUVertexFormat_Float32x2, -- Vector2D (float) = UV coords
-			offset = 0,
-		}),
-		arrayStride = 2 * sizeof("float"), -- sizeof(Vector2D) = uv
-		stepMode = ffi.C.WGPUVertexStepMode_Vertex,
-	})
-
-	return new("WGPUVertexBufferLayout[?]", 3, {
-		vertexPositionsLayout,
-		vertexColorsLayout,
-		diffuseTexCoordsLayout,
-	})
 end
 
 class("WaterPlaneDrawingPipeline", WaterPlaneDrawingPipeline)

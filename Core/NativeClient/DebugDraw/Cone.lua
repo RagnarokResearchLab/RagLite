@@ -70,6 +70,9 @@ function Cone:Construct(creationOptions)
 	for _ = 1, #coneMesh.vertexPositions / 3 do
 		tinsert(coneMesh.diffuseTextureCoords, 0)
 		tinsert(coneMesh.diffuseTextureCoords, 0)
+		tinsert(coneMesh.surfaceNormals, 0)
+		tinsert(coneMesh.surfaceNormals, 1) -- Placeholder (uses unlit material, anyway)
+		tinsert(coneMesh.surfaceNormals, 0)
 	end
 
 	return coneMesh

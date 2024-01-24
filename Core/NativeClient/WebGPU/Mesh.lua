@@ -13,6 +13,7 @@ function Mesh:Construct(name)
 		triangleConnections = {},
 		vertexColors = {},
 		diffuseTextureCoords = {},
+		surfaceNormals = {},
 		material = UnlitMeshMaterial(name and (name .. "Material") or globallyUniqueID),
 		keyframeAnimations = {},
 	}

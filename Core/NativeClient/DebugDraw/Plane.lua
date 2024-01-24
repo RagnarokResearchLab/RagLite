@@ -58,6 +58,12 @@ function Plane:Construct(creationOptions)
 	tinsert(planeMesh.triangleConnections, 3)
 	tinsert(planeMesh.triangleConnections, 0)
 
+	for _ = 1, #planeMesh.vertexPositions / 3 do
+		tinsert(planeMesh.surfaceNormals, 0)
+		tinsert(planeMesh.surfaceNormals, 1) -- Placeholder (uses unlit material, anyway)
+		tinsert(planeMesh.surfaceNormals, 0)
+	end
+
 	return planeMesh
 end
 

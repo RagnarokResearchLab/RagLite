@@ -65,6 +65,9 @@ function Sphere:Construct(creationOptions)
 	for _ = 1, #sphereMesh.vertexPositions / 3 do
 		tinsert(sphereMesh.diffuseTextureCoords, 0)
 		tinsert(sphereMesh.diffuseTextureCoords, 0)
+		tinsert(sphereMesh.surfaceNormals, 0)
+		tinsert(sphereMesh.surfaceNormals, 1) -- Placeholder (uses unlit material, anyway)
+		tinsert(sphereMesh.surfaceNormals, 0)
 	end
 
 	return sphereMesh

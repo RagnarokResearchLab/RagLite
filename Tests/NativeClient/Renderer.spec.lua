@@ -172,7 +172,7 @@ describe("Renderer", function()
 
 			Renderer:DestroyMeshGeometry(planeMesh)
 
-			assertEquals(#events, 8)
+			assertEquals(#events, 10)
 
 			-- Vertex positions
 			local index = 1
@@ -233,6 +233,21 @@ describe("Renderer", function()
 			assertEquals(ffi.sizeof(events[index].payload.data), expectedBufferSize * ffi.sizeof("float"))
 			assertEquals(events[index].payload.size, expectedBufferSize)
 			assertEqualArrayContents(events[index].payload.data, planeMesh.diffuseTextureCoords)
+
+			-- Normal vectors
+			index = index + 1
+			expectedBufferSize = Buffer.GetAlignedSize(#planeMesh.surfaceNormals * ffi.sizeof("float"))
+			assertEquals(events[index].name, "GPU_BUFFER_CREATE")
+			assertEquals(events[index].payload.descriptor.usage, Buffer.VERTEX_BUFFER_FLAGS)
+			assertEquals(tonumber(events[index].payload.descriptor.size), expectedBufferSize)
+			assertEquals(events[index].payload.descriptor.mappedAtCreation ~= 0, false)
+
+			index = index + 1
+			assertEquals(events[index].name, "GPU_BUFFER_WRITE")
+			assertEquals(events[index].payload.bufferOffset, 0)
+			assertEquals(ffi.sizeof(events[index].payload.data), expectedBufferSize * ffi.sizeof("float"))
+			assertEquals(events[index].payload.size, expectedBufferSize)
+			assertEqualArrayContents(events[index].payload.data, planeMesh.surfaceNormals)
 		end)
 
 		it("should throw if the geometry contains an insufficient number of vertex positions", function()
@@ -265,6 +280,16 @@ describe("Renderer", function()
 			assertThrows(uploadIncompleteMeshGeometry, expectedErrorMessage)
 		end)
 
+		it("should throw if the geometry contains an insufficient number of normal components", function()
+			local mesh = table.copy(planeMesh)
+			mesh.surfaceNormals = { 0, 1 }
+			local expectedErrorMessage = Renderer.errorStrings.INVALID_NORMAL_BUFFER
+			local function uploadIncompleteMeshGeometry()
+				Renderer:UploadMeshGeometry(mesh)
+			end
+			assertThrows(uploadIncompleteMeshGeometry, expectedErrorMessage)
+		end)
+
 		it("should throw if the geometry contains more vertex positions than colors", function()
 			local mesh = table.copy(planeMesh)
 			mesh.vertexColors = {}
@@ -289,6 +314,16 @@ describe("Renderer", function()
 			local mesh = table.copy(planeMesh)
 			mesh.diffuseTextureCoords = {}
 			local expectedErrorMessage = Renderer.errorStrings.INCOMPLETE_UV_BUFFER
+			local function uploadIncompleteMeshGeometry()
+				Renderer:UploadMeshGeometry(mesh)
+			end
+			assertThrows(uploadIncompleteMeshGeometry, expectedErrorMessage)
+		end)
+
+		it("should throw if the geometry contains more vertex positions than surface normals", function()
+			local mesh = table.copy(planeMesh)
+			mesh.surfaceNormals = {}
+			local expectedErrorMessage = Renderer.errorStrings.INCOMPLETE_NORMAL_BUFFER
 			local function uploadIncompleteMeshGeometry()
 				Renderer:UploadMeshGeometry(mesh)
 			end
@@ -334,13 +369,14 @@ describe("Renderer", function()
 			Renderer:DestroyMeshGeometry(planeMesh)
 			local events = etrace.filter()
 
-			assertEquals(#events, 4)
+			assertEquals(#events, 5)
 
 			-- It's technically possible that the wrong buffers are destroyed here, but eh...
 			assertEquals(events[1].name, "GPU_BUFFER_DESTROY")
 			assertEquals(events[2].name, "GPU_BUFFER_DESTROY")
 			assertEquals(events[3].name, "GPU_BUFFER_DESTROY")
 			assertEquals(events[4].name, "GPU_BUFFER_DESTROY")
+			assertEquals(events[5].name, "GPU_BUFFER_DESTROY")
 			-- Default texture coordinates shouldn't be destroyed (implicit)
 		end)
 	end)

@@ -441,6 +441,13 @@ function RagnarokGND:GenerateSurfaceGeometry(surfaceConstructionInfo)
 	table_insert(mesh.diffuseTextureCoords, surface.uvs.top_left_v)
 	table_insert(mesh.diffuseTextureCoords, surface.uvs.top_right_u)
 	table_insert(mesh.diffuseTextureCoords, surface.uvs.top_right_v)
+
+	-- Should compute smooth normals here (later)
+	for i = 1, 4, 1 do
+		table_insert(mesh.surfaceNormals, 0)
+		table_insert(mesh.surfaceNormals, 1)
+		table_insert(mesh.surfaceNormals, 0)
+	end
 end
 
 function RagnarokGND:GenerateGroundVertices(gridU, gridV)

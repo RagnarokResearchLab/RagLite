@@ -27,6 +27,7 @@ describe("Mesh", function()
 			assertEquals(mesh.triangleConnections, {})
 			assertEquals(mesh.vertexColors, {})
 			assertEquals(mesh.diffuseTextureCoords, {})
+			assertEquals(mesh.surfaceNormals, {})
 		end)
 
 		it("should assign a material that uses the default rendering pipeline", function()

@@ -20,7 +20,7 @@ function BasicTriangleDrawingPipeline:Construct(wgpuDeviceHandle, textureFormatI
 	local sharedShaderModule = self:CreateShaderModule(wgpuDeviceHandle)
 	local renderPipelineDescriptor = new("WGPURenderPipelineDescriptor", {
 		vertex = {
-			bufferCount = 3, -- Vertex positions, colors, diffuse UVs
+			bufferCount = 4, -- Vertex positions, colors, diffuse UVs, normals
 			module = sharedShaderModule,
 			entryPoint = "vs_main",
 			constantCount = 0,
@@ -154,10 +154,22 @@ function BasicTriangleDrawingPipeline:CreateVertexBufferLayout()
 		stepMode = ffi.C.WGPUVertexStepMode_Vertex,
 	})
 
-	return new("WGPUVertexBufferLayout[?]", 3, {
+	local surfaceNormalsLayout = new("WGPUVertexBufferLayout", {
+		attributeCount = 1, -- Normals
+		attributes = new("WGPUVertexAttribute", {
+			shaderLocation = 3, -- Pass as fourth argument
+			format = ffi.C.WGPUVertexFormat_Float32x3, -- Vector3D (float)
+			offset = 0,
+		}),
+		arrayStride = 3 * sizeof("float"), -- sizeof(Vector3D)
+		stepMode = ffi.C.WGPUVertexStepMode_Vertex,
+	})
+
+	return new("WGPUVertexBufferLayout[?]", 4, {
 		vertexPositionsLayout,
 		vertexColorsLayout,
 		diffuseTexCoordsLayout,
+		surfaceNormalsLayout,
 	})
 end
 
