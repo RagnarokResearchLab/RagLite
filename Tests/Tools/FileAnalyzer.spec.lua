@@ -1,5 +1,8 @@
 local FileAnalyzer = require("Tools.FileAnalyzer")
+local AnimatedWaterPlane = require("Core.FileFormats.RSW.AnimatedWaterPlane")
 local QuadTreeRange = require("Core.FileFormats.RSW.QuadTreeRange")
+local RagnarokGND = require("Core.FileFormats.RagnarokGND")
+local RagnarokRSW = require("Core.FileFormats.RagnarokRSW")
 
 local gndFiles = {
 	path.join("Tests", "Fixtures", "no-water-plane.gnd"),
@@ -193,6 +196,62 @@ describe("FileAnalyzer", function()
 			assertEquals(analysisResult.fields.version[1.5], 1)
 			assertEquals(analysisResult.fields.version[2.2], 1)
 			assertEquals(analysisResult.fields.version[2.3], 1)
+		end)
+	end)
+
+	describe("AnalyzeWaterPlanes", function()
+		it("should return a summary of the given water plane's properties", function()
+			local waterPlane = AnimatedWaterPlane()
+			waterPlane.textureTypePrefix = 1
+			local classicLavaPlane = AnimatedWaterPlane()
+			classicLavaPlane.textureTypePrefix = 4
+			local renewalLavaPlane = AnimatedWaterPlane()
+			renewalLavaPlane.textureTypePrefix = 6
+
+			local rswA = RagnarokRSW()
+			table.insert(rswA.waterPlanes, waterPlane)
+			local rswB = RagnarokRSW()
+			table.insert(rswB.waterPlanes, classicLavaPlane)
+			local gndC = RagnarokGND()
+			table.insert(gndC.waterPlanes, waterPlane)
+			local gndD = RagnarokGND()
+			table.insert(gndD.waterPlanes, renewalLavaPlane)
+			table.insert(gndD.waterPlanes, waterPlane)
+			table.insert(gndD.waterPlanes, waterPlane)
+			local rswE = RagnarokRSW() -- No water planes
+
+			local inputs = {
+				["map_a.rsw"] = rswA,
+				["map_c.gnd"] = gndC,
+				["map_b.rsw"] = rswB,
+				["map_d.gnd"] = gndD,
+				["map_e.rsw"] = rswE,
+			}
+
+			local analysisResult = FileAnalyzer:AnalyzeWaterPlanes(inputs)
+
+			assertEquals(analysisResult.numProcessedResources, 5)
+			assertEquals(analysisResult.fields.textureTypePrefix.numEncounteredValues, 6)
+
+			assertEquals(analysisResult.fields.textureTypePrefix.keysToValues, {
+				["map_a.rsw"] = { 1 },
+				["map_c.gnd"] = { 1 },
+				["map_b.rsw"] = { 4 },
+				["map_d.gnd"] = { 6, 1, 1 },
+			})
+			assertEquals(analysisResult.fields.textureTypePrefix.valuesToKeys, {
+				["01"] = {
+					["map_a.rsw"] = 1,
+					["map_c.gnd"] = 1,
+					["map_d.gnd"] = 2,
+				},
+				["04"] = {
+					["map_b.rsw"] = 1,
+				},
+				["06"] = {
+					["map_d.gnd"] = 1,
+				},
+			})
 		end)
 	end)
 end)
