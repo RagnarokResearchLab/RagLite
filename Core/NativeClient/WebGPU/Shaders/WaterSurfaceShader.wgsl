@@ -43,6 +43,7 @@ var<uniform> uMaterialInstanceData: PerMaterialData;
 
 const MATH_PI = 3.14159266;
 const DEBUG_ALPHA_OFFSET = 0.0; // Set to non-zero value (e.g., 0.2) to make transparent background pixels visible
+const NORMALIZING_SCALE_FACTOR = 1.0 / 5.0; // See RagnarokGND.NORMALIZING_SCALE_FACTOR
 
 fn degreesToRadians(degrees: i32) -> f32 {
     return f32(degrees) * MATH_PI / 180.0;
@@ -134,7 +135,7 @@ fn vs_main(in: VertexInput) -> VertexOutput {
 	let waveSamplingOffset = getNormalizedWaveOffset(position);
 	var waveHeight = sampleWaveHeight(i32(position.x), i32(position.z), i32(waveSamplingOffset * 1.0));
 
-	position.y += waveHeight;
+	position.y += waveHeight * NORMALIZING_SCALE_FACTOR;
 
 	var out: VertexOutput;
 	var homogeneousPosition = vec4<f32>(position, 1.0);
