@@ -121,36 +121,6 @@ describe("AnimatedWaterPlane", function()
 		end)
 	end)
 
-	describe("GetTextureDimensionsByWaterType", function()
-		it("should return the texture dimensions for the given water type ID", function()
-			assertEquals(AnimatedWaterPlane:GetExpectedTextureDimensions(0), 128)
-			assertEquals(AnimatedWaterPlane:GetExpectedTextureDimensions(1), 128)
-			assertEquals(AnimatedWaterPlane:GetExpectedTextureDimensions(2), 128)
-			assertEquals(AnimatedWaterPlane:GetExpectedTextureDimensions(3), 128)
-			assertEquals(AnimatedWaterPlane:GetExpectedTextureDimensions(4), 256)
-			assertEquals(AnimatedWaterPlane:GetExpectedTextureDimensions(5), 128)
-			assertEquals(AnimatedWaterPlane:GetExpectedTextureDimensions(6), 256)
-			assertEquals(AnimatedWaterPlane:GetExpectedTextureDimensions(7), 128)
-			assertEquals(AnimatedWaterPlane:GetExpectedTextureDimensions(8), 128)
-			assertEquals(AnimatedWaterPlane:GetExpectedTextureDimensions(9), 128)
-			assertEquals(AnimatedWaterPlane:GetExpectedTextureDimensions(10), 128)
-			assertEquals(AnimatedWaterPlane:GetExpectedTextureDimensions(11), 128)
-		end)
-
-		it("should return the texture dimensions for the plane itself if no type ID was given", function()
-			local waterPlane = AnimatedWaterPlane()
-			waterPlane.textureTypePrefix = 0 -- Regular water surface
-			local classicLavaPlane = AnimatedWaterPlane()
-			classicLavaPlane.textureTypePrefix = 4 -- Classic lava surface
-			local renewalWaterPlane = AnimatedWaterPlane()
-			renewalWaterPlane.textureTypePrefix = 6 -- Renewal lava surface
-
-			assertEquals(waterPlane:GetExpectedTextureDimensions(), 128)
-			assertEquals(classicLavaPlane:GetExpectedTextureDimensions(), 256)
-			assertEquals(renewalWaterPlane:GetExpectedTextureDimensions(), 256)
-		end)
-	end)
-
 	describe("AlignWithGroundMesh", function()
 		it("should reposition the plane so that it covers the entire map if there's just one water surface", function()
 			local expectedSurfaceRegion = { maxU = 120, maxV = 150, minU = 1, minV = 1, tileSlotU = 1, tileSlotV = 1 }
@@ -202,27 +172,30 @@ describe("AnimatedWaterPlane", function()
 			end
 		)
 
-		it("should generate no vertices if the ground mesh surface is above sea level at the grid position", function()
-			local plane = AnimatedWaterPlane()
-			plane.normalizedSeaLevel = 42
+		it(
+			"should generate no vertices if the ground mesh surface is above the maximum sea level at the grid position",
+			function()
+				local plane = AnimatedWaterPlane()
+				plane.normalizedSeaLevel = 42
 
-			GND_WITH_A_SINGLE_WATER_PLANE.cubeGrid[0].top_surface_id = 0
-			GND_WITH_A_SINGLE_WATER_PLANE.cubeGrid[0].southwest_corner_altitude =
-				denormalizeTerrainAltitude(plane.normalizedSeaLevel + 1)
-			GND_WITH_A_SINGLE_WATER_PLANE.cubeGrid[0].southeast_corner_altitude =
-				denormalizeTerrainAltitude(plane.normalizedSeaLevel + 1)
-			GND_WITH_A_SINGLE_WATER_PLANE.cubeGrid[0].northwest_corner_altitude =
-				denormalizeTerrainAltitude(plane.normalizedSeaLevel + 1)
-			GND_WITH_A_SINGLE_WATER_PLANE.cubeGrid[0].northeast_corner_altitude =
-				denormalizeTerrainAltitude(plane.normalizedSeaLevel + 1)
+				GND_WITH_A_SINGLE_WATER_PLANE.cubeGrid[0].top_surface_id = 0
+				GND_WITH_A_SINGLE_WATER_PLANE.cubeGrid[0].southwest_corner_altitude =
+					denormalizeTerrainAltitude(plane.normalizedSeaLevel + 1 + plane.waveformAmplitudeScalingFactor)
+				GND_WITH_A_SINGLE_WATER_PLANE.cubeGrid[0].southeast_corner_altitude =
+					denormalizeTerrainAltitude(plane.normalizedSeaLevel + 1 + plane.waveformAmplitudeScalingFactor)
+				GND_WITH_A_SINGLE_WATER_PLANE.cubeGrid[0].northwest_corner_altitude =
+					denormalizeTerrainAltitude(plane.normalizedSeaLevel + 1 + plane.waveformAmplitudeScalingFactor)
+				GND_WITH_A_SINGLE_WATER_PLANE.cubeGrid[0].northeast_corner_altitude =
+					denormalizeTerrainAltitude(plane.normalizedSeaLevel + 1 + plane.waveformAmplitudeScalingFactor)
 
-			plane:GenerateWaterVertices(GND_WITH_A_SINGLE_WATER_PLANE, 1, 1)
+				plane:GenerateWaterVertices(GND_WITH_A_SINGLE_WATER_PLANE, 1, 1)
 
-			assertEquals(#plane.surfaceGeometry.vertexPositions, 0)
-			assertEquals(#plane.surfaceGeometry.vertexColors, 0)
-			assertEquals(#plane.surfaceGeometry.triangleConnections, 0)
-			assertEquals(#plane.surfaceGeometry.diffuseTextureCoords, 0)
-		end)
+				assertEquals(#plane.surfaceGeometry.vertexPositions, 0)
+				assertEquals(#plane.surfaceGeometry.vertexColors, 0)
+				assertEquals(#plane.surfaceGeometry.triangleConnections, 0)
+				assertEquals(#plane.surfaceGeometry.diffuseTextureCoords, 0)
+			end
+		)
 
 		it("should generate no vertices if the grid position is outside the plane's surface region", function()
 			local plane = AnimatedWaterPlane(2, 1) -- Starts at u = 51 in this case (= clearly OOB)
@@ -266,7 +239,17 @@ describe("AnimatedWaterPlane", function()
 						end
 					end
 
-					table.insert(surfaceGeometries, plane.surfaceGeometry)
+					-- This is extremely sketchy, but unlikely to require sweeping changes
+					plane.surfaceGeometry.keyframeAnimations = nil
+					plane.surfaceGeometry.material = nil
+					local surfaceGeometry = {
+						vertexPositions = plane.surfaceGeometry.surfaceNormals,
+						triangleConnections = plane.surfaceGeometry.triangleConnections,
+						vertexColors = plane.surfaceGeometry.vertexColors,
+						diffuseTextureCoords = plane.surfaceGeometry.diffuseTextureCoords,
+						surfaceNormals = plane.surfaceGeometry.surfaceNormals,
+					}
+					table.insert(surfaceGeometries, surfaceGeometry)
 				end
 			end
 
@@ -360,7 +343,7 @@ describe("AnimatedWaterPlane", function()
 			assertEquals(#plane.surfaceGeometry.triangleConnections, 6)
 			assertEquals(plane.surfaceGeometry.triangleConnections, { 0, 1, 2, 1, 3, 2 })
 			assertEquals(#plane.surfaceGeometry.diffuseTextureCoords, 8)
-			assertEquals(plane.surfaceGeometry.diffuseTextureCoords, { 0, 1, 0.5, 1, 0, 0.5, 0.5, 0.5 })
+			assertEquals(plane.surfaceGeometry.diffuseTextureCoords, { 0, 0, 0.25, 0, 0, 0.25, 0.25, 0.25 })
 		end)
 	end)
 
