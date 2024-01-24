@@ -321,4 +321,44 @@ function FileAnalyzer:AnalyzeRSM(rsmFiles)
 	return analysisResult
 end
 
+function FileAnalyzer:AnalyzeWaterPlanes(decodedResources)
+	local analysisResult = {
+		numProcessedResources = 0,
+		fields = {
+			textureTypePrefix = {
+				numEncounteredValues = 0,
+				keysToValues = {},
+				valuesToKeys = {},
+			},
+		},
+	}
+
+	for resourceName, decodedResource in pairs(decodedResources) do
+		analysisResult.numProcessedResources = analysisResult.numProcessedResources + 1
+		for planeID, waterPlane in ipairs(decodedResource.waterPlanes) do
+			analysisResult.fields.textureTypePrefix.numEncounteredValues = analysisResult.fields.textureTypePrefix.numEncounteredValues
+				+ 1
+
+			-- The JSON library ignores 0-index tables, and this makes the results easier to read
+			local waterType = format("%02d", tostring(waterPlane.textureTypePrefix))
+			analysisResult.fields.textureTypePrefix.keysToValues[resourceName] = analysisResult.fields.textureTypePrefix.keysToValues[resourceName]
+				or {}
+			analysisResult.fields.textureTypePrefix.valuesToKeys[waterType] = analysisResult.fields.textureTypePrefix.valuesToKeys[waterType]
+				or {}
+
+			table.insert(
+				analysisResult.fields.textureTypePrefix.keysToValues[resourceName],
+				waterPlane.textureTypePrefix
+			)
+
+			analysisResult.fields.textureTypePrefix.valuesToKeys[waterType][resourceName] = analysisResult.fields.textureTypePrefix.valuesToKeys[waterType][resourceName]
+				or 0
+			analysisResult.fields.textureTypePrefix.valuesToKeys[waterType][resourceName] = analysisResult.fields.textureTypePrefix.valuesToKeys[waterType][resourceName]
+				+ 1
+		end
+	end
+
+	return analysisResult
+end
+
 return FileAnalyzer

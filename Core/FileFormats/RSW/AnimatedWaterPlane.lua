@@ -14,6 +14,7 @@ local AnimatedWaterPlane = {
 	NUM_FRAMES_PER_WAVEFORM_ANIMATION = 360, -- Degrees on the unit circle
 	GEOMETRY_DEBUG_INSET = 0,
 	MAX_TEXTURE_SIZE_IN_PIXELS = 256,
+	PREALLOCATE_GEOMETRY_BUFFERS = true, -- Not needed during analysis (huge memory hog)
 }
 function AnimatedWaterPlane:Construct(tileSlotU, tileSlotV, surfaceProperties)
 	surfaceProperties = surfaceProperties or {}
@@ -44,11 +45,14 @@ function AnimatedWaterPlane:Construct(tileSlotU, tileSlotV, surfaceProperties)
 	instance.waveformAnimation.frameDisplayDurationInMilliseconds =
 		self:GetWaveformCyclingSpeed(instance.waveformPhaseShiftInDegreesPerFrame)
 
-	-- These estimates need refinement (see https://github.com/RagnarokResearchLab/RagLite/issues/281)
-	instance.surfaceGeometry.vertexPositions = table.new(75000, 0)
-	instance.surfaceGeometry.triangleConnections = table.new(10000, 0)
-	instance.surfaceGeometry.vertexColors = table.new(10000, 0)
-	instance.surfaceGeometry.diffuseTextureCoords = table.new(10000, 0)
+	if self.PREALLOCATE_GEOMETRY_BUFFERS then
+		-- These estimates need refinement (see https://github.com/RagnarokResearchLab/RagLite/issues/281)
+		instance.surfaceGeometry.vertexPositions = table.new(75000, 0)
+		instance.surfaceGeometry.triangleConnections = table.new(10000, 0)
+		instance.surfaceGeometry.vertexColors = table.new(10000, 0)
+		instance.surfaceGeometry.diffuseTextureCoords = table.new(10000, 0)
+	end
+
 	instance.surfaceGeometry.OnUpdate = function(surfaceGeometry, ...)
 		instance:OnUpdate(instance, ...)
 	end

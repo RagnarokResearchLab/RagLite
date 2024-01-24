@@ -185,9 +185,6 @@ function RagnarokRSW:DecodeIncludeFiles()
 	self.gndFile = reader:GetNullTerminatedString(includePathLength)
 	self.gatFile = reader:GetNullTerminatedString(includePathLength)
 	self.scrFile = reader:GetNullTerminatedString(includePathLength)
-
-	assert(self.iniFile == "", "Unexpected usage of INI files (Is that you, Arcturus?)")
-	assert(self.scrFile == "", "Unexpected usage of SCR files (Is that you, Arcturus?)")
 end
 
 function RagnarokRSW:DecodeWaterPlanes()
