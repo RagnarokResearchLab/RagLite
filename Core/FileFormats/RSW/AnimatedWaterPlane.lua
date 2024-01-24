@@ -240,6 +240,11 @@ function AnimatedWaterPlane:GenerateWaterVertices(gnd, gridU, gridV)
 		table_insert(mesh.vertexColors, surfaceColor.red)
 		table_insert(mesh.vertexColors, surfaceColor.green)
 		table_insert(mesh.vertexColors, surfaceColor.blue)
+
+		-- Normals are constant for flat planes, so re-use the X/Z coords to pass grid positions for each vertex
+		table_insert(mesh.surfaceNormals, (gridU - 1)) -- Required for waveform sampling (can't compute from world position)
+		table_insert(mesh.surfaceNormals, 1) -- Technically, don't even need that (could hardcode in the shader)
+		table_insert(mesh.surfaceNormals, (gridV - 1)) -- Required for waveform sampling (can't compute from world position)
 	end
 
 	local textureSizeInPixels = self:GetExpectedTextureDimensions()
