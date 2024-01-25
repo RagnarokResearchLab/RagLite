@@ -87,7 +87,10 @@ function NativeClient:CreateMainWindow()
 end
 
 function NativeClient:StartRenderLoop()
+	PerformanceMetricsOverlay.formatOverrides.CPU = "%s: %.2f %%%s"
+	PerformanceMetricsOverlay.formatOverrides.Memory = "%s: %d MB%s"
 	PerformanceMetricsOverlay:StartMeasuring()
+	local initialResourceUsage = uv.getrusage()
 
 	-- Should probably replace with RML data binding or a similar approach later?
 	self.fpsDisplayTicker = C_Timer.NewTicker(2500, function()
@@ -115,7 +118,18 @@ function NativeClient:StartRenderLoop()
 		local frameEndTime = uv.hrtime()
 
 		local frameTimeInMilliseconds = (frameEndTime - frameStartTime) / 10E5
+		local lastMeasuredResourceUsage = uv.getrusage()
+
+		local cpuUsage = PerformanceMetricsOverlay:ComputeResourceUsageForInterval(
+			initialResourceUsage,
+			lastMeasuredResourceUsage,
+			frameTimeInMilliseconds
+		)
+		initialResourceUsage = lastMeasuredResourceUsage
+
 		local sample = {
+			CPU = cpuUsage,
+			Memory = collectgarbage("count") / 1024,
 			Frame = frameTimeInMilliseconds,
 			Render = cpuFrameTime / 10E5,
 			World = worldRenderTime / 10E5,
@@ -123,6 +137,8 @@ function NativeClient:StartRenderLoop()
 			Submit = commandSubmissionTime / 10E5,
 			UV = uvPollingTime / 10E5,
 			GLFW = (glfwPollingTime + replayTime) / 10E5,
+			"Memory",
+			"CPU",
 			"Frame",
 			"Render",
 			"World",

@@ -5,6 +5,7 @@ local tinsert = table.insert
 
 local PerformanceMetricsOverlay = {
 	samples = {},
+	formatOverrides = {},
 	isEnabled = false,
 	messageStrings = {
 		NO_SAMPLES_AVAILABLE = "No performance metrics available at this time",
@@ -53,10 +54,33 @@ function PerformanceMetricsOverlay:GetFormattedMetricsString()
 
 		local isLastMetric = (index == #self.samples)
 		local separator = isLastMetric and "" or " | "
-		tinsert(sampleStrings, format("%s: %.2f ms%s", name, avg, separator))
+		local formatString = self.formatOverrides[name] or "%s: %.2f ms%s"
+		tinsert(sampleStrings, format(formatString, name, avg, separator))
 	end
 
 	return tconcat(sampleStrings, "")
+end
+
+local function toMicroseconds(time)
+	return time.sec * 1E6 + time.usec
+end
+
+function PerformanceMetricsOverlay:ComputeResourceUsageForInterval(
+	initialResourceUsage,
+	finalUsage,
+	measuredIntervalInMilliseconds
+)
+	if measuredIntervalInMilliseconds <= 0 then
+		return 0
+	end
+
+	local initialTotal = toMicroseconds(initialResourceUsage.utime)
+	local finalTotal = toMicroseconds(finalUsage.utime)
+
+	local cpuTimeUsedInMicroseconds = finalTotal - initialTotal
+	local elapsedTimeInMicroseconds = measuredIntervalInMilliseconds * 1E3
+
+	return (cpuTimeUsedInMicroseconds / elapsedTimeInMicroseconds) * 100
 end
 
 return PerformanceMetricsOverlay
