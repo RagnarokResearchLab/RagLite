@@ -87,6 +87,7 @@ function NativeClient:CreateMainWindow()
 end
 
 function NativeClient:StartRenderLoop()
+	PerformanceMetricsOverlay.formatOverrides.Memory = "%s: %d MB%s"
 	PerformanceMetricsOverlay:StartMeasuring()
 
 	-- Should probably replace with RML data binding or a similar approach later?
@@ -116,6 +117,7 @@ function NativeClient:StartRenderLoop()
 
 		local frameTimeInMilliseconds = (frameEndTime - frameStartTime) / 10E5
 		local sample = {
+			Memory = collectgarbage("count") / 1024,
 			Frame = frameTimeInMilliseconds,
 			Render = cpuFrameTime / 10E5,
 			World = worldRenderTime / 10E5,
@@ -123,6 +125,7 @@ function NativeClient:StartRenderLoop()
 			Submit = commandSubmissionTime / 10E5,
 			UV = uvPollingTime / 10E5,
 			GLFW = (glfwPollingTime + replayTime) / 10E5,
+			"Memory",
 			"Frame",
 			"Render",
 			"World",
