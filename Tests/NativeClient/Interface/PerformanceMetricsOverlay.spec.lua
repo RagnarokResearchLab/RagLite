@@ -90,5 +90,28 @@ describe("PerformanceMetricsOverlay", function()
 				"totalFrameTime: 100.00 ms | cpuRenderTime: nan ms | worldRenderTime: 200.00 ms | interfaceRenderTime: 300.00 ms | commandSubmissionTime: 600.00 ms | uvPollingTime: 400.00 ms | glfwPollingTime: 500.00 ms"
 			assertEquals(actual, expected)
 		end)
+
+		it("should allow overriding the format for non-standard types of metrics", function()
+			PerformanceMetricsOverlay:StartMeasuring()
+
+			local metricsEntry = {
+				Memory = 1024,
+				Percentage = 56.75345,
+				Time = 250,
+				"Memory",
+				"Percentage",
+				"Time",
+			}
+			PerformanceMetricsOverlay:AddSample(metricsEntry)
+			PerformanceMetricsOverlay:AddSample(metricsEntry)
+
+			PerformanceMetricsOverlay.formatOverrides.Memory = "%s: %d MB%s"
+			PerformanceMetricsOverlay.formatOverrides.Percentage = "%s: %.2f %%%s"
+			PerformanceMetricsOverlay.formatOverrides.Time = "%s: %d milliseconds%s"
+
+			local actual = PerformanceMetricsOverlay:GetFormattedMetricsString()
+			local expected = "Memory: 1024 MB | Percentage: 56.75 % | Time: 250 milliseconds"
+			assertEquals(actual, expected)
+		end)
 	end)
 end)

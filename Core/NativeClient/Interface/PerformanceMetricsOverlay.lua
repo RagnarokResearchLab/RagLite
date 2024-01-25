@@ -5,6 +5,7 @@ local tinsert = table.insert
 
 local PerformanceMetricsOverlay = {
 	samples = {},
+	formatOverrides = {},
 	isEnabled = false,
 	messageStrings = {
 		NO_SAMPLES_AVAILABLE = "No performance metrics available at this time",
@@ -53,7 +54,8 @@ function PerformanceMetricsOverlay:GetFormattedMetricsString()
 
 		local isLastMetric = (index == #self.samples)
 		local separator = isLastMetric and "" or " | "
-		tinsert(sampleStrings, format("%s: %.2f ms%s", name, avg, separator))
+		local formatString = self.formatOverrides[name] or "%s: %.2f ms%s"
+		tinsert(sampleStrings, format(formatString, name, avg, separator))
 	end
 
 	return tconcat(sampleStrings, "")
