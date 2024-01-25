@@ -61,4 +61,26 @@ function PerformanceMetricsOverlay:GetFormattedMetricsString()
 	return tconcat(sampleStrings, "")
 end
 
+local function toMicroseconds(time)
+	return time.sec * 1E6 + time.usec
+end
+
+function PerformanceMetricsOverlay:ComputeResourceUsageForInterval(
+	initialResourceUsage,
+	finalUsage,
+	measuredIntervalInMilliseconds
+)
+	if measuredIntervalInMilliseconds <= 0 then
+		return 0
+	end
+
+	local initialTotal = toMicroseconds(initialResourceUsage.utime)
+	local finalTotal = toMicroseconds(finalUsage.utime)
+
+	local cpuTimeUsedInMicroseconds = finalTotal - initialTotal
+	local elapsedTimeInMicroseconds = measuredIntervalInMilliseconds * 1E3
+
+	return (cpuTimeUsedInMicroseconds / elapsedTimeInMicroseconds) * 100
+end
+
 return PerformanceMetricsOverlay
