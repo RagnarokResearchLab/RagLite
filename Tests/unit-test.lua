@@ -29,6 +29,7 @@ local specFiles = {
 	"Tests/NativeClient/DebugDraw/Cone.spec.lua",
 	"Tests/NativeClient/DebugDraw/Cylinder.spec.lua",
 	"Tests/NativeClient/DebugDraw/DebugScene.spec.lua",
+	"Tests/NativeClient/DebugDraw/NormalsVisualization.spec.lua",
 	"Tests/NativeClient/DebugDraw/Plane.spec.lua",
 	"Tests/NativeClient/DebugDraw/Pyramid.spec.lua",
 	"Tests/NativeClient/DebugDraw/Sphere.spec.lua",
