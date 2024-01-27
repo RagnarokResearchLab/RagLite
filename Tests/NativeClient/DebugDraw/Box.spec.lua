@@ -7,9 +7,11 @@ describe("Box", function()
 
 			local expectedVertexPositions = require("Tests.Fixtures.Snapshots.unit-cube-positions")
 			local expectedVertexIndices = require("Tests.Fixtures.Snapshots.unit-cube-indices")
+			local expectedSurfaceNormals = require("Tests.Fixtures.Snapshots.unit-cube-normals")
 
 			assertEquals(boxGeometry.vertexPositions, expectedVertexPositions)
 			assertEquals(boxGeometry.triangleConnections, expectedVertexIndices)
+			assertEquals(boxGeometry.surfaceNormals, expectedSurfaceNormals)
 		end)
 
 		it("should generate a scaled box if non-unit dimensions were passed", function()
@@ -18,9 +20,11 @@ describe("Box", function()
 
 			local expectedVertexPositions = require("Tests.Fixtures.Snapshots.scaled-cube-positions")
 			local expectedVertexIndices = require("Tests.Fixtures.Snapshots.scaled-cube-indices")
+			local expectedSurfaceNormals = require("Tests.Fixtures.Snapshots.scaled-cube-normals")
 
 			assertEquals(boxGeometry.vertexPositions, expectedVertexPositions)
 			assertEquals(boxGeometry.triangleConnections, expectedVertexIndices)
+			assertEquals(boxGeometry.surfaceNormals, expectedSurfaceNormals)
 		end)
 
 		it("should bake in the translation vector if a table value was passed", function()
@@ -29,9 +33,11 @@ describe("Box", function()
 
 			local expectedVertexPositions = require("Tests.Fixtures.Snapshots.translated-cube-positions")
 			local expectedVertexIndices = require("Tests.Fixtures.Snapshots.translated-cube-indices")
+			local expectedSurfaceNormals = require("Tests.Fixtures.Snapshots.translated-cube-normals")
 
 			assertEquals(boxGeometry.vertexPositions, expectedVertexPositions)
 			assertEquals(boxGeometry.triangleConnections, expectedVertexIndices)
+			assertEquals(boxGeometry.surfaceNormals, expectedSurfaceNormals)
 		end)
 	end)
 end)
