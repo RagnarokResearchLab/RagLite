@@ -389,7 +389,7 @@ describe("Renderer", function()
 		it("should all meshes to the scene", function()
 			local scene = require("Core.NativeClient.DebugDraw.Scenes.cube3d")
 			Renderer:LoadSceneObjects(scene)
-			assertEquals(#Renderer.meshes, 3)
+			assertEquals(#Renderer.meshes, 4)
 			Renderer:LoadSceneObjects(scene)
 		end)
 
