@@ -10,6 +10,7 @@ local ffi_string = ffi.string
 local GPU = {
 	MAX_VERTEX_COUNT = 200000, -- Should be configurable (later)
 	MAX_TEXTURE_ARRAY_SIZE = 32,
+	MAX_BUFFER_SIZE = 256 * 1024 * 1024,
 }
 
 -- The FFI bindings don't provide enums for native extensions yet (requires a fix in the runtime)
@@ -116,7 +117,7 @@ function GPU:RequestLogicalDevice(adapter, options)
 				maxVertexAttributes = 4, -- Vertex positions, vertex colors, diffuse texture UVs, normals
 				maxVertexBuffers = 4, -- Vertex positions, vertex colors, diffuse texture UVs, normals
 				maxInterStageShaderComponents = 8, -- #(vec3f color, vec2f diffuseTextureCoords, float alpha), normal(vec3f)
-				maxBufferSize = self.MAX_VERTEX_COUNT * 5 * ffi.sizeof("float"), -- #(vec3f position, vec2f transform)
+				maxBufferSize = GPU.MAX_BUFFER_SIZE, -- DEFAULT
 				maxVertexBufferArrayStride = 20, -- #(Rml::Vertex)
 				maxBindGroups = 3, -- Camera, material, transforms
 				maxUniformBuffersPerShaderStage = 1, -- Camera properties (increase for material, soon?)
