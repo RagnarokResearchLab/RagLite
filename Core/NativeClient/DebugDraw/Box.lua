@@ -27,6 +27,15 @@ function Box:Construct(creationOptions)
 		Vector3D(-halfWidth + translation.x, halfHeight + translation.y, halfDepth + translation.z),
 	}
 
+	local faceNormals = {
+		Vector3D(0, 0, -1), -- Front
+		Vector3D(0, 0, 1), -- Back
+		Vector3D(0, -1, 0), -- Bottom
+		Vector3D(0, 1, 0), -- Top
+		Vector3D(-1, 0, 0), -- Left
+		Vector3D(1, 0, 0), -- Right
+	}
+
 	local faceColors = {
 		Color.RED,
 		Color.GREEN,
@@ -49,6 +58,7 @@ function Box:Construct(creationOptions)
 
 	for faceID, face in ipairs(faceIndices) do
 		local faceColor = faceColors[faceID]
+		local normal = faceNormals[faceID]
 		for _, index in ipairs(face) do
 			local vertex = cornerVertices[index]
 			tinsert(boxMesh.vertexPositions, vertex.x)
@@ -58,6 +68,10 @@ function Box:Construct(creationOptions)
 			tinsert(boxMesh.vertexColors, faceColor.red)
 			tinsert(boxMesh.vertexColors, faceColor.green)
 			tinsert(boxMesh.vertexColors, faceColor.blue)
+
+			tinsert(boxMesh.surfaceNormals, normal.x)
+			tinsert(boxMesh.surfaceNormals, normal.y)
+			tinsert(boxMesh.surfaceNormals, normal.z)
 		end
 
 		local baseIndex = (faceID - 1) * 4
@@ -72,9 +86,6 @@ function Box:Construct(creationOptions)
 	for _ = 1, #boxMesh.vertexPositions / 3 do
 		tinsert(boxMesh.diffuseTextureCoords, 0)
 		tinsert(boxMesh.diffuseTextureCoords, 0)
-		tinsert(boxMesh.surfaceNormals, 0)
-		tinsert(boxMesh.surfaceNormals, 1) -- Placeholder (uses unlit material, anyway)
-		tinsert(boxMesh.surfaceNormals, 0)
 	end
 
 	return boxMesh

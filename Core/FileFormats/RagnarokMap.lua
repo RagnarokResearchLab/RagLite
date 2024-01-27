@@ -3,6 +3,8 @@ local RagnarokGND = require("Core.FileFormats.RagnarokGND")
 local RagnarokGRF = require("Core.FileFormats.RagnarokGRF")
 local RagnarokRSW = require("Core.FileFormats.RagnarokRSW")
 
+local NormalsVisualization = require("Core.NativeClient.DebugDraw.NormalsVisualization")
+
 local uv = require("uv")
 
 local format = string.format
@@ -12,6 +14,7 @@ local RagnarokMap = {
 	MAP_DATABASE = require("DB.Maps"),
 	ERROR_INVALID_MAP_ID = "No such entry exists in the map database",
 	ERROR_INVALID_FILE_SYSTEM = "Cannot fetch resources without a registered file system handler",
+	DEBUG_TERRAIN_NORMALS = false,
 }
 
 function RagnarokMap:Construct(mapID, fileSystem)
@@ -33,6 +36,10 @@ function RagnarokMap:Construct(mapID, fileSystem)
 	local groundMeshSections = self:LoadTerrainGeometry(mapID)
 	for sectionID, groundMeshSection in ipairs(groundMeshSections) do
 		table_insert(scene.meshes, groundMeshSection)
+		if self.DEBUG_TERRAIN_NORMALS then
+			local normalsVisualization = NormalsVisualization(groundMeshSection)
+			table_insert(scene.meshes, normalsVisualization)
+		end
 	end
 
 	local waterPlanes = self:LoadWaterSurface(mapID)
