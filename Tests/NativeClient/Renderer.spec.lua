@@ -397,9 +397,9 @@ describe("Renderer", function()
 			local scene = require("Core.NativeClient.DebugDraw.Scenes.cube3d")
 			scene.ambientLight = { red = 0.1, green = 0.2, blue = 0.3, intensity = 0.4 }
 
-			Renderer.ambientLight.red = 123 / 255
-			Renderer.ambientLight.green = 123 / 255
-			Renderer.ambientLight.blue = 123 / 255
+			Renderer.ambientLight.red = 102 / 255
+			Renderer.ambientLight.green = 102 / 255
+			Renderer.ambientLight.blue = 103 / 255
 			Renderer.ambientLight.intensity = 0.5
 
 			Renderer:LoadSceneObjects(scene)
@@ -415,9 +415,9 @@ describe("Renderer", function()
 			local scene = require("Core.NativeClient.DebugDraw.Scenes.cube3d")
 			assert(scene.ambientLight == nil, tostring(scene.ambientLight))
 
-			Renderer.ambientLight.red = 123 / 255
-			Renderer.ambientLight.green = 123 / 255
-			Renderer.ambientLight.blue = 123 / 255
+			Renderer.ambientLight.red = 101 / 255
+			Renderer.ambientLight.green = 102 / 255
+			Renderer.ambientLight.blue = 103 / 255
 			Renderer.ambientLight.intensity = 0.5
 
 			Renderer:LoadSceneObjects(scene)
@@ -427,6 +427,68 @@ describe("Renderer", function()
 			assertEquals(Renderer.ambientLight.green, 1)
 			assertEquals(Renderer.ambientLight.blue, 1)
 			assertEquals(Renderer.ambientLight.intensity, 1)
+		end)
+
+		it("should set the sunlight source to the scene's directional light if one exists", function()
+			local scene = require("Core.NativeClient.DebugDraw.Scenes.cube3d")
+			scene.directionalLight = {
+				red = 0.1,
+				green = 0.2,
+				blue = 0.3,
+				intensity = 0.4,
+				rayDirection = {
+					x = 1,
+					y = 2,
+					z = 3,
+				},
+			}
+
+			Renderer.directionalLight.red = 121 / 255
+			Renderer.directionalLight.green = 122 / 255
+			Renderer.directionalLight.blue = 123 / 255
+			Renderer.directionalLight.intensity = 0.5
+			Renderer.directionalLight.rayDirection = {
+				x = 4,
+				y = 5,
+				z = 6,
+			}
+
+			Renderer:LoadSceneObjects(scene)
+
+			scene.directionalLight = nil
+			assertEquals(Renderer.directionalLight.red, 0.1)
+			assertEquals(Renderer.directionalLight.green, 0.2)
+			assertEquals(Renderer.directionalLight.blue, 0.3)
+			assertEquals(Renderer.directionalLight.intensity, 0.4)
+			assertEquals(Renderer.directionalLight.rayDirection.x, 1)
+			assertEquals(Renderer.directionalLight.rayDirection.y, 2)
+			assertEquals(Renderer.directionalLight.rayDirection.z, 3)
+		end)
+
+		it("should set the sunlight source to its default settings if the scene doesn't use it", function()
+			local scene = require("Core.NativeClient.DebugDraw.Scenes.cube3d")
+			assert(scene.directionalLight == nil, tostring(scene.directionalLight))
+
+			Renderer.directionalLight.red = 100 / 255
+			Renderer.directionalLight.green = 101 / 255
+			Renderer.directionalLight.blue = 102 / 255
+			Renderer.directionalLight.intensity = 0.5
+			Renderer.directionalLight.rayDirection = {
+				x = 4,
+				y = 5,
+				z = 6,
+			}
+
+			Renderer:LoadSceneObjects(scene)
+
+			scene.directionalLight = nil
+			assertEquals(Renderer.directionalLight.red, 1)
+			assertEquals(Renderer.directionalLight.green, 1)
+			assertEquals(Renderer.directionalLight.blue, 1)
+			assertEquals(Renderer.directionalLight.intensity, 1)
+			assertEquals(Renderer.directionalLight.rayDirection.x, 1)
+			assertEquals(Renderer.directionalLight.rayDirection.y, -1)
+			assertEquals(Renderer.directionalLight.rayDirection.z, 1)
 		end)
 
 		describe("ResetScene", function()
@@ -447,17 +509,17 @@ describe("Renderer", function()
 
 			it("should reset the scene lighting to its default values", function()
 				Renderer.ambientLight = {
-					red = 42 / 255,
-					green = 42 / 255,
-					blue = 42 / 255,
+					red = 1 / 255,
+					green = 2 / 255,
+					blue = 3 / 255,
 					intensity = 1,
 				}
 				Renderer.directionalLight = {
-					red = 42 / 255,
-					green = 42 / 255,
+					red = 40 / 255,
+					green = 41 / 255,
 					blue = 42 / 255,
 					intensity = 1,
-					direction = { x = 1, y = -1, z = 1 },
+					rayDirection = { x = 10, y = 20, z = 30 },
 				}
 				Renderer:ResetScene()
 				assertEquals(Renderer.ambientLight.red, 1)
@@ -469,9 +531,9 @@ describe("Renderer", function()
 				assertEquals(Renderer.directionalLight.green, 1)
 				assertEquals(Renderer.directionalLight.blue, 1)
 				assertEquals(Renderer.directionalLight.intensity, 1)
-				assertEquals(Renderer.directionalLight.direction.x, 1)
-				assertEquals(Renderer.directionalLight.direction.y, -1)
-				assertEquals(Renderer.directionalLight.direction.z, 1)
+				assertEquals(Renderer.directionalLight.rayDirection.x, 1)
+				assertEquals(Renderer.directionalLight.rayDirection.y, -1)
+				assertEquals(Renderer.directionalLight.rayDirection.z, 1)
 			end)
 		end)
 	end)

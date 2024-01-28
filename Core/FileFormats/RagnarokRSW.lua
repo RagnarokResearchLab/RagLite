@@ -10,6 +10,9 @@ local BinaryReader = require("Core.FileFormats.BinaryReader")
 local RagnarokGND = require("Core.FileFormats.RagnarokGND")
 local QuadTreeRange = require("Core.FileFormats.RSW.QuadTreeRange")
 
+local Matrix3D = require("Core.VectorMath.Matrix3D")
+local Vector3D = require("Core.VectorMath.Vector3D")
+
 local RagnarokRSW = {
 	SCENE_OBJECT_TYPE_ANIMATED_PROP = 1,
 	SCENE_OBJECT_TYPE_DYNAMIC_LIGHT_SOURCE = 2,
@@ -221,6 +224,10 @@ function RagnarokRSW:DecodeEnvironmentalLightSources()
 		},
 	}
 
+	local rayDirection =
+		self:ComputeSunRayDirection(directionalLight.latitudeInDegrees, directionalLight.longitudeInDegrees)
+	directionalLight.direction = rayDirection
+
 	local ambientLight = {
 		diffuseColor = {
 			red = tonumber(environmentalLightInfo.ambient_color.red),
@@ -243,6 +250,20 @@ function RagnarokRSW:DecodeEnvironmentalLightSources()
 	self.ambientLight = ambientLight
 	self.contrastCorrectionColor = contrastCorrectionColor
 	self.prebakedShadowmapAlpha = tonumber(environmentalLightInfo.shadowmap_alpha)
+end
+
+function RagnarokRSW:ComputeSunRayDirection(latitudeInDegrees, longitudeInDegrees)
+	local sunRayDirection = Vector3D(0, 1, 0)
+
+	local rotationAroundX = Matrix3D:CreateAxisRotationX(latitudeInDegrees)
+	local rotationAroundY = Matrix3D:CreateAxisRotationY(longitudeInDegrees)
+
+	sunRayDirection:Transform(rotationAroundX)
+	sunRayDirection:Transform(rotationAroundY)
+
+	sunRayDirection.y = -1 * sunRayDirection.y
+
+	return sunRayDirection
 end
 
 function RagnarokRSW:DecodeMapBoundaries()
