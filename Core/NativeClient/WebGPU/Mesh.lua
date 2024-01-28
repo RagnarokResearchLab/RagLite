@@ -2,7 +2,9 @@ local UnlitMeshMaterial = require("Core.NativeClient.WebGPU.Materials.UnlitMeshM
 
 local uuid = require("uuid")
 
-local Mesh = {}
+local Mesh = {
+	NUM_BUFFERS_PER_MESH = 5, -- Positions, indices, colors, diffuse UVs, normals
+}
 
 function Mesh:Construct(name)
 	local globallyUniqueID = uuid.createMersenneTwistedUUID() -- Might be overkill, but oh well...

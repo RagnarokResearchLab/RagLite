@@ -433,13 +433,16 @@ describe("Renderer", function()
 			it("should remove all existing meshes from the scene", function()
 				local scene = require("Core.NativeClient.DebugDraw.Scenes.wgpu")
 				Renderer:LoadSceneObjects(scene)
-				assertEquals(#Renderer.meshes, 9)
+				assertEquals(#Renderer.meshes, #scene.meshes)
 
-				-- A bit sketchy, but oh well... Better: Track wgpu calls (again)? Maybe later, seems redundant
-				_G.assertCallsFunction(function()
-					Renderer:ResetScene()
-				end, Renderer.DestroyMeshGeometry, 42)
-				assertEquals(#Renderer.meshes, 0)
+				etrace.clear()
+				Renderer:ResetScene()
+				local events = etrace.filter()
+
+				assertEquals(#events, #scene.meshes * Mesh.NUM_BUFFERS_PER_MESH)
+				for index = 1, #scene.meshes * Mesh.NUM_BUFFERS_PER_MESH, 1 do
+					assertEquals(events[index].name, "GPU_BUFFER_DESTROY")
+				end
 			end)
 
 			it("should reset the scene lighting to its default values", function()
