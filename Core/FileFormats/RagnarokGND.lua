@@ -97,6 +97,7 @@ function RagnarokGND:Construct()
 		diffuseTexturePaths = {},
 		groundMeshSections = {},
 		waterPlanes = {},
+		computedVertexPositions = {},
 	}
 
 	setmetatable(instance, self)
@@ -201,6 +202,7 @@ end
 function RagnarokGND:DecodeCubeGrid()
 	local numGroundMeshCubes = self.gridSizeU * self.gridSizeV
 	self.cubeGrid = self.reader:GetTypedArray("gnd_groundmesh_cube_t", numGroundMeshCubes)
+	self.computedVertexPositions = table.new(numGroundMeshCubes, 0)
 end
 
 function RagnarokGND:DecodeWaterPlanes()
@@ -562,6 +564,10 @@ function RagnarokGND:GenerateGroundVertices(gridU, gridV)
 		return nil, format("Failed to generate GROUND surface at (%d, %d)", gridU, gridV)
 	end
 
+	if self.computedVertexPositions[cubeID] then
+		return unpack(self.computedVertexPositions[cubeID])
+	end
+
 	assert(cubeID < self.gridSizeU * self.gridSizeV)
 	local cube = self.cubeGrid[cubeID]
 
@@ -585,6 +591,8 @@ function RagnarokGND:GenerateGroundVertices(gridU, gridV)
 	topRightCorner.x = gridU * RagnarokGND.GAT_TILES_PER_GND_SURFACE
 	topRightCorner.y = -1 * cube.northeast_corner_altitude * self.NORMALIZING_SCALE_FACTOR
 	topRightCorner.z = gridV * RagnarokGND.GAT_TILES_PER_GND_SURFACE
+
+	self.computedVertexPositions[cubeID] = { bottomLeftCorner, bottomRightCorner, topLeftCorner, topRightCorner }
 
 	return bottomLeftCorner, bottomRightCorner, topLeftCorner, topRightCorner
 end
