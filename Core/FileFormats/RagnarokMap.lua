@@ -49,8 +49,8 @@ function RagnarokMap:Construct(mapID, fileSystem)
 
 	local ambient = {
 		red = self.rsw.ambientLight.diffuseColor.red,
-		green = self.rsw.ambientLight.diffuseColor.red,
-		blue = self.rsw.ambientLight.diffuseColor.red,
+		green = self.rsw.ambientLight.diffuseColor.green,
+		blue = self.rsw.ambientLight.diffuseColor.blue,
 		intensity = 1,
 	}
 	scene.ambientLight = ambient
