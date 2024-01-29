@@ -98,6 +98,10 @@ function RagnarokGND:Construct()
 		groundMeshSections = {},
 		waterPlanes = {},
 		computedVertexPositions = {},
+		computedFlatNormals = {
+			right = {},
+			left = {},
+		},
 	}
 
 	setmetatable(instance, self)
@@ -203,6 +207,8 @@ function RagnarokGND:DecodeCubeGrid()
 	local numGroundMeshCubes = self.gridSizeU * self.gridSizeV
 	self.cubeGrid = self.reader:GetTypedArray("gnd_groundmesh_cube_t", numGroundMeshCubes)
 	self.computedVertexPositions = table.new(numGroundMeshCubes, 0)
+	self.computedFlatNormals.left = table.new(numGroundMeshCubes, 0)
+	self.computedFlatNormals.right = table.new(numGroundMeshCubes, 0)
 end
 
 function RagnarokGND:DecodeWaterPlanes()
@@ -695,6 +701,11 @@ function RagnarokGND:PickVertexColor(gridU, gridV)
 end
 
 function RagnarokGND:ComputeFlatFaceNormalLeft(gridU, gridV)
+	local cubeID = self:GridPositionToCubeID(gridU, gridV)
+	if self.computedFlatNormals.left[cubeID] then
+		return self.computedFlatNormals.left[cubeID]
+	end
+
 	local bottomLeftCorner, bottomRightCorner, topLeftCorner = self:GenerateGroundVertices(gridU, gridV)
 
 	if not bottomLeftCorner then -- The others probably don't exist either due to OOB access
@@ -720,11 +731,16 @@ function RagnarokGND:ComputeFlatFaceNormalLeft(gridU, gridV)
 	)
 
 	leftFaceNormal:Normalize()
-
+	self.computedFlatNormals.left[cubeID] = leftFaceNormal
 	return leftFaceNormal
 end
 
 function RagnarokGND:ComputeFlatFaceNormalRight(gridU, gridV)
+	local cubeID = self:GridPositionToCubeID(gridU, gridV)
+	if self.computedFlatNormals.right[cubeID] then
+		return self.computedFlatNormals.right[cubeID]
+	end
+
 	local bottomLeftCorner, bottomRightCorner, topLeftCorner, topRightCorner = self:GenerateGroundVertices(gridU, gridV)
 
 	if not bottomLeftCorner then -- The others probably don't exist either due to OOB access
@@ -750,7 +766,7 @@ function RagnarokGND:ComputeFlatFaceNormalRight(gridU, gridV)
 	)
 
 	rightFaceNormal:Normalize()
-
+	self.computedFlatNormals.right[cubeID] = rightFaceNormal
 	return rightFaceNormal
 end
 
