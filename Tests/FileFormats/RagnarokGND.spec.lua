@@ -572,7 +572,6 @@ describe("RagnarokGND", function()
 			assertEquals(#sections, 1) -- Index starts at zero
 			assertEquals(table.count(sections), 1)
 			local json = require("json")
-			sections[1].surfaceNormals = nil -- Placeholder normals aren't worth checking
 			local jsonDump = json.prettier(sections)
 			-- Leaving this here because the snapshot likely needs to be recreated once lightmaps/normals are needed
 			-- C_FileSystem.WriteFile(path.join("Tests", "Fixtures", "Snapshots", "gnd-geometry.json"), jsonDump)
