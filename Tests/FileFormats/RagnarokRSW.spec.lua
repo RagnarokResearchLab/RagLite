@@ -1,3 +1,4 @@
+local BinaryReader = require("Core.FileFormats.BinaryReader")
 local QuadTreeRange = require("Core.FileFormats.RSW.QuadTreeRange")
 local RagnarokRSW = require("Core.FileFormats.RagnarokRSW")
 
@@ -902,6 +903,21 @@ describe("RagnarokRSW", function()
 			assertEqualNumbers(rsw.particleEffectEmitters[2].launchParameters[4], 2.1, 1E-3)
 
 			assertEquals(rsw.sceneGraph:GetBinaryStorageSize(), 65520) -- This will have to do (for now)
+		end)
+	end)
+
+	describe("DecodeDynamicLightSource", function()
+		it("should be able to handle NaN values without crashing", function()
+			local name = string.rep("\000", 80)
+			local position = string.rep("\000", 4) .. string.rep("\255", 4) .. string.rep("\000", 4)
+			local color = string.rep("\000", 12)
+			local intensity = string.rep("\000", 4)
+			local garbageBytes = name .. position .. color .. intensity
+
+			local rsw = RagnarokRSW()
+			rsw.reader = BinaryReader(garbageBytes)
+			rsw:DecodeDynamicLightSource()
+			assertEquals(rsw.dynamicLightSources[1].normalizedWorldPosition.y, 29.8)
 		end)
 	end)
 end)

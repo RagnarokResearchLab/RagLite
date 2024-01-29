@@ -266,7 +266,7 @@ function RagnarokRSW:DecodeSceneObjects()
 		if objectTypeID == RagnarokRSW.SCENE_OBJECT_TYPE_ANIMATED_PROP then
 			self:DecodeAnimatedProps()
 		elseif objectTypeID == RagnarokRSW.SCENE_OBJECT_TYPE_DYNAMIC_LIGHT_SOURCE then
-			self:DecodeDynamicLightSources()
+			self:DecodeDynamicLightSource()
 		elseif objectTypeID == RagnarokRSW.SCENE_OBJECT_TYPE_SPATIAL_AUDIO_SOURCE then
 			self:DecodeSpatialAudioSource()
 		elseif objectTypeID == RagnarokRSW.SCENE_OBJECT_TYPE_PARTICLE_EFFECT_EMITTER then
@@ -344,8 +344,13 @@ function RagnarokRSW:DecodeAnimatedProps()
 	tinsert(self.animatedProps, objectInfo)
 end
 
-function RagnarokRSW:DecodeDynamicLightSources()
+function RagnarokRSW:DecodeDynamicLightSource()
 	local objectInfo = self.reader:GetTypedArray("rsw_dynamic_light_t")
+
+	-- Garbage data exists in gl_step: See https://github.com/RagnarokResearchLab/RagLite/issues/343
+	if not objectInfo.position.y then
+		objectInfo.position.y = -1 * 5 * 29.8 -- Denormalized Y of nearby light sources (workaround)
+	end
 
 	local lightSource = {
 		name = ffi_string(objectInfo.name),
