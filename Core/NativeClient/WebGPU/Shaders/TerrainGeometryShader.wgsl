@@ -2,12 +2,14 @@ struct VertexInput {
 	@location(0) position: vec3f,
 	@location(1) color: vec3f,
 	@location(2) diffuseTextureCoords: vec2f,
+	@location(3) surfaceNormal: vec3f,
 };
 
 struct VertexOutput {
 	@builtin(position) position: vec4f,
 	@location(0) color: vec3f,
 	@location(1) diffuseTextureCoords: vec2f,
+	@location(2) surfaceNormal: vec3f,
 };
 
 // CameraBindGroup: Updated once per frame
@@ -18,6 +20,9 @@ struct PerSceneData {
 	viewportWidth: f32,
 	viewportHeight: f32,
 	deltaTime: f32,
+	unusedPadding: f32,
+	directionalLightDirection: vec4f,
+	directionalLightColor: vec4f,
 };
 
 @group(0) @binding(0) var<uniform> uPerSceneData: PerSceneData;
@@ -40,6 +45,12 @@ var<uniform> uMaterialInstanceData: PerMaterialData;
 
 const MATH_PI = 3.14159266;
 const DEBUG_ALPHA_OFFSET = 0.0; // Set to non-zero value (e.g., 0.2) to make transparent background pixels visible
+const ZERO_VECTOR = vec3f(0.0, 0.0, 0.0);
+const UNIT_VECTOR = vec3f(1.0, 1.0, 1.0);
+
+fn clampToUnitRange(color : vec3f) -> vec3f {
+	return clamp(color, ZERO_VECTOR, UNIT_VECTOR);
+}
 
 @vertex
 fn vs_main(in: VertexInput) -> VertexOutput {
@@ -102,6 +113,7 @@ fn vs_main(in: VertexInput) -> VertexOutput {
 	out.position = projectionMatrix * viewMatrix * T1 * S * homogeneousPosition;
 
 	out.color = in.color;
+	out.surfaceNormal = in.surfaceNormal;
 	out.diffuseTextureCoords = in.diffuseTextureCoords;
 	return out;
 }
@@ -110,12 +122,23 @@ fn vs_main(in: VertexInput) -> VertexOutput {
 fn fs_main(in: VertexOutput) -> @location(0) vec4f {
 	let textureCoords = in.diffuseTextureCoords;
 	let diffuseTextureColor = textureSample(diffuseTexture, diffuseTextureSampler, textureCoords);
-	let materialColor = vec4f(uMaterialInstanceData.diffuseRed, uMaterialInstanceData.diffuseGreen, uMaterialInstanceData.diffuseBlue, uMaterialInstanceData.materialOpacity);
-	let finalColor = in.color * diffuseTextureColor.rgb * uPerSceneData.ambientLight.rgb * materialColor.rgb;
+	let normal = normalize(in.surfaceNormal);
+	let sunlightColor = uPerSceneData.directionalLightColor.rgb;
+	let ambientColor = uPerSceneData.ambientLight.rgb;    
+
+	// Simulated fixed-function pipeline (DirectX7/9) - no specular highlights needed AFAICT?
+	let sunlightRayOrigin = -normalize(uPerSceneData.directionalLightDirection.xyz);
+	let sunlightColorContribution = max(dot(sunlightRayOrigin, normal), 0.0);
+	let directionalLightColor = sunlightColorContribution * sunlightColor;
+	let combinedLightContribution = clampToUnitRange(directionalLightColor + ambientColor);
+
+	// Screen blending increases the vibrancy of colors (see https://en.wikipedia.org/wiki/Blend_modes#Screen)
+	let contrastCorrectionColor = clampToUnitRange(ambientColor + sunlightColor - (sunlightColor * ambientColor));
+	let fragmentColor = in.color * contrastCorrectionColor * combinedLightContribution * diffuseTextureColor.rgb ;
 
 	// Gamma-correction:
 	// WebGPU assumes that the colors output by the fragment shader are given in linear space
 	// When setting the surface format to BGRA8UnormSrgb it performs a linear to sRGB conversion
-	let gammaCorrectedColor = pow(finalColor.rgb, vec3f(2.2));
-	return vec4f(gammaCorrectedColor, diffuseTextureColor.a * materialColor.a + DEBUG_ALPHA_OFFSET);
+	let gammaCorrectedColor = pow(fragmentColor.rgb, vec3f(2.2));
+	return vec4f(gammaCorrectedColor, diffuseTextureColor.a + DEBUG_ALPHA_OFFSET);
 }

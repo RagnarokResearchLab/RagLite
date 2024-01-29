@@ -25,8 +25,16 @@ local UniformBuffer = {
 			float viewportWidth; // 148
 			float viewportHeight; // 152
 			float deltaTime; // 156
+			float padding[1]; // 160 - Aligned block must end here or colors are messed up
+			float directionalLightDirectionX; // 164
+			float directionalLightDirectionY; // 168
+			float directionalLightDirectionZ; // 172
+			float directionalLightDirectionW; // 176
+			float directionalLightRed; // 180
+			float directionalLightGreen; // 184
+			float directionalLightBlue; // 188
+			float directionalLightIntensity; // 192
 			// Padding needs to be updated whenever the struct changes!
-			float padding; // 160
 		} scenewide_uniform_t;
 		typedef struct PerMaterialData {
 			float materialOpacity; // 4

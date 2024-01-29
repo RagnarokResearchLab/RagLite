@@ -49,11 +49,20 @@ function RagnarokMap:Construct(mapID, fileSystem)
 
 	local ambient = {
 		red = self.rsw.ambientLight.diffuseColor.red,
-		green = self.rsw.ambientLight.diffuseColor.red,
-		blue = self.rsw.ambientLight.diffuseColor.red,
+		green = self.rsw.ambientLight.diffuseColor.green,
+		blue = self.rsw.ambientLight.diffuseColor.blue,
 		intensity = 1,
 	}
 	scene.ambientLight = ambient
+
+	local sun = {
+		red = self.rsw.directionalLight.diffuseColor.red,
+		green = self.rsw.directionalLight.diffuseColor.green,
+		blue = self.rsw.directionalLight.diffuseColor.blue,
+		intensity = 1,
+		rayDirection = self.rsw.directionalLight.direction,
+	}
+	scene.directionalLight = sun
 
 	printf("[RagnarokMap] Entering world %s (%s)", mapID, scene.displayName)
 

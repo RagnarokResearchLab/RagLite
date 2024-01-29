@@ -18,6 +18,9 @@ struct PerSceneData {
 	viewportWidth: f32,
 	viewportHeight: f32,
 	deltaTime: f32,
+	unusedPadding: f32,
+	directionalLightDirection: vec4f,
+	directionalLightColor: vec4f,
 };
 
 @group(0) @binding(0) var<uniform> uPerSceneData: PerSceneData;

@@ -39,6 +39,8 @@ local table_insert = table.insert
 
 local Color = require("Core.NativeClient.DebugDraw.Color")
 local DEFAULT_AMBIENT_COLOR = { red = 1, green = 1, blue = 1, intensity = 1 }
+local DEFAULT_SUNLIGHT_COLOR = DEFAULT_AMBIENT_COLOR
+local DEFAULT_SUNLIGHT_DIRECTION = { x = 1, y = -1, z = 1 }
 
 local Renderer = {
 	clearColorRGBA = { Color.GREY.red, Color.GREY.green, Color.GREY.blue, 0 },
@@ -49,6 +51,17 @@ local Renderer = {
 		green = DEFAULT_AMBIENT_COLOR.green,
 		blue = DEFAULT_AMBIENT_COLOR.blue,
 		intensity = DEFAULT_AMBIENT_COLOR.intensity,
+	},
+	directionalLight = {
+		red = DEFAULT_SUNLIGHT_COLOR.red,
+		green = DEFAULT_SUNLIGHT_COLOR.green,
+		blue = DEFAULT_SUNLIGHT_COLOR.blue,
+		intensity = DEFAULT_SUNLIGHT_COLOR.intensity,
+		rayDirection = {
+			x = DEFAULT_SUNLIGHT_DIRECTION.x,
+			y = DEFAULT_SUNLIGHT_DIRECTION.y,
+			z = DEFAULT_SUNLIGHT_DIRECTION.z,
+		},
 	},
 	DEBUG_DISCARDED_BACKGROUND_PIXELS = false, -- This is really slow (disk I/O); don't enable unless necessary
 	numWidgetTransformsUsedThisFrame = 0,
@@ -677,6 +690,14 @@ function Renderer:UpdateScenewideUniformBuffer(deltaTime)
 	perSceneUniformData.ambientLightBlue = self.ambientLight.blue
 	perSceneUniformData.ambientLightIntensity = self.ambientLight.intensity
 	perSceneUniformData.deltaTime = deltaTime
+	perSceneUniformData.directionalLightDirectionX = self.directionalLight.rayDirection.x
+	perSceneUniformData.directionalLightDirectionY = self.directionalLight.rayDirection.y
+	perSceneUniformData.directionalLightDirectionZ = self.directionalLight.rayDirection.z
+	perSceneUniformData.directionalLightRed = self.directionalLight.red
+	perSceneUniformData.directionalLightGreen = self.directionalLight.green
+	perSceneUniformData.directionalLightBlue = self.directionalLight.blue
+	perSceneUniformData.directionalLightIntensity = self.directionalLight.intensity
+	assert(self.directionalLight.intensity == 1, "The directional light must always be at full intensity")
 
 	Queue:WriteBuffer(
 		Device:GetQueue(self.wgpuDevice),
@@ -840,6 +861,16 @@ function Renderer:LoadSceneObjects(scene)
 		self.ambientLight.blue = DEFAULT_AMBIENT_COLOR.blue
 		self.ambientLight.intensity = DEFAULT_AMBIENT_COLOR.intensity
 	end
+
+	if scene.directionalLight then
+		self.directionalLight = scene.directionalLight
+	else
+		self.directionalLight.red = DEFAULT_SUNLIGHT_COLOR.red
+		self.directionalLight.green = DEFAULT_SUNLIGHT_COLOR.green
+		self.directionalLight.blue = DEFAULT_SUNLIGHT_COLOR.blue
+		self.directionalLight.intensity = DEFAULT_SUNLIGHT_COLOR.intensity
+		self.directionalLight.rayDirection = DEFAULT_SUNLIGHT_DIRECTION
+	end
 end
 
 function Renderer:DebugDumpTextures(mesh, fileName)
@@ -876,6 +907,14 @@ function Renderer:ResetScene()
 	self.ambientLight.green = DEFAULT_AMBIENT_COLOR.green
 	self.ambientLight.blue = DEFAULT_AMBIENT_COLOR.blue
 	self.ambientLight.intensity = DEFAULT_AMBIENT_COLOR.intensity
+
+	self.directionalLight.red = DEFAULT_SUNLIGHT_COLOR.red
+	self.directionalLight.green = DEFAULT_SUNLIGHT_COLOR.green
+	self.directionalLight.blue = DEFAULT_SUNLIGHT_COLOR.blue
+	self.directionalLight.intensity = DEFAULT_SUNLIGHT_COLOR.intensity
+	self.directionalLight.rayDirection.x = DEFAULT_SUNLIGHT_DIRECTION.x
+	self.directionalLight.rayDirection.y = DEFAULT_SUNLIGHT_DIRECTION.y
+	self.directionalLight.rayDirection.z = DEFAULT_SUNLIGHT_DIRECTION.z
 end
 
 return Renderer
