@@ -2,6 +2,7 @@ local AnimatedWaterPlane = require("Core.FileFormats.RSW.AnimatedWaterPlane")
 local BinaryReader = require("Core.FileFormats.BinaryReader")
 local Mesh = require("Core.NativeClient.WebGPU.Mesh")
 local GroundMeshMaterial = require("Core.NativeClient.WebGPU.Materials.GroundMeshMaterial")
+local Vector3D = require("Core.VectorMath.Vector3D")
 
 local ffi = require("ffi")
 local uv = require("uv")
@@ -96,6 +97,11 @@ function RagnarokGND:Construct()
 		diffuseTexturePaths = {},
 		groundMeshSections = {},
 		waterPlanes = {},
+		computedVertexPositions = {},
+		computedFlatNormals = {
+			right = {},
+			left = {},
+		},
 	}
 
 	setmetatable(instance, self)
@@ -200,6 +206,9 @@ end
 function RagnarokGND:DecodeCubeGrid()
 	local numGroundMeshCubes = self.gridSizeU * self.gridSizeV
 	self.cubeGrid = self.reader:GetTypedArray("gnd_groundmesh_cube_t", numGroundMeshCubes)
+	self.computedVertexPositions = table.new(numGroundMeshCubes, 0)
+	self.computedFlatNormals.left = table.new(numGroundMeshCubes, 0)
+	self.computedFlatNormals.right = table.new(numGroundMeshCubes, 0)
 end
 
 function RagnarokGND:DecodeWaterPlanes()
@@ -442,18 +451,128 @@ function RagnarokGND:GenerateSurfaceGeometry(surfaceConstructionInfo)
 	table_insert(mesh.diffuseTextureCoords, surface.uvs.top_right_u)
 	table_insert(mesh.diffuseTextureCoords, surface.uvs.top_right_v)
 
-	-- Should compute smooth normals here (later)
-	for i = 1, 4, 1 do
-		table_insert(mesh.surfaceNormals, 0)
-		table_insert(mesh.surfaceNormals, 1)
-		table_insert(mesh.surfaceNormals, 0)
+	if surfaceConstructionInfo.facing == RagnarokGND.SURFACE_DIRECTION_UP then
+		local flatFaceNormalLeft = self:ComputeFlatFaceNormalLeft(gridU, gridV)
+		local flatFaceNormalRight = self:ComputeFlatFaceNormalRight(gridU, gridV)
+
+		local flatNormals = {}
+		local smoothNormals = {}
+		local tinsert = table_insert -- Shorthand to improve readability (single-line inserts after autoformat)
+
+		-- Bottom left corner vertex
+		tinsert(flatNormals, flatFaceNormalLeft)
+		tinsert(flatNormals, self:ComputeFlatFaceNormalRight(gridU - 1, gridV))
+		tinsert(flatNormals, self:ComputeFlatFaceNormalLeft(gridU - 1, gridV))
+		tinsert(flatNormals, self:ComputeFlatFaceNormalRight(gridU - 1, gridV - 1))
+		tinsert(flatNormals, self:ComputeFlatFaceNormalLeft(gridU, gridV - 1))
+		tinsert(flatNormals, self:ComputeFlatFaceNormalRight(gridU, gridV - 1))
+		smoothNormals.bottomLeft = self:ComputeSmoothNormal(flatNormals)
+
+		-- Bottom right corner vertex
+		flatNormals = {}
+		tinsert(flatNormals, flatFaceNormalRight)
+		tinsert(flatNormals, flatFaceNormalLeft)
+		tinsert(flatNormals, self:ComputeFlatFaceNormalRight(gridU, gridV - 1))
+		tinsert(flatNormals, self:ComputeFlatFaceNormalLeft(gridU + 1, gridV - 1))
+		tinsert(flatNormals, self:ComputeFlatFaceNormalRight(gridU + 1, gridV - 1))
+		tinsert(flatNormals, self:ComputeFlatFaceNormalLeft(gridU + 1, gridV))
+		smoothNormals.bottomRight = self:ComputeSmoothNormal(flatNormals)
+
+		-- Top left corner vertex
+		flatNormals = {}
+		tinsert(flatNormals, flatFaceNormalRight)
+		tinsert(flatNormals, flatFaceNormalLeft)
+		tinsert(flatNormals, self:ComputeFlatFaceNormalLeft(gridU, gridV + 1))
+		tinsert(flatNormals, self:ComputeFlatFaceNormalRight(gridU - 1, gridV + 1))
+		tinsert(flatNormals, self:ComputeFlatFaceNormalLeft(gridU - 1, gridV + 1))
+		tinsert(flatNormals, self:ComputeFlatFaceNormalRight(gridU - 1, gridV))
+		smoothNormals.topLeft = self:ComputeSmoothNormal(flatNormals)
+
+		-- Top right corner vertex
+		flatNormals = {}
+		tinsert(flatNormals, flatFaceNormalRight)
+		tinsert(flatNormals, self:ComputeFlatFaceNormalLeft(gridU + 1, gridV + 1))
+		tinsert(flatNormals, self:ComputeFlatFaceNormalRight(gridU, gridV + 1))
+		tinsert(flatNormals, self:ComputeFlatFaceNormalLeft(gridU, gridV + 1))
+		tinsert(flatNormals, self:ComputeFlatFaceNormalLeft(gridU + 1, gridV))
+		tinsert(flatNormals, self:ComputeFlatFaceNormalRight(gridU + 1, gridV))
+		smoothNormals.topRight = self:ComputeSmoothNormal(flatNormals)
+
+		-- Vertices that share triangles must be blended in order to smooth the surface when lit
+		local averagedFlatNormals = {
+			bottomLeft = smoothNormals.bottomLeft,
+			bottomRight = smoothNormals.bottomRight,
+			topLeft = smoothNormals.topLeft,
+			topRight = smoothNormals.topRight,
+		}
+
+		-- These have to be stored so that smooth normals can be generated from them
+		tinsert(mesh.surfaceNormals, -averagedFlatNormals.bottomLeft.x)
+		tinsert(mesh.surfaceNormals, averagedFlatNormals.bottomLeft.y)
+		tinsert(mesh.surfaceNormals, -averagedFlatNormals.bottomLeft.z)
+		tinsert(mesh.surfaceNormals, -averagedFlatNormals.bottomRight.x)
+		tinsert(mesh.surfaceNormals, averagedFlatNormals.bottomRight.y)
+		tinsert(mesh.surfaceNormals, -averagedFlatNormals.bottomRight.z)
+		tinsert(mesh.surfaceNormals, -averagedFlatNormals.topLeft.x)
+		tinsert(mesh.surfaceNormals, averagedFlatNormals.topLeft.y)
+		tinsert(mesh.surfaceNormals, -averagedFlatNormals.topLeft.z)
+		tinsert(mesh.surfaceNormals, -averagedFlatNormals.topRight.x)
+		tinsert(mesh.surfaceNormals, averagedFlatNormals.topRight.y)
+		tinsert(mesh.surfaceNormals, -averagedFlatNormals.topRight.z)
+	elseif surfaceConstructionInfo.facing == RagnarokGND.SURFACE_DIRECTION_NORTH then
+		--  Walls will always be drawn from the higher of the two adjacent cubes to the lower one, at a 90 DEG angle
+		local cubeID = self:GridPositionToCubeID(gridU, gridV)
+		local cube = self.cubeGrid[cubeID]
+		local adjacentCubeID = self:GridPositionToCubeID(gridU, gridV + 1)
+		local adjacentCube = self.cubeGrid[adjacentCubeID]
+
+		local isTerrainRising = cube.northwest_corner_altitude >= adjacentCube.southwest_corner_altitude
+		-- Altitudes aren't normalized (inverted Y)
+		local normalDirection = isTerrainRising and -1 or 1
+		for i = 1, 4, 1 do
+			table_insert(mesh.surfaceNormals, 0)
+			table_insert(mesh.surfaceNormals, 0)
+			table_insert(mesh.surfaceNormals, normalDirection)
+		end
+	else -- Implicit: SURFACE_DIRECTION_EAST
+		local cubeID = self:GridPositionToCubeID(gridU, gridV)
+		local cube = self.cubeGrid[cubeID]
+		local adjacentCubeID = self:GridPositionToCubeID(gridU + 1, gridV)
+		local adjacentCube = self.cubeGrid[adjacentCubeID]
+		-- Altitudes aren't normalized (inverted Y)
+		local isTerrainRising = cube.northeast_corner_altitude >= adjacentCube.northwest_corner_altitude
+		local normalDirection = isTerrainRising and -1 or 1
+		for i = 1, 4, 1 do
+			table_insert(mesh.surfaceNormals, normalDirection)
+			table_insert(mesh.surfaceNormals, 0)
+			table_insert(mesh.surfaceNormals, 0)
+		end
 	end
+end
+
+function RagnarokGND:ComputeSmoothNormal(flatNormalsToAverage)
+	local smoothNormal = Vector3D()
+
+	-- Some may be nil (if no adjacent face exists); they shouldn't affect the average
+	for index, adjacentFaceNormal in ipairs(flatNormalsToAverage) do
+		smoothNormal = smoothNormal:Add(adjacentFaceNormal)
+	end
+
+	smoothNormal:Scale(1 / #flatNormalsToAverage)
+
+	return smoothNormal
 end
 
 function RagnarokGND:GenerateGroundVertices(gridU, gridV)
 	local cubeID = self:GridPositionToCubeID(gridU, gridV)
 
-	assert(cubeID ~= nil, format("Failed to generate GROUND surface at (%d, %d)", gridU, gridV))
+	if cubeID == nil then
+		return nil, format("Failed to generate GROUND surface at (%d, %d)", gridU, gridV)
+	end
+
+	if self.computedVertexPositions[cubeID] then
+		return unpack(self.computedVertexPositions[cubeID])
+	end
 
 	assert(cubeID < self.gridSizeU * self.gridSizeV)
 	local cube = self.cubeGrid[cubeID]
@@ -478,6 +597,8 @@ function RagnarokGND:GenerateGroundVertices(gridU, gridV)
 	topRightCorner.x = gridU * RagnarokGND.GAT_TILES_PER_GND_SURFACE
 	topRightCorner.y = -1 * cube.northeast_corner_altitude * self.NORMALIZING_SCALE_FACTOR
 	topRightCorner.z = gridV * RagnarokGND.GAT_TILES_PER_GND_SURFACE
+
+	self.computedVertexPositions[cubeID] = { bottomLeftCorner, bottomRightCorner, topLeftCorner, topRightCorner }
 
 	return bottomLeftCorner, bottomRightCorner, topLeftCorner, topRightCorner
 end
@@ -577,6 +698,76 @@ function RagnarokGND:PickVertexColor(gridU, gridV)
 		blue = surface.bottom_left_color.blue,
 		alpha = surface.bottom_left_color.alpha,
 	}
+end
+
+function RagnarokGND:ComputeFlatFaceNormalLeft(gridU, gridV)
+	local cubeID = self:GridPositionToCubeID(gridU, gridV)
+	if self.computedFlatNormals.left[cubeID] then
+		return self.computedFlatNormals.left[cubeID]
+	end
+
+	local bottomLeftCorner, bottomRightCorner, topLeftCorner = self:GenerateGroundVertices(gridU, gridV)
+
+	if not bottomLeftCorner then -- The others probably don't exist either due to OOB access
+		return nil
+	end
+
+	local displacementBC = {
+		x = topLeftCorner.x - bottomRightCorner.x,
+		y = -1 * (topLeftCorner.y - bottomRightCorner.y),
+		z = topLeftCorner.z - bottomRightCorner.z,
+	}
+
+	local displacementAC = {
+		x = topLeftCorner.x - bottomLeftCorner.x,
+		y = -1 * (topLeftCorner.y - bottomLeftCorner.y),
+		z = topLeftCorner.z - bottomLeftCorner.z,
+	}
+	-- (top left - bottom right) X (top left - bottom left)
+	local leftFaceNormal = Vector3D(
+		displacementBC.y * displacementAC.z - displacementBC.z * displacementAC.y,
+		displacementBC.z * displacementAC.x - displacementBC.x * displacementAC.z,
+		displacementBC.x * displacementAC.y - displacementBC.y * displacementAC.x
+	)
+
+	leftFaceNormal:Normalize()
+	self.computedFlatNormals.left[cubeID] = leftFaceNormal
+	return leftFaceNormal
+end
+
+function RagnarokGND:ComputeFlatFaceNormalRight(gridU, gridV)
+	local cubeID = self:GridPositionToCubeID(gridU, gridV)
+	if self.computedFlatNormals.right[cubeID] then
+		return self.computedFlatNormals.right[cubeID]
+	end
+
+	local bottomLeftCorner, bottomRightCorner, topLeftCorner, topRightCorner = self:GenerateGroundVertices(gridU, gridV)
+
+	if not bottomLeftCorner then -- The others probably don't exist either due to OOB access
+		return nil
+	end
+
+	-- (top right - bottom right) X (top right - top left)
+	local displacementBD = {
+		x = topRightCorner.x - bottomRightCorner.x,
+		y = -1 * (topRightCorner.y - bottomRightCorner.y),
+		z = topRightCorner.z - bottomRightCorner.z,
+	}
+
+	local displacementCD = {
+		x = topRightCorner.x - topLeftCorner.x,
+		y = -1 * (topRightCorner.y - topLeftCorner.y),
+		z = topRightCorner.z - topLeftCorner.z,
+	}
+	local rightFaceNormal = Vector3D(
+		displacementBD.y * displacementCD.z - displacementBD.z * displacementCD.y,
+		displacementBD.z * displacementCD.x - displacementBD.x * displacementCD.z,
+		displacementBD.x * displacementCD.y - displacementBD.y * displacementCD.x
+	)
+
+	rightFaceNormal:Normalize()
+	self.computedFlatNormals.right[cubeID] = rightFaceNormal
+	return rightFaceNormal
 end
 
 ffi.cdef(RagnarokGND.cdefs)
