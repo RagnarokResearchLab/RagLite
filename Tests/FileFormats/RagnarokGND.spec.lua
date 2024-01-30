@@ -1,5 +1,5 @@
 local ffi = require("ffi")
-local openssl = require("openssl")
+local miniz = require("miniz")
 
 local RagnarokGND = require("Core.FileFormats.RagnarokGND")
 
@@ -593,13 +593,28 @@ describe("RagnarokGND", function()
 		it("should return a combined shadow-and-lightmap texture with power-of-two dimensions", function()
 			local gnd = RagnarokGND()
 			gnd:DecodeFileContents(GND_WITHOUT_WATER_PLANE)
+			gnd.lightmapSlices[0].baked_lightmap_texels[0] = 255
 			local lightmapTextureImage = gnd:GenerateLightmapTextureImage()
 			assertEquals(lightmapTextureImage.width, 2048)
 			assertEquals(lightmapTextureImage.height, 8)
 
 			local rawImageBytes = tostring(lightmapTextureImage.rgbaImageBytes)
-			local expectedTextureChecksum = "c8f7e53ad2ab4cee94027927813b2c3a4f9cf5d4690fc22aaf43fabfb7c9efbc"
-			local generatedTextureChecksum = openssl.digest.digest("sha256", rawImageBytes)
+			local expectedTextureChecksum = 546589407
+			local generatedTextureChecksum = miniz.crc32(rawImageBytes)
+			assertEquals(generatedTextureChecksum, expectedTextureChecksum)
+		end)
+
+		it("should take into account the selected posterization level if any was given", function()
+			local gnd = RagnarokGND()
+			gnd:DecodeFileContents(GND_WITHOUT_WATER_PLANE)
+			gnd.lightmapSlices[0].baked_lightmap_texels[0] = 255
+			local lightmapTextureImage = gnd:GenerateLightmapTextureImage(0)
+			assertEquals(lightmapTextureImage.width, 2048)
+			assertEquals(lightmapTextureImage.height, 8)
+
+			local rawImageBytes = tostring(lightmapTextureImage.rgbaImageBytes)
+			local expectedTextureChecksum = 3127357477
+			local generatedTextureChecksum = miniz.crc32(rawImageBytes)
 			assertEquals(generatedTextureChecksum, expectedTextureChecksum)
 		end)
 	end)

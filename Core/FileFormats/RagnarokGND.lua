@@ -28,6 +28,7 @@ local RagnarokGND = {
 		blue = 0,
 		alpha = 255,
 	},
+	LIGHTMAP_POSTERIZATION_LEVEL = 4, -- 16 levels, encoded as binary shift amount (Source: greenboxal)
 	cdefs = [[
 		#pragma pack(1)
 		typedef struct gnd_header {
@@ -802,7 +803,8 @@ local function nextPowerOfTwo(n)
 	return power
 end
 
-function RagnarokGND:GenerateLightmapTextureImage()
+function RagnarokGND:GenerateLightmapTextureImage(posterizationLevel)
+	posterizationLevel = posterizationLevel or RagnarokGND.LIGHTMAP_POSTERIZATION_LEVEL
 	console.startTimer("Generate combined lightmap texture image")
 
 	local width = 2048 -- TBD: Should use MAX_TEXTURE_DIMENSION?
@@ -832,9 +834,17 @@ function RagnarokGND:GenerateLightmapTextureImage()
 				local green = lightmapTexels[lightmapStartIndex + 1]
 				local blue = lightmapTexels[lightmapStartIndex + 2]
 				local alpha = shadowmapTexels[shadowmapStartIndex]
-				bufferStartPointer[writableAreaStartIndex + 0] = red
-				bufferStartPointer[writableAreaStartIndex + 1] = green
-				bufferStartPointer[writableAreaStartIndex + 2] = blue
+
+				local posterizedRed = bit.rshift(red, posterizationLevel)
+				local posterizedGreen = bit.rshift(green, posterizationLevel)
+				local posterizedBlue = bit.rshift(blue, posterizationLevel)
+				posterizedRed = bit.lshift(posterizedRed, posterizationLevel)
+				posterizedGreen = bit.lshift(posterizedGreen, posterizationLevel)
+				posterizedBlue = bit.lshift(posterizedBlue, posterizationLevel)
+
+				bufferStartPointer[writableAreaStartIndex + 0] = posterizedRed
+				bufferStartPointer[writableAreaStartIndex + 1] = posterizedGreen
+				bufferStartPointer[writableAreaStartIndex + 2] = posterizedBlue
 				bufferStartPointer[writableAreaStartIndex + 3] = alpha
 			else -- Slightly wasteful, but the determinism enables testing (and it's barely noticeable anyway)
 				bufferStartPointer[writableAreaStartIndex + 0] = 255
