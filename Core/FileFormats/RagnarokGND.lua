@@ -4,11 +4,14 @@ local Mesh = require("Core.NativeClient.WebGPU.Mesh")
 local GroundMeshMaterial = require("Core.NativeClient.WebGPU.Materials.GroundMeshMaterial")
 local Vector3D = require("Core.VectorMath.Vector3D")
 
+local bit = require("bit")
+local console = require("console")
 local ffi = require("ffi")
 local uv = require("uv")
 
 local assert = assert
 local format = string.format
+local string_char = string.char
 local table_insert = table.insert
 local tonumber = tonumber
 
@@ -782,19 +785,72 @@ function RagnarokGND:ComputeFlatFaceNormalRight(gridU, gridV)
 	return rightFaceNormal
 end
 
-function RagnarokGND:GenerateLightmapTextureImage()
-	-- Should replace with a power-of-two texture containing the actual lightmap slices
-	local textureFilePath = path.join("Core", "NativeClient", "Assets", "DebugTexture256.png")
-	local pngFileContents = C_FileSystem.ReadFile(textureFilePath)
+local function nextPowerOfTwo(n)
+	if n <= 0 then
+		return 1
+	end
 
-	local rgbaImageBytes, width, height = C_ImageProcessing.DecodeFileContents(pngFileContents)
-	local placeholderLightmapTexture = {
+	if bit.band(n, (n - 1)) == 0 then
+		return n
+	end
+
+	local power = 1
+	while power < n do
+		power = power * 2
+	end
+
+	return power
+end
+
+local math_floor = math.floor
+
+function RagnarokGND:GenerateLightmapTextureImage()
+	console.startTimer("Generate combined lightmap texture image")
+
+	local width = 2048 -- TBD: Should use MAX_TEXTURE_DIMENSION?
+	local numSlicesPerRow = 2048 / 8
+	local numRows = math.ceil(self.lightmapFormat.numSlices / numSlicesPerRow)
+	local height = nextPowerOfTwo(numRows * 8)
+	local backgroundPixel = ffi.new("uint8_t[4]", { 255, 0, 255, 255 })
+
+	printf("[RagnarokGND] Computed lightmap texture dimensions: %dx%d", width, height)
+
+	local rgbaImageBytes = buffer.new(width * height * 4)
+	for pixelV = height - 1, 0, -1 do
+		local sliceV = math_floor(pixelV / 8)
+		for pixelU = width - 1, 0, -1 do
+			local sliceU = math_floor(pixelU / 8)
+			local sliceID = sliceV * numSlicesPerRow + sliceU
+			local offsetU = pixelU % 8
+			local offsetV = pixelV % 8
+			local lightmapStartIndex = (offsetU + offsetV * 8) * 3
+			local shadowmapStartIndex = (offsetU + offsetV * 8)
+
+			if sliceID < self.lightmapFormat.numSlices then
+				local shadowmapTexels = self.lightmapSlices[sliceID].ambient_occlusion_texels
+				local lightmapTexels = self.lightmapSlices[sliceID].baked_lightmap_texels
+				local red = string_char(lightmapTexels[lightmapStartIndex + 0])
+				local green = string_char(lightmapTexels[lightmapStartIndex + 1])
+				local blue = string_char(lightmapTexels[lightmapStartIndex + 2])
+				local alpha = string_char(shadowmapTexels[shadowmapStartIndex])
+				rgbaImageBytes:put(red)
+				rgbaImageBytes:put(green)
+				rgbaImageBytes:put(blue)
+				rgbaImageBytes:put(alpha)
+			else
+				rgbaImageBytes:putcdata(backgroundPixel, 4)
+			end
+		end
+	end
+
+	local lightmapTextureImage = {
 		rgbaImageBytes = rgbaImageBytes,
 		width = width,
 		height = height,
 	}
+	console.stopTimer("Generate combined lightmap texture image")
 
-	return placeholderLightmapTexture
+	return lightmapTextureImage
 end
 
 function RagnarokGND:ComputeLightmapTextureCoords(lightmapSliceID)

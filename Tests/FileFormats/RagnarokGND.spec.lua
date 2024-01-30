@@ -1,4 +1,5 @@
 local ffi = require("ffi")
+local openssl = require("openssl")
 
 local RagnarokGND = require("Core.FileFormats.RagnarokGND")
 
@@ -584,6 +585,21 @@ describe("RagnarokGND", function()
 			-- C_FileSystem.WriteFile(path.join("Tests", "Fixtures", "Snapshots", "gnd-geometry.json"), jsonDump)
 			local snapshot = C_FileSystem.ReadFile(path.join("Tests", "Fixtures", "Snapshots", "gnd-geometry.json"))
 			assertEquals(jsonDump, snapshot)
+		end)
+	end)
+
+	describe("GenerateLightmapTextureImage", function()
+		it("should return a combined shadow-and-lightmap texture with power-of-two dimensions", function()
+			local gnd = RagnarokGND()
+			gnd:DecodeFileContents(GND_WITHOUT_WATER_PLANE)
+			local lightmapTextureImage = gnd:GenerateLightmapTextureImage()
+			assertEquals(lightmapTextureImage.width, 2048)
+			assertEquals(lightmapTextureImage.height, 8)
+
+			local rawImageBytes = tostring(lightmapTextureImage.rgbaImageBytes)
+			local expectedTextureChecksum = "c8f7e53ad2ab4cee94027927813b2c3a4f9cf5d4690fc22aaf43fabfb7c9efbc"
+			local generatedTextureChecksum = openssl.digest.digest("sha256", rawImageBytes)
+			assertEquals(generatedTextureChecksum, expectedTextureChecksum)
 		end)
 	end)
 end)
