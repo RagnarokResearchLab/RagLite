@@ -429,6 +429,13 @@ function Renderer:DrawMesh(renderPass, mesh)
 		self.dummyTextureMaterial:UpdateMaterialPropertiesUniform() -- Wasteful, should only do it once?
 	end
 
+	if rawget(mesh.material, "lightmapTexture") then
+		-- This binding slot is usually reserved for instance transforms, but they aren't needed for the terrain
+		RenderPassEncoder:SetBindGroup(renderPass, 2, mesh.material.lightmapTextureBindGroup, 0, nil)
+		local lightmapTexCoordsBufferSize = #mesh.lightmapTextureCoords * ffi.sizeof("float") or GPU.MAX_VERTEX_COUNT
+		RenderPassEncoder:SetVertexBuffer(renderPass, 4, mesh.lightmapTexCoordsBuffer, 0, lightmapTexCoordsBufferSize)
+	end
+
 	local instanceCount = 1
 	local firstVertexIndex = 0
 	local firstInstanceIndex = 0
