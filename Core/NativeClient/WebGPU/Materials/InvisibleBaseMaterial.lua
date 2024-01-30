@@ -47,6 +47,10 @@ function InvisibleBaseMaterial:AssignDiffuseTexture(texture, wgpuTexture)
 	self.diffuseTexture = texture
 end
 
+function InvisibleBaseMaterial:AssignLightmapTexture(texture, wgpuTexture)
+	error("Lightmap textures aren't yet supported by this material", 0)
+end
+
 function InvisibleBaseMaterial:UpdateMaterialPropertiesUniform()
 	-- Should only send if the data has actually changed? (optimize later)
 	self.materialPropertiesUniform.data.diffuseRed = self.diffuseColor.red

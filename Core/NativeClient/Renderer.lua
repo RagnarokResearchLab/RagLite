@@ -862,6 +862,7 @@ function Renderer:LoadSceneObjects(scene)
 			textureImages = { textureImage }
 		end
 
+		-- Process diffuse texture(s)
 		local diffuseTextures = {}
 		for textureIndex = 1, #textureImages, 1 do
 			local image = textureImages[textureIndex]
@@ -875,6 +876,15 @@ function Renderer:LoadSceneObjects(scene)
 			mesh.material:AssignDiffuseTexture(diffuseTextures[1])
 		elseif #diffuseTextures > 1 then -- Water material (using texture array)
 			mesh.material:AssignDiffuseTextureArray(diffuseTextures)
+		end
+
+		-- Process lightmap texture
+		local image = rawget(mesh, "lightmapTextureImage")
+		if image then
+			self:DebugDumpTextures(mesh, format("lightmap-texture-%s-in.png", scene.mapID))
+			local wgpuTextureHandle = self:CreateTextureFromImage(image.rgbaImageBytes, image.width, image.height)
+			self:DebugDumpTextures(mesh, format("lightmap-texture-%s-out.png", scene.mapID))
+			mesh.material:AssignLightmapTexture(wgpuTextureHandle)
 		end
 	end
 
@@ -908,15 +918,24 @@ function Renderer:DebugDumpTextures(mesh, fileName)
 	end
 
 	local diffuseTextureImage = mesh.diffuseTextureImage
-	if not diffuseTextureImage then
-		return
-	end
-
 	C_FileSystem.MakeDirectoryTree("Exports")
 	local pngBytes = C_ImageProcessing.EncodePNG(
 		diffuseTextureImage.rgbaImageBytes,
 		diffuseTextureImage.width,
 		diffuseTextureImage.height
+	)
+	C_FileSystem.WriteFile(path.join("Exports", fileName), pngBytes)
+
+	local lightmapTextureImage = rawget(mesh, "lightmapTextureImage")
+	if not lightmapTextureImage then
+		return
+	end
+
+	C_FileSystem.MakeDirectoryTree("Exports")
+	pngBytes = C_ImageProcessing.EncodePNG(
+		lightmapTextureImage.rgbaImageBytes,
+		lightmapTextureImage.width,
+		lightmapTextureImage.height
 	)
 	C_FileSystem.WriteFile(path.join("Exports", fileName), pngBytes)
 end
