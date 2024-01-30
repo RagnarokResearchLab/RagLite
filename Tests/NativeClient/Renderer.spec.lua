@@ -386,7 +386,7 @@ describe("Renderer", function()
 			Renderer:ResetScene()
 		end)
 
-		it("should all meshes to the scene", function()
+		it("should add all meshes to the scene", function()
 			local scene = require("Core.NativeClient.DebugDraw.Scenes.cube3d")
 			Renderer:LoadSceneObjects(scene)
 			assertEquals(#Renderer.meshes, 4)
