@@ -770,6 +770,21 @@ function RagnarokGND:ComputeFlatFaceNormalRight(gridU, gridV)
 	return rightFaceNormal
 end
 
+function RagnarokGND:GenerateLightmapTextureImage()
+	-- Should replace with a power-of-two texture containing the actual lightmap slices
+	local textureFilePath = path.join("Core", "NativeClient", "Assets", "DebugTexture256.png")
+	local pngFileContents = C_FileSystem.ReadFile(textureFilePath)
+
+	local rgbaImageBytes, width, height = C_ImageProcessing.DecodeFileContents(pngFileContents)
+	local placeholderLightmapTexture = {
+		rgbaImageBytes = rgbaImageBytes,
+		width = width,
+		height = height,
+	}
+
+	return placeholderLightmapTexture
+end
+
 ffi.cdef(RagnarokGND.cdefs)
 
 return RagnarokGND

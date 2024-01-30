@@ -15,6 +15,10 @@ function GroundMeshMaterial:Construct(...)
 	return self.super.Construct(self, ...)
 end
 
+function GroundMeshMaterial:AssignLightmapTexture(texture)
+	self.lightmapTexture = texture
+end
+
 class("GroundMeshMaterial", GroundMeshMaterial)
 extend(GroundMeshMaterial, InvisibleBaseMaterial)
 
