@@ -860,16 +860,33 @@ function RagnarokGND:GenerateLightmapTextureImage()
 end
 
 function RagnarokGND:ComputeLightmapTextureCoords(lightmapSliceID)
-	-- Should replace this with the actual lightmap coordinates (to be computed)
+	local textureWidth = 2048 -- TBD: Should use MAX_TEXTURE_DIMENSION?
+	local numSlicesPerRow = 2048 / 8
+	local numRows = math.ceil(self.lightmapFormat.numSlices / numSlicesPerRow)
+	local textureHeight = nextPowerOfTwo(numRows * 8)
+	local sliceSize = 8
+
+	local sliceU = lightmapSliceID % numSlicesPerRow
+	local sliceV = math.floor(lightmapSliceID / numSlicesPerRow)
+
+	local pixelOffsetU = 1 / textureWidth
+	local pixelOffsetV = 1 / textureHeight
+
+	local bottomLeftU = sliceU * sliceSize / textureWidth + pixelOffsetU
+	local bottomLeftV = sliceV * sliceSize / textureHeight + pixelOffsetV
+
+	local topRightU = (sliceU + 1) * sliceSize / textureWidth - pixelOffsetU
+	local topRightV = (sliceV + 1) * sliceSize / textureHeight - pixelOffsetV
+
 	return {
-		bottomLeftU = 0,
-		bottomLeftV = 0,
-		bottomRightU = 0,
-		bottomRightV = 0,
-		topLeftU = 0,
-		topLeftV = 0,
-		topRightU = 0,
-		topRightV = 0,
+		bottomLeftU = bottomLeftU,
+		bottomLeftV = bottomLeftV,
+		bottomRightU = topRightU,
+		bottomRightV = bottomLeftV,
+		topLeftU = bottomLeftU,
+		topLeftV = topRightV,
+		topRightU = topRightU,
+		topRightV = topRightV,
 	}
 end
 
