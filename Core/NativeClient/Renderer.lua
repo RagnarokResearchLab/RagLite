@@ -70,9 +70,11 @@ local Renderer = {
 		INVALID_INDEX_BUFFER = "Cannot upload geometry with invalid index buffer",
 		INVALID_COLOR_BUFFER = "Cannot upload geometry with invalid color buffer",
 		INVALID_UV_BUFFER = "Cannot upload geometry with invalid diffuse texture coordinates buffer",
+		INVALID_LIGHTMAP_UV_BUFFER = "Cannot upload geometry with invalid lightmap texture coordinates buffer",
 		INVALID_NORMAL_BUFFER = "Cannot upload geometry with invalid normal buffer",
 		INCOMPLETE_COLOR_BUFFER = "Cannot upload geometry with missing or incomplete vertex colors",
 		INCOMPLETE_UV_BUFFER = "Cannot upload geometry with missing or incomplete diffuse texture coordinates ",
+		INCOMPLETE_LIGHTMAP_UV_BUFFER = "Cannot upload geometry with missing or incomplete lightmap texture coordinates ",
 		INVALID_MATERIAL = "Invalid material assigned to mesh",
 		INCOMPLETE_NORMAL_BUFFER = "Cannot upload geometry with missing or incomplete surface normals ",
 	},
@@ -605,17 +607,26 @@ function Renderer:ValidateGeometry(mesh)
 		error(self.errorStrings.INCOMPLETE_NORMAL_BUFFER, 0)
 	end
 
-	if not mesh.diffuseTextureCoords then
-		return
+	if mesh.diffuseTextureCoords then
+		local diffuseTextureCoordsCount = #mesh.diffuseTextureCoords / 2
+		if (diffuseTextureCoordsCount * 2) % 2 ~= 0 then
+			error(self.errorStrings.INVALID_UV_BUFFER, 0)
+		end
+
+		if vertexCount ~= diffuseTextureCoordsCount then
+			error(self.errorStrings.INCOMPLETE_UV_BUFFER, 0)
+		end
 	end
 
-	local diffuseTextureCoordsCount = #mesh.diffuseTextureCoords / 2
-	if (diffuseTextureCoordsCount * 2) % 2 ~= 0 then
-		error(self.errorStrings.INVALID_UV_BUFFER, 0)
-	end
+	if rawget(mesh, "lightmapTextureCoords") then
+		local lightmapTextureCoordsCount = #mesh.lightmapTextureCoords / 2
+		if (lightmapTextureCoordsCount * 2) % 2 ~= 0 then
+			error(self.errorStrings.INVALID_LIGHTMAP_UV_BUFFER, 0)
+		end
 
-	if vertexCount ~= diffuseTextureCoordsCount then
-		error(self.errorStrings.INCOMPLETE_UV_BUFFER, 0)
+		if vertexCount ~= lightmapTextureCoordsCount then
+			error(self.errorStrings.INCOMPLETE_LIGHTMAP_UV_BUFFER, 0)
+		end
 	end
 end
 

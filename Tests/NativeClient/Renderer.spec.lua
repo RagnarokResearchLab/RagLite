@@ -330,6 +330,26 @@ describe("Renderer", function()
 			assertThrows(uploadIncompleteMeshGeometry, expectedErrorMessage)
 		end)
 
+		it("should throw if the geometry contains an insufficient number of lightmap texture coordinates", function()
+			local mesh = table.copy(planeMesh)
+			mesh.lightmapTextureCoords = { 1, 2, 3 }
+			local expectedErrorMessage = Renderer.errorStrings.INVALID_LIGHTMAP_UV_BUFFER
+			local function uploadIncompleteMeshGeometry()
+				Renderer:UploadMeshGeometry(mesh)
+			end
+			assertThrows(uploadIncompleteMeshGeometry, expectedErrorMessage)
+		end)
+
+		it("should throw if the geometry contains more vertex positions than lightmap texture coordinates", function()
+			local mesh = table.copy(planeMesh)
+			mesh.lightmapTextureCoords = {}
+			local expectedErrorMessage = Renderer.errorStrings.INCOMPLETE_LIGHTMAP_UV_BUFFER
+			local function uploadIncompleteMeshGeometry()
+				Renderer:UploadMeshGeometry(mesh)
+			end
+			assertThrows(uploadIncompleteMeshGeometry, expectedErrorMessage)
+		end)
+
 		it("should skip geometry that contains no vertex position", function()
 			local mesh = table.copy(planeMesh)
 			mesh.vertexPositions = {}
