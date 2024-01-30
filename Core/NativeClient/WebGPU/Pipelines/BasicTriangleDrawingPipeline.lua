@@ -165,11 +165,23 @@ function BasicTriangleDrawingPipeline:CreateVertexBufferLayout()
 		stepMode = ffi.C.WGPUVertexStepMode_Vertex,
 	})
 
-	return new("WGPUVertexBufferLayout[?]", 4, {
+	local lightmapTexCoordsLayout = new("WGPUVertexBufferLayout", {
+		attributeCount = 1, -- UV
+		attributes = new("WGPUVertexAttribute", {
+			shaderLocation = 4, -- Pass as 5th argument
+			format = ffi.C.WGPUVertexFormat_Float32x2, -- Vector2D (float) = UV coords
+			offset = 0,
+		}),
+		arrayStride = 2 * sizeof("float"), -- sizeof(Vector2D) = uv
+		stepMode = ffi.C.WGPUVertexStepMode_Vertex,
+	})
+
+	return new("WGPUVertexBufferLayout[?]", 5, {
 		vertexPositionsLayout,
 		vertexColorsLayout,
 		diffuseTexCoordsLayout,
 		surfaceNormalsLayout,
+		lightmapTexCoordsLayout,
 	})
 end
 

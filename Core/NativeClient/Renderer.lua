@@ -70,9 +70,11 @@ local Renderer = {
 		INVALID_INDEX_BUFFER = "Cannot upload geometry with invalid index buffer",
 		INVALID_COLOR_BUFFER = "Cannot upload geometry with invalid color buffer",
 		INVALID_UV_BUFFER = "Cannot upload geometry with invalid diffuse texture coordinates buffer",
+		INVALID_LIGHTMAP_UV_BUFFER = "Cannot upload geometry with invalid lightmap texture coordinates buffer",
 		INVALID_NORMAL_BUFFER = "Cannot upload geometry with invalid normal buffer",
 		INCOMPLETE_COLOR_BUFFER = "Cannot upload geometry with missing or incomplete vertex colors",
 		INCOMPLETE_UV_BUFFER = "Cannot upload geometry with missing or incomplete diffuse texture coordinates ",
+		INCOMPLETE_LIGHTMAP_UV_BUFFER = "Cannot upload geometry with missing or incomplete lightmap texture coordinates ",
 		INVALID_MATERIAL = "Invalid material assigned to mesh",
 		INCOMPLETE_NORMAL_BUFFER = "Cannot upload geometry with missing or incomplete surface normals ",
 	},
@@ -427,6 +429,13 @@ function Renderer:DrawMesh(renderPass, mesh)
 		self.dummyTextureMaterial:UpdateMaterialPropertiesUniform() -- Wasteful, should only do it once?
 	end
 
+	if rawget(mesh.material, "lightmapTexture") then
+		-- This binding slot is usually reserved for instance transforms, but they aren't needed for the terrain
+		RenderPassEncoder:SetBindGroup(renderPass, 2, mesh.material.lightmapTextureBindGroup, 0, nil)
+		local lightmapTexCoordsBufferSize = #mesh.lightmapTextureCoords * ffi.sizeof("float") or GPU.MAX_VERTEX_COUNT
+		RenderPassEncoder:SetVertexBuffer(renderPass, 4, mesh.lightmapTexCoordsBuffer, 0, lightmapTexCoordsBufferSize)
+	end
+
 	local instanceCount = 1
 	local firstVertexIndex = 0
 	local firstInstanceIndex = 0
@@ -561,6 +570,19 @@ function Renderer:UploadMeshGeometry(mesh)
 	printf("Uploading geometry: %d surface normals (%s)", normalCount, filesize(normalBufferSize))
 	local surfaceNormalsBuffer = Buffer:CreateVertexBuffer(self.wgpuDevice, mesh.surfaceNormals)
 
+	if rawget(mesh, "lightmapTextureCoords") then
+		local lightmapTextureCoordsCount = #mesh.lightmapTextureCoords / 2
+		local lightmapTextureCoordsBufferSize = #mesh.lightmapTextureCoords * ffi.sizeof("float")
+		printf(
+			"Uploading geometry: %d lightmap texture coordinates (%s)",
+			lightmapTextureCoordsCount,
+			filesize(lightmapTextureCoordsBufferSize)
+		)
+		local lightmapTextureCoordinatesBuffer = Buffer:CreateVertexBuffer(self.wgpuDevice, mesh.lightmapTextureCoords)
+
+		mesh.lightmapTexCoordsBuffer = lightmapTextureCoordinatesBuffer
+	end
+
 	mesh.vertexBuffer = vertexBuffer
 	mesh.colorBuffer = vertexColorsBuffer
 	mesh.indexBuffer = triangleIndicesBuffer
@@ -605,17 +627,26 @@ function Renderer:ValidateGeometry(mesh)
 		error(self.errorStrings.INCOMPLETE_NORMAL_BUFFER, 0)
 	end
 
-	if not mesh.diffuseTextureCoords then
-		return
+	if mesh.diffuseTextureCoords then
+		local diffuseTextureCoordsCount = #mesh.diffuseTextureCoords / 2
+		if (diffuseTextureCoordsCount * 2) % 2 ~= 0 then
+			error(self.errorStrings.INVALID_UV_BUFFER, 0)
+		end
+
+		if vertexCount ~= diffuseTextureCoordsCount then
+			error(self.errorStrings.INCOMPLETE_UV_BUFFER, 0)
+		end
 	end
 
-	local diffuseTextureCoordsCount = #mesh.diffuseTextureCoords / 2
-	if (diffuseTextureCoordsCount * 2) % 2 ~= 0 then
-		error(self.errorStrings.INVALID_UV_BUFFER, 0)
-	end
+	if rawget(mesh, "lightmapTextureCoords") then
+		local lightmapTextureCoordsCount = #mesh.lightmapTextureCoords / 2
+		if (lightmapTextureCoordsCount * 2) % 2 ~= 0 then
+			error(self.errorStrings.INVALID_LIGHTMAP_UV_BUFFER, 0)
+		end
 
-	if vertexCount ~= diffuseTextureCoordsCount then
-		error(self.errorStrings.INCOMPLETE_UV_BUFFER, 0)
+		if vertexCount ~= lightmapTextureCoordsCount then
+			error(self.errorStrings.INCOMPLETE_LIGHTMAP_UV_BUFFER, 0)
+		end
 	end
 end
 
@@ -625,6 +656,7 @@ function Renderer:DestroyMeshGeometry(mesh)
 	Buffer:Destroy(rawget(mesh, "colorBuffer"))
 	Buffer:Destroy(rawget(mesh, "indexBuffer"))
 	Buffer:Destroy(rawget(mesh, "diffuseTexCoordsBuffer"))
+	Buffer:Destroy(rawget(mesh, "lightmapTexCoordsBuffer"))
 	Buffer:Destroy(rawget(mesh, "surfaceNormalsBuffer"))
 
 	self.meshes = {}
@@ -837,6 +869,7 @@ function Renderer:LoadSceneObjects(scene)
 			textureImages = { textureImage }
 		end
 
+		-- Process diffuse texture(s)
 		local diffuseTextures = {}
 		for textureIndex = 1, #textureImages, 1 do
 			local image = textureImages[textureIndex]
@@ -850,6 +883,15 @@ function Renderer:LoadSceneObjects(scene)
 			mesh.material:AssignDiffuseTexture(diffuseTextures[1])
 		elseif #diffuseTextures > 1 then -- Water material (using texture array)
 			mesh.material:AssignDiffuseTextureArray(diffuseTextures)
+		end
+
+		-- Process lightmap texture
+		local image = rawget(mesh, "lightmapTextureImage")
+		if image then
+			self:DebugDumpTextures(mesh, format("lightmap-texture-%s-in.png", scene.mapID))
+			local wgpuTextureHandle = self:CreateTextureFromImage(image.rgbaImageBytes, image.width, image.height)
+			self:DebugDumpTextures(mesh, format("lightmap-texture-%s-out.png", scene.mapID))
+			mesh.material:AssignLightmapTexture(wgpuTextureHandle)
 		end
 	end
 
@@ -883,15 +925,24 @@ function Renderer:DebugDumpTextures(mesh, fileName)
 	end
 
 	local diffuseTextureImage = mesh.diffuseTextureImage
-	if not diffuseTextureImage then
-		return
-	end
-
 	C_FileSystem.MakeDirectoryTree("Exports")
 	local pngBytes = C_ImageProcessing.EncodePNG(
 		diffuseTextureImage.rgbaImageBytes,
 		diffuseTextureImage.width,
 		diffuseTextureImage.height
+	)
+	C_FileSystem.WriteFile(path.join("Exports", fileName), pngBytes)
+
+	local lightmapTextureImage = rawget(mesh, "lightmapTextureImage")
+	if not lightmapTextureImage then
+		return
+	end
+
+	C_FileSystem.MakeDirectoryTree("Exports")
+	pngBytes = C_ImageProcessing.EncodePNG(
+		lightmapTextureImage.rgbaImageBytes,
+		lightmapTextureImage.width,
+		lightmapTextureImage.height
 	)
 	C_FileSystem.WriteFile(path.join("Exports", fileName), pngBytes)
 end

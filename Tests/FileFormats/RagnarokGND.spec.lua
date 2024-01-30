@@ -566,11 +566,18 @@ describe("RagnarokGND", function()
 					triangleConnections = {},
 					diffuseTextureCoords = {},
 					surfaceNormals = {},
+					lightmapTextureCoords = {},
 				},
 			}
 			local sections = gnd:GenerateGroundMeshSections()
 			assertEquals(#sections, 1) -- Index starts at zero
 			assertEquals(table.count(sections), 1)
+
+			-- Remove this once the actual lightmap UVs are being computed
+			for index, section in ipairs(sections) do
+				section.lightmapTextureCoords = nil -- No need to snapshot placeholder UVs
+			end
+
 			local json = require("json")
 			local jsonDump = json.prettier(sections)
 			-- Leaving this here because the snapshot likely needs to be recreated once lightmaps/normals are needed

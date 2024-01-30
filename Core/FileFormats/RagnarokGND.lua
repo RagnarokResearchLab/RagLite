@@ -174,6 +174,8 @@ function RagnarokGND:DecodeTexturePaths()
 
 		local groundMeshSection = Mesh("GroundMeshSection" .. textureIndex)
 		groundMeshSection.material = GroundMeshMaterial("GroundMeshSection" .. textureIndex .. "Material")
+		-- Should preallocate based on observed sizes here? (same as for the other buffers)
+		groundMeshSection.lightmapTextureCoords = {}
 		table_insert(self.groundMeshSections, groundMeshSection)
 	end
 end
@@ -450,6 +452,16 @@ function RagnarokGND:GenerateSurfaceGeometry(surfaceConstructionInfo)
 	table_insert(mesh.diffuseTextureCoords, surface.uvs.top_left_v)
 	table_insert(mesh.diffuseTextureCoords, surface.uvs.top_right_u)
 	table_insert(mesh.diffuseTextureCoords, surface.uvs.top_right_v)
+
+	local lightmapTextureCoords = self:ComputeLightmapTextureCoords(surface.lightmap_slice_id)
+	table_insert(mesh.lightmapTextureCoords, lightmapTextureCoords.bottomLeftU)
+	table_insert(mesh.lightmapTextureCoords, lightmapTextureCoords.bottomLeftV)
+	table_insert(mesh.lightmapTextureCoords, lightmapTextureCoords.bottomRightU)
+	table_insert(mesh.lightmapTextureCoords, lightmapTextureCoords.bottomRightV)
+	table_insert(mesh.lightmapTextureCoords, lightmapTextureCoords.topLeftU)
+	table_insert(mesh.lightmapTextureCoords, lightmapTextureCoords.topLeftV)
+	table_insert(mesh.lightmapTextureCoords, lightmapTextureCoords.topRightU)
+	table_insert(mesh.lightmapTextureCoords, lightmapTextureCoords.topRightV)
 
 	if surfaceConstructionInfo.facing == RagnarokGND.SURFACE_DIRECTION_UP then
 		local flatFaceNormalLeft = self:ComputeFlatFaceNormalLeft(gridU, gridV)
@@ -768,6 +780,35 @@ function RagnarokGND:ComputeFlatFaceNormalRight(gridU, gridV)
 	rightFaceNormal:Normalize()
 	self.computedFlatNormals.right[cubeID] = rightFaceNormal
 	return rightFaceNormal
+end
+
+function RagnarokGND:GenerateLightmapTextureImage()
+	-- Should replace with a power-of-two texture containing the actual lightmap slices
+	local textureFilePath = path.join("Core", "NativeClient", "Assets", "DebugTexture256.png")
+	local pngFileContents = C_FileSystem.ReadFile(textureFilePath)
+
+	local rgbaImageBytes, width, height = C_ImageProcessing.DecodeFileContents(pngFileContents)
+	local placeholderLightmapTexture = {
+		rgbaImageBytes = rgbaImageBytes,
+		width = width,
+		height = height,
+	}
+
+	return placeholderLightmapTexture
+end
+
+function RagnarokGND:ComputeLightmapTextureCoords(lightmapSliceID)
+	-- Should replace this with the actual lightmap coordinates (to be computed)
+	return {
+		bottomLeftU = 0,
+		bottomLeftV = 0,
+		bottomRightU = 0,
+		bottomRightV = 0,
+		topLeftU = 0,
+		topLeftV = 0,
+		topRightU = 0,
+		topRightV = 0,
+	}
 end
 
 ffi.cdef(RagnarokGND.cdefs)

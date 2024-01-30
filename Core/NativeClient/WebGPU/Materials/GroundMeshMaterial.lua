@@ -15,6 +15,12 @@ function GroundMeshMaterial:Construct(...)
 	return self.super.Construct(self, ...)
 end
 
+function GroundMeshMaterial:AssignLightmapTexture(texture)
+	-- It's probably safe to use the diffuse bind group layout here, at least for now?
+	self.lightmapTextureBindGroup = self:CreateMaterialPropertiesBindGroup(texture)
+	self.lightmapTexture = texture
+end
+
 class("GroundMeshMaterial", GroundMeshMaterial)
 extend(GroundMeshMaterial, InvisibleBaseMaterial)
 

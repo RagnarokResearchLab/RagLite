@@ -88,6 +88,7 @@ function RagnarokMap:LoadTerrainGeometry(mapID)
 	local gnd = self.gnd
 
 	local groundMeshSections = gnd:GenerateGroundMeshSections()
+	local sharedLightmapTextureImage = gnd:GenerateLightmapTextureImage()
 	for sectionID, groundMeshSection in pairs(groundMeshSections) do
 		local texturePath = "texture/" .. gnd.diffuseTexturePaths[sectionID]
 		local normalizedTextureImagePath = RagnarokGRF:DecodeFileName(texturePath)
@@ -106,6 +107,9 @@ function RagnarokMap:LoadTerrainGeometry(mapID)
 			width = width,
 			height = height,
 		}
+
+		-- Should only upload once and bind the same texture?
+		groundMeshSection.lightmapTextureImage = sharedLightmapTextureImage
 	end
 
 	return groundMeshSections
