@@ -253,15 +253,13 @@ function RagnarokRSW:DecodeEnvironmentalLightSources()
 end
 
 function RagnarokRSW:ComputeSunRayDirection(latitudeInDegrees, longitudeInDegrees)
-	local sunRayDirection = Vector3D(0, 1, 0)
+	local sunRayDirection = Vector3D(0, -1, 0)
 
-	local rotationAroundX = Matrix3D:CreateAxisRotationX(latitudeInDegrees)
+	local rotationAroundX = Matrix3D:CreateAxisRotationX(-latitudeInDegrees) -- Account for inverted Y axis
 	local rotationAroundY = Matrix3D:CreateAxisRotationY(longitudeInDegrees)
 
 	sunRayDirection:Transform(rotationAroundX)
 	sunRayDirection:Transform(rotationAroundY)
-
-	sunRayDirection.y = -1 * sunRayDirection.y
 
 	return sunRayDirection
 end
