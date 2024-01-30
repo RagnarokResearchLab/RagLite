@@ -3,7 +3,7 @@ local UnlitMeshMaterial = require("Core.NativeClient.WebGPU.Materials.UnlitMeshM
 local uuid = require("uuid")
 
 local Mesh = {
-	NUM_BUFFERS_PER_MESH = 5, -- Positions, indices, colors, diffuse UVs, normals
+	MAX_BUFFER_COUNT_PER_MESH = 6, -- Positions, indices, colors, diffuse UVs, normals, lightmap UVs
 }
 
 function Mesh:Construct(name)

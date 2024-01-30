@@ -563,6 +563,19 @@ function Renderer:UploadMeshGeometry(mesh)
 	printf("Uploading geometry: %d surface normals (%s)", normalCount, filesize(normalBufferSize))
 	local surfaceNormalsBuffer = Buffer:CreateVertexBuffer(self.wgpuDevice, mesh.surfaceNormals)
 
+	if rawget(mesh, "lightmapTextureCoords") then
+		local lightmapTextureCoordsCount = #mesh.lightmapTextureCoords / 2
+		local lightmapTextureCoordsBufferSize = #mesh.lightmapTextureCoords * ffi.sizeof("float")
+		printf(
+			"Uploading geometry: %d lightmap texture coordinates (%s)",
+			lightmapTextureCoordsCount,
+			filesize(lightmapTextureCoordsBufferSize)
+		)
+		local lightmapTextureCoordinatesBuffer = Buffer:CreateVertexBuffer(self.wgpuDevice, mesh.lightmapTextureCoords)
+
+		mesh.lightmapTexCoordsBuffer = lightmapTextureCoordinatesBuffer
+	end
+
 	mesh.vertexBuffer = vertexBuffer
 	mesh.colorBuffer = vertexColorsBuffer
 	mesh.indexBuffer = triangleIndicesBuffer
@@ -636,6 +649,7 @@ function Renderer:DestroyMeshGeometry(mesh)
 	Buffer:Destroy(rawget(mesh, "colorBuffer"))
 	Buffer:Destroy(rawget(mesh, "indexBuffer"))
 	Buffer:Destroy(rawget(mesh, "diffuseTexCoordsBuffer"))
+	Buffer:Destroy(rawget(mesh, "lightmapTexCoordsBuffer"))
 	Buffer:Destroy(rawget(mesh, "surfaceNormalsBuffer"))
 
 	self.meshes = {}

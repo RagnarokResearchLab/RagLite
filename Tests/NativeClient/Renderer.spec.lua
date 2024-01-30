@@ -13,6 +13,7 @@ local Texture = require("Core.NativeClient.WebGPU.Texture")
 local WaterSurfaceMaterial = require("Core.NativeClient.WebGPU.Materials.WaterSurfaceMaterial")
 
 local planeMesh = Plane()
+planeMesh.lightmapTextureCoords = planeMesh.diffuseTextureCoords
 
 local function assertEqualArrayContents(arrayBuffer, arrayTable)
 	for index = 0, #arrayTable - 1, 1 do
@@ -172,7 +173,7 @@ describe("Renderer", function()
 
 			Renderer:DestroyMeshGeometry(planeMesh)
 
-			assertEquals(#events, 10)
+			assertEquals(#events, 12)
 
 			-- Vertex positions
 			local index = 1
@@ -248,6 +249,21 @@ describe("Renderer", function()
 			assertEquals(ffi.sizeof(events[index].payload.data), expectedBufferSize * ffi.sizeof("float"))
 			assertEquals(events[index].payload.size, expectedBufferSize)
 			assertEqualArrayContents(events[index].payload.data, planeMesh.surfaceNormals)
+
+			-- Lightmap texture coordinates
+			index = index + 1
+			expectedBufferSize = Buffer.GetAlignedSize(#planeMesh.lightmapTextureCoords * ffi.sizeof("float"))
+			assertEquals(events[index].name, "GPU_BUFFER_CREATE")
+			assertEquals(events[index].payload.descriptor.usage, Buffer.VERTEX_BUFFER_FLAGS)
+			assertEquals(tonumber(events[index].payload.descriptor.size), expectedBufferSize)
+			assertEquals(events[index].payload.descriptor.mappedAtCreation ~= 0, false)
+
+			index = index + 1
+			assertEquals(events[index].name, "GPU_BUFFER_WRITE")
+			assertEquals(events[index].payload.bufferOffset, 0)
+			assertEquals(ffi.sizeof(events[index].payload.data), expectedBufferSize * ffi.sizeof("float"))
+			assertEquals(events[index].payload.size, expectedBufferSize)
+			assertEqualArrayContents(events[index].payload.data, planeMesh.lightmapTextureCoords)
 		end)
 
 		it("should throw if the geometry contains an insufficient number of vertex positions", function()
@@ -389,7 +405,7 @@ describe("Renderer", function()
 			Renderer:DestroyMeshGeometry(planeMesh)
 			local events = etrace.filter()
 
-			assertEquals(#events, 5)
+			assertEquals(#events, 6)
 
 			-- It's technically possible that the wrong buffers are destroyed here, but eh...
 			assertEquals(events[1].name, "GPU_BUFFER_DESTROY")
@@ -397,6 +413,7 @@ describe("Renderer", function()
 			assertEquals(events[3].name, "GPU_BUFFER_DESTROY")
 			assertEquals(events[4].name, "GPU_BUFFER_DESTROY")
 			assertEquals(events[5].name, "GPU_BUFFER_DESTROY")
+			assertEquals(events[6].name, "GPU_BUFFER_DESTROY")
 			-- Default texture coordinates shouldn't be destroyed (implicit)
 		end)
 	end)
@@ -521,8 +538,8 @@ describe("Renderer", function()
 				Renderer:ResetScene()
 				local events = etrace.filter()
 
-				assertEquals(#events, #scene.meshes * Mesh.NUM_BUFFERS_PER_MESH)
-				for index = 1, #scene.meshes * Mesh.NUM_BUFFERS_PER_MESH, 1 do
+				assertEquals(#events, #scene.meshes * Mesh.MAX_BUFFER_COUNT_PER_MESH)
+				for index = 1, #scene.meshes * Mesh.MAX_BUFFER_COUNT_PER_MESH, 1 do
 					assertEquals(events[index].name, "GPU_BUFFER_DESTROY")
 				end
 			end)
