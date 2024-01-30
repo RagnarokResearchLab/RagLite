@@ -10,8 +10,8 @@ local ffi = require("ffi")
 local uv = require("uv")
 
 local assert = assert
+local math_floor = math.floor
 local format = string.format
-local string_char = string.char
 local table_insert = table.insert
 local tonumber = tonumber
 
@@ -802,8 +802,6 @@ local function nextPowerOfTwo(n)
 	return power
 end
 
-local math_floor = math.floor
-
 function RagnarokGND:GenerateLightmapTextureImage()
 	console.startTimer("Generate combined lightmap texture image")
 
@@ -811,37 +809,45 @@ function RagnarokGND:GenerateLightmapTextureImage()
 	local numSlicesPerRow = 2048 / 8
 	local numRows = math.ceil(self.lightmapFormat.numSlices / numSlicesPerRow)
 	local height = nextPowerOfTwo(numRows * 8)
-	local backgroundPixel = ffi.new("uint8_t[4]", { 255, 0, 255, 255 })
 
 	printf("[RagnarokGND] Computed lightmap texture dimensions: %dx%d", width, height)
-
+	local numBytesWritten = 0
 	local rgbaImageBytes = buffer.new(width * height * 4)
-	for pixelV = height - 1, 0, -1 do
+	local bufferStartPointer, reservedlength = rgbaImageBytes:reserve(width * height * 4)
+	for pixelV = 0, height - 1, 1 do
 		local sliceV = math_floor(pixelV / 8)
-		for pixelU = width - 1, 0, -1 do
+		for pixelU = 0, width - 1, 1 do
 			local sliceU = math_floor(pixelU / 8)
 			local sliceID = sliceV * numSlicesPerRow + sliceU
 			local offsetU = pixelU % 8
 			local offsetV = pixelV % 8
 			local lightmapStartIndex = (offsetU + offsetV * 8) * 3
 			local shadowmapStartIndex = (offsetU + offsetV * 8)
+			local writableAreaStartIndex = (pixelV * width + pixelU) * 4
 
 			if sliceID < self.lightmapFormat.numSlices then
 				local shadowmapTexels = self.lightmapSlices[sliceID].ambient_occlusion_texels
 				local lightmapTexels = self.lightmapSlices[sliceID].baked_lightmap_texels
-				local red = string_char(lightmapTexels[lightmapStartIndex + 0])
-				local green = string_char(lightmapTexels[lightmapStartIndex + 1])
-				local blue = string_char(lightmapTexels[lightmapStartIndex + 2])
-				local alpha = string_char(shadowmapTexels[shadowmapStartIndex])
-				rgbaImageBytes:put(red)
-				rgbaImageBytes:put(green)
-				rgbaImageBytes:put(blue)
-				rgbaImageBytes:put(alpha)
-			else
-				rgbaImageBytes:putcdata(backgroundPixel, 4)
+				local red = lightmapTexels[lightmapStartIndex + 0]
+				local green = lightmapTexels[lightmapStartIndex + 1]
+				local blue = lightmapTexels[lightmapStartIndex + 2]
+				local alpha = shadowmapTexels[shadowmapStartIndex]
+				bufferStartPointer[writableAreaStartIndex + 0] = red
+				bufferStartPointer[writableAreaStartIndex + 1] = green
+				bufferStartPointer[writableAreaStartIndex + 2] = blue
+				bufferStartPointer[writableAreaStartIndex + 3] = alpha
+			else -- Slightly wasteful, but the determinism enables testing (and it's barely noticeable anyway)
+				bufferStartPointer[writableAreaStartIndex + 0] = 255
+				bufferStartPointer[writableAreaStartIndex + 1] = 0
+				bufferStartPointer[writableAreaStartIndex + 2] = 255
+				bufferStartPointer[writableAreaStartIndex + 3] = 255
 			end
+			numBytesWritten = numBytesWritten + 4
 		end
 	end
+
+	assert(numBytesWritten <= reservedlength, "Buffer overrun while writing lightmap pixels?")
+	rgbaImageBytes:commit(numBytesWritten)
 
 	local lightmapTextureImage = {
 		rgbaImageBytes = rgbaImageBytes,
