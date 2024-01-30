@@ -86,6 +86,7 @@ function RagnarokTools:ExportLightmapsFromGND(gndFileContents)
 	local textureImageHeight = gnd.gridSizeV * gnd.lightmapFormat.pixelHeight
 	local shadowmapPixels = ffi.new("stbi_unsigned_char_t[?]", textureImageWidth * textureImageHeight * 4)
 	local lightmapPixels = ffi.new("stbi_unsigned_char_t[?]", textureImageWidth * textureImageHeight * 4)
+	local combinedTextureImage = gnd:GenerateLightmapTextureImage()
 
 	for pixelV = 0, textureImageHeight - 1, 1 do
 		for pixelU = 0, textureImageWidth - 1, 1 do
@@ -134,7 +135,12 @@ function RagnarokTools:ExportLightmapsFromGND(gndFileContents)
 
 	self:ExportHumandReadableTextureImageAsPNG(shadowmapPixels, textureImageWidth, textureImageHeight, "shadowmap.png")
 	self:ExportHumandReadableTextureImageAsPNG(lightmapPixels, textureImageWidth, textureImageHeight, "lightmap.png")
-
+	self:ExportHumandReadableTextureImageAsPNG(
+		combinedTextureImage.rgbaImageBytes,
+		combinedTextureImage.width,
+		combinedTextureImage.height,
+		"combined-lightmap-texture.png"
+	)
 	stbi.bindings.stbi_flip_vertically_on_write(false)
 end
 

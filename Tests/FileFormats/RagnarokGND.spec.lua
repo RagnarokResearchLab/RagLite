@@ -1,4 +1,5 @@
 local ffi = require("ffi")
+local miniz = require("miniz")
 
 local RagnarokGND = require("Core.FileFormats.RagnarokGND")
 
@@ -531,6 +532,7 @@ describe("RagnarokGND", function()
 			gnd.gridSizeU = 3
 			gnd.gridSizeV = 3
 			gnd.cubeGrid = ffi.new("gnd_groundmesh_cube_t[?]", gnd.gridSizeU * gnd.gridSizeV)
+			gnd.lightmapFormat = { numSlices = 0 }
 			for gridV = 1, gnd.gridSizeV, 1 do
 				for gridU = 1, gnd.gridSizeU, 1 do
 					local cubeID = (gridU - 1) + (gridV - 1) * gnd.gridSizeU
@@ -584,6 +586,74 @@ describe("RagnarokGND", function()
 			-- C_FileSystem.WriteFile(path.join("Tests", "Fixtures", "Snapshots", "gnd-geometry.json"), jsonDump)
 			local snapshot = C_FileSystem.ReadFile(path.join("Tests", "Fixtures", "Snapshots", "gnd-geometry.json"))
 			assertEquals(jsonDump, snapshot)
+		end)
+	end)
+
+	describe("GenerateLightmapTextureImage", function()
+		it("should return a combined shadow-and-lightmap texture with power-of-two dimensions", function()
+			local gnd = RagnarokGND()
+			gnd:DecodeFileContents(GND_WITHOUT_WATER_PLANE)
+			gnd.lightmapSlices[0].baked_lightmap_texels[0] = 255
+			local lightmapTextureImage = gnd:GenerateLightmapTextureImage()
+			assertEquals(lightmapTextureImage.width, 2048)
+			assertEquals(lightmapTextureImage.height, 8)
+
+			local rawImageBytes = tostring(lightmapTextureImage.rgbaImageBytes)
+			local expectedTextureChecksum = 546589407
+			local generatedTextureChecksum = miniz.crc32(rawImageBytes)
+			assertEquals(generatedTextureChecksum, expectedTextureChecksum)
+		end)
+
+		it("should take into account the selected posterization level if any was given", function()
+			local gnd = RagnarokGND()
+			gnd:DecodeFileContents(GND_WITHOUT_WATER_PLANE)
+			gnd.lightmapSlices[0].baked_lightmap_texels[0] = 255
+			local lightmapTextureImage = gnd:GenerateLightmapTextureImage(0)
+			assertEquals(lightmapTextureImage.width, 2048)
+			assertEquals(lightmapTextureImage.height, 8)
+
+			local rawImageBytes = tostring(lightmapTextureImage.rgbaImageBytes)
+			local expectedTextureChecksum = 3127357477
+			local generatedTextureChecksum = miniz.crc32(rawImageBytes)
+			assertEquals(generatedTextureChecksum, expectedTextureChecksum)
+		end)
+	end)
+
+	describe("ComputeLightmapTextureCoords", function()
+		it("should return the set of texture coordinates that corresponds to the given lightmap slice", function()
+			local gnd = RagnarokGND()
+			gnd:DecodeFileContents(GND_WITHOUT_WATER_PLANE)
+
+			assertEquals(gnd:ComputeLightmapTextureCoords(0), {
+				bottomLeftU = 0.00048828125,
+				bottomLeftV = 0.125,
+				bottomRightU = 0.00341796875,
+				bottomRightV = 0.125,
+				topLeftU = 0.00048828125,
+				topLeftV = 0.875,
+				topRightU = 0.00341796875,
+				topRightV = 0.875,
+			})
+			assertEquals(gnd:ComputeLightmapTextureCoords(1), {
+				bottomLeftU = 0.00439453125,
+				bottomLeftV = 0.125,
+				bottomRightU = 0.00732421875,
+				bottomRightV = 0.125,
+				topLeftU = 0.00439453125,
+				topLeftV = 0.875,
+				topRightU = 0.00732421875,
+				topRightV = 0.875,
+			})
+			assertEquals(gnd:ComputeLightmapTextureCoords(3), {
+				bottomLeftU = 0.01220703125,
+				bottomLeftV = 0.125,
+				bottomRightU = 0.01513671875,
+				bottomRightV = 0.125,
+				topLeftU = 0.01220703125,
+				topLeftV = 0.875,
+				topRightU = 0.01513671875,
+				topRightV = 0.875,
+			})
 		end)
 	end)
 end)

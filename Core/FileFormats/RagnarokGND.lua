@@ -4,10 +4,13 @@ local Mesh = require("Core.NativeClient.WebGPU.Mesh")
 local GroundMeshMaterial = require("Core.NativeClient.WebGPU.Materials.GroundMeshMaterial")
 local Vector3D = require("Core.VectorMath.Vector3D")
 
+local bit = require("bit")
+local console = require("console")
 local ffi = require("ffi")
 local uv = require("uv")
 
 local assert = assert
+local math_floor = math.floor
 local format = string.format
 local table_insert = table.insert
 local tonumber = tonumber
@@ -25,6 +28,7 @@ local RagnarokGND = {
 		blue = 0,
 		alpha = 255,
 	},
+	LIGHTMAP_POSTERIZATION_LEVEL = 4, -- 16 levels, encoded as binary shift amount (Source: greenboxal)
 	cdefs = [[
 		#pragma pack(1)
 		typedef struct gnd_header {
@@ -782,32 +786,117 @@ function RagnarokGND:ComputeFlatFaceNormalRight(gridU, gridV)
 	return rightFaceNormal
 end
 
-function RagnarokGND:GenerateLightmapTextureImage()
-	-- Should replace with a power-of-two texture containing the actual lightmap slices
-	local textureFilePath = path.join("Core", "NativeClient", "Assets", "DebugTexture256.png")
-	local pngFileContents = C_FileSystem.ReadFile(textureFilePath)
+local function nextPowerOfTwo(n)
+	if n <= 0 then
+		return 1
+	end
 
-	local rgbaImageBytes, width, height = C_ImageProcessing.DecodeFileContents(pngFileContents)
-	local placeholderLightmapTexture = {
+	if bit.band(n, (n - 1)) == 0 then
+		return n
+	end
+
+	local power = 1
+	while power < n do
+		power = power * 2
+	end
+
+	return power
+end
+
+function RagnarokGND:GenerateLightmapTextureImage(posterizationLevel)
+	posterizationLevel = posterizationLevel or RagnarokGND.LIGHTMAP_POSTERIZATION_LEVEL
+	console.startTimer("Generate combined lightmap texture image")
+
+	local width = 2048 -- TBD: Should use MAX_TEXTURE_DIMENSION?
+	local numSlicesPerRow = 2048 / 8
+	local numRows = math.ceil(self.lightmapFormat.numSlices / numSlicesPerRow)
+	local height = nextPowerOfTwo(numRows * 8)
+
+	printf("[RagnarokGND] Computed lightmap texture dimensions: %dx%d", width, height)
+	local numBytesWritten = 0
+	local rgbaImageBytes = buffer.new(width * height * 4)
+	local bufferStartPointer, reservedlength = rgbaImageBytes:reserve(width * height * 4)
+	for pixelV = 0, height - 1, 1 do
+		local sliceV = math_floor(pixelV / 8)
+		for pixelU = 0, width - 1, 1 do
+			local sliceU = math_floor(pixelU / 8)
+			local sliceID = sliceV * numSlicesPerRow + sliceU
+			local offsetU = pixelU % 8
+			local offsetV = pixelV % 8
+			local lightmapStartIndex = (offsetU + offsetV * 8) * 3
+			local shadowmapStartIndex = (offsetU + offsetV * 8)
+			local writableAreaStartIndex = (pixelV * width + pixelU) * 4
+
+			if sliceID < self.lightmapFormat.numSlices then
+				local shadowmapTexels = self.lightmapSlices[sliceID].ambient_occlusion_texels
+				local lightmapTexels = self.lightmapSlices[sliceID].baked_lightmap_texels
+				local red = lightmapTexels[lightmapStartIndex + 0]
+				local green = lightmapTexels[lightmapStartIndex + 1]
+				local blue = lightmapTexels[lightmapStartIndex + 2]
+				local alpha = shadowmapTexels[shadowmapStartIndex]
+
+				local posterizedRed = bit.rshift(red, posterizationLevel)
+				local posterizedGreen = bit.rshift(green, posterizationLevel)
+				local posterizedBlue = bit.rshift(blue, posterizationLevel)
+				posterizedRed = bit.lshift(posterizedRed, posterizationLevel)
+				posterizedGreen = bit.lshift(posterizedGreen, posterizationLevel)
+				posterizedBlue = bit.lshift(posterizedBlue, posterizationLevel)
+
+				bufferStartPointer[writableAreaStartIndex + 0] = posterizedRed
+				bufferStartPointer[writableAreaStartIndex + 1] = posterizedGreen
+				bufferStartPointer[writableAreaStartIndex + 2] = posterizedBlue
+				bufferStartPointer[writableAreaStartIndex + 3] = alpha
+			else -- Slightly wasteful, but the determinism enables testing (and it's barely noticeable anyway)
+				bufferStartPointer[writableAreaStartIndex + 0] = 255
+				bufferStartPointer[writableAreaStartIndex + 1] = 0
+				bufferStartPointer[writableAreaStartIndex + 2] = 255
+				bufferStartPointer[writableAreaStartIndex + 3] = 255
+			end
+			numBytesWritten = numBytesWritten + 4
+		end
+	end
+
+	assert(numBytesWritten <= reservedlength, "Buffer overrun while writing lightmap pixels?")
+	rgbaImageBytes:commit(numBytesWritten)
+
+	local lightmapTextureImage = {
 		rgbaImageBytes = rgbaImageBytes,
 		width = width,
 		height = height,
 	}
+	console.stopTimer("Generate combined lightmap texture image")
 
-	return placeholderLightmapTexture
+	return lightmapTextureImage
 end
 
 function RagnarokGND:ComputeLightmapTextureCoords(lightmapSliceID)
-	-- Should replace this with the actual lightmap coordinates (to be computed)
+	local textureWidth = 2048 -- TBD: Should use MAX_TEXTURE_DIMENSION?
+	local numSlicesPerRow = 2048 / 8
+	local numRows = math.ceil(self.lightmapFormat.numSlices / numSlicesPerRow)
+	local textureHeight = nextPowerOfTwo(numRows * 8)
+	local sliceSize = 8
+
+	local sliceU = lightmapSliceID % numSlicesPerRow
+	local sliceV = math.floor(lightmapSliceID / numSlicesPerRow)
+
+	local pixelOffsetU = 1 / textureWidth
+	local pixelOffsetV = 1 / textureHeight
+
+	local bottomLeftU = sliceU * sliceSize / textureWidth + pixelOffsetU
+	local bottomLeftV = sliceV * sliceSize / textureHeight + pixelOffsetV
+
+	local topRightU = (sliceU + 1) * sliceSize / textureWidth - pixelOffsetU
+	local topRightV = (sliceV + 1) * sliceSize / textureHeight - pixelOffsetV
+
 	return {
-		bottomLeftU = 0,
-		bottomLeftV = 0,
-		bottomRightU = 0,
-		bottomRightV = 0,
-		topLeftU = 0,
-		topLeftV = 0,
-		topRightU = 0,
-		topRightV = 0,
+		bottomLeftU = bottomLeftU,
+		bottomLeftV = bottomLeftV,
+		bottomRightU = topRightU,
+		bottomRightV = bottomLeftV,
+		topLeftU = bottomLeftU,
+		topLeftV = topRightV,
+		topRightU = topRightU,
+		topRightV = topRightV,
 	}
 end
 

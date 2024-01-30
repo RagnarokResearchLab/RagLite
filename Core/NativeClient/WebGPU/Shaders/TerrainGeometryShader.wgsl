@@ -132,17 +132,16 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4f {
 
 	let lightmapTexCoords = in.lightmapTextureCoords;
 	var lightmapTextureColor = textureSample(lightmapTexture, lightmapTextureSampler, lightmapTexCoords);
-	lightmapTextureColor = vec4f(0.05, 0.05, 0.05, 0.05); // Remove once the real lightmaps are sampled here
 
 	// Simulated fixed-function pipeline (DirectX7/9) - no specular highlights needed AFAICT?
 	let sunlightRayOrigin = -normalize(uPerSceneData.directionalLightDirection.xyz);
 	let sunlightColorContribution = max(dot(sunlightRayOrigin, normal), 0.0);
 	let directionalLightColor = sunlightColorContribution * sunlightColor;
-	let combinedLightContribution = clampToUnitRange(directionalLightColor + ambientColor);
+	let combinedLightContribution = clampToUnitRange(directionalLightColor + ambientColor) * lightmapTextureColor.a;
 
 	// Screen blending increases the vibrancy of colors (see https://en.wikipedia.org/wiki/Blend_modes#Screen)
 	let contrastCorrectionColor = clampToUnitRange(ambientColor + sunlightColor - (sunlightColor * ambientColor));
-	let fragmentColor = in.color * contrastCorrectionColor * combinedLightContribution * diffuseTextureColor.rgb + lightmapTextureColor.rgb;
+	let fragmentColor = clampToUnitRange(in.color * contrastCorrectionColor * combinedLightContribution * diffuseTextureColor.rgb + lightmapTextureColor.rgb);
 
 	// Gamma-correction:
 	// WebGPU assumes that the colors output by the fragment shader are given in linear space
