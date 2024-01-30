@@ -3,6 +3,7 @@ struct VertexInput {
 	@location(1) color: vec3f,
 	@location(2) diffuseTextureCoords: vec2f,
 	@location(3) surfaceNormal: vec3f,
+	@location(4) lightmapTextureCoords: vec2f,
 };
 
 struct VertexOutput {
@@ -10,6 +11,7 @@ struct VertexOutput {
 	@location(0) color: vec3f,
 	@location(1) diffuseTextureCoords: vec2f,
 	@location(2) surfaceNormal: vec3f,
+	@location(4) lightmapTextureCoords: vec2f,
 };
 
 // CameraBindGroup: Updated once per frame
@@ -40,8 +42,9 @@ struct PerMaterialData {
 @group(1) @binding(2)
 var<uniform> uMaterialInstanceData: PerMaterialData;
 
-// InstanceBindGroup: Updated once per mesh instance
-// NYI (only for RML UI widgets)
+// InstanceBindGroup: Re-used to store the lightmap texture for this material (hacky; I know...)
+@group(2) @binding(0) var lightmapTexture: texture_2d<f32>;
+@group(2) @binding(1) var lightmapTextureSampler: sampler;
 
 const MATH_PI = 3.14159266;
 const DEBUG_ALPHA_OFFSET = 0.0; // Set to non-zero value (e.g., 0.2) to make transparent background pixels visible
@@ -115,6 +118,7 @@ fn vs_main(in: VertexInput) -> VertexOutput {
 	out.color = in.color;
 	out.surfaceNormal = in.surfaceNormal;
 	out.diffuseTextureCoords = in.diffuseTextureCoords;
+	out.lightmapTextureCoords = in.lightmapTextureCoords;
 	return out;
 }
 
@@ -124,7 +128,11 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4f {
 	let diffuseTextureColor = textureSample(diffuseTexture, diffuseTextureSampler, textureCoords);
 	let normal = normalize(in.surfaceNormal);
 	let sunlightColor = uPerSceneData.directionalLightColor.rgb;
-	let ambientColor = uPerSceneData.ambientLight.rgb;    
+	let ambientColor = uPerSceneData.ambientLight.rgb;
+
+	let lightmapTexCoords = in.lightmapTextureCoords;
+	var lightmapTextureColor = textureSample(lightmapTexture, lightmapTextureSampler, lightmapTexCoords);
+	lightmapTextureColor = vec4f(0.05, 0.05, 0.05, 0.05); // Remove once the real lightmaps are sampled here
 
 	// Simulated fixed-function pipeline (DirectX7/9) - no specular highlights needed AFAICT?
 	let sunlightRayOrigin = -normalize(uPerSceneData.directionalLightDirection.xyz);
@@ -134,7 +142,7 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4f {
 
 	// Screen blending increases the vibrancy of colors (see https://en.wikipedia.org/wiki/Blend_modes#Screen)
 	let contrastCorrectionColor = clampToUnitRange(ambientColor + sunlightColor - (sunlightColor * ambientColor));
-	let fragmentColor = in.color * contrastCorrectionColor * combinedLightContribution * diffuseTextureColor.rgb ;
+	let fragmentColor = in.color * contrastCorrectionColor * combinedLightContribution * diffuseTextureColor.rgb + lightmapTextureColor.rgb;
 
 	// Gamma-correction:
 	// WebGPU assumes that the colors output by the fragment shader are given in linear space
