@@ -20,7 +20,7 @@ function GroundMeshDrawingPipeline:Construct(wgpuDeviceHandle, textureFormatID)
 	local sharedShaderModule = self:CreateShaderModule(wgpuDeviceHandle)
 	local renderPipelineDescriptor = new("WGPURenderPipelineDescriptor", {
 		vertex = {
-			bufferCount = 4, -- Vertex positions, colors, diffuse UVs, normals
+			bufferCount = 5, -- Vertex positions, colors, diffuse UVs, normals, lightmap UVs
 			module = sharedShaderModule,
 			entryPoint = "vs_main",
 			constantCount = 0,
@@ -82,10 +82,11 @@ function GroundMeshDrawingPipeline:Construct(wgpuDeviceHandle, textureFormatID)
 
 	-- Configure resource layout for the vertex shader
 	local pipelineLayoutDescriptor = new("WGPUPipelineLayoutDescriptor", {
-		bindGroupLayoutCount = 2,
-		bindGroupLayouts = new("WGPUBindGroupLayout[?]", 2, {
+		bindGroupLayoutCount = 3,
+		bindGroupLayouts = new("WGPUBindGroupLayout[?]", 3, {
 			UniformBuffer.cameraBindGroupLayout,
 			UniformBuffer.materialBindGroupLayout,
+			UniformBuffer.materialBindGroupLayout, -- Re-used for lightmaps
 		}),
 	})
 
