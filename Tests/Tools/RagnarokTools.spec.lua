@@ -49,21 +49,26 @@ describe("RagnarokTools", function()
 		it("should export the GND lightmap data in a human-readable format if a valid GND buffer is passed", function()
 			local expectedLightmapChecksum = "be735bab85771a54892d4129d7aba3126e0f7f41f2c9891a28aa8dcfc897d2fa"
 			local expectedShadowmapChecksum = "4a7a36bedbb8e73797b91b2f568b59b8d4600dc3975e2265114339a5142e9175"
+			local expectedTextureChecksum = "a740daf79dda0245b71824d441f42baa9cb9c9449458090b983ec7b80a05b3bc"
 
 			local gndFileContents = C_FileSystem.ReadFile(path.join("Tests", "Fixtures", "no-water-plane.gnd"))
 			RagnarokTools:ExportLightmapsFromGND(gndFileContents)
 
 			local generatedLightmapBytes = C_FileSystem.ReadFile("lightmap.png")
 			local generatedShadowmapBytes = C_FileSystem.ReadFile("shadowmap.png")
+			local generatedTextureImage = C_FileSystem.ReadFile("combined-lightmap-texture.png")
 
 			local generatedLightmapChecksum = openssl.digest.digest("sha256", generatedLightmapBytes)
 			local generatedShadowmapChecksum = openssl.digest.digest("sha256", generatedShadowmapBytes)
+			local generatedTextureChecksum = openssl.digest.digest("sha256", generatedTextureImage)
 
 			assertEquals(generatedLightmapChecksum, expectedLightmapChecksum)
 			assertEquals(generatedShadowmapChecksum, expectedShadowmapChecksum)
+			assertEquals(generatedTextureChecksum, expectedTextureChecksum)
 
 			C_FileSystem.Delete("lightmap.png")
 			C_FileSystem.Delete("shadowmap.png")
+			C_FileSystem.Delete("combined-lightmap-texture.png")
 		end)
 	end)
 
