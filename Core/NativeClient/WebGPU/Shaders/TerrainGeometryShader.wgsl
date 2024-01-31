@@ -12,6 +12,7 @@ struct VertexOutput {
 	@location(1) diffuseTextureCoords: vec2f,
 	@location(2) surfaceNormal: vec3f,
 	@location(4) lightmapTextureCoords: vec2f,
+	@location(5) fogFactor: f32,
 };
 
 // CameraBindGroup: Updated once per frame
@@ -25,6 +26,9 @@ struct PerSceneData {
 	unusedPadding: f32,
 	directionalLightDirection: vec4f,
 	directionalLightColor: vec4f,
+	cameraWorldPosition: vec4f,
+	fogColor: vec4f,
+	fogLimits: vec4f,
 };
 
 @group(0) @binding(0) var<uniform> uPerSceneData: PerSceneData;
@@ -119,6 +123,15 @@ fn vs_main(in: VertexInput) -> VertexOutput {
 	out.surfaceNormal = in.surfaceNormal;
 	out.diffuseTextureCoords = in.diffuseTextureCoords;
 	out.lightmapTextureCoords = in.lightmapTextureCoords;
+
+	let worldPosition = T1 * S * homogeneousPosition;
+	let distance = length(worldPosition.xyz - uPerSceneData.cameraWorldPosition.xyz);
+
+	let fogNearLimit = uPerSceneData.fogLimits.x;
+	let fogFarLimit = uPerSceneData.fogLimits.y;
+	let fogFactor = (fogFarLimit - distance) / (fogFarLimit - fogNearLimit);
+	out.fogFactor = 1.0 - clamp(fogFactor, 0.0, 1.0);
+	
 	return out;
 }
 
@@ -143,9 +156,12 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4f {
 	let contrastCorrectionColor = clampToUnitRange(ambientColor + sunlightColor - (sunlightColor * ambientColor));
 	let fragmentColor = clampToUnitRange(in.color * contrastCorrectionColor * combinedLightContribution * diffuseTextureColor.rgb + lightmapTextureColor.rgb);
 
+	// Should be a no-op if fog is disabled, since the fogFactor would be zero
+	let foggedColor = mix(fragmentColor.rgb, uPerSceneData.fogColor.rgb, in.fogFactor);
+
 	// Gamma-correction:
 	// WebGPU assumes that the colors output by the fragment shader are given in linear space
 	// When setting the surface format to BGRA8UnormSrgb it performs a linear to sRGB conversion
-	let gammaCorrectedColor = pow(fragmentColor.rgb, vec3f(2.2));
+	let gammaCorrectedColor = pow(foggedColor.rgb, vec3f(2.2));
 	return vec4f(gammaCorrectedColor, diffuseTextureColor.a + DEBUG_ALPHA_OFFSET);
 }
