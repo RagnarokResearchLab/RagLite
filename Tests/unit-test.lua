@@ -2,6 +2,7 @@ require("Core.RuntimeExtensions.C_Runtime")
 
 local specFiles = {
 	"Tests/FileFormats/BinaryReader.spec.lua",
+	"Tests/FileFormats/FogParameters.spec.lua",
 	"Tests/FileFormats/RagnarokACT.spec.lua",
 	"Tests/FileFormats/RagnarokGAT.spec.lua",
 	"Tests/FileFormats/RagnarokGND.spec.lua",
@@ -26,6 +27,7 @@ local specFiles = {
 	"Tests/NativeClient/NativeClient.spec.lua",
 	"Tests/NativeClient/Renderer.spec.lua",
 	"Tests/NativeClient/DebugDraw/Box.spec.lua",
+	"Tests/NativeClient/DebugDraw/Color.spec.lua",
 	"Tests/NativeClient/DebugDraw/Cone.spec.lua",
 	"Tests/NativeClient/DebugDraw/Cylinder.spec.lua",
 	"Tests/NativeClient/DebugDraw/DebugScene.spec.lua",
