@@ -730,6 +730,9 @@ function Renderer:UpdateScenewideUniformBuffer(deltaTime)
 	perSceneUniformData.directionalLightBlue = self.directionalLight.blue
 	perSceneUniformData.directionalLightIntensity = self.directionalLight.intensity
 	assert(self.directionalLight.intensity == 1, "The directional light must always be at full intensity")
+	perSceneUniformData.cameraWorldPosition.x = cameraWorldPosition.x
+	perSceneUniformData.cameraWorldPosition.y = cameraWorldPosition.y
+	perSceneUniformData.cameraWorldPosition.z = cameraWorldPosition.z
 
 	Queue:WriteBuffer(
 		Device:GetQueue(self.wgpuDevice),

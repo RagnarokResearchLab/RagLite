@@ -1,5 +1,6 @@
 local Device = require("Core.NativeClient.WebGPU.Device")
 local GPU = require("Core.NativeClient.WebGPU.GPU")
+local _ = require("Core.VectorMath.Vector3D") -- Only needed for the cdefs right now
 local _ = require("Core.VectorMath.Matrix4D") -- Only needed for the cdefs right now
 
 local bit = require("bit")
@@ -34,6 +35,8 @@ local UniformBuffer = {
 			float directionalLightGreen; // 184
 			float directionalLightBlue; // 188
 			float directionalLightIntensity; // 192
+			Vector3D cameraWorldPosition; // 204
+			float padding[1]; // 208
 			// Padding needs to be updated whenever the struct changes!
 		} scenewide_uniform_t;
 		typedef struct PerMaterialData {
