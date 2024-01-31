@@ -1,7 +1,10 @@
 local ffi = require("ffi")
+local transform = require("transform")
 
 local tonumber = tonumber
+local format = string.format
 local string_sub = string.sub
+local transform_bold = transform.bold
 
 local Color = {
 	WHITE = { red = 1, green = 1, blue = 1 },
@@ -44,6 +47,23 @@ function Color:HexStringToRGBA(hexColorString)
 	color.alpha = alpha / 255
 
 	return color
+end
+
+function Color:__tostring()
+	local formatted = {
+		red = format("%.3f", self.red),
+		green = format("%.3f", self.green),
+		blue = format("%.3f", self.blue),
+		alpha = format("%.3f", self.alpha),
+	}
+	local firstRow = format(
+		"{ red = %s, green = %s, blue = %s, alpha = %s }",
+		formatted.red,
+		formatted.green,
+		formatted.blue,
+		formatted.alpha
+	)
+	return format("%s %s", transform_bold("Color"), firstRow)
 end
 
 Color.__index = Color
