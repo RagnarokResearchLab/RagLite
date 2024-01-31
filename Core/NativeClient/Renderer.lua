@@ -734,6 +734,19 @@ function Renderer:UpdateScenewideUniformBuffer(deltaTime)
 	perSceneUniformData.cameraWorldPosition.y = cameraWorldPosition.y
 	perSceneUniformData.cameraWorldPosition.z = cameraWorldPosition.z
 
+	if not self.fogParameters then
+		-- Disabling the effect in a roundabout way to avoid a new uniform just for this
+		perSceneUniformData.fogNearLimit = 10
+		perSceneUniformData.fogFarLimit = 1
+	else
+		local viewDistance = C_Camera.farPlaneDistanceInWorldUnits - C_Camera.nearPlaneDistanceInWorldUnits
+		perSceneUniformData.fogNearLimit = self.fogParameters.near * viewDistance
+		perSceneUniformData.fogFarLimit = self.fogParameters.far * viewDistance
+		perSceneUniformData.fogColorRed = self.fogParameters.color.red
+		perSceneUniformData.fogColorGreen = self.fogParameters.color.green
+		perSceneUniformData.fogColorBlue = self.fogParameters.color.blue
+	end
+
 	Queue:WriteBuffer(
 		Device:GetQueue(self.wgpuDevice),
 		self.cameraViewportUniform.buffer,

@@ -37,6 +37,13 @@ local UniformBuffer = {
 			float directionalLightIntensity; // 192
 			Vector3D cameraWorldPosition; // 204
 			float padding[1]; // 208
+			float fogColorRed; // 212
+			float fogColorGreen; // 216
+			float fogColorBlue; // 220
+			float padding[1]; // 224
+			float fogNearLimit; // 228
+			float fogFarLimit; // 232
+			float padding[2]; // 240
 			// Padding needs to be updated whenever the struct changes!
 		} scenewide_uniform_t;
 		typedef struct PerMaterialData {
