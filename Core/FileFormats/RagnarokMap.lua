@@ -3,6 +3,8 @@ local RagnarokGND = require("Core.FileFormats.RagnarokGND")
 local RagnarokGRF = require("Core.FileFormats.RagnarokGRF")
 local RagnarokRSW = require("Core.FileFormats.RagnarokRSW")
 
+local C_Resources = require("Core.NativeClient.C_Resources")
+
 local NormalsVisualization = require("Core.NativeClient.DebugDraw.NormalsVisualization")
 
 local uv = require("uv")
@@ -63,6 +65,9 @@ function RagnarokMap:Construct(mapID, fileSystem)
 		rayDirection = self.rsw.directionalLight.direction,
 	}
 	scene.directionalLight = sun
+
+	-- Not really testable with how the resource management works currently; should improve later
+	scene.fogParameters = C_Resources.PERSISTENT_RESOURCES["data/fogparametertable.txt"][mapID]
 
 	printf("[RagnarokMap] Entering world %s (%s)", mapID, scene.displayName)
 

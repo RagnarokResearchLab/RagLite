@@ -23,6 +23,7 @@ local specFiles = {
 	"Tests/NativeClient/WebGPU/Buffer.spec.lua",
 	"Tests/NativeClient/C_Camera.spec.lua",
 	"Tests/NativeClient/C_Cursor.spec.lua",
+	"Tests/NativeClient/C_Resources.spec.lua",
 	"Tests/NativeClient/KeyframeAnimation.spec.lua",
 	"Tests/NativeClient/NativeClient.spec.lua",
 	"Tests/NativeClient/Renderer.spec.lua",

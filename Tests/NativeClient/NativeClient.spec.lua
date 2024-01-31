@@ -4,7 +4,6 @@ local glfw = require("glfw")
 local C_Camera = require("Core.NativeClient.C_Camera")
 local C_Cursor = require("Core.NativeClient.C_Cursor")
 local NativeClient = require("Core.NativeClient.NativeClient")
-local RagnarokGRF = require("Core.FileFormats.RagnarokGRF")
 local Vector3D = require("Core.VectorMath.Vector3D")
 
 describe("NativeClient", function()
@@ -554,63 +553,6 @@ describe("NativeClient", function()
 			assertEquals(newCameraTarget.x, expectedCameraTarget.x)
 			assertEquals(newCameraTarget.y, expectedCameraTarget.y)
 			assertEquals(newCameraTarget.z, expectedCameraTarget.z)
-		end)
-	end)
-
-	describe("PreloadPersistentResources", function()
-		local DEFAULT_GRF_PATH = NativeClient.GRF_FILE_PATH
-		local PRELOADED_ASSET_FILES = NativeClient.PERSISTENT_RESOURCES
-
-		after(function()
-			NativeClient.GRF_FILE_PATH = DEFAULT_GRF_PATH
-			NativeClient.PERSISTENT_RESOURCES = PRELOADED_ASSET_FILES
-		end)
-
-		it("should throw if the configured asset container doesn't exist", function()
-			local function preloadFromNonExistingGRF()
-				NativeClient.GRF_FILE_PATH = "invalid.grf"
-				NativeClient:PreloadPersistentResources()
-			end
-			local expectedErrorMessage = "Failed to open archive invalid.grf (No such file exists)"
-			assertThrows(preloadFromNonExistingGRF, expectedErrorMessage)
-		end)
-
-		it("should throw if the configured asset container isn't a valid GRF archive", function()
-			local SOME_EXISTING_FILE = path.join("Tests", "Fixtures", "test.rgz")
-			local function preloadFromInvalidGRF()
-				NativeClient.GRF_FILE_PATH = SOME_EXISTING_FILE
-				NativeClient:PreloadPersistentResources()
-			end
-			local expectedErrorMessage = format("Failed to open archive %s (Not a .grf file)", SOME_EXISTING_FILE)
-			assertThrows(preloadFromInvalidGRF, expectedErrorMessage)
-		end)
-
-		it("should load and store all persistent resources from the configured asset container", function()
-			NativeClient.GRF_FILE_PATH = path.join("Tests", "Fixtures", "test.grf")
-			NativeClient.PERSISTENT_RESOURCES = {
-				["hello-grf.txt"] = false,
-				["subdirectory/hello.txt"] = false,
-				["uppercase.png"] = false,
-				["안녕하세요.txt"] = false,
-			}
-			NativeClient:PreloadPersistentResources()
-
-			local grf = RagnarokGRF()
-			grf:Open(NativeClient.GRF_FILE_PATH)
-			local expectedFileContents = {
-				["hello-grf.txt"] = grf:ExtractFileInMemory("hello-grf.txt"),
-				["subdirectory/hello.txt"] = grf:ExtractFileInMemory("subdirectory/hello.txt"),
-				["uppercase.png"] = grf:ExtractFileInMemory("uppercase.png"),
-				["안녕하세요.txt"] = grf:ExtractFileInMemory("안녕하세요.txt"),
-			}
-			grf:Close()
-
-			-- Might want to add metadata later, but for now just caching the file contents should suffice
-			local preloadedAssetFiles = NativeClient.PERSISTENT_RESOURCES
-			assertEquals(preloadedAssetFiles["hello-grf.txt"], expectedFileContents["hello-grf.txt"])
-			assertEquals(preloadedAssetFiles["subdirectory/hello.txt"], expectedFileContents["subdirectory/hello.txt"])
-			assertEquals(preloadedAssetFiles["uppercase.png"], expectedFileContents["uppercase.png"])
-			assertEquals(preloadedAssetFiles["안녕하세요.txt"], expectedFileContents["안녕하세요.txt"])
 		end)
 	end)
 end)

@@ -730,6 +730,22 @@ function Renderer:UpdateScenewideUniformBuffer(deltaTime)
 	perSceneUniformData.directionalLightBlue = self.directionalLight.blue
 	perSceneUniformData.directionalLightIntensity = self.directionalLight.intensity
 	assert(self.directionalLight.intensity == 1, "The directional light must always be at full intensity")
+	perSceneUniformData.cameraWorldPosition.x = cameraWorldPosition.x
+	perSceneUniformData.cameraWorldPosition.y = cameraWorldPosition.y
+	perSceneUniformData.cameraWorldPosition.z = cameraWorldPosition.z
+
+	if not self.fogParameters then
+		-- Disabling the effect in a roundabout way to avoid a new uniform just for this
+		perSceneUniformData.fogNearLimit = 10
+		perSceneUniformData.fogFarLimit = 1
+	else
+		local viewDistance = C_Camera.farPlaneDistanceInWorldUnits - C_Camera.nearPlaneDistanceInWorldUnits
+		perSceneUniformData.fogNearLimit = self.fogParameters.near * viewDistance
+		perSceneUniformData.fogFarLimit = self.fogParameters.far * viewDistance
+		perSceneUniformData.fogColorRed = self.fogParameters.color.red
+		perSceneUniformData.fogColorGreen = self.fogParameters.color.green
+		perSceneUniformData.fogColorBlue = self.fogParameters.color.blue
+	end
 
 	Queue:WriteBuffer(
 		Device:GetQueue(self.wgpuDevice),
@@ -913,6 +929,8 @@ function Renderer:LoadSceneObjects(scene)
 		self.directionalLight.intensity = DEFAULT_SUNLIGHT_COLOR.intensity
 		self.directionalLight.rayDirection = DEFAULT_SUNLIGHT_DIRECTION
 	end
+
+	self.fogParameters = scene.fogParameters
 end
 
 function Renderer:DebugDumpTextures(mesh, fileName)
@@ -966,6 +984,8 @@ function Renderer:ResetScene()
 	self.directionalLight.rayDirection.x = DEFAULT_SUNLIGHT_DIRECTION.x
 	self.directionalLight.rayDirection.y = DEFAULT_SUNLIGHT_DIRECTION.y
 	self.directionalLight.rayDirection.z = DEFAULT_SUNLIGHT_DIRECTION.z
+
+	self.fogParameters = nil
 end
 
 return Renderer

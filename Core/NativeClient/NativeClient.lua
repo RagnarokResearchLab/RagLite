@@ -7,11 +7,11 @@ local uv = require("uv")
 
 local C_Camera = require("Core.NativeClient.C_Camera")
 local C_Cursor = require("Core.NativeClient.C_Cursor")
+local C_Resources = require("Core.NativeClient.C_Resources")
 local DebugScene = require("Core.NativeClient.DebugDraw.DebugScene")
 local Renderer = require("Core.NativeClient.Renderer")
 local Vector3D = require("Core.VectorMath.Vector3D")
 
-local RagnarokGRF = require("Core.FileFormats.RagnarokGRF")
 local RagnarokMap = require("Core.FileFormats.RagnarokMap")
 
 local PerformanceMetricsOverlay = require("Core.NativeClient.Interface.PerformanceMetricsOverlay")
@@ -21,12 +21,6 @@ local tonumber = tonumber
 local NativeClient = {
 	mainWindow = nil,
 	deferredEventQueue = nil,
-	-- Should probably move this to a dedicated Resources API (later)
-	GRF_FILE_PATH = "data.grf",
-	PERSISTENT_RESOURCES = {
-		["data/sprite/cursors.act"] = false,
-		["data/sprite/cursors.spr"] = false,
-	},
 	FALLBACK_SCENE_ID = "wgpu",
 }
 
@@ -34,7 +28,7 @@ function NativeClient:Start(loginSceneID)
 	self.mainWindow = self:CreateMainWindow()
 	Renderer:InitializeWithGLFW(self.mainWindow)
 
-	self:PreloadPersistentResources()
+	C_Resources.PreloadPersistentResources()
 	self:LoadSceneByID(loginSceneID or self.FALLBACK_SCENE_ID)
 
 	self:StartRenderLoop()
@@ -376,36 +370,12 @@ function NativeClient:IsShiftKeyDown()
 	return (glfw.bindings.glfw_get_key(self.mainWindow, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
 end
 
--- Can move to runtime later?
-local function table_count(t)
-	local count = 0
-
-	for k, v in pairs(t) do
-		count = count + 1
-	end
-
-	return count
-end
-
--- Should probably move this to a dedicated Resources API (later)
-function NativeClient:PreloadPersistentResources()
-	local grf = RagnarokGRF()
-	grf:Open(self.GRF_FILE_PATH)
-
-	printf("Preloading %d persistent resources from %s", table_count(self.PERSISTENT_RESOURCES), self.GRF_FILE_PATH)
-	for filePath, isLoaded in pairs(self.PERSISTENT_RESOURCES) do
-		self.PERSISTENT_RESOURCES[filePath] = grf:ExtractFileInMemory(filePath)
-	end
-
-	self.grf = grf -- No need to close as reopening would be expensive (OS will free the handle)
-end
-
 function NativeClient:LoadSceneByID(globallyUniqueSceneID)
 	printf("Loading scene %s", globallyUniqueSceneID)
 	Renderer:ResetScene()
 
 	-- This might seem sketchy, but it allows swapping the asset source on the fly (e.g., disk/network/virtual FS)
-	local grfFileSystem = self.grf:MakeFileSystem(self.GRF_FILE_PATH)
+	local grfFileSystem = C_Resources.grf:MakeFileSystem(C_Resources.GRF_FILE_PATH)
 
 	local map = RagnarokMap(globallyUniqueSceneID, grfFileSystem) or DebugScene(globallyUniqueSceneID)
 	Renderer:LoadSceneObjects(map)
@@ -414,7 +384,7 @@ end
 function NativeClient:LoadScenesOneByOne(delayInMilliseconds)
 	delayInMilliseconds = delayInMilliseconds or 1
 	local mapDB = require("DB.Maps")
-	local gndFiles = self.grf:FindFilesByType("gnd")
+	local gndFiles = C_Resources.grf:FindFilesByType("gnd")
 	local numAvailableGNDs = table.count(gndFiles)
 
 	local numMapsLoaded, numMapsSkipped = 0, 0
@@ -445,7 +415,7 @@ function NativeClient:LoadScenesOneByOne(delayInMilliseconds)
 			self:LoadSceneByID(mapID)
 			numMapsLoaded = numMapsLoaded + 1
 		else
-			printf("Skipping map %s since it wasn't found in %s", mapID, self.GRF_FILE_PATH)
+			printf("Skipping map %s since it wasn't found in %s", mapID, C_Resources.GRF_FILE_PATH)
 			numMapsSkipped = numMapsSkipped + 1
 		end
 	end)
