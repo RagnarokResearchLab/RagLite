@@ -612,5 +612,45 @@ describe("NativeClient", function()
 			assertEquals(preloadedAssetFiles["uppercase.png"], expectedFileContents["uppercase.png"])
 			assertEquals(preloadedAssetFiles["안녕하세요.txt"], expectedFileContents["안녕하세요.txt"])
 		end)
+
+		it("should decode any persistent resources that have been assigned a decoder", function()
+			NativeClient.GRF_FILE_PATH = path.join("Tests", "Fixtures", "test.grf")
+
+			-- This needs some streamlining once a proper resource management API is implemented
+			local MakeshiftImageDecoder = {
+				DecodeFileContents = function(self, fileContents)
+					local rgbaImageBytes, width, height = C_ImageProcessing.DecodeFileContents(fileContents)
+					local imageResource = {
+						width = width,
+						height = height,
+						rgbaImageBytes = rgbaImageBytes,
+					}
+					return imageResource
+				end,
+			}
+
+			NativeClient.PERSISTENT_RESOURCES = {
+				["uppercase.png"] = MakeshiftImageDecoder,
+			}
+			NativeClient:PreloadPersistentResources()
+
+			local grf = RagnarokGRF()
+			grf:Open(NativeClient.GRF_FILE_PATH)
+
+			local rgbaImageBytes, width, height =
+				C_ImageProcessing.DecodeFileContents(grf:ExtractFileInMemory("uppercase.png"))
+			local expectedFileContents = {
+				["uppercase.png"] = {
+					rgbaImageBytes = rgbaImageBytes,
+					width = width,
+					height = height,
+				},
+			}
+			grf:Close()
+
+			-- Might want to add metadata later, but for now just caching the file contents should suffice
+			local preloadedAssetFiles = NativeClient.PERSISTENT_RESOURCES
+			assertEquals(preloadedAssetFiles["uppercase.png"], expectedFileContents["uppercase.png"])
+		end)
 	end)
 end)
