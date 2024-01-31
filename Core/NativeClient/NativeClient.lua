@@ -11,6 +11,7 @@ local DebugScene = require("Core.NativeClient.DebugDraw.DebugScene")
 local Renderer = require("Core.NativeClient.Renderer")
 local Vector3D = require("Core.VectorMath.Vector3D")
 
+local FogParameters = require("Core.FileFormats.FogParameters")
 local RagnarokGRF = require("Core.FileFormats.RagnarokGRF")
 local RagnarokMap = require("Core.FileFormats.RagnarokMap")
 
@@ -26,6 +27,7 @@ local NativeClient = {
 	PERSISTENT_RESOURCES = {
 		["data/sprite/cursors.act"] = false,
 		["data/sprite/cursors.spr"] = false,
+		["data/fogparametertable.txt"] = FogParameters,
 	},
 	FALLBACK_SCENE_ID = "wgpu",
 }
