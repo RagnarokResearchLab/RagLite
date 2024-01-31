@@ -528,6 +528,50 @@ describe("Renderer", function()
 			assertEquals(Renderer.directionalLight.rayDirection.z, 1)
 		end)
 
+		it("should adjust the fog effect based on the scene's fog parameters if any exist", function()
+			local scene = require("Core.NativeClient.DebugDraw.Scenes.cube3d")
+			scene.fogParameters = {
+				nearLimit = 2,
+				farLimit = 300,
+				color = { red = 0.1, green = 0.2, blue = 0.3, alpha = 0.4 },
+			}
+			Renderer.fogParameters = { color = {} }
+			Renderer.fogParameters.color.red = 102 / 255
+			Renderer.fogParameters.color.green = 102 / 255
+			Renderer.fogParameters.color.blue = 103 / 255
+			Renderer.fogParameters.color.alpha = 0.5
+			Renderer.fogParameters.nearLimit = 42
+			Renderer.fogParameters.farLimit = 420
+
+			Renderer:LoadSceneObjects(scene)
+
+			scene.fogParameters = nil
+			assertEquals(Renderer.fogParameters.color.red, 0.1)
+			assertEquals(Renderer.fogParameters.color.green, 0.2)
+			assertEquals(Renderer.fogParameters.color.blue, 0.3)
+			assertEquals(Renderer.fogParameters.color.alpha, 0.4)
+			assertEquals(Renderer.fogParameters.nearLimit, 2)
+			assertEquals(Renderer.fogParameters.farLimit, 300)
+		end)
+
+		it("should disable the fog effect if the scene doesn't use it", function()
+			local scene = require("Core.NativeClient.DebugDraw.Scenes.cube3d")
+			assert(scene.fogParameters == nil, tostring(scene.fogParameters))
+
+			Renderer.fogParameters = { color = {} }
+			Renderer.fogParameters.color.red = 102 / 255
+			Renderer.fogParameters.color.green = 102 / 255
+			Renderer.fogParameters.color.blue = 103 / 255
+			Renderer.fogParameters.color.alpha = 0.5
+			Renderer.fogParameters.nearLimit = 42
+			Renderer.fogParameters.farLimit = 420
+
+			Renderer:LoadSceneObjects(scene)
+
+			scene.fogParameters = nil
+			assertEquals(Renderer.fogParameters, nil)
+		end)
+
 		describe("ResetScene", function()
 			it("should remove all existing meshes from the scene", function()
 				local scene = require("Core.NativeClient.DebugDraw.Scenes.wgpu")
@@ -571,6 +615,20 @@ describe("Renderer", function()
 				assertEquals(Renderer.directionalLight.rayDirection.x, 1)
 				assertEquals(Renderer.directionalLight.rayDirection.y, -1)
 				assertEquals(Renderer.directionalLight.rayDirection.z, 1)
+			end)
+
+			it("should disable the fog effect", function()
+				Renderer.fogParameters = { color = {} }
+				Renderer.fogParameters.color.red = 102 / 255
+				Renderer.fogParameters.color.green = 102 / 255
+				Renderer.fogParameters.color.blue = 103 / 255
+				Renderer.fogParameters.color.alpha = 0.5
+				Renderer.fogParameters.nearLimit = 42
+				Renderer.fogParameters.farLimit = 420
+
+				Renderer:ResetScene()
+
+				assertEquals(Renderer.fogParameters, nil)
 			end)
 		end)
 	end)

@@ -916,6 +916,8 @@ function Renderer:LoadSceneObjects(scene)
 		self.directionalLight.intensity = DEFAULT_SUNLIGHT_COLOR.intensity
 		self.directionalLight.rayDirection = DEFAULT_SUNLIGHT_DIRECTION
 	end
+
+	self.fogParameters = scene.fogParameters
 end
 
 function Renderer:DebugDumpTextures(mesh, fileName)
@@ -969,6 +971,8 @@ function Renderer:ResetScene()
 	self.directionalLight.rayDirection.x = DEFAULT_SUNLIGHT_DIRECTION.x
 	self.directionalLight.rayDirection.y = DEFAULT_SUNLIGHT_DIRECTION.y
 	self.directionalLight.rayDirection.z = DEFAULT_SUNLIGHT_DIRECTION.z
+
+	self.fogParameters = nil
 end
 
 return Renderer
