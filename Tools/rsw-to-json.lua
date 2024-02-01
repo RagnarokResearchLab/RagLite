@@ -25,7 +25,6 @@ local sceneObjects = {
 	buildNumber = rsw.buildNumber,
 	directionalLight = rsw.directionalLight,
 	ambientLight = rsw.ambientLight,
-	contrastCorrectionColor = rsw.contrastCorrectionColor,
 	prebakedShadowmapAlpha = rsw.prebakedShadowmapAlpha,
 	animatedProps = rsw.animatedProps,
 	spatialAudioSources = rsw.spatialAudioSources,

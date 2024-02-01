@@ -236,19 +236,8 @@ function RagnarokRSW:DecodeEnvironmentalLightSources()
 		},
 	}
 
-	-- Composite blending (additive + multiplicative components) ~> scenewide color tint
-	local contrastCorrectionColor = {
-		red = (directionalLight.diffuseColor.red + ambientLight.diffuseColor.red)
-			- directionalLight.diffuseColor.red * ambientLight.diffuseColor.red,
-		green = (directionalLight.diffuseColor.green + ambientLight.diffuseColor.green)
-			- directionalLight.diffuseColor.green * ambientLight.diffuseColor.green,
-		blue = (directionalLight.diffuseColor.blue + ambientLight.diffuseColor.blue)
-			- directionalLight.diffuseColor.blue * ambientLight.diffuseColor.blue,
-	}
-
 	self.directionalLight = directionalLight
 	self.ambientLight = ambientLight
-	self.contrastCorrectionColor = contrastCorrectionColor
 	self.prebakedShadowmapAlpha = tonumber(environmentalLightInfo.shadowmap_alpha)
 end
 
