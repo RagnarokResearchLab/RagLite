@@ -92,14 +92,18 @@ describe("RagnarokTools", function()
 
 	describe("ExportCollisionMapFromGAT", function()
 		it("should export the GAT terrain data in a human-readable format if a valid GAT buffer is passed", function()
-			local expectedChecksum = "315ad7d3a93849ec6fbb7786cd739e8237ead08b2cb1530bf6370f9cfe9c873b"
+			local expectedChecksum = "782b916b6e39531622f552e69c3e52d6a3b11ab30f877163e3778f3cfd58d42c"
 
 			local gatFileContents = C_FileSystem.ReadFile(path.join("Tests", "Fixtures", "v0102.gat"))
 			RagnarokTools:ExportCollisionMapFromGAT(gatFileContents, uv.cwd())
 
-			local generatedImageBytes = C_FileSystem.ReadFile("gat-collision-map.png")
+			local generatedFileContents = C_FileSystem.ReadFile("gat-collision-map.png")
+			local generatedImageBytes, width, height = C_ImageProcessing.DecodeFileContents(generatedFileContents)
 			local generatedChecksum = openssl.digest.digest("sha256", generatedImageBytes)
 
+			assertEquals(width, 3)
+			assertEquals(height, 2)
+			assertEquals(#generatedImageBytes, 3 * 2 * 4)
 			assertEquals(generatedChecksum, expectedChecksum)
 
 			C_FileSystem.Delete("gat-collision-map.png")
@@ -108,14 +112,18 @@ describe("RagnarokTools", function()
 
 	describe("ExportTerrainMapFromGAT", function()
 		it("should export the GAT terrain data in a human-readable format if a valid GAT buffer is passed", function()
-			local expectedChecksum = "348cb14b08edd6e41f7c6eee094b033020d397d8d28bc91ac12f3dc98da6fe1b"
+			local expectedChecksum = "720f8a671b438e6db46b7e8298b3d66695cc46d38057f1f32a6810b7de3cd4ec"
 
 			local gatFileContents = C_FileSystem.ReadFile(path.join("Tests", "Fixtures", "v0102.gat"))
 			RagnarokTools:ExportTerrainMapFromGAT(gatFileContents, uv.cwd())
 
-			local generatedImageBytes = C_FileSystem.ReadFile("gat-terrain-map.png")
+			local generatedFileContents = C_FileSystem.ReadFile("gat-terrain-map.png")
+			local generatedImageBytes, width, height = C_ImageProcessing.DecodeFileContents(generatedFileContents)
 			local generatedChecksum = openssl.digest.digest("sha256", generatedImageBytes)
 
+			assertEquals(width, 3)
+			assertEquals(height, 2)
+			assertEquals(#generatedImageBytes, 3 * 2 * 4)
 			assertEquals(generatedChecksum, expectedChecksum)
 
 			C_FileSystem.Delete("gat-terrain-map.png")
@@ -124,14 +132,18 @@ describe("RagnarokTools", function()
 
 	describe("ExportHeightMapFromGAT", function()
 		it("should export the GAT terrain data in a human-readable format if a valid GAT buffer is passed", function()
-			local expectedChecksum = "e3ab51a50d93a00bd28b22264e52e983a375dbbe7a87ecdd0c9a0c99ebf541e4"
+			local expectedChecksum = "c773395b224984566fc1c2a1bc01ed83f5e89ea97e9c035b75d1a1c5ef48ff48"
 
 			local gatFileContents = C_FileSystem.ReadFile(path.join("Tests", "Fixtures", "v0102.gat"))
 			RagnarokTools:ExportHeightMapFromGAT(gatFileContents, uv.cwd())
 
-			local generatedImageBytes = C_FileSystem.ReadFile("gat-height-map.png")
+			local generatedFileContents = C_FileSystem.ReadFile("gat-height-map.png")
+			local generatedImageBytes, width, height = C_ImageProcessing.DecodeFileContents(generatedFileContents)
 			local generatedChecksum = openssl.digest.digest("sha256", generatedImageBytes)
 
+			assertEquals(width, 3)
+			assertEquals(height, 2)
+			assertEquals(#generatedImageBytes, 3 * 2 * 4)
 			assertEquals(generatedChecksum, expectedChecksum)
 
 			C_FileSystem.Delete("gat-height-map.png")
