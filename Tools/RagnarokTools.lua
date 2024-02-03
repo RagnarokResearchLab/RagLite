@@ -253,7 +253,7 @@ function RagnarokTools:ExportHeightMapFromGAT(gatFileContents, outputDirectory)
 			rgbaImageBytes:putcdata(ffi.new("uint8_t[1]", relativeHeight * 255), 1)
 			rgbaImageBytes:putcdata(ffi.new("uint8_t[1]", relativeHeight * 255), 1)
 			rgbaImageBytes:putcdata(ffi.new("uint8_t[1]", relativeHeight * 255), 1)
-			rgbaImageBytes:putcdata(ffi.new("uint8_t[1]", 0), 1)
+			rgbaImageBytes:putcdata(ffi.new("uint8_t[1]", 255), 1)
 		end
 	end
 
@@ -287,7 +287,7 @@ function RagnarokTools:ExportCollisionMapFromGAT(gatFileContents, outputDirector
 			rgbaImageBytes:putcdata(ffi.new("uint8_t[1]", (isBlocked and 0 or 1) * 255), 1)
 			rgbaImageBytes:putcdata(ffi.new("uint8_t[1]", (isBlocked and 0 or 1) * 255), 1)
 			rgbaImageBytes:putcdata(ffi.new("uint8_t[1]", (isBlocked and 0 or 1) * 255), 1)
-			rgbaImageBytes:putcdata(ffi.new("uint8_t[1]", 0), 1)
+			rgbaImageBytes:putcdata(ffi.new("uint8_t[1]", 255), 1)
 		end
 	end
 
@@ -337,7 +337,7 @@ function RagnarokTools:ExportTerrainMapFromGAT(gatFileContents, outputDirectory)
 			rgbaImageBytes:putcdata(ffi.new("uint8_t[1]", pixelColor.red), 1)
 			rgbaImageBytes:putcdata(ffi.new("uint8_t[1]", pixelColor.green * 255), 1)
 			rgbaImageBytes:putcdata(ffi.new("uint8_t[1]", pixelColor.blue * 255), 1)
-			rgbaImageBytes:putcdata(ffi.new("uint8_t[1]", 0), 1)
+			rgbaImageBytes:putcdata(ffi.new("uint8_t[1]", 255), 1)
 		end
 	end
 
