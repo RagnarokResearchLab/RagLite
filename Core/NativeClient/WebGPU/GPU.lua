@@ -13,51 +13,6 @@ local GPU = {
 	MAX_BUFFER_SIZE = 256 * 1024 * 1024,
 }
 
--- The FFI bindings don't provide enums for native extensions yet (requires a fix in the runtime)
-ffi.cdef([[
-	typedef enum WGPUNativeFeature {
-		WGPUNativeFeature_PushConstants = 0x00030001,
-		WGPUNativeFeature_TextureAdapterSpecificFormatFeatures = 0x00030002,
-		WGPUNativeFeature_MultiDrawIndirect = 0x00030003,
-		WGPUNativeFeature_MultiDrawIndirectCount = 0x00030004,
-		WGPUNativeFeature_VertexWritableStorage = 0x00030005,
-		WGPUNativeFeature_TextureBindingArray = 0x00030006,
-		WGPUNativeFeature_SampledTextureAndStorageBufferArrayNonUniformIndexing = 0x00030007,
-		WGPUNativeFeature_PipelineStatisticsQuery = 0x00030008,
-		WGPUNativeFeature_Force32 = 0x7FFFFFFF
-	} WGPUNativeFeature;
-
-	typedef enum WGPUNativeSType {
-		// Start at 0003 since that's allocated range for wgpu-native
-		WGPUSType_DeviceExtras = 0x00030001,
-		WGPUSType_RequiredLimitsExtras = 0x00030002,
-		WGPUSType_PipelineLayoutExtras = 0x00030003,
-		WGPUSType_ShaderModuleGLSLDescriptor = 0x00030004,
-		WGPUSType_SupportedLimitsExtras = 0x00030005,
-		WGPUSType_InstanceExtras = 0x00030006,
-		WGPUSType_BindGroupEntryExtras = 0x00030007,
-		WGPUSType_BindGroupLayoutEntryExtras = 0x00030008,
-		WGPUSType_QuerySetDescriptorExtras = 0x00030009,
-		WGPUSType_SurfaceConfigurationExtras = 0x0003000A,
-		WGPUNativeSType_Force32 = 0x7FFFFFFF
-	} WGPUNativeSType;
-
-	typedef struct WGPUBindGroupLayoutEntryExtras {
-		WGPUChainedStruct chain;
-		uint32_t count;
-	} WGPUBindGroupLayoutEntryExtras;
-
-	typedef struct WGPUBindGroupEntryExtras {
-		WGPUChainedStruct chain;
-		WGPUBuffer const * buffers;
-		size_t bufferCount;
-		WGPUSampler const * samplers;
-		size_t samplerCount;
-		WGPUTextureView const * textureViews;
-		size_t textureViewCount;
-	} WGPUBindGroupEntryExtras;
-]])
-
 function GPU:CreateInstance()
 	local instanceDescriptor = new("WGPUInstanceDescriptor")
 	local instance = webgpu.bindings.wgpu_create_instance(instanceDescriptor)
