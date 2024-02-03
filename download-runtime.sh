@@ -5,6 +5,7 @@ GITHUB_REPOSITORY="evo-runtime"
 REQUIRED_RUNTIME_VERSION="v0.0.18"
 
 PLATFORM=$(uname)
+ARCHITECTURE=$(uname -m)
 
 echo "Required runtime version: $REQUIRED_RUNTIME_VERSION"
 
@@ -12,7 +13,7 @@ ASSET_FILE_NAME=""
 EXECUTABLE_NAME=""
 GITHUB_BASE_URL="https://github.com/$GITHUB_ORGANIZATION/$GITHUB_REPOSITORY/releases/download"
 
-echo "Detected platform: $PLATFORM"
+echo "Detected platform: $PLATFORM ($ARCHITECTURE)"
 
 case $PLATFORM in
     MINGW64_NT*|CYGWIN_NT*|MSYS_NT*)
@@ -24,7 +25,18 @@ case $PLATFORM in
 		EXECUTABLE_NAME="evo"
         ;;
     Darwin)
-        ASSET_FILE_NAME="evo-macos-x64"
+        case $ARCHITECTURE in
+            arm64)
+                ASSET_FILE_NAME="evo-macos-M1"
+            ;;
+            x86_64)
+                ASSET_FILE_NAME="evo-macos-x64"
+	        ;;
+            *)
+                echo "Unsupported architecture: $ARCHITECTURE"
+                exit 1
+                ;;
+        esac
 		EXECUTABLE_NAME="evo"
         ;;
     *)
