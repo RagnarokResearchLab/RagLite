@@ -237,22 +237,25 @@ function RagnarokTools:ExportHeightMapFromGAT(gatFileContents, outputDirectory)
 	local rgbaImageBytes = buffer.new(gat.mapU * gat.mapV * 4)
 
 	local maxObservedAltitude = 0
+	local minObservedAltitude = math.huge
 	for v = 1, gat.mapV do
 		for u = 1, gat.mapU do
 			local altitude = gat:GetTerrainAltitudeAt(u, v)
 			maxObservedAltitude = math.max(maxObservedAltitude, altitude)
+			minObservedAltitude = math.min(minObservedAltitude, altitude)
 		end
 	end
 
-	local normalizationFactor = 1 - math.floor(255 / maxObservedAltitude)
+	local observedAltitudeRange = maxObservedAltitude - minObservedAltitude
 
 	for v = 1, gat.mapV do
 		for u = 1, gat.mapU do
 			local altitude = gat:GetTerrainAltitudeAt(u, v)
-			local relativeHeight = math.floor(altitude * normalizationFactor)
-			rgbaImageBytes:putcdata(ffi.new("uint8_t[1]", relativeHeight * 255), 1)
-			rgbaImageBytes:putcdata(ffi.new("uint8_t[1]", relativeHeight * 255), 1)
-			rgbaImageBytes:putcdata(ffi.new("uint8_t[1]", relativeHeight * 255), 1)
+			local relativeAltitude = (altitude - minObservedAltitude) / observedAltitudeRange
+			local normalizedAltitude = math.floor(relativeAltitude * 255)
+			rgbaImageBytes:putcdata(ffi.new("uint8_t[1]", normalizedAltitude), 1)
+			rgbaImageBytes:putcdata(ffi.new("uint8_t[1]", normalizedAltitude), 1)
+			rgbaImageBytes:putcdata(ffi.new("uint8_t[1]", normalizedAltitude), 1)
 			rgbaImageBytes:putcdata(ffi.new("uint8_t[1]", 255), 1)
 		end
 	end
