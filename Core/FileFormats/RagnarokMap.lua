@@ -93,6 +93,8 @@ end
 function RagnarokMap:LoadTerrainGeometry(mapID)
 	local gnd = self.gnd
 
+	local groundMeshSections = gnd.groundMeshSections -- gnd:GenerateGroundMeshSections()
+
 	-- GeometryCache:LoadJSON(key)
 	local console = require("console")
 	local json = require("json")
@@ -110,19 +112,16 @@ function RagnarokMap:LoadTerrainGeometry(mapID)
 		local cacheEntry = json.parse(jsonCacheEntry)
 		-- dump(cacheEntry)
 		for index, cachedGeometry in ipairs(cacheEntry) do
-			-- setmetatable(cachedGeometry, nil) -- Remove JSON object/array tag as it interferes with the class system
-			gnd.groundMeshSections[index].vertexPositions = table.new(cachedGeometry.vertexPositions, 0)
-			gnd.groundMeshSections[index].triangleConnections = table.new(cachedGeometry.triangleConnections, 0)
-			gnd.groundMeshSections[index].vertexColors = table.new(cachedGeometry.vertexColors, 0)
-			gnd.groundMeshSections[index].diffuseTextureCoords = table.new(cachedGeometry.diffuseTextureCoords, 0)
-			gnd.groundMeshSections[index].surfaceNormals = table.new(cachedGeometry.surfaceNormals, 0)
-			gnd.groundMeshSections[index].lightmapTextureCoords = table.new(cachedGeometry.lightmapTextureCoords, 0)
+			setmetatable(cachedGeometry, nil) -- Remove JSON object/array tag as it interferes with the class system
+			groundMeshSections[index].vertexPositions = cachedGeometry.vertexPositions
+			groundMeshSections[index].triangleConnections = cachedGeometry.triangleConnections
+			groundMeshSections[index].vertexColors = cachedGeometry.vertexColors
+			groundMeshSections[index].diffuseTextureCoords = cachedGeometry.diffuseTextureCoords
+			groundMeshSections[index].surfaceNormals = cachedGeometry.surfaceNormals
+			groundMeshSections[index].lightmapTextureCoords = cachedGeometry.lightmapTextureCoords
 		end
-		-- dump(groundMeshSections)
 	end
 	console.stopTimer("Reading GeometryCache")
-
-	local groundMeshSections = gnd:GenerateGroundMeshSections()
 
 	local sharedLightmapTextureImage = gnd:GenerateLightmapTextureImage()
 	for sectionID, groundMeshSection in pairs(groundMeshSections) do
@@ -152,20 +151,27 @@ function RagnarokMap:LoadTerrainGeometry(mapID)
 
 	local preallocatedGeometryInfo = {}
 	for index, section in ipairs(groundMeshSections) do
-		table_insert(preallocatedGeometryInfo, section:GetGeometryBufferSizes())
+		table_insert(preallocatedGeometryInfo, {
+			vertexPositions = section.vertexPositions,
+			triangleConnections = section.triangleConnections,
+			vertexColors = section.vertexColors,
+			diffuseTextureCoords = section.diffuseTextureCoords,
+			surfaceNormals = section.surfaceNormals,
+			lightmapTextureCoords = section.lightmapTextureCoords,
+		})
 	end
 
 	-- GeometryCache:LoadJSON(key)
-	console.startTimer("Updating GeometryCache")
-	-- local json = require("json")
-	-- GeometryCache:StoreJSON(key, value)
-	-- Do not serialize if loaded from DB (pointless increase)
-	-- local geometryCachePath = path.join("Cache", "GND")
-	-- local geometryCacheFile = path.join(geometryCachePath, mapID .. ".json")
-	local cacheEntry = json.prettier(preallocatedGeometryInfo) -- No need to do this, just dump as Lua or even binary?
-	C_FileSystem.MakeDirectoryTree(geometryCachePath)
-	C_FileSystem.WriteFile(geometryCacheFile, cacheEntry)
-	console.stopTimer("Updating GeometryCache")
+	-- console.startTimer("Updating GeometryCache")
+	-- -- local json = require("json")
+	-- -- GeometryCache:StoreJSON(key, value)
+	-- -- Do not serialize if loaded from DB (pointless increase)
+	-- -- local geometryCachePath = path.join("Cache", "GND")
+	-- -- local geometryCacheFile = path.join(geometryCachePath, mapID .. ".json")
+	-- local cacheEntry = json.prettier(preallocatedGeometryInfo) -- No need to do this, just dump as Lua or even binary?
+	-- C_FileSystem.MakeDirectoryTree(geometryCachePath)
+	-- C_FileSystem.WriteFile(geometryCacheFile, cacheEntry)
+	-- console.stopTimer("Updating GeometryCache")
 
 	return groundMeshSections
 end
