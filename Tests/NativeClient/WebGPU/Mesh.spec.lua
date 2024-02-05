@@ -59,4 +59,31 @@ describe("Mesh", function()
 			assertEquals(stringifiedMesh, expectedRepresentation)
 		end)
 	end)
+
+	describe("GetGeometryBufferSizes", function()
+		it("should return a table of geometry buffer sizes for the given mesh", function()
+			local mesh = Mesh()
+			mesh.vertexPositions = { 1, 2, 3, 4, 5, 6 }
+			mesh.triangleConnections = { 1, 2, 3 }
+			mesh.vertexColors = { 0, 0, 0, 0, 0, 0, 0, 0, 0 }
+			mesh.diffuseTextureCoords = { 1, 0.5, 1, 0.5 }
+			mesh.surfaceNormals = { 0, 1, 0, 0, -1 }
+
+			local bufferSizes = mesh:GetGeometryBufferSizes()
+			local expectedBufferSizes = {
+				vertexPositions = 6,
+				triangleConnections = 3,
+				vertexColors = 9,
+				diffuseTextureCoords = 4,
+				surfaceNormals = 5,
+				lightmapTextureCoords = 0,
+			}
+			assertEquals(bufferSizes.vertexPositions, expectedBufferSizes.vertexPositions)
+			assertEquals(bufferSizes.triangleConnections, expectedBufferSizes.triangleConnections)
+			assertEquals(bufferSizes.vertexColors, expectedBufferSizes.vertexColors)
+			assertEquals(bufferSizes.diffuseTextureCoords, expectedBufferSizes.diffuseTextureCoords)
+			assertEquals(bufferSizes.surfaceNormals, expectedBufferSizes.surfaceNormals)
+			assertEquals(bufferSizes.lightmapTextureCoords, expectedBufferSizes.lightmapTextureCoords)
+		end)
+	end)
 end)
