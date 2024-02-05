@@ -456,8 +456,10 @@ function Renderer:DrawMesh(renderPass, mesh)
 
 	local vertexBufferSize = (isCGND and mesh.numVertexPositions or #mesh.vertexPositions) * ffi.sizeof("float")
 	local colorBufferSize = (isCGND and mesh.numVertexColors or #mesh.vertexColors) * ffi.sizeof("float")
-	local indexBufferSize = (isCGND and mesh.numTriangleConnections	or #mesh.triangleConnections) * ffi.sizeof("uint32_t")
-	local diffuseTexCoordsBufferSize = (isCGND and mesh.numDiffuseTextureCoords or #mesh.diffuseTextureCoords) * ffi.sizeof("float")
+	local indexBufferSize = (isCGND and mesh.numTriangleConnections or #mesh.triangleConnections)
+		* ffi.sizeof("uint32_t")
+	local diffuseTexCoordsBufferSize = (isCGND and mesh.numDiffuseTextureCoords or #mesh.diffuseTextureCoords)
+			* ffi.sizeof("float")
 		or GPU.MAX_VERTEX_COUNT
 	local surfaceNormalsBufferSize = (isCGND and mesh.numSurfaceNormals or #mesh.surfaceNormals) * ffi.sizeof("float")
 
@@ -481,7 +483,8 @@ function Renderer:DrawMesh(renderPass, mesh)
 	if rawget(mesh.material, "lightmapTexture") then
 		-- This binding slot is usually reserved for instance transforms, but they aren't needed for the terrain
 		RenderPassEncoder:SetBindGroup(renderPass, 2, mesh.material.lightmapTextureBindGroup, 0, nil)
-		local lightmapTexCoordsBufferSize = (isCGND and mesh.numLightmapTextureCoords or #mesh.lightmapTextureCoords) * ffi.sizeof("float")
+		local lightmapTexCoordsBufferSize = (isCGND and mesh.numLightmapTextureCoords or #mesh.lightmapTextureCoords)
+				* ffi.sizeof("float")
 			or GPU.MAX_VERTEX_COUNT
 		RenderPassEncoder:SetVertexBuffer(renderPass, 4, mesh.lightmapTexCoordsBuffer, 0, lightmapTexCoordsBufferSize)
 	end
@@ -589,15 +592,15 @@ function Renderer:UploadMeshGeometry(mesh)
 
 	local vertexBufferSize = vertexCount * 3 * ffi.sizeof("float")
 	printf("Uploading geometry: %d vertex positions (%s)", vertexCount, filesize(vertexBufferSize))
-	local vertexBuffer = Buffer:CreateVertexBuffer(self.wgpuDevice, positions)
+	local vertexBuffer = Buffer:CreateVertexBuffer(self.wgpuDevice, positions, mesh.numVertexPositions)
 
 	local vertexColorsBufferSize = numVertexColors * 3 * ffi.sizeof("float")
 	printf("Uploading geometry: %d vertex colors (%s)", numVertexColors, filesize(vertexColorsBufferSize))
-	local vertexColorsBuffer = Buffer:CreateVertexBuffer(self.wgpuDevice, colors)
+	local vertexColorsBuffer = Buffer:CreateVertexBuffer(self.wgpuDevice, colors, mesh.numVertexColors)
 
 	local triangleIndexBufferSize = indexCount * ffi.sizeof("uint32_t") -- TBD this seems sketchy, review on main
 	printf("Uploading geometry: %d triangle indices (%s)", indexCount, filesize(triangleIndexBufferSize))
-	local triangleIndicesBuffer = Buffer:CreateIndexBuffer(self.wgpuDevice, indices)
+	local triangleIndicesBuffer = Buffer:CreateIndexBuffer(self.wgpuDevice, indices, mesh.numTriangleConnections)
 
 	local diffuseTextureCoordsCount = isCGND and mesh.numDiffuseTextureCoords or #mesh.diffuseTextureCoords / 2
 	local diffuseTextureCoordsBufferSize = diffuseTextureCoordsCount * 2 * ffi.sizeof("float")
@@ -606,21 +609,23 @@ function Renderer:UploadMeshGeometry(mesh)
 		diffuseTextureCoordsCount,
 		filesize(diffuseTextureCoordsBufferSize)
 	)
-	local diffuseTextureCoordinatesBuffer = Buffer:CreateVertexBuffer(self.wgpuDevice, mesh.diffuseTextureCoords)
+	local diffuseTextureCoordinatesBuffer =
+		Buffer:CreateVertexBuffer(self.wgpuDevice, mesh.diffuseTextureCoords, mesh.numDiffuseTextureCoords)
 
 	local normalBufferSize = normalCount * ffi.sizeof("float")
 	printf("Uploading geometry: %d surface normals (%s)", normalCount, filesize(normalBufferSize))
-	local surfaceNormalsBuffer = Buffer:CreateVertexBuffer(self.wgpuDevice, mesh.surfaceNormals)
+	local surfaceNormalsBuffer = Buffer:CreateVertexBuffer(self.wgpuDevice, mesh.surfaceNormals, mesh.numSurfaceNormals)
 
 	if rawget(mesh, "lightmapTextureCoords") then
-		local lightmapTextureCoordsCount = isCGND and mesh.numLightmapTextureCoords	or #mesh.lightmapTextureCoords / 2
+		local lightmapTextureCoordsCount = isCGND and mesh.numLightmapTextureCoords or #mesh.lightmapTextureCoords / 2
 		local lightmapTextureCoordsBufferSize = lightmapTextureCoordsCount * 2 * ffi.sizeof("float")
 		printf(
 			"Uploading geometry: %d lightmap texture coordinates (%s)",
 			lightmapTextureCoordsCount,
 			filesize(lightmapTextureCoordsBufferSize)
 		)
-		local lightmapTextureCoordinatesBuffer = Buffer:CreateVertexBuffer(self.wgpuDevice, mesh.lightmapTextureCoords)
+		local lightmapTextureCoordinatesBuffer =
+			Buffer:CreateVertexBuffer(self.wgpuDevice, mesh.lightmapTextureCoords, mesh.numLightmapTextureCoords)
 
 		mesh.lightmapTexCoordsBuffer = lightmapTextureCoordinatesBuffer
 	end
@@ -685,7 +690,7 @@ function Renderer:ValidateGeometry(mesh)
 	end
 
 	if rawget(mesh, "lightmapTextureCoords") then
-		local lightmapTextureCoordsCount = isCGND and mesh.numLightmapTextureCoords	or #mesh.lightmapTextureCoords / 2
+		local lightmapTextureCoordsCount = isCGND and mesh.numLightmapTextureCoords or #mesh.lightmapTextureCoords / 2
 
 		-- local lightmapTextureCoordsCount = #mesh.lightmapTextureCoords / 2
 		if (lightmapTextureCoordsCount * 2) % 2 ~= 0 then
