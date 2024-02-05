@@ -90,6 +90,22 @@ function NativeClient:StartRenderLoop()
 	self.fpsDisplayTicker = C_Timer.NewTicker(2500, function()
 		print(PerformanceMetricsOverlay:GetFormattedMetricsString())
 		PerformanceMetricsOverlay:StartMeasuring()
+		local report = ffi.new("WGPUGlobalReport")
+		require("webgpu").bindings.wgpu_generate_report(Renderer.wgpuInstance, report)
+		printf("Global report for backend type %s:", report.backendType)
+		printf([[Surfaces:
+Allocated: %d
+Kept: %d
+Released: %d
+Error: %d
+Count: %d
+]],
+	report.surfaces.numAllocated,
+	report.surfaces.numKeptFromUser,
+	report.surfaces.numReleasedFromUser,
+	report.surfaces.numError,
+	report.surfaces.elementSize
+)
 	end)
 
 	while glfw.bindings.glfw_window_should_close(self.mainWindow) == 0 do
