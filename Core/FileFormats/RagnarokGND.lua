@@ -180,6 +180,7 @@ function RagnarokGND:DecodeTexturePaths()
 		groundMeshSection.material = GroundMeshMaterial("GroundMeshSection" .. textureIndex .. "Material")
 		-- Should preallocate based on observed sizes here? (same as for the other buffers)
 		groundMeshSection.lightmapTextureCoords = {}
+		-- groundMeshSection.vertexPositions = table.new(32000, 0)
 		table_insert(self.groundMeshSections, groundMeshSection)
 	end
 end
@@ -415,18 +416,20 @@ function RagnarokGND:GenerateSurfaceGeometry(surfaceConstructionInfo)
 	local mesh = self.groundMeshSections[surface.texture_id + 1]
 	local nextAvailableVertexID = #mesh.vertexPositions / 3
 
-	table_insert(mesh.vertexPositions, bottomLeftCorner.x)
-	table_insert(mesh.vertexPositions, bottomLeftCorner.y)
-	table_insert(mesh.vertexPositions, bottomLeftCorner.z)
-	table_insert(mesh.vertexPositions, bottomRightCorner.x)
-	table_insert(mesh.vertexPositions, bottomRightCorner.y)
-	table_insert(mesh.vertexPositions, bottomRightCorner.z)
-	table_insert(mesh.vertexPositions, topLeftCorner.x)
-	table_insert(mesh.vertexPositions, topLeftCorner.y)
-	table_insert(mesh.vertexPositions, topLeftCorner.z)
-	table_insert(mesh.vertexPositions, topRightCorner.x)
-	table_insert(mesh.vertexPositions, topRightCorner.y)
-	table_insert(mesh.vertexPositions, topRightCorner.z)
+	-- When using the geometry cache, the tableZZ
+	local nextAvailableIndex = #mesh.vertexPositions + 1 -- WIll be zero for prealloc empty tables
+	mesh.vertexPositions[nextAvailableIndex + 0] = bottomLeftCorner.x
+	mesh.vertexPositions[nextAvailableIndex + 1] = bottomLeftCorner.y
+	mesh.vertexPositions[nextAvailableIndex + 2] = bottomLeftCorner.z
+	mesh.vertexPositions[nextAvailableIndex + 3] = bottomRightCorner.x
+	mesh.vertexPositions[nextAvailableIndex + 4] = bottomRightCorner.y
+	mesh.vertexPositions[nextAvailableIndex + 5] = bottomRightCorner.z
+	mesh.vertexPositions[nextAvailableIndex + 6] = topLeftCorner.x
+	mesh.vertexPositions[nextAvailableIndex + 7] = topLeftCorner.y
+	mesh.vertexPositions[nextAvailableIndex + 8] = topLeftCorner.z
+	mesh.vertexPositions[nextAvailableIndex + 9] = topRightCorner.x
+	mesh.vertexPositions[nextAvailableIndex + 10] = topRightCorner.y
+	mesh.vertexPositions[nextAvailableIndex + 11] = topRightCorner.z
 
 	table_insert(mesh.vertexColors, bottomLeftVertexColor.red / 255)
 	table_insert(mesh.vertexColors, bottomLeftVertexColor.green / 255)
