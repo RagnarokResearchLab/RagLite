@@ -13,6 +13,7 @@ local WidgetDrawingPipeline = require("Core.NativeClient.WebGPU.Pipelines.Widget
 
 local Buffer = require("Core.NativeClient.WebGPU.Buffer")
 local CommandEncoder = require("Core.NativeClient.WebGPU.CommandEncoder")
+local DepthStencilTexture = require("Core.NativeClient.WebGPU.RenderTargets.DepthStencilTexture")
 local Device = require("Core.NativeClient.WebGPU.Device")
 local Queue = require("Core.NativeClient.WebGPU.Queue")
 local RenderPassEncoder = require("Core.NativeClient.WebGPU.RenderPassEncoder")
@@ -98,7 +99,6 @@ function Renderer:InitializeWithGLFW(nativeWindowHandle)
 	Renderer:CompileMaterials(self.backingSurface.preferredTextureFormat)
 
 	Renderer:CreateUniformBuffers()
-	Renderer:EnableDepthBuffer()
 
 	-- Default texture that is multiplicatively neutral (use with untextured geometry to keep things simple)
 	Renderer:CreateDummyTexture()
@@ -122,6 +122,8 @@ function Renderer:CreateGraphicsContext(nativeWindowHandle)
 
 	-- Updates to the backing window should be pushed via events, so only store the result here
 	self.backingSurface = Surface(instance, adapter, device, nativeWindowHandle)
+	printf("Creating depth buffer with texture dimensions %d x %d", viewportWidth, viewportHeight)
+	self.depthStencilTexture = DepthStencilTexture(device, viewportWidth, viewportHeight)
 end
 
 function Renderer:CompileMaterials(outputTextureFormat)
@@ -365,24 +367,12 @@ function Renderer:BeginRenderPass(commandEncoder, nextTextureView)
 		clearValue = new("WGPUColor", self.clearColorRGBA),
 	})
 
-	-- Enable Z buffering in the fragment stage
-	local depthStencilAttachment = ffi.new("WGPURenderPassDepthStencilAttachment", {
-		view = self.depthTextureView,
-		depthClearValue = 1.0, -- The initial value of the depth buffer, meaning "far"
-		depthLoadOp = ffi.C.WGPULoadOp_Clear,
-		depthStoreOp = ffi.C.WGPUStoreOp_Store, -- Enable depth write (should disable for UI later?)
-		depthReadOnly = false,
-		-- Stencil setup; mandatory but unused
-		stencilClearValue = 0,
-		stencilLoadOp = ffi.C.WGPULoadOp_Clear,
-		stencilStoreOp = ffi.C.WGPUStoreOp_Store,
-		stencilReadOnly = true,
 	})
 
 	local renderPassDescriptor = new("WGPURenderPassDescriptor", {
 		colorAttachmentCount = 1,
 		colorAttachments = renderPassColorAttachment,
-		depthStencilAttachment = depthStencilAttachment,
+		depthStencilAttachment = self.depthStencilTexture.colorAttachment,
 	})
 
 	return CommandEncoder:BeginRenderPass(commandEncoder, renderPassDescriptor)
@@ -754,41 +744,6 @@ function Renderer:UpdateScenewideUniformBuffer(deltaTime)
 		perSceneUniformData,
 		ffi.sizeof(perSceneUniformData)
 	)
-end
-
-function Renderer:EnableDepthBuffer()
-	-- Create the depth texture
-	local viewportWidth, viewportHeight = self.backingSurface:GetViewportSize()
-	printf("Creating depth buffer with texture dimensions %d x %d", viewportWidth, viewportHeight)
-	local depthTextureDesc = ffi.new("WGPUTextureDescriptor", {
-		dimension = ffi.C.WGPUTextureDimension_2D,
-		format = ffi.C.WGPUTextureFormat_Depth24Plus,
-		mipLevelCount = 1,
-		sampleCount = 1,
-		size = {
-			viewportWidth,
-			viewportHeight,
-			1,
-		},
-		usage = ffi.C.WGPUTextureUsage_RenderAttachment,
-		viewFormatCount = 1,
-		viewFormats = ffi.new("WGPUTextureFormat[1]", ffi.C.WGPUTextureFormat_Depth24Plus),
-	})
-	local depthTexture = Device:CreateTexture(self.wgpuDevice, depthTextureDesc)
-
-	-- Create the view of the depth texture manipulated by the rasterizer
-	local depthTextureViewDesc = ffi.new("WGPUTextureViewDescriptor", {
-		aspect = ffi.C.WGPUTextureAspect_DepthOnly,
-		baseArrayLayer = 0,
-		arrayLayerCount = 1,
-		baseMipLevel = 0,
-		mipLevelCount = 1,
-		dimension = ffi.C.WGPUTextureViewDimension_2D,
-		format = ffi.C.WGPUTextureFormat_Depth24Plus,
-	})
-	local depthTextureView = Texture:CreateTextureView(depthTexture, depthTextureViewDesc)
-
-	self.depthTextureView = depthTextureView
 end
 
 function Renderer:CreateDebugTexture()
