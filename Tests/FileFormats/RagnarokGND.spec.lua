@@ -9,6 +9,17 @@ local GND_WITH_MULTIPLE_WATER_PLANES =
 	C_FileSystem.ReadFile(path.join("Tests", "Fixtures", "multiple-water-planes.gnd"))
 
 describe("RagnarokGND", function()
+	describe("Construct", function()
+		it("should use pre-allocated geometry buffers if any have been provided", function()
+			local preallocatedGeometryBuffers = {
+				{
+					
+				}
+			}
+			local gnd = RagnarokGND(preallocatedGeometryBuffers)
+		end)
+	end)
+
 	describe("DecodeFileContents", function()
 		it("should throw if the geometry scale factor has changed", function()
 			-- A lot of assumptions are based on this being effectively a constant, so let's hope it never does change
