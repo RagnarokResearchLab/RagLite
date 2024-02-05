@@ -39,6 +39,17 @@ function Mesh:OnUpdate(deltaTimeInMilliseconds)
 	-- NOOP by default (for performance reasons; the JIT will almost certainly optimize this out)
 end
 
+function Mesh:GetGeometryBufferSizes()
+	return {
+		vertexPositions = #self.vertexPositions,
+		triangleConnections = #self.triangleConnections,
+		vertexColors = #self.vertexColors,
+		diffuseTextureCoords = #self.diffuseTextureCoords,
+		surfaceNormals = #self.surfaceNormals,
+		lightmapTextureCoords = rawget(self, "lightmapTextureCoords") and #self.lightmapTextureCoords or 0,
+	}
+end
+
 Mesh.__call = Mesh.Construct
 Mesh.__index = Mesh
 setmetatable(Mesh, Mesh)
