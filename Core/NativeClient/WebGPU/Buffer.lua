@@ -23,7 +23,8 @@ function Buffer.GetAlignedSize(unalignedSize)
 end
 
 function Buffer:CreateVertexBuffer(wgpuDevice, entries)
-	local rawBufferSizeInBytes = #entries * ffi.sizeof("float") -- Assumes 3D positions, texture coords, or colors
+	local isCGND = type(entries) == "cdata"
+	local rawBufferSizeInBytes = isCGND and ffi.sizeof(entries) or #entries * ffi.sizeof("float") -- Assumes 3D positions, texture coords, or colors
 	local alignedBufferSizeInBytes = Buffer.GetAlignedSize(rawBufferSizeInBytes)
 
 	local bufferDescriptor = ffi.new("WGPUBufferDescriptor", {
@@ -36,7 +37,7 @@ function Buffer:CreateVertexBuffer(wgpuDevice, entries)
 		webgpu.bindings.wgpu_device_get_queue(wgpuDevice),
 		buffer,
 		0,
-		ffi.new("float[?]", alignedBufferSizeInBytes, entries),
+		isCGND and entries or ffi.new("float[?]", alignedBufferSizeInBytes, entries),
 		alignedBufferSizeInBytes
 	)
 
@@ -44,7 +45,9 @@ function Buffer:CreateVertexBuffer(wgpuDevice, entries)
 end
 
 function Buffer:CreateIndexBuffer(wgpuDevice, indices)
-	local rawBufferSizeInBytes = #indices * ffi.sizeof("uint32_t") -- Assumes there won't be too many trianglces per mesh
+	local isCGND = type(indices) == "cdata"
+
+	local rawBufferSizeInBytes = isCGND and ffi.sizeof(indices) or #indices * ffi.sizeof("uint32_t") -- Assumes there won't be too many trianglces per mesh
 	local alignedBufferSizeInBytes = Buffer.GetAlignedSize(rawBufferSizeInBytes)
 
 	local bufferDescriptor = ffi.new("WGPUBufferDescriptor", {
@@ -57,7 +60,7 @@ function Buffer:CreateIndexBuffer(wgpuDevice, indices)
 		webgpu.bindings.wgpu_device_get_queue(wgpuDevice),
 		buffer,
 		0,
-		ffi.new("uint32_t[?]", alignedBufferSizeInBytes, indices),
+		isCGND and indices or ffi.new("uint32_t[?]", alignedBufferSizeInBytes, indices),
 		alignedBufferSizeInBytes
 	)
 
