@@ -120,6 +120,19 @@ function RagnarokMap:LoadTerrainGeometry(mapID)
 		groundMeshSection.lightmapTextureImage = sharedLightmapTextureImage
 	end
 
+	local preallocatedGeometryInfo = {}
+	for index, section in ipairs(groundMeshSections) do
+		table_insert(preallocatedGeometryInfo, section:GetGeometryBufferSizes())
+	end
+
+	local json = require("json")
+	-- Do not serialize if loaded from DB (pointless increase)
+	local cacheEntry = json.prettier(preallocatedGeometryInfo) -- No need to do this, just dump as Lua or even binary?
+	local geometryCachePath = path.join("Cache", "GND")
+	local geometryCacheFile = path.join(geometryCachePath, mapID .. ".json")
+	C_FileSystem.MakeDirectoryTree(geometryCachePath)
+	C_FileSystem.WriteFile(geometryCacheFile, cacheEntry)
+
 	return groundMeshSections
 end
 
