@@ -1,4 +1,5 @@
 local bit = require("bit")
+local console = require("console")
 local etrace = require("etrace")
 local ffi = require("ffi")
 local interop = require("interop")
@@ -66,6 +67,7 @@ local Renderer = {
 		},
 	},
 	DEBUG_DISCARDED_BACKGROUND_PIXELS = false, -- This is really slow (disk I/O); don't enable unless necessary
+	SCREENSHOT_OUTPUT_DIRECTORY = "Screenshots",
 	numWidgetTransformsUsedThisFrame = 0,
 	errorStrings = {
 		INVALID_VERTEX_BUFFER = "Cannot upload geometry with invalid vertex buffer",
@@ -224,7 +226,11 @@ function Renderer:RenderNextFrame(deltaTime)
 		for materialIndex, meshes in pairs(meshesByMaterial) do
 			local material = self.supportedMaterials[materialIndex]
 			-- Should skip this if there aren't any meshes (wasteful to switch for no reason)?
+			if self.isCapturingScreenshot then
+				RenderPassEncoder:SetPipeline(renderPass, material.offlineRenderingPipeline.wgpuPipeline)
+			else
 				RenderPassEncoder:SetPipeline(renderPass, material.surfaceRenderingPipeline.wgpuPipeline)
+			end
 			for _, mesh in ipairs(meshes) do
 				for index, animation in ipairs(mesh.keyframeAnimations) do
 					animation:UpdateWithDeltaTime(deltaTime / 10E5)
@@ -241,8 +247,11 @@ function Renderer:RenderNextFrame(deltaTime)
 	do
 		local uiRenderPass = self:BeginUserInterfaceRenderPass(commandEncoder, nextTextureView)
 		RenderPassEncoder:SetBindGroup(uiRenderPass, 0, self.cameraViewportUniform.bindGroup, 0, nil)
-
+		if self.isCapturingScreenshot then
+			RenderPassEncoder:SetPipeline(uiRenderPass, UserInterfaceMaterial.offlineRenderingPipeline.wgpuPipeline)
+		else
 			RenderPassEncoder:SetPipeline(uiRenderPass, UserInterfaceMaterial.surfaceRenderingPipeline.wgpuPipeline)
+		end
 		self.numWidgetTransformsUsedThisFrame = 0
 		rml.bindings.rml_context_update(self.rmlContext)
 		-- NO MORE CHANGES here before rendering the updated state!
@@ -255,13 +264,40 @@ function Renderer:RenderNextFrame(deltaTime)
 	local uiRenderPassTime = uv.hrtime() - uiRenderPassStartTime
 
 	local commandSubmitStartTime = uv.hrtime()
-	self:SubmitCommandBuffer(commandEncoder)
+	CommandEncoder:Submit(commandEncoder, self.wgpuDevice)
 	local commandSubmissionTime = uv.hrtime() - commandSubmitStartTime
+
+	if self.isCapturingScreenshot then
+		local rgbaImageBytes, width, height = self.screenshotTexture:DownloadPixelBuffer(self.wgpuDevice)
+		-- This assumes the buffer read is blocking (which is suboptimal); streamline later, via events
+		self:SaveCapturedScreenshot(rgbaImageBytes, width, height)
+		self.isCapturingScreenshot = false
+	end
 
 	self.backingSurface:PresentNextFrame()
 
 	local totalFrameTime = worldRenderPassTime + uiRenderPassTime + commandSubmissionTime
 	return totalFrameTime, worldRenderPassTime, uiRenderPassTime, commandSubmissionTime
+end
+
+function Renderer:SaveCapturedScreenshot(rgbaImageBytes, width, height)
+	console.startTimer("[Renderer] SaveCapturedScreenshot")
+
+	local screenshotFileName = format("RagLite_Screenshot_%s.jpg", os.date("%Y%m%d%H%M%S"))
+	C_FileSystem.MakeDirectoryTree(Renderer.SCREENSHOT_OUTPUT_DIRECTORY)
+	local screenshotFilePath = path.join(Renderer.SCREENSHOT_OUTPUT_DIRECTORY, screenshotFileName)
+
+	local imageFileContents = C_ImageProcessing.EncodeJPG(rgbaImageBytes, width, height)
+
+	C_FileSystem.WriteFile(screenshotFilePath, imageFileContents)
+	printf(
+		"Screenshot taken: %s (raw size: %s, encoded size: %s)",
+		screenshotFileName,
+		string.filesize(#rgbaImageBytes),
+		string.filesize(#imageFileContents)
+	)
+
+	console.stopTimer("[Renderer] SaveCapturedScreenshot")
 end
 
 local rmlEventNames = {
@@ -516,16 +552,6 @@ function Renderer:DrawWidget(renderPass, compiledWidgetGeometry, offsetU, offset
 		firstInstanceIndex,
 		indexBufferOffset
 	)
-end
-
-function Renderer:SubmitCommandBuffer(commandEncoder)
-	local commandBufferDescriptor = new("WGPUCommandBufferDescriptor")
-	local commandBuffer = CommandEncoder:Finish(commandEncoder, commandBufferDescriptor)
-
-	-- The WebGPU API expects an array here, but currently this renderer only supports a single buffer (to keep things simple)
-	local queue = Device:GetQueue(self.wgpuDevice)
-	local commandBuffers = new("WGPUCommandBuffer[1]", commandBuffer)
-	Queue:Submit(queue, 1, commandBuffers)
 end
 
 function Renderer:UploadMeshGeometry(mesh)
