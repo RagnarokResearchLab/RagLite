@@ -129,6 +129,14 @@ function RagnarokMap:LoadTerrainGeometry(mapID)
 			groundMeshSections[index].diffuseTextureCoords = reader:GetTypedArray("float", numDiffuseTextureCoords)
 			groundMeshSections[index].surfaceNormals = reader:GetTypedArray("float", numSurfaceNormals)
 			groundMeshSections[index].lightmapTextureCoords = reader:GetTypedArray("float", numLightmapTextureCoords)
+
+			-- TBD
+			groundMeshSections[index].numVertexPositions = numVertexPositions
+			groundMeshSections[index].numTriangleConnections = numTriangleConnections
+			groundMeshSections[index].numVertexColors = numVertexColors
+			groundMeshSections[index].numDiffuseTextureCoords = numDiffuseTextureCoords
+			groundMeshSections[index].numSurfaceNormals = numSurfaceNormals
+			groundMeshSections[index].numLightmapTextureCoords = numLightmapTextureCoords
 		end
 		console.stopTimer("Reading GeometryCache")
 	end
