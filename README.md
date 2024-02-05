@@ -103,6 +103,10 @@ The following controls have been implemented so far:
 
 They're of course very rough, but should allow inspecting the rendered scene.
 
+### Other Keybindings
+
+You can take a screenshot by pressing the `SPACE` key. The result will be saved in the `Screenshots/` directory.
+
 ## Goals
 
 I'm building this software with the following guidelines in mind:
