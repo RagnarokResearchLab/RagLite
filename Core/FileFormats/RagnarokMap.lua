@@ -125,9 +125,9 @@ function RagnarokMap:LoadTerrainGeometry(mapID)
 		table_insert(preallocatedGeometryInfo, section:GetGeometryBufferSizes())
 	end
 
+	-- GeometryCache:LoadJSON(key)
 	local json = require("json")
-	-- GeometryCache:Store(key, value)
-	-- GeometryCache:Load(key)
+	-- GeometryCache:StoreJSON(key, value)
 	-- Do not serialize if loaded from DB (pointless increase)
 	local cacheEntry = json.prettier(preallocatedGeometryInfo) -- No need to do this, just dump as Lua or even binary?
 	local geometryCachePath = path.join("Cache", "GND")
