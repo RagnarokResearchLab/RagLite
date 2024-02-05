@@ -93,7 +93,37 @@ end
 function RagnarokMap:LoadTerrainGeometry(mapID)
 	local gnd = self.gnd
 
+	-- GeometryCache:LoadJSON(key)
+	local console = require("console")
+	local json = require("json")
+	-- GeometryCache:StoreJSON(key, value)
+	-- Do not serialize if loaded from DB (pointless increase)
+	-- local cacheEntry = json.prettier(preallocatedGeometryInfo) -- No need to do this, just dump as Lua or even binary?
+	local geometryCachePath = path.join("Cache", "GND")
+	local geometryCacheFile = path.join(geometryCachePath, mapID .. ".json")
+	-- C_FileSystem.MakeDirectoryTree(geometryCachePath)
+	console.startTimer("Reading GeometryCache")
+	if C_FileSystem.Exists(geometryCacheFile) then
+		-- Preallocate buffers to reduce loading times
+		printf("Loading geometry cache entry for key %s", mapID)
+		local jsonCacheEntry = C_FileSystem.ReadFile(geometryCacheFile)
+		local cacheEntry = json.parse(jsonCacheEntry)
+		-- dump(cacheEntry)
+		for index, cachedGeometry in ipairs(cacheEntry) do
+			-- setmetatable(cachedGeometry, nil) -- Remove JSON object/array tag as it interferes with the class system
+			gnd.groundMeshSections[index].vertexPositions = table.new(cachedGeometry.vertexPositions, 0)
+			gnd.groundMeshSections[index].triangleConnections = table.new(cachedGeometry.triangleConnections, 0)
+			gnd.groundMeshSections[index].vertexColors = table.new(cachedGeometry.vertexColors, 0)
+			gnd.groundMeshSections[index].diffuseTextureCoords = table.new(cachedGeometry.diffuseTextureCoords, 0)
+			gnd.groundMeshSections[index].surfaceNormals = table.new(cachedGeometry.surfaceNormals, 0)
+			gnd.groundMeshSections[index].lightmapTextureCoords = table.new(cachedGeometry.lightmapTextureCoords, 0)
+		end
+		-- dump(groundMeshSections)
+	end
+	console.stopTimer("Reading GeometryCache")
+
 	local groundMeshSections = gnd:GenerateGroundMeshSections()
+
 	local sharedLightmapTextureImage = gnd:GenerateLightmapTextureImage()
 	for sectionID, groundMeshSection in pairs(groundMeshSections) do
 		local texturePath = "texture/" .. gnd.diffuseTexturePaths[sectionID]
@@ -126,14 +156,16 @@ function RagnarokMap:LoadTerrainGeometry(mapID)
 	end
 
 	-- GeometryCache:LoadJSON(key)
-	local json = require("json")
+	console.startTimer("Updating GeometryCache")
+	-- local json = require("json")
 	-- GeometryCache:StoreJSON(key, value)
 	-- Do not serialize if loaded from DB (pointless increase)
+	-- local geometryCachePath = path.join("Cache", "GND")
+	-- local geometryCacheFile = path.join(geometryCachePath, mapID .. ".json")
 	local cacheEntry = json.prettier(preallocatedGeometryInfo) -- No need to do this, just dump as Lua or even binary?
-	local geometryCachePath = path.join("Cache", "GND")
-	local geometryCacheFile = path.join(geometryCachePath, mapID .. ".json")
 	C_FileSystem.MakeDirectoryTree(geometryCachePath)
 	C_FileSystem.WriteFile(geometryCacheFile, cacheEntry)
+	console.stopTimer("Updating GeometryCache")
 
 	return groundMeshSections
 end
