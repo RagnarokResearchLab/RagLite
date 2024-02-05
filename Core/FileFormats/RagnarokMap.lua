@@ -114,14 +114,15 @@ function RagnarokMap:LoadTerrainGeometry(mapID)
 		local BinaryReader = require("Core.FileFormats.BinaryReader")
 		local reader = BinaryReader(binaryCacheEntry)
 		local numMeshes = reader:GetUnsignedInt32()
-		local numVertexPositions = reader:GetUnsignedInt32()
-		local numTriangleConnections = reader:GetUnsignedInt32()
-		local numVertexColors = reader:GetUnsignedInt32()
-		local numDiffuseTextureCoords = reader:GetUnsignedInt32()
-		local numSurfaceNormals = reader:GetUnsignedInt32()
-		local numLightmapTextureCoords = reader:GetUnsignedInt32()
 
 		for index = 1, numMeshes, 1 do
+			local numVertexPositions = reader:GetUnsignedInt32()
+			local numTriangleConnections = reader:GetUnsignedInt32()
+			local numVertexColors = reader:GetUnsignedInt32()
+			local numDiffuseTextureCoords = reader:GetUnsignedInt32()
+			local numSurfaceNormals = reader:GetUnsignedInt32()
+			local numLightmapTextureCoords = reader:GetUnsignedInt32()
+
 			groundMeshSections[index].vertexPositions = reader:GetTypedArray("float", numVertexPositions)
 			groundMeshSections[index].triangleConnections = reader:GetTypedArray("uint32_t", numTriangleConnections)
 			groundMeshSections[index].vertexColors = reader:GetTypedArray("float", numVertexColors)
@@ -195,15 +196,21 @@ function RagnarokMap:LoadTerrainGeometry(mapID)
 			local numVertexColors = #section.vertexColors
 			local numDiffuseTextureCoords = #section.diffuseTextureCoords
 			local numSurfaceNormals = #section.surfaceNormals
-			local numLightmapTextureCoords = #section.lightmapTextureCoords -- SKIP for water planes
-			-- setmetatable(cachedGeometry, nil) -- Remove JSON object/array tag as it interferes with the class system
-			-- local ffi = require("ffi")
+			local numLightmapTextureCoords = #section.lightmapTextureCoords -- SKIP for water planes (TBD: just set to 0)
+
 			local vertexPositions = ffi.new("float[?]", numVertexPositions, section.vertexPositions)
 			local triangleConnections = ffi.new("uint32_t[?]", numTriangleConnections, section.triangleConnections)
 			local vertexColors = ffi.new("float[?]", numVertexColors, section.vertexColors)
 			local diffuseTextureCoords = ffi.new("float[?]", numDiffuseTextureCoords, section.diffuseTextureCoords)
 			local surfaceNormals = ffi.new("float[?]", numSurfaceNormals, section.surfaceNormals)
 			local lightmapTextureCoords = ffi.new("float[?]", numLightmapTextureCoords, section.lightmapTextureCoords)
+
+			cacheEntry:putcdata(ffi.new("uint32_t[1]", numVertexPositions), 4)
+			cacheEntry:putcdata(ffi.new("uint32_t[1]", numTriangleConnections), 4)
+			cacheEntry:putcdata(ffi.new("uint32_t[1]", numVertexColors), 4)
+			cacheEntry:putcdata(ffi.new("uint32_t[1]", numDiffuseTextureCoords), 4)
+			cacheEntry:putcdata(ffi.new("uint32_t[1]", numSurfaceNormals), 4)
+			cacheEntry:putcdata(ffi.new("uint32_t[1]", numLightmapTextureCoords), 4)
 
 			cacheEntry:putcdata(vertexPositions, ffi.sizeof(vertexPositions))
 			cacheEntry:putcdata(triangleConnections, ffi.sizeof(triangleConnections))
