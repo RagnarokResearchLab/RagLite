@@ -3,6 +3,7 @@ local Device = require("Core.NativeClient.WebGPU.Device")
 local Queue = require("Core.NativeClient.WebGPU.Queue")
 local Texture = require("Core.NativeClient.WebGPU.Texture")
 local UniformBuffer = require("Core.NativeClient.WebGPU.UniformBuffer")
+local ScreenshotCaptureTexture = require("Core.NativeClient.WebGPU.RenderTargets.ScreenshotCaptureTexture")
 
 local uuid = require("uuid")
 local ffi = require("ffi")
@@ -34,11 +35,12 @@ function InvisibleBaseMaterial:Construct(name)
 	return instance
 end
 
-function InvisibleBaseMaterial:Compile(wgpuDevice, textureFormat)
+function InvisibleBaseMaterial:Compile(wgpuDevice, surfaceTextureFormat)
 	printf("Compiling material: %s", classname(self))
-	self.assignedRenderingPipeline = self.pipeline:Construct(wgpuDevice, textureFormat)
+	self.surfaceRenderingPipeline = self.pipeline:Construct(wgpuDevice, surfaceTextureFormat)
+	self.offlineRenderingPipeline = self.pipeline:Construct(wgpuDevice, ScreenshotCaptureTexture.OUTPUT_TEXTURE_FORMAT)
 	self.wgpuDevice = wgpuDevice
-	self.textureFormat = textureFormat
+	self.textureFormat = surfaceTextureFormat
 end
 
 function InvisibleBaseMaterial:AssignDiffuseTexture(texture, wgpuTexture)

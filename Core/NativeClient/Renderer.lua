@@ -1,4 +1,5 @@
 local bit = require("bit")
+local console = require("console")
 local etrace = require("etrace")
 local ffi = require("ffi")
 local interop = require("interop")
@@ -13,9 +14,11 @@ local WidgetDrawingPipeline = require("Core.NativeClient.WebGPU.Pipelines.Widget
 
 local Buffer = require("Core.NativeClient.WebGPU.Buffer")
 local CommandEncoder = require("Core.NativeClient.WebGPU.CommandEncoder")
+local DepthStencilTexture = require("Core.NativeClient.WebGPU.RenderTargets.DepthStencilTexture")
 local Device = require("Core.NativeClient.WebGPU.Device")
 local Queue = require("Core.NativeClient.WebGPU.Queue")
 local RenderPassEncoder = require("Core.NativeClient.WebGPU.RenderPassEncoder")
+local ScreenshotCaptureTexture = require("Core.NativeClient.WebGPU.RenderTargets.ScreenshotCaptureTexture")
 local Surface = require("Core.NativeClient.WebGPU.Surface")
 local Texture = require("Core.NativeClient.WebGPU.Texture")
 local UniformBuffer = require("Core.NativeClient.WebGPU.UniformBuffer")
@@ -64,6 +67,7 @@ local Renderer = {
 		},
 	},
 	DEBUG_DISCARDED_BACKGROUND_PIXELS = false, -- This is really slow (disk I/O); don't enable unless necessary
+	SCREENSHOT_OUTPUT_DIRECTORY = "Screenshots",
 	numWidgetTransformsUsedThisFrame = 0,
 	errorStrings = {
 		INVALID_VERTEX_BUFFER = "Cannot upload geometry with invalid vertex buffer",
@@ -98,7 +102,6 @@ function Renderer:InitializeWithGLFW(nativeWindowHandle)
 	Renderer:CompileMaterials(self.backingSurface.preferredTextureFormat)
 
 	Renderer:CreateUniformBuffers()
-	Renderer:EnableDepthBuffer()
 
 	-- Default texture that is multiplicatively neutral (use with untextured geometry to keep things simple)
 	Renderer:CreateDummyTexture()
@@ -122,6 +125,12 @@ function Renderer:CreateGraphicsContext(nativeWindowHandle)
 
 	-- Updates to the backing window should be pushed via events, so only store the result here
 	self.backingSurface = Surface(instance, adapter, device, nativeWindowHandle)
+
+	local viewportWidth, viewportHeight = self.backingSurface:GetViewportSize()
+	self.screenshotTexture = ScreenshotCaptureTexture(device, viewportWidth, viewportHeight)
+
+	printf("Creating depth buffer with texture dimensions %d x %d", viewportWidth, viewportHeight)
+	self.depthStencilTexture = DepthStencilTexture(device, viewportWidth, viewportHeight)
 end
 
 function Renderer:CompileMaterials(outputTextureFormat)
@@ -217,7 +226,11 @@ function Renderer:RenderNextFrame(deltaTime)
 		for materialIndex, meshes in pairs(meshesByMaterial) do
 			local material = self.supportedMaterials[materialIndex]
 			-- Should skip this if there aren't any meshes (wasteful to switch for no reason)?
-			RenderPassEncoder:SetPipeline(renderPass, material.assignedRenderingPipeline.wgpuPipeline)
+			if self.isCapturingScreenshot then
+				RenderPassEncoder:SetPipeline(renderPass, material.offlineRenderingPipeline.wgpuPipeline)
+			else
+				RenderPassEncoder:SetPipeline(renderPass, material.surfaceRenderingPipeline.wgpuPipeline)
+			end
 			for _, mesh in ipairs(meshes) do
 				for index, animation in ipairs(mesh.keyframeAnimations) do
 					animation:UpdateWithDeltaTime(deltaTime / 10E5)
@@ -234,8 +247,11 @@ function Renderer:RenderNextFrame(deltaTime)
 	do
 		local uiRenderPass = self:BeginUserInterfaceRenderPass(commandEncoder, nextTextureView)
 		RenderPassEncoder:SetBindGroup(uiRenderPass, 0, self.cameraViewportUniform.bindGroup, 0, nil)
-		RenderPassEncoder:SetPipeline(uiRenderPass, UserInterfaceMaterial.assignedRenderingPipeline.wgpuPipeline)
-
+		if self.isCapturingScreenshot then
+			RenderPassEncoder:SetPipeline(uiRenderPass, UserInterfaceMaterial.offlineRenderingPipeline.wgpuPipeline)
+		else
+			RenderPassEncoder:SetPipeline(uiRenderPass, UserInterfaceMaterial.surfaceRenderingPipeline.wgpuPipeline)
+		end
 		self.numWidgetTransformsUsedThisFrame = 0
 		rml.bindings.rml_context_update(self.rmlContext)
 		-- NO MORE CHANGES here before rendering the updated state!
@@ -248,13 +264,40 @@ function Renderer:RenderNextFrame(deltaTime)
 	local uiRenderPassTime = uv.hrtime() - uiRenderPassStartTime
 
 	local commandSubmitStartTime = uv.hrtime()
-	self:SubmitCommandBuffer(commandEncoder)
+	CommandEncoder:Submit(commandEncoder, self.wgpuDevice)
 	local commandSubmissionTime = uv.hrtime() - commandSubmitStartTime
+
+	if self.isCapturingScreenshot then
+		local rgbaImageBytes, width, height = self.screenshotTexture:DownloadPixelBuffer(self.wgpuDevice)
+		-- This assumes the buffer read is blocking (which is suboptimal); streamline later, via events
+		self:SaveCapturedScreenshot(rgbaImageBytes, width, height)
+		self.isCapturingScreenshot = false
+	end
 
 	self.backingSurface:PresentNextFrame()
 
 	local totalFrameTime = worldRenderPassTime + uiRenderPassTime + commandSubmissionTime
 	return totalFrameTime, worldRenderPassTime, uiRenderPassTime, commandSubmissionTime
+end
+
+function Renderer:SaveCapturedScreenshot(rgbaImageBytes, width, height)
+	console.startTimer("[Renderer] SaveCapturedScreenshot")
+
+	local screenshotFileName = format("RagLite_Screenshot_%s.jpg", os.date("%Y%m%d%H%M%S"))
+	C_FileSystem.MakeDirectoryTree(Renderer.SCREENSHOT_OUTPUT_DIRECTORY)
+	local screenshotFilePath = path.join(Renderer.SCREENSHOT_OUTPUT_DIRECTORY, screenshotFileName)
+
+	local imageFileContents = C_ImageProcessing.EncodeJPG(rgbaImageBytes, width, height)
+
+	C_FileSystem.WriteFile(screenshotFilePath, imageFileContents)
+	printf(
+		"Screenshot taken: %s (raw size: %s, encoded size: %s)",
+		screenshotFileName,
+		string.filesize(#rgbaImageBytes),
+		string.filesize(#imageFileContents)
+	)
+
+	console.stopTimer("[Renderer] SaveCapturedScreenshot")
 end
 
 local rmlEventNames = {
@@ -357,48 +400,43 @@ function Renderer:TRANSFORMATION_UPDATE_EVENT(eventID, payload)
 end
 
 function Renderer:BeginRenderPass(commandEncoder, nextTextureView)
-	-- Clearing is a built-in mechanism of the render pass
-	local renderPassColorAttachment = new("WGPURenderPassColorAttachment", {
+	local surfaceColorAttachment = new("WGPURenderPassColorAttachment", {
 		view = nextTextureView,
 		loadOp = ffi.C.WGPULoadOp_Clear,
 		storeOp = ffi.C.WGPUStoreOp_Store,
 		clearValue = new("WGPUColor", self.clearColorRGBA),
 	})
 
-	-- Enable Z buffering in the fragment stage
-	local depthStencilAttachment = ffi.new("WGPURenderPassDepthStencilAttachment", {
-		view = self.depthTextureView,
-		depthClearValue = 1.0, -- The initial value of the depth buffer, meaning "far"
-		depthLoadOp = ffi.C.WGPULoadOp_Clear,
-		depthStoreOp = ffi.C.WGPUStoreOp_Store, -- Enable depth write (should disable for UI later?)
-		depthReadOnly = false,
-		-- Stencil setup; mandatory but unused
-		stencilClearValue = 0,
-		stencilLoadOp = ffi.C.WGPULoadOp_Clear,
-		stencilStoreOp = ffi.C.WGPUStoreOp_Store,
-		stencilReadOnly = true,
-	})
+	local screenshotCaptureAttachment = self.screenshotTexture.colorAttachment
+	local colorAttachment = self.isCapturingScreenshot and screenshotCaptureAttachment or surfaceColorAttachment
+
+	-- Clearing is a built-in mechanism of the render pass
+	colorAttachment.loadOp = ffi.C.WGPULoadOp_Clear
+	colorAttachment.clearValue = self.clearColorRGBA
 
 	local renderPassDescriptor = new("WGPURenderPassDescriptor", {
 		colorAttachmentCount = 1,
-		colorAttachments = renderPassColorAttachment,
-		depthStencilAttachment = depthStencilAttachment,
+		colorAttachments = colorAttachment,
+		depthStencilAttachment = self.depthStencilTexture.colorAttachment,
 	})
 
 	return CommandEncoder:BeginRenderPass(commandEncoder, renderPassDescriptor)
 end
 
 function Renderer:BeginUserInterfaceRenderPass(commandEncoder, nextTextureView)
-	local renderPassColorAttachment = new("WGPURenderPassColorAttachment", {
+	local surfaceColorAttachment = new("WGPURenderPassColorAttachment", {
 		view = nextTextureView,
-		loadOp = ffi.C.WGPULoadOp_Load, -- Preserve existing framebuffer content
+		loadOp = ffi.C.WGPULoadOp_Load,
 		storeOp = ffi.C.WGPUStoreOp_Store,
 		clearValue = new("WGPUColor", self.clearColorRGBA),
 	})
 
+	local screenshotCaptureAttachment = self.screenshotTexture.colorAttachment
+	local colorAttachment = self.isCapturingScreenshot and screenshotCaptureAttachment or surfaceColorAttachment
+	colorAttachment.loadOp = ffi.C.WGPULoadOp_Load -- The UI should be rendered on top of the 3D world
 	local renderPassDescriptor = new("WGPURenderPassDescriptor", {
 		colorAttachmentCount = 1,
-		colorAttachments = renderPassColorAttachment,
+		colorAttachments = colorAttachment,
 		-- Depth/stencil testing is omitted since it isn't needed for UI rendering
 	})
 
@@ -514,16 +552,6 @@ function Renderer:DrawWidget(renderPass, compiledWidgetGeometry, offsetU, offset
 		firstInstanceIndex,
 		indexBufferOffset
 	)
-end
-
-function Renderer:SubmitCommandBuffer(commandEncoder)
-	local commandBufferDescriptor = new("WGPUCommandBufferDescriptor")
-	local commandBuffer = CommandEncoder:Finish(commandEncoder, commandBufferDescriptor)
-
-	-- The WebGPU API expects an array here, but currently this renderer only supports a single buffer (to keep things simple)
-	local queue = Device:GetQueue(self.wgpuDevice)
-	local commandBuffers = new("WGPUCommandBuffer[1]", commandBuffer)
-	Queue:Submit(queue, 1, commandBuffers)
 end
 
 function Renderer:UploadMeshGeometry(mesh)
@@ -754,41 +782,6 @@ function Renderer:UpdateScenewideUniformBuffer(deltaTime)
 		perSceneUniformData,
 		ffi.sizeof(perSceneUniformData)
 	)
-end
-
-function Renderer:EnableDepthBuffer()
-	-- Create the depth texture
-	local viewportWidth, viewportHeight = self.backingSurface:GetViewportSize()
-	printf("Creating depth buffer with texture dimensions %d x %d", viewportWidth, viewportHeight)
-	local depthTextureDesc = ffi.new("WGPUTextureDescriptor", {
-		dimension = ffi.C.WGPUTextureDimension_2D,
-		format = ffi.C.WGPUTextureFormat_Depth24Plus,
-		mipLevelCount = 1,
-		sampleCount = 1,
-		size = {
-			viewportWidth,
-			viewportHeight,
-			1,
-		},
-		usage = ffi.C.WGPUTextureUsage_RenderAttachment,
-		viewFormatCount = 1,
-		viewFormats = ffi.new("WGPUTextureFormat[1]", ffi.C.WGPUTextureFormat_Depth24Plus),
-	})
-	local depthTexture = Device:CreateTexture(self.wgpuDevice, depthTextureDesc)
-
-	-- Create the view of the depth texture manipulated by the rasterizer
-	local depthTextureViewDesc = ffi.new("WGPUTextureViewDescriptor", {
-		aspect = ffi.C.WGPUTextureAspect_DepthOnly,
-		baseArrayLayer = 0,
-		arrayLayerCount = 1,
-		baseMipLevel = 0,
-		mipLevelCount = 1,
-		dimension = ffi.C.WGPUTextureViewDimension_2D,
-		format = ffi.C.WGPUTextureFormat_Depth24Plus,
-	})
-	local depthTextureView = Texture:CreateTextureView(depthTexture, depthTextureViewDesc)
-
-	self.depthTextureView = depthTextureView
 end
 
 function Renderer:CreateDebugTexture()

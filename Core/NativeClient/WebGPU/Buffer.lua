@@ -5,6 +5,7 @@ local webgpu = require("webgpu")
 local Buffer = {
 	VERTEX_BUFFER_FLAGS = bit.bor(ffi.C.WGPUBufferUsage_CopyDst, ffi.C.WGPUBufferUsage_Vertex),
 	INDEX_BUFFER_FLAGS = bit.bor(ffi.C.WGPUBufferUsage_CopyDst, ffi.C.WGPUBufferUsage_Index),
+	READBACK_BUFFER_FLAGS = bit.bor(ffi.C.WGPUBufferUsage_MapRead, ffi.C.WGPUBufferUsage_CopyDst),
 }
 
 local ALIGNMENT_IN_BYTES = 4

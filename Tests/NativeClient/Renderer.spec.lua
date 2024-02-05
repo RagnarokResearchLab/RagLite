@@ -668,6 +668,41 @@ describe("Renderer", function()
 			end, expectedErrorMessage)
 		end)
 	end)
+
+	describe("SaveCapturedScreenshot", function()
+		before(function()
+			Renderer.SCREENSHOT_OUTPUT_DIRECTORY = "TemporaryScreenshotsDir"
+		end)
+
+		after(function()
+			local screenshots = C_FileSystem.ReadDirectoryTree(Renderer.SCREENSHOT_OUTPUT_DIRECTORY)
+			for screenshotFile, isFile in pairs(screenshots) do
+				C_FileSystem.Delete(screenshotFile)
+			end
+			C_FileSystem.Delete(Renderer.SCREENSHOT_OUTPUT_DIRECTORY)
+			Renderer.SCREENSHOT_OUTPUT_DIRECTORY = "Screenshots"
+		end)
+
+		it("should create the configured screenshots directory if it doesn't yet exist", function()
+			assertFalse(C_FileSystem.Exists(Renderer.SCREENSHOT_OUTPUT_DIRECTORY))
+			Renderer:SaveCapturedScreenshot("\255\254\253\0", 1, 1)
+			assertTrue(C_FileSystem.Exists(Renderer.SCREENSHOT_OUTPUT_DIRECTORY))
+		end)
+
+		it("should save the provided image in the configured screenshots directory", function()
+			Renderer:SaveCapturedScreenshot("\000\000\000\000	", 1, 1)
+			local screenshots = C_FileSystem.ReadDirectoryTree(Renderer.SCREENSHOT_OUTPUT_DIRECTORY)
+			assertEquals(table.count(screenshots), 1)
+			for screenshotFile, isFile in pairs(screenshots) do
+				local fileContents = C_FileSystem.ReadFile(screenshotFile)
+				local rgbaImageBytes, width, height = C_ImageProcessing.DecodeFileContents(fileContents)
+				assertEquals(width, 1)
+				assertEquals(height, 1)
+				local expectedImageBytes = "\000\000\000\255" -- JPG doesn't support transparency
+				assertEquals(rgbaImageBytes, expectedImageBytes)
+			end
+		end)
+	end)
 end)
 
 VirtualGPU:Disable()

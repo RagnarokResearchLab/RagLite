@@ -2,6 +2,7 @@
 data.grf
 *.grf.extracted/*
 Exports
+Screenshots/
 *.mp3
 *.bin
 *.exe
