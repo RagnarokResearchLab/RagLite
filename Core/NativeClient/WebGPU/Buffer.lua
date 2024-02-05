@@ -22,9 +22,9 @@ function Buffer.GetAlignedSize(unalignedSize)
 	return paddedSize
 end
 
-function Buffer:CreateVertexBuffer(wgpuDevice, entries)
+function Buffer:CreateVertexBuffer(wgpuDevice, entries, count)
 	local isCGND = type(entries) == "cdata"
-	local rawBufferSizeInBytes = isCGND and ffi.sizeof(entries) or #entries * ffi.sizeof("float") -- Assumes 3D positions, texture coords, or colors
+	local rawBufferSizeInBytes = (isCGND and count or #entries) * ffi.sizeof("float") -- Assumes 3D positions, texture coords, or colors
 	local alignedBufferSizeInBytes = Buffer.GetAlignedSize(rawBufferSizeInBytes)
 
 	local bufferDescriptor = ffi.new("WGPUBufferDescriptor", {
@@ -44,10 +44,10 @@ function Buffer:CreateVertexBuffer(wgpuDevice, entries)
 	return buffer
 end
 
-function Buffer:CreateIndexBuffer(wgpuDevice, indices)
+function Buffer:CreateIndexBuffer(wgpuDevice, indices, count)
 	local isCGND = type(indices) == "cdata"
 
-	local rawBufferSizeInBytes = isCGND and ffi.sizeof(indices) or #indices * ffi.sizeof("uint32_t") -- Assumes there won't be too many trianglces per mesh
+	local rawBufferSizeInBytes = (isCGND and count or #indices) * ffi.sizeof("uint32_t") -- Assumes there won't be too many trianglces per mesh
 	local alignedBufferSizeInBytes = Buffer.GetAlignedSize(rawBufferSizeInBytes)
 
 	local bufferDescriptor = ffi.new("WGPUBufferDescriptor", {
