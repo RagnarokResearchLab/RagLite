@@ -1,0 +1,90 @@
+[
+	{
+		"diffuseTextureCoords": 8216,
+		"lightmapTextureCoords": 8216,
+		"surfaceNormals": 12324,
+		"triangleConnections": 6162,
+		"vertexColors": 12324,
+		"vertexPositions": 12324
+	},
+	{
+		"diffuseTextureCoords": 398376,
+		"lightmapTextureCoords": 398376,
+		"surfaceNormals": 597564,
+		"triangleConnections": 298782,
+		"vertexColors": 597564,
+		"vertexPositions": 597564
+	},
+	{
+		"diffuseTextureCoords": 323696,
+		"lightmapTextureCoords": 323696,
+		"surfaceNormals": 485544,
+		"triangleConnections": 242772,
+		"vertexColors": 485544,
+		"vertexPositions": 485544
+	},
+	{
+		"diffuseTextureCoords": 25464,
+		"lightmapTextureCoords": 25464,
+		"surfaceNormals": 38196,
+		"triangleConnections": 19098,
+		"vertexColors": 38196,
+		"vertexPositions": 38196
+	},
+	{
+		"diffuseTextureCoords": 8,
+		"lightmapTextureCoords": 8,
+		"surfaceNormals": 12,
+		"triangleConnections": 6,
+		"vertexColors": 12,
+		"vertexPositions": 12
+	},
+	{
+		"diffuseTextureCoords": 10688,
+		"lightmapTextureCoords": 10688,
+		"surfaceNormals": 16032,
+		"triangleConnections": 8016,
+		"vertexColors": 16032,
+		"vertexPositions": 16032
+	},
+	{
+		"diffuseTextureCoords": 11128,
+		"lightmapTextureCoords": 11128,
+		"surfaceNormals": 16692,
+		"triangleConnections": 8346,
+		"vertexColors": 16692,
+		"vertexPositions": 16692
+	},
+	{
+		"diffuseTextureCoords": 7272,
+		"lightmapTextureCoords": 7272,
+		"surfaceNormals": 10908,
+		"triangleConnections": 5454,
+		"vertexColors": 10908,
+		"vertexPositions": 10908
+	},
+	{
+		"diffuseTextureCoords": 48,
+		"lightmapTextureCoords": 48,
+		"surfaceNormals": 72,
+		"triangleConnections": 36,
+		"vertexColors": 72,
+		"vertexPositions": 72
+	},
+	{
+		"diffuseTextureCoords": 176,
+		"lightmapTextureCoords": 176,
+		"surfaceNormals": 264,
+		"triangleConnections": 132,
+		"vertexColors": 264,
+		"vertexPositions": 264
+	},
+	{
+		"diffuseTextureCoords": 512,
+		"lightmapTextureCoords": 512,
+		"surfaceNormals": 768,
+		"triangleConnections": 384,
+		"vertexColors": 768,
+		"vertexPositions": 768
+	}
+]
