@@ -65,7 +65,10 @@ function AnimatedWaterPlane:Construct(tileSlotU, tileSlotV, surfaceProperties)
 		instance.surfaceGeometry.material.opacity = 1 -- Lava should be fully opaque (see mag_dun01)
 	end
 
-	setmetatable(instance, self)
+	local inheritanceLookupMetatable = {
+		__index = self,
+	}
+	setmetatable(instance, inheritanceLookupMetatable) -- TODO fix up the setmetatable stuff
 
 	return instance
 end
@@ -267,8 +270,6 @@ function AnimatedWaterPlane:GenerateWaterVertices(gnd, gridU, gridV)
 	end
 end
 
-AnimatedWaterPlane.__call = AnimatedWaterPlane.Construct
-AnimatedWaterPlane.__index = AnimatedWaterPlane
-setmetatable(AnimatedWaterPlane, AnimatedWaterPlane)
+class("AnimatedWaterPlane", AnimatedWaterPlane)
 
 return AnimatedWaterPlane
