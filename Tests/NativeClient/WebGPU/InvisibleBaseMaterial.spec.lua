@@ -37,11 +37,25 @@ describe("InvisibleBaseMaterial", function()
 
 			local materialInstanceA = InvisibleBaseMaterial()
 			local materialInstanceB = InvisibleBaseMaterial()
-			assertEquals(materialInstanceA.assignedRenderingPipeline, InvisibleBaseMaterial.assignedRenderingPipeline)
-			assertEquals(materialInstanceB.assignedRenderingPipeline, InvisibleBaseMaterial.assignedRenderingPipeline)
+			assertEquals(materialInstanceA.surfaceRenderingPipeline, InvisibleBaseMaterial.surfaceRenderingPipeline)
+			assertEquals(materialInstanceB.surfaceRenderingPipeline, InvisibleBaseMaterial.surfaceRenderingPipeline)
 
-			assertTrue(instanceof(materialInstanceA.assignedRenderingPipeline, BasicTriangleDrawingPipeline))
-			assertTrue(instanceof(materialInstanceB.assignedRenderingPipeline, BasicTriangleDrawingPipeline))
+			assertTrue(instanceof(materialInstanceA.surfaceRenderingPipeline, BasicTriangleDrawingPipeline))
+			assertTrue(instanceof(materialInstanceB.surfaceRenderingPipeline, BasicTriangleDrawingPipeline))
+		end)
+
+		it("should instantiate and assign the default capture pipeline to all material instances", function()
+			local wgpuDevice = new("WGPUDevice") --  Doesn't have to be functional
+			local textureFormat = 0 -- Doesn't matter here, either
+			InvisibleBaseMaterial:Compile(wgpuDevice, textureFormat)
+
+			local materialInstanceA = InvisibleBaseMaterial()
+			local materialInstanceB = InvisibleBaseMaterial()
+			assertEquals(materialInstanceA.offlineRenderingPipeline, InvisibleBaseMaterial.offlineRenderingPipeline)
+			assertEquals(materialInstanceB.offlineRenderingPipeline, InvisibleBaseMaterial.offlineRenderingPipeline)
+
+			assertTrue(instanceof(materialInstanceA.offlineRenderingPipeline, BasicTriangleDrawingPipeline))
+			assertTrue(instanceof(materialInstanceB.offlineRenderingPipeline, BasicTriangleDrawingPipeline))
 		end)
 	end)
 end)

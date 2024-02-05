@@ -34,11 +34,12 @@ function InvisibleBaseMaterial:Construct(name)
 	return instance
 end
 
-function InvisibleBaseMaterial:Compile(wgpuDevice, textureFormat)
+function InvisibleBaseMaterial:Compile(wgpuDevice, surfaceTextureFormat)
 	printf("Compiling material: %s", classname(self))
-	self.assignedRenderingPipeline = self.pipeline:Construct(wgpuDevice, textureFormat)
+	self.surfaceRenderingPipeline = self.pipeline:Construct(wgpuDevice, surfaceTextureFormat)
+	self.offlineRenderingPipeline = self.pipeline:Construct(wgpuDevice, ffi.C.WGPUTextureFormat_RGBA8UnormSrgb)
 	self.wgpuDevice = wgpuDevice
-	self.textureFormat = textureFormat
+	self.textureFormat = surfaceTextureFormat
 end
 
 function InvisibleBaseMaterial:AssignDiffuseTexture(texture, wgpuTexture)

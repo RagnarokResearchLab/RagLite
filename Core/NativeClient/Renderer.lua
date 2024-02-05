@@ -217,7 +217,7 @@ function Renderer:RenderNextFrame(deltaTime)
 		for materialIndex, meshes in pairs(meshesByMaterial) do
 			local material = self.supportedMaterials[materialIndex]
 			-- Should skip this if there aren't any meshes (wasteful to switch for no reason)?
-			RenderPassEncoder:SetPipeline(renderPass, material.assignedRenderingPipeline.wgpuPipeline)
+				RenderPassEncoder:SetPipeline(renderPass, material.surfaceRenderingPipeline.wgpuPipeline)
 			for _, mesh in ipairs(meshes) do
 				for index, animation in ipairs(mesh.keyframeAnimations) do
 					animation:UpdateWithDeltaTime(deltaTime / 10E5)
@@ -234,8 +234,8 @@ function Renderer:RenderNextFrame(deltaTime)
 	do
 		local uiRenderPass = self:BeginUserInterfaceRenderPass(commandEncoder, nextTextureView)
 		RenderPassEncoder:SetBindGroup(uiRenderPass, 0, self.cameraViewportUniform.bindGroup, 0, nil)
-		RenderPassEncoder:SetPipeline(uiRenderPass, UserInterfaceMaterial.assignedRenderingPipeline.wgpuPipeline)
 
+			RenderPassEncoder:SetPipeline(uiRenderPass, UserInterfaceMaterial.surfaceRenderingPipeline.wgpuPipeline)
 		self.numWidgetTransformsUsedThisFrame = 0
 		rml.bindings.rml_context_update(self.rmlContext)
 		-- NO MORE CHANGES here before rendering the updated state!
