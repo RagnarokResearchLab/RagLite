@@ -43,6 +43,7 @@ local specFiles = {
 	"Tests/NativeClient/WebGPU/UnlitMeshMaterial.spec.lua",
 	"Tests/NativeClient/WebGPU/WaterSurfaceMaterial.spec.lua",
 	"Tests/NativeClient/WebGPU/UserInterfaceMaterial.spec.lua",
+	"Tests/NativeClient/WebGPU/Surface.spec.lua",
 	"Tests/NativeClient/WebGPU/Texture.spec.lua",
 	"Tests/WorldServer/C_ServerHealth.spec.lua",
 	"Tests/WorldServer/WorldServer.spec.lua",
