@@ -616,7 +616,8 @@ function Renderer:UploadMeshGeometry(mesh)
 
 	local normalBufferSize = normalCount * ffi.sizeof("float")
 	printf("Uploading geometry: %d surface normals (%s)", normalCount, filesize(normalBufferSize))
-	local surfaceNormalsBuffer = Buffer:CreateVertexBuffer(self.wgpuDevice, mesh.surfaceNormals, rawget(mesh, "numSurfaceNormals"))
+	local surfaceNormalsBuffer =
+		Buffer:CreateVertexBuffer(self.wgpuDevice, mesh.surfaceNormals, rawget(mesh, "numSurfaceNormals"))
 
 	if rawget(mesh, "lightmapTextureCoords") then
 		local lightmapTextureCoordsCount = isCGND and mesh.numLightmapTextureCoords or #mesh.lightmapTextureCoords
