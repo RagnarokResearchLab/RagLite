@@ -20,7 +20,10 @@ function Mesh:Construct(name)
 		keyframeAnimations = {},
 	}
 
-	setmetatable(instance, self)
+	local inheritanceLookupMetatable = {
+		__index = self,
+	}
+	setmetatable(instance, inheritanceLookupMetatable)
 
 	return instance
 end
@@ -50,8 +53,6 @@ function Mesh:GetGeometryBufferSizes()
 	}
 end
 
-Mesh.__call = Mesh.Construct
-Mesh.__index = Mesh
-setmetatable(Mesh, Mesh)
+class("Mesh", Mesh)
 
 return Mesh
