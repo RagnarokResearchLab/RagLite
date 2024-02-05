@@ -61,6 +61,13 @@ function Surface:UpdateConfiguration()
 	surfaceConfiguration.presentMode = ffi.C.WGPUPresentMode_Fifo
 
 	webgpu.bindings.wgpu_surface_configure(self.wgpuSurface, surfaceConfiguration)
+
+	printf(
+		"Surface configuration changed: Frame buffer size is now %dx%d (preferred texture format: %d)",
+		viewportWidth,
+		viewportHeight,
+		tonumber(preferredTextureFormat)
+	)
 end
 
 function Surface:AcquireTextureView()

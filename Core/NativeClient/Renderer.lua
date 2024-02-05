@@ -216,6 +216,7 @@ function Renderer:RenderNextFrame(deltaTime)
 	if not nextTextureView then
 		-- Recoverable error, but this frame is probably beyond saving as reconfiguring the surface takes time
 		printf(transform.yellow(Renderer.errorStrings.TEXTURE_ACQUISITION_FAILED), failureReason)
+		self.backingSurface:UpdateConfiguration()
 		return 0, 0, 0, 0
 	end
 
