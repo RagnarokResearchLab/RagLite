@@ -17,6 +17,7 @@ local DepthStencilTexture = require("Core.NativeClient.WebGPU.RenderTargets.Dept
 local Device = require("Core.NativeClient.WebGPU.Device")
 local Queue = require("Core.NativeClient.WebGPU.Queue")
 local RenderPassEncoder = require("Core.NativeClient.WebGPU.RenderPassEncoder")
+local ScreenshotCaptureTexture = require("Core.NativeClient.WebGPU.RenderTargets.ScreenshotCaptureTexture")
 local Surface = require("Core.NativeClient.WebGPU.Surface")
 local Texture = require("Core.NativeClient.WebGPU.Texture")
 local UniformBuffer = require("Core.NativeClient.WebGPU.UniformBuffer")
@@ -122,6 +123,10 @@ function Renderer:CreateGraphicsContext(nativeWindowHandle)
 
 	-- Updates to the backing window should be pushed via events, so only store the result here
 	self.backingSurface = Surface(instance, adapter, device, nativeWindowHandle)
+
+	local viewportWidth, viewportHeight = self.backingSurface:GetViewportSize()
+	self.screenshotTexture = ScreenshotCaptureTexture(device, viewportWidth, viewportHeight)
+
 	printf("Creating depth buffer with texture dimensions %d x %d", viewportWidth, viewportHeight)
 	self.depthStencilTexture = DepthStencilTexture(device, viewportWidth, viewportHeight)
 end
@@ -359,19 +364,23 @@ function Renderer:TRANSFORMATION_UPDATE_EVENT(eventID, payload)
 end
 
 function Renderer:BeginRenderPass(commandEncoder, nextTextureView)
-	-- Clearing is a built-in mechanism of the render pass
-	local renderPassColorAttachment = new("WGPURenderPassColorAttachment", {
+	local surfaceColorAttachment = new("WGPURenderPassColorAttachment", {
 		view = nextTextureView,
 		loadOp = ffi.C.WGPULoadOp_Clear,
 		storeOp = ffi.C.WGPUStoreOp_Store,
 		clearValue = new("WGPUColor", self.clearColorRGBA),
 	})
 
-	})
+	local screenshotCaptureAttachment = self.screenshotTexture.colorAttachment
+	local colorAttachment = self.isCapturingScreenshot and screenshotCaptureAttachment or surfaceColorAttachment
+
+	-- Clearing is a built-in mechanism of the render pass
+	colorAttachment.loadOp = ffi.C.WGPULoadOp_Clear
+	colorAttachment.clearValue = self.clearColorRGBA
 
 	local renderPassDescriptor = new("WGPURenderPassDescriptor", {
 		colorAttachmentCount = 1,
-		colorAttachments = renderPassColorAttachment,
+		colorAttachments = colorAttachment,
 		depthStencilAttachment = self.depthStencilTexture.colorAttachment,
 	})
 
@@ -379,16 +388,19 @@ function Renderer:BeginRenderPass(commandEncoder, nextTextureView)
 end
 
 function Renderer:BeginUserInterfaceRenderPass(commandEncoder, nextTextureView)
-	local renderPassColorAttachment = new("WGPURenderPassColorAttachment", {
+	local surfaceColorAttachment = new("WGPURenderPassColorAttachment", {
 		view = nextTextureView,
-		loadOp = ffi.C.WGPULoadOp_Load, -- Preserve existing framebuffer content
+		loadOp = ffi.C.WGPULoadOp_Load,
 		storeOp = ffi.C.WGPUStoreOp_Store,
 		clearValue = new("WGPUColor", self.clearColorRGBA),
 	})
 
+	local screenshotCaptureAttachment = self.screenshotTexture.colorAttachment
+	local colorAttachment = self.isCapturingScreenshot and screenshotCaptureAttachment or surfaceColorAttachment
+	colorAttachment.loadOp = ffi.C.WGPULoadOp_Load -- The UI should be rendered on top of the 3D world
 	local renderPassDescriptor = new("WGPURenderPassDescriptor", {
 		colorAttachmentCount = 1,
-		colorAttachments = renderPassColorAttachment,
+		colorAttachments = colorAttachment,
 		-- Depth/stencil testing is omitted since it isn't needed for UI rendering
 	})
 
