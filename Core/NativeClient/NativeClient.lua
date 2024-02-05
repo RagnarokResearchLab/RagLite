@@ -331,6 +331,13 @@ function NativeClient:KEYPRESS_STATUS_CHANGED(eventID, payload)
 		return
 	end
 
+	local GLFW_KEY_SPACE = glfw.bindings.glfw_find_constant("GLFW_KEY_SPACE")
+	local wasSpaceKey = payload.key_details.key == GLFW_KEY_SPACE
+	if wasSpaceKey then
+		Renderer.isCapturingScreenshot = true
+		return
+	end
+
 	local isModifiedBySHIFT = bit.band(payload.key_details.mods, GLFW_MOD_SHIFT) == 1
 	if not isModifiedBySHIFT then
 		return
