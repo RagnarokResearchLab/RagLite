@@ -12,9 +12,7 @@ describe("RagnarokGND", function()
 	describe("Construct", function()
 		it("should use pre-allocated geometry buffers if any have been provided", function()
 			local preallocatedGeometryBuffers = {
-				{
-					
-				}
+				{},
 			}
 			local gnd = RagnarokGND(preallocatedGeometryBuffers)
 		end)
