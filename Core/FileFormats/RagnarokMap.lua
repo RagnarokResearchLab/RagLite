@@ -99,8 +99,12 @@ function RagnarokMap:LoadTerrainGeometry(mapID)
 	-- GeometryCache:StoreJSON(key, value)
 	-- Do not serialize if loaded from DB (pointless increase)
 	-- local cacheEntry = json.prettier(preallocatedGeometryInfo) -- No need to do this, just dump as Lua or even binary?
+	local ENABLE_CGND_COMPRESSION = false
 	local geometryCachePath = path.join("Cache", "CGND")
 	local geometryCacheFile = path.join(geometryCachePath, mapID .. ".cgnd")
+	if ENABLE_CGND_COMPRESSION then
+		geometryCacheFile = path.join(geometryCachePath, mapID .. ".zgnd")
+	end
 	-- C_FileSystem.MakeDirectoryTree(geometryCachePath)
 
 	local hasCacheEntry = C_FileSystem.Exists(geometryCacheFile)
@@ -110,6 +114,12 @@ function RagnarokMap:LoadTerrainGeometry(mapID)
 		-- Preallocate buffers to reduce loading times
 		printf("Loading geometry cache entry for key %s", mapID)
 		local binaryCacheEntry = C_FileSystem.ReadFile(geometryCacheFile)
+		if ENABLE_CGND_COMPRESSION then
+			console.startTimer("Decompress ZGND cache entry")
+			local miniz = require("miniz")
+			binaryCacheEntry = miniz.uncompress(binaryCacheEntry)
+			console.stopTimer("Decompress ZGND cache entry") -- TBD benchmark zlib and FFI zlib/miniz also (avoid redundant 20MB+ copies)
+		end
 		-- skip version for now
 		local BinaryReader = require("Core.FileFormats.BinaryReader")
 		local reader = BinaryReader(binaryCacheEntry)
@@ -228,13 +238,21 @@ function RagnarokMap:LoadTerrainGeometry(mapID)
 			cacheEntry:putcdata(lightmapTextureCoords, ffi.sizeof(lightmapTextureCoords))
 		end
 
+		cacheEntry = tostring(cacheEntry)
 		printf(
 			"Writing GeometryCache entry for key %s: %s (%s)",
 			mapID,
 			geometryCacheFile,
 			string.filesize(#cacheEntry)
 		)
-		C_FileSystem.WriteFile(geometryCacheFile, tostring(cacheEntry))
+		if ENABLE_CGND_COMPRESSION then
+			-- benchmark zlib and FFI bindings to zlib/miniz
+			console.startTimer("Compress ZGND cache entry")
+			local miniz = require("miniz")
+			cacheEntry = miniz.compress(tostring(cacheEntry))
+			console.stopTimer("Compress ZGND cache entry")
+		end
+		C_FileSystem.WriteFile(geometryCacheFile, cacheEntry)
 		console.stopTimer("Updating GeometryCache")
 	end
 
