@@ -93,38 +93,45 @@ end
 function RagnarokMap:LoadTerrainGeometry(mapID)
 	local gnd = self.gnd
 
-	
 	-- GeometryCache:LoadJSON(key)
 	local console = require("console")
-	local json = require("json")
+	-- local json = require("json")
 	-- GeometryCache:StoreJSON(key, value)
 	-- Do not serialize if loaded from DB (pointless increase)
 	-- local cacheEntry = json.prettier(preallocatedGeometryInfo) -- No need to do this, just dump as Lua or even binary?
-	local geometryCachePath = path.join("Cache", "GND")
-	local geometryCacheFile = path.join(geometryCachePath, mapID .. ".json")
+	local geometryCachePath = path.join("Cache", "CGND")
+	local geometryCacheFile = path.join(geometryCachePath, mapID .. ".cgnd")
 	-- C_FileSystem.MakeDirectoryTree(geometryCachePath)
 
 	local hasCacheEntry = C_FileSystem.Exists(geometryCacheFile)
-	local groundMeshSections = not hasCacheEntry and gnd:GenerateGroundMeshSections() or gnd.groundMeshSections 
+	local groundMeshSections = not hasCacheEntry and gnd:GenerateGroundMeshSections() or gnd.groundMeshSections
 	if hasCacheEntry then
 		console.startTimer("Reading GeometryCache")
 		-- Preallocate buffers to reduce loading times
 		printf("Loading geometry cache entry for key %s", mapID)
-		local jsonCacheEntry = C_FileSystem.ReadFile(geometryCacheFile)
-		local cacheEntry = json.parse(jsonCacheEntry)
-		-- dump(cacheEntry)
-		for index, cachedGeometry in ipairs(cacheEntry) do
-			setmetatable(cachedGeometry, nil) -- Remove JSON object/array tag as it interferes with the class system
-			groundMeshSections[index].vertexPositions = cachedGeometry.vertexPositions
-			groundMeshSections[index].triangleConnections = cachedGeometry.triangleConnections
-			groundMeshSections[index].vertexColors = cachedGeometry.vertexColors
-			groundMeshSections[index].diffuseTextureCoords = cachedGeometry.diffuseTextureCoords
-			groundMeshSections[index].surfaceNormals = cachedGeometry.surfaceNormals
-			groundMeshSections[index].lightmapTextureCoords = cachedGeometry.lightmapTextureCoords
+		local binaryCacheEntry = C_FileSystem.ReadFile(geometryCacheFile)
+		-- skip version for now
+		local BinaryReader = require("Core.FileFormats.BinaryReader")
+		local reader = BinaryReader(binaryCacheEntry)
+		local numMeshes = reader:GetUnsignedInt32()
+		local numVertexPositions = reader:GetUnsignedInt32()
+		local numTriangleConnections = reader:GetUnsignedInt32()
+		local numVertexColors = reader:GetUnsignedInt32()
+		local numDiffuseTextureCoords = reader:GetUnsignedInt32()
+		local numSurfaceNormals = reader:GetUnsignedInt32()
+		local numLightmapTextureCoords = reader:GetUnsignedInt32()
+
+		for index = 1, numMeshes, 1 do
+			groundMeshSections[index].vertexPositions = reader:GetTypedArray("float", numVertexPositions)
+			groundMeshSections[index].triangleConnections = reader:GetTypedArray("uint32_t", numTriangleConnections)
+			groundMeshSections[index].vertexColors = reader:GetTypedArray("float", numVertexColors)
+			groundMeshSections[index].diffuseTextureCoords = reader:GetTypedArray("float", numDiffuseTextureCoords)
+			groundMeshSections[index].surfaceNormals = reader:GetTypedArray("float", numSurfaceNormals)
+			groundMeshSections[index].lightmapTextureCoords = reader:GetTypedArray("float", numLightmapTextureCoords)
 		end
 		console.stopTimer("Reading GeometryCache")
 	end
-	
+
 	local sharedLightmapTextureImage = gnd:GenerateLightmapTextureImage()
 	for sectionID, groundMeshSection in pairs(groundMeshSections) do
 		local texturePath = "texture/" .. gnd.diffuseTexturePaths[sectionID]
@@ -165,16 +172,55 @@ function RagnarokMap:LoadTerrainGeometry(mapID)
 
 	-- GeometryCache:LoadJSON(key)
 	if not hasCacheEntry then
-	console.startTimer("Updating GeometryCache")
-	-- local json = require("json")
-	-- GeometryCache:StoreJSON(key, value)
-	-- Do not serialize if loaded from DB (pointless increase)
-	-- local geometryCachePath = path.join("Cache", "GND")
-	-- local geometryCacheFile = path.join(geometryCachePath, mapID .. ".json")
-	local cacheEntry = json.prettier(preallocatedGeometryInfo) -- No need to do this, just dump as Lua or even binary?
-	C_FileSystem.MakeDirectoryTree(geometryCachePath)
-	C_FileSystem.WriteFile(geometryCacheFile, cacheEntry)
-	console.stopTimer("Updating GeometryCache")
+		console.startTimer("Updating GeometryCache")
+		-- GeometryCache:StoreJSON(key, value)
+		-- Do not serialize if loaded from DB (pointless increase)
+		C_FileSystem.MakeDirectoryTree(geometryCachePath)
+
+		-- local binaryCacheEntry = C_FileSystem.ReadFile(geometryCacheFile)
+		-- skip version for now
+		-- local BinaryReader = require("Core.FileFormats.BinaryReader")
+		-- local reader = BinaryReader(binaryCacheEntry)
+		local numMeshes = #gnd.groundMeshSections
+		local ffi = require("ffi")
+		-- skip versionand header (CGND = compiled GND, 4 bytes - version: major.minor.patch = 12 bytes)
+		-- Actually, may want to reuse for water = RCMG = compiled mesh geometry
+		-- local bufferSize = numMeshes * (numVertexPositions + numTriangleConnections + numVertexColors + numDiffuseTextureCoords+ numSurfaceNormals +numLightmapTextureCoords ) * 4 -- float32, uint32
+		local cacheEntry = buffer.new() -- TBD precompute if it matters perf wise?
+		cacheEntry:putcdata(ffi.new("uint32_t[1]", numMeshes), ffi.sizeof("uint32_t"))
+		for index = 1, numMeshes, 1 do
+			local section = gnd.groundMeshSections[index]
+			local numVertexPositions = #section.vertexPositions
+			local numTriangleConnections = #section.triangleConnections
+			local numVertexColors = #section.vertexColors
+			local numDiffuseTextureCoords = #section.diffuseTextureCoords
+			local numSurfaceNormals = #section.surfaceNormals
+			local numLightmapTextureCoords = #section.lightmapTextureCoords -- SKIP for water planes
+			-- setmetatable(cachedGeometry, nil) -- Remove JSON object/array tag as it interferes with the class system
+			-- local ffi = require("ffi")
+			local vertexPositions = ffi.new("float[?]", numVertexPositions, section.vertexPositions)
+			local triangleConnections = ffi.new("uint32_t[?]", numTriangleConnections, section.triangleConnections)
+			local vertexColors = ffi.new("float[?]", numVertexColors, section.vertexColors)
+			local diffuseTextureCoords = ffi.new("float[?]", numDiffuseTextureCoords, section.diffuseTextureCoords)
+			local surfaceNormals = ffi.new("float[?]", numSurfaceNormals, section.surfaceNormals)
+			local lightmapTextureCoords = ffi.new("float[?]", numLightmapTextureCoords, section.lightmapTextureCoords)
+
+			cacheEntry:putcdata(vertexPositions, ffi.sizeof(vertexPositions))
+			cacheEntry:putcdata(triangleConnections, ffi.sizeof(triangleConnections))
+			cacheEntry:putcdata(vertexColors, ffi.sizeof(vertexColors))
+			cacheEntry:putcdata(diffuseTextureCoords, ffi.sizeof(diffuseTextureCoords))
+			cacheEntry:putcdata(surfaceNormals, ffi.sizeof(surfaceNormals))
+			cacheEntry:putcdata(lightmapTextureCoords, ffi.sizeof(lightmapTextureCoords))
+		end
+
+		printf(
+			"Writing GeometryCache entry for key %s: %s (%s)",
+			mapID,
+			geometryCacheFile,
+			string.filesize(#cacheEntry)
+		)
+		C_FileSystem.WriteFile(geometryCacheFile, tostring(cacheEntry))
+		console.stopTimer("Updating GeometryCache")
 	end
 
 	return groundMeshSections
