@@ -7,7 +7,16 @@ local tonumber = tonumber
 
 local new = ffi.new
 
-local Surface = {}
+local Surface = {
+	errorStrings = {
+		GPU_DEVICE_LOST = "GPU access has been lost and can't be restored (hardware issue or abrupt shutdown?)",
+		UNKNOWN_TEXTURE_STATUS = "Received an unknown texture status from the WebGPU API (outdated FFI bindings?)",
+		GPU_MEMORY_EXHAUSTED = "The available GPU memory is exhausted (VRAM usage too high or leaking resources?)",
+		BACKING_SURFACE_LOST = "The backing surface has been lost and can't be used (texture format changed?)",
+		BACKING_SURFACE_OUDATED = "The backing surface is outdated and can't be used (window resized or moved?)",
+		BACKING_SURFACE_TIMEOUT = "The backing surface couldn't be accessed in time (CPU or GPU too busy?)",
+	},
+}
 
 function Surface:Construct(wgpuInstance, wgpuAdapter, wgpuDevice, glfwWindow)
 	self.wgpuInstance = wgpuInstance
@@ -60,8 +69,10 @@ function Surface:AcquireTextureView()
 
 	-- Since resizing isn't yet supported, fail loudly if attempted despite GLFW window hints
 	webgpu.bindings.wgpu_surface_get_current_texture(self.wgpuSurface, surfaceTexture)
-	-- Some of those errors could probably be handled... oh, well. Maybe later!
-	assert(surfaceTexture.status == ffi.C.WGPUSurfaceGetCurrentTextureStatus_Success, "Unexpected surface status")
+	local isTextureReadyToUse, failureReason = self:ValidateTextureStatus(surfaceTexture.status)
+	if not isTextureReadyToUse then
+		return nil, failureReason
+	end
 
 	local nextTextureView = webgpu.bindings.wgpu_texture_create_view(surfaceTexture.texture, textureViewDescriptor)
 	assert(nextTextureView, "Cannot acquire next presentable texture view (window surface has changed?)")
@@ -84,6 +95,35 @@ function Surface:GetViewportSize()
 	-- Should probably differentiate between window and frame buffer here for high-DPI (later)
 	glfw.bindings.glfw_get_window_size(self.glfwWindow, contentWidthInPixels, contentHeightInPixels)
 	return tonumber(contentWidthInPixels[0]), tonumber(contentHeightInPixels[0])
+end
+
+function Surface:ValidateTextureStatus(status)
+	if status == ffi.C.WGPUSurfaceGetCurrentTextureStatus_Success then
+		-- Should check for suboptimality here?
+		return true
+	end
+
+	if status == ffi.C.WGPUSurfaceGetCurrentTextureStatus_DeviceLost then
+		error(self.errorStrings.GPU_DEVICE_LOST, 0)
+	end
+
+	if status == ffi.C.WGPUSurfaceGetCurrentTextureStatus_OutOfMemory then
+		error(self.errorStrings.GPU_MEMORY_EXHAUSTED, 0)
+	end
+
+	if status == ffi.C.WGPUSurfaceGetCurrentTextureStatus_Lost then
+		return nil, self.errorStrings.BACKING_SURFACE_LOST
+	end
+
+	if status == ffi.C.WGPUSurfaceGetCurrentTextureStatus_Outdated then
+		return nil, self.errorStrings.BACKING_SURFACE_OUTDATED
+	end
+
+	if status == ffi.C.WGPUSurfaceGetCurrentTextureStatus_Timeout then
+		return nil, self.errorStrings.BACKING_SURFACE_TIMEOUT
+	end
+
+	error(self.errorStrings.UNKNOWN_TEXTURE_STATUS, 0)
 end
 
 Surface.__index = Surface

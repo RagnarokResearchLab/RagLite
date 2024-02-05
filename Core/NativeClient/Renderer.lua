@@ -6,6 +6,7 @@ local interop = require("interop")
 local oop = require("oop")
 local rml = require("rml")
 local uv = require("uv")
+local transform = require("transform")
 local validation = require("validation")
 local webgpu = require("webgpu")
 
@@ -36,6 +37,7 @@ local rawget = rawget
 
 local instanceof = oop.instanceof
 local new = ffi.new
+local printf = printf
 local format = string.format
 local filesize = string.filesize
 local table_insert = table.insert
@@ -81,6 +83,7 @@ local Renderer = {
 		INCOMPLETE_LIGHTMAP_UV_BUFFER = "Cannot upload geometry with missing or incomplete lightmap texture coordinates ",
 		INVALID_MATERIAL = "Invalid material assigned to mesh",
 		INCOMPLETE_NORMAL_BUFFER = "Cannot upload geometry with missing or incomplete surface normals ",
+		TEXTURE_ACQUISITION_FAILED = "Failed to acquire surface texture; skipping the current frame. Reason:\n%s",
 	},
 	supportedMaterials = {
 		-- The order doesn't really matter, as long as it's consistently used
@@ -209,7 +212,12 @@ function Renderer:RenderNextFrame(deltaTime)
 	etrace.clear()
 
 	-- Blocking call in VSYNC present mode, so timing this isn't particularly helpful
-	local nextTextureView = self.backingSurface:AcquireTextureView()
+	local nextTextureView, failureReason = self.backingSurface:AcquireTextureView()
+	if not nextTextureView then
+		-- Recoverable error, but this frame is probably beyond saving as reconfiguring the surface takes time
+		printf(transform.yellow(Renderer.errorStrings.TEXTURE_ACQUISITION_FAILED), failureReason)
+		return 0, 0, 0, 0
+	end
 
 	local commandEncoderDescriptor = new("WGPUCommandEncoderDescriptor")
 	local commandEncoder = Device:CreateCommandEncoder(self.wgpuDevice, commandEncoderDescriptor)
