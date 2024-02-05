@@ -93,8 +93,7 @@ end
 function RagnarokMap:LoadTerrainGeometry(mapID)
 	local gnd = self.gnd
 
-	local groundMeshSections = gnd.groundMeshSections -- gnd:GenerateGroundMeshSections()
-
+	
 	-- GeometryCache:LoadJSON(key)
 	local console = require("console")
 	local json = require("json")
@@ -104,8 +103,11 @@ function RagnarokMap:LoadTerrainGeometry(mapID)
 	local geometryCachePath = path.join("Cache", "GND")
 	local geometryCacheFile = path.join(geometryCachePath, mapID .. ".json")
 	-- C_FileSystem.MakeDirectoryTree(geometryCachePath)
-	console.startTimer("Reading GeometryCache")
-	if C_FileSystem.Exists(geometryCacheFile) then
+
+	local hasCacheEntry = C_FileSystem.Exists(geometryCacheFile)
+	local groundMeshSections = not hasCacheEntry and gnd:GenerateGroundMeshSections() or gnd.groundMeshSections 
+	if hasCacheEntry then
+		console.startTimer("Reading GeometryCache")
 		-- Preallocate buffers to reduce loading times
 		printf("Loading geometry cache entry for key %s", mapID)
 		local jsonCacheEntry = C_FileSystem.ReadFile(geometryCacheFile)
@@ -120,9 +122,9 @@ function RagnarokMap:LoadTerrainGeometry(mapID)
 			groundMeshSections[index].surfaceNormals = cachedGeometry.surfaceNormals
 			groundMeshSections[index].lightmapTextureCoords = cachedGeometry.lightmapTextureCoords
 		end
+		console.stopTimer("Reading GeometryCache")
 	end
-	console.stopTimer("Reading GeometryCache")
-
+	
 	local sharedLightmapTextureImage = gnd:GenerateLightmapTextureImage()
 	for sectionID, groundMeshSection in pairs(groundMeshSections) do
 		local texturePath = "texture/" .. gnd.diffuseTexturePaths[sectionID]
@@ -162,16 +164,18 @@ function RagnarokMap:LoadTerrainGeometry(mapID)
 	end
 
 	-- GeometryCache:LoadJSON(key)
-	-- console.startTimer("Updating GeometryCache")
-	-- -- local json = require("json")
-	-- -- GeometryCache:StoreJSON(key, value)
-	-- -- Do not serialize if loaded from DB (pointless increase)
-	-- -- local geometryCachePath = path.join("Cache", "GND")
-	-- -- local geometryCacheFile = path.join(geometryCachePath, mapID .. ".json")
-	-- local cacheEntry = json.prettier(preallocatedGeometryInfo) -- No need to do this, just dump as Lua or even binary?
-	-- C_FileSystem.MakeDirectoryTree(geometryCachePath)
-	-- C_FileSystem.WriteFile(geometryCacheFile, cacheEntry)
-	-- console.stopTimer("Updating GeometryCache")
+	if not hasCacheEntry then
+	console.startTimer("Updating GeometryCache")
+	-- local json = require("json")
+	-- GeometryCache:StoreJSON(key, value)
+	-- Do not serialize if loaded from DB (pointless increase)
+	-- local geometryCachePath = path.join("Cache", "GND")
+	-- local geometryCacheFile = path.join(geometryCachePath, mapID .. ".json")
+	local cacheEntry = json.prettier(preallocatedGeometryInfo) -- No need to do this, just dump as Lua or even binary?
+	C_FileSystem.MakeDirectoryTree(geometryCachePath)
+	C_FileSystem.WriteFile(geometryCacheFile, cacheEntry)
+	console.stopTimer("Updating GeometryCache")
+	end
 
 	return groundMeshSections
 end
