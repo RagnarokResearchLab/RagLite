@@ -1,6 +1,5 @@
 local etrace = require("etrace")
 local ffi = require("ffi")
-local miniz = require("miniz")
 
 local Plane = require("Core.NativeClient.DebugDraw.Plane")
 local Mesh = require("Core.NativeClient.WebGPU.Mesh")
@@ -56,100 +55,6 @@ describe("Renderer", function()
 			assertEquals(tonumber(events[1].payload.dataLayout.offset), 0)
 			assertEquals(tonumber(events[1].payload.dataLayout.bytesPerRow), width * 4)
 			assertEquals(tonumber(events[1].payload.dataLayout.rowsPerImage), height)
-		end)
-
-		it("should discard transparent background pixels in the final image", function()
-			local IMAGE_WIDTH, IMAGE_HEIGHT = 256, 256
-			local transparentColors = {
-				"\254\000\254\255",
-				"\254\000\255\255",
-				"\254\001\254\255",
-				"\254\001\255\255",
-				"\254\002\254\255",
-				"\254\002\255\255",
-				"\254\003\254\255",
-				"\254\003\255\255",
-				"\255\000\254\255",
-				"\255\000\255\255",
-				"\255\001\254\255",
-				"\255\001\255\255",
-				"\255\002\254\255",
-				"\255\002\255\255",
-				"\255\003\254\255",
-				"\255\003\255\255",
-			}
-
-			local function createImageBytes(pixel)
-				return string.rep(pixel, IMAGE_WIDTH * IMAGE_HEIGHT)
-			end
-
-			local transparentImages = {}
-			for index = 1, #transparentColors, 1 do
-				table.insert(transparentImages, createImageBytes(transparentColors[index]))
-			end
-
-			-- Only discard alpha to save on unnecessary writes
-			local expectedPixelValues = {
-				"\254\000\254\000",
-				"\254\000\255\000",
-				"\254\001\254\000",
-				"\254\001\255\000",
-				"\254\002\254\000",
-				"\254\002\255\000",
-				"\254\003\254\000",
-				"\254\003\255\000",
-				"\255\000\254\000",
-				"\255\000\255\000",
-				"\255\001\254\000",
-				"\255\001\255\000",
-				"\255\002\254\000",
-				"\255\002\255\000",
-				"\255\003\254\000",
-				"\255\003\255\000",
-			}
-
-			local expectedImages = {}
-			for index = 1, #expectedPixelValues, 1 do
-				table.insert(expectedImages, createImageBytes(expectedPixelValues[index]))
-			end
-
-			local function assertRendererDiscardsTransparentPixelsOnUpload(rgbaImageBytes, expectedResult)
-				etrace.clear()
-
-				Renderer:CreateTextureFromImage(rgbaImageBytes, IMAGE_WIDTH, IMAGE_HEIGHT)
-				local events = etrace.filter("GPU_TEXTURE_WRITE")
-				local payload = events[1].payload
-
-				assertEquals(events[1].name, "GPU_TEXTURE_WRITE")
-				assertEquals(payload.dataSize, IMAGE_WIDTH * IMAGE_HEIGHT * 4)
-				assertEquals(payload.writeSize.width, IMAGE_WIDTH)
-				assertEquals(payload.writeSize.height, IMAGE_HEIGHT)
-				assertEquals(payload.writeSize.depthOrArrayLayers, 1)
-
-				assertEquals(#payload.data, #rgbaImageBytes) -- More readable errors in case of failure
-				assertEquals(miniz.crc32(payload.data), miniz.crc32(expectedResult))
-
-				assertEquals(tonumber(events[1].payload.dataLayout.offset), 0)
-				assertEquals(tonumber(events[1].payload.dataLayout.bytesPerRow), IMAGE_WIDTH * 4)
-				assertEquals(tonumber(events[1].payload.dataLayout.rowsPerImage), IMAGE_HEIGHT)
-			end
-
-			assertRendererDiscardsTransparentPixelsOnUpload(transparentImages[1], expectedImages[1])
-			assertRendererDiscardsTransparentPixelsOnUpload(transparentImages[2], expectedImages[2])
-			assertRendererDiscardsTransparentPixelsOnUpload(transparentImages[3], expectedImages[3])
-			assertRendererDiscardsTransparentPixelsOnUpload(transparentImages[4], expectedImages[4])
-			assertRendererDiscardsTransparentPixelsOnUpload(transparentImages[5], expectedImages[5])
-			assertRendererDiscardsTransparentPixelsOnUpload(transparentImages[6], expectedImages[6])
-			assertRendererDiscardsTransparentPixelsOnUpload(transparentImages[7], expectedImages[7])
-			assertRendererDiscardsTransparentPixelsOnUpload(transparentImages[8], expectedImages[8])
-			assertRendererDiscardsTransparentPixelsOnUpload(transparentImages[9], expectedImages[9])
-			assertRendererDiscardsTransparentPixelsOnUpload(transparentImages[10], expectedImages[10])
-			assertRendererDiscardsTransparentPixelsOnUpload(transparentImages[11], expectedImages[11])
-			assertRendererDiscardsTransparentPixelsOnUpload(transparentImages[12], expectedImages[12])
-			assertRendererDiscardsTransparentPixelsOnUpload(transparentImages[13], expectedImages[13])
-			assertRendererDiscardsTransparentPixelsOnUpload(transparentImages[14], expectedImages[14])
-			assertRendererDiscardsTransparentPixelsOnUpload(transparentImages[15], expectedImages[15])
-			assertRendererDiscardsTransparentPixelsOnUpload(transparentImages[16], expectedImages[16])
 		end)
 	end)
 

@@ -135,13 +135,22 @@ fn vs_main(in: VertexInput) -> VertexOutput {
 	return out;
 }
 
+// Magenta background pixels should be discarded (but pre-processing on the CPU is expensive)
+fn isTransparentBackgroundPixel(diffuseTextureColor : vec4f) -> bool {
+	return (diffuseTextureColor.r >= 254/255 && diffuseTextureColor.g <= 3/255 && diffuseTextureColor.b >= 254/255);
+}
+
 @fragment
 fn fs_main(in: VertexOutput) -> @location(0) vec4f {
 	let textureCoords = in.diffuseTextureCoords;
-	let diffuseTextureColor = textureSample(diffuseTexture, diffuseTextureSampler, textureCoords);
+	var diffuseTextureColor = textureSample(diffuseTexture, diffuseTextureSampler, textureCoords);
 	let normal = normalize(in.surfaceNormal);
 	let sunlightColor = uPerSceneData.directionalLightColor.rgb;
 	let ambientColor = uPerSceneData.ambientLight.rgb;
+
+	if (isTransparentBackgroundPixel(diffuseTextureColor)) {
+		diffuseTextureColor.a = 0.0;
+	}
 
 	let lightmapTexCoords = in.lightmapTextureCoords;
 	var lightmapTextureColor = textureSample(lightmapTexture, lightmapTextureSampler, lightmapTexCoords);

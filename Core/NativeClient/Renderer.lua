@@ -820,54 +820,7 @@ function Renderer:CreateDummyTexture()
 	self.dummyTextureMaterial = dummyTextureMaterial
 end
 
--- Should probably move this to the runtime for efficiency (needs benchmarking)
--- Also... should use string buffers everywhere, but currently the API still uses strings
-local function discardTransparentPixels(rgbaImageBytes, width, height, discardRanges)
-	local OFFSET_RED = 0
-	local OFFSET_GREEN = 1
-	local OFFSET_BLUE = 2
-	local OFFSET_ALPHA = 3
-
-	local DISCARD_MIN_RED = discardRanges.red.from
-	local DISCARD_MAX_RED = discardRanges.red.to
-	local DISCARD_MIN_GREEN = discardRanges.green.from
-	local DISCARD_MAX_GREEN = discardRanges.green.to
-	local DISCARD_MIN_BLUE = discardRanges.blue.from
-	local DISCARD_MAX_BLUE = discardRanges.blue.to
-
-	local rgbaImageBuffer = buffer.new(width * height * 4):put(rgbaImageBytes)
-	local pixelArray, bufferSize = rgbaImageBuffer:ref()
-	assert(bufferSize == width * height * 4)
-
-	for pixelStartOffset = 0, width * height * 4, 4 do
-		local red = pixelArray[pixelStartOffset + OFFSET_RED]
-		local green = pixelArray[pixelStartOffset + OFFSET_GREEN]
-		local blue = pixelArray[pixelStartOffset + OFFSET_BLUE]
-
-		local isRedWithinDiscardedRange = (red >= DISCARD_MIN_RED and red <= DISCARD_MAX_RED)
-		local isGreenWithinDiscardedRange = (green >= DISCARD_MIN_GREEN and green <= DISCARD_MAX_GREEN)
-		local isBlueWithinDiscardedRange = (blue >= DISCARD_MIN_BLUE and blue <= DISCARD_MAX_BLUE)
-		local shouldDiscardPixel = isRedWithinDiscardedRange
-			and isGreenWithinDiscardedRange
-			and isBlueWithinDiscardedRange
-
-		if shouldDiscardPixel then
-			pixelArray[pixelStartOffset + OFFSET_ALPHA] = 0
-		end
-	end
-
-	return rgbaImageBuffer:tostring()
-end
-
 function Renderer:CreateTextureFromImage(rgbaImageBytes, width, height)
-	local inclusiveTransparentPixelRanges = {
-		red = { from = 254, to = 255 },
-		green = { from = 0, to = 3 },
-		blue = { from = 254, to = 255 },
-	}
-	-- This is currently NOT in-place and so incurs unnecessary copy overhead (optimize later)
-	rgbaImageBytes = discardTransparentPixels(rgbaImageBytes, width, height, inclusiveTransparentPixelRanges)
-
 	local texture = Texture(self.wgpuDevice, rgbaImageBytes, width, height)
 	Renderer:UploadTextureImage(texture)
 
