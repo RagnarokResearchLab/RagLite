@@ -1,6 +1,7 @@
 *.log
 data.grf
 *.grf.extracted/*
+Cache/
 Exports
 Screenshots/
 *.mp3
