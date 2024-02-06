@@ -54,6 +54,19 @@ describe("RagnarokGRF", function()
 			assertEquals(grf.fileTable.entries["uppercase.png"].typeID, RagnarokGRF.COMPRESSED_FILE_ENTRY_TYPE)
 			assertEquals(grf.fileTable.entries["uppercase.png"].offsetRelativeToHeader, 160)
 		end)
+
+		it("should be able to restore the file table from a CGRF buffer", function()
+			local cgrfFilePath = path.join("Tests", "Fixtures", "test.cgrf")
+			local cgrfFileContents = C_FileSystem.ReadFile(cgrfFilePath)
+
+			local grf = RagnarokGRF()
+			grf:Open("Tests/Fixtures/test.grf", cgrfFileContents)
+			grf:Close()
+
+			-- These aren't stored in the CGRF (because they're useless on their own)
+			assertEquals(grf.fileTable.compressedSizeInBytes, 0)
+			assertEquals(grf.fileTable.decompressedSizeInBytes, 0)
+		end)
 	end)
 
 	describe("FindLargestFileEntry", function()

@@ -1,3 +1,5 @@
+local CompiledGRF = require("Core.FileFormats.Optimized.CompiledGRF")
+
 local cstring = require("Core.RuntimeExtensions.cstring")
 
 local bit = require("bit")
@@ -58,16 +60,16 @@ function RagnarokGRF:Construct()
 		fileTable = {},
 	}
 
-	setmetatable(instance, self)
+	setmetatable(instance, {
+		__index = self,
+	})
 
 	return instance
 end
 
-RagnarokGRF.__index = RagnarokGRF
-RagnarokGRF.__call = RagnarokGRF.Construct
-setmetatable(RagnarokGRF, RagnarokGRF)
+class("RagnarokGRF", RagnarokGRF)
 
-function RagnarokGRF:Open(pathToGRF)
+function RagnarokGRF:Open(pathToGRF, cgrfFileContents)
 	local isValidPath = C_FileSystem.Exists(pathToGRF)
 	if not isValidPath then
 		error(format("Failed to open archive %s (No such file exists)", pathToGRF), 0)
@@ -82,6 +84,7 @@ function RagnarokGRF:Open(pathToGRF)
 	self.fileHandle = assert(io.open(pathToGRF, "rb"))
 
 	self.pathToGRF = pathToGRF
+	self.cgrfFileContents = cgrfFileContents
 
 	self:DecodeArchiveMetadata()
 end
@@ -128,6 +131,11 @@ function RagnarokGRF:DecodeHeader()
 end
 
 function RagnarokGRF:DecodeFileTable()
+	if rawget(self, "cgrfFileContents") then
+		CompiledGRF:RestoreTableOfContents(self, self.cgrfFileContents)
+		return
+	end
+
 	self:DecodeTableHeader()
 	self:DecodeFileEntries()
 end
