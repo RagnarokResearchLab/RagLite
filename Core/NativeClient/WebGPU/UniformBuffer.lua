@@ -66,8 +66,9 @@ local UniformBuffer = {
 		} water_uniform_t;
 		typedef struct PerMeshData {
 			float translation[2]; // 8
-			float padding[6]; // 32
-			// Total size must be at least minUniformBufferOffsetAlignment bytes large (with 16 byte alignment)
+			float padding[62]; // 256
+			// Struct size must be aligned with minUniformBufferOffsetAlignment (GPU limit)
+			// Padding needs to be updated whenever the struct changes!
 		} mesh_uniform_t;
 	]],
 }

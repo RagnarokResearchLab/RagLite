@@ -82,13 +82,10 @@ function GPU:RequestLogicalDevice(adapter, options)
 				maxBindingsPerBindGroup = 2, -- Max. allowed binding index
 				maxDynamicUniformBuffersPerPipelineLayout = 1,
 				minStorageBufferOffsetAlignment = 32,
-				minUniformBufferOffsetAlignment = 32,
+				minUniformBufferOffsetAlignment = ffi.sizeof("mesh_uniform_t"),
 			},
 		}),
 	})
-
-	assert(supportedLimits.limits.minUniformBufferOffsetAlignment <= 32, "Dynamic uniform headaches will ensue")
-	self.minUniformBufferOffsetAlignment = supportedLimits.limits.minUniformBufferOffsetAlignment
 
 	local requestedDevice
 	local function onDeviceRequested(status, device, message, userdata)
@@ -127,13 +124,6 @@ function GPU:RequestLogicalDevice(adapter, options)
 	assert(canUseNonUniformTextureArraySampler, "Device is unable to use non-uniform sampling for texture arrays")
 
 	return requestedDevice, deviceDescriptor
-end
-
-function GPU:GetAlignedDynamicUniformBufferStride(uniformStructSizeInBytes)
-	local step = self.minUniformBufferOffsetAlignment
-	-- More headaches if the dynamic uniforms (e.g., widget transforms) are smaller than the minimum stride...
-	local divide_and_ceil = uniformStructSizeInBytes / step + (uniformStructSizeInBytes % step == 0 and 0 or 1)
-	return step * divide_and_ceil
 end
 
 return GPU
