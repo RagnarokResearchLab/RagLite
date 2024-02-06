@@ -4,6 +4,7 @@ local webgpu = require("webgpu")
 
 local Device = require("Core.NativeClient.WebGPU.Device")
 
+local GPU = require("Core.NativeClient.WebGPU.GPU")
 local UniformBuffer = require("Core.NativeClient.WebGPU.UniformBuffer")
 
 local binary_not = bit.bnot
@@ -12,7 +13,7 @@ local sizeof = ffi.sizeof
 
 local WidgetDrawingPipeline = {
 	WGSL_SHADER_SOURCE_LOCATION = "Core/NativeClient/WebGPU/Shaders/UserInterfaceShader.wgsl",
-	MAX_WIDGET_COUNT = 2048, -- The default maxUniformBufferBindingSize allows for this many without optimizing further/removing padding/using other buffer types or even hardware instacing for the UI
+	MAX_WIDGET_COUNT = GPU.MAX_UNIFORM_BUFFER_BINDING_SIZE / sizeof("mesh_uniform_t"),
 }
 
 function WidgetDrawingPipeline:Construct(wgpuDeviceHandle, textureFormatID)
