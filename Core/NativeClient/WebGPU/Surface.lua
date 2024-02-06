@@ -13,7 +13,7 @@ local Surface = {
 		UNKNOWN_TEXTURE_STATUS = "Received an unknown texture status from the WebGPU API (outdated FFI bindings?)",
 		GPU_MEMORY_EXHAUSTED = "The available GPU memory is exhausted (VRAM usage too high or leaking resources?)",
 		BACKING_SURFACE_LOST = "The backing surface has been lost and can't be used (texture format changed?)",
-		BACKING_SURFACE_OUDATED = "The backing surface is outdated and can't be used (window resized or moved?)",
+		BACKING_SURFACE_OUTDATED = "The backing surface is outdated and can't be used (window resized or moved?)",
 		BACKING_SURFACE_TIMEOUT = "The backing surface couldn't be accessed in time (CPU or GPU too busy?)",
 	},
 }
