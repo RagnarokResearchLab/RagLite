@@ -11,6 +11,7 @@ local GPU = {
 	MAX_VERTEX_COUNT = 200000, -- Should be configurable (later)
 	MAX_TEXTURE_ARRAY_SIZE = 32,
 	MAX_BUFFER_SIZE = 256 * 1024 * 1024,
+	MAX_UNIFORM_BUFFER_BINDING_SIZE = 65536,
 }
 
 function GPU:CreateInstance()
@@ -78,7 +79,7 @@ function GPU:RequestLogicalDevice(adapter, options)
 				maxUniformBuffersPerShaderStage = 1, -- Camera properties (increase for material, soon?)
 				maxSampledTexturesPerShaderStage = GPU.MAX_TEXTURE_ARRAY_SIZE,
 				maxSamplersPerShaderStage = GPU.MAX_TEXTURE_ARRAY_SIZE,
-				maxUniformBufferBindingSize = 65536, -- DEFAULT
+				maxUniformBufferBindingSize = GPU.MAX_UNIFORM_BUFFER_BINDING_SIZE,
 				maxBindingsPerBindGroup = 2, -- Max. allowed binding index
 				maxDynamicUniformBuffersPerPipelineLayout = 1,
 				minStorageBufferOffsetAlignment = 32,
