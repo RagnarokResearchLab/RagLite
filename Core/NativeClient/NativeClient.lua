@@ -331,6 +331,14 @@ function NativeClient:KEYPRESS_STATUS_CHANGED(eventID, payload)
 		return
 	end
 
+	local GLFW_KEY_ESCAPE = glfw.bindings.glfw_find_constant("GLFW_KEY_ESCAPE")
+	local wasEscapeKeyPressed = payload.key_details.key == GLFW_KEY_ESCAPE
+	if wasEscapeKeyPressed then
+		print("ESC detected; shutting down...")
+		self:Stop()
+		return
+	end
+
 	local GLFW_KEY_SPACE = glfw.bindings.glfw_find_constant("GLFW_KEY_SPACE")
 	local wasSpaceKey = payload.key_details.key == GLFW_KEY_SPACE
 	if wasSpaceKey then
