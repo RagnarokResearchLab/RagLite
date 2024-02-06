@@ -16,6 +16,8 @@ elseif arg[1] == "--stresstest" then
 		NativeClient:LoadScenesOneByOne(arg[2])
 	end)
 	_G.arg[1] = nil -- Don't try to load it as a scene
+elseif arg[2] == "--profile" then
+	NativeClient.isProfilingStartupTime = true
 end
 
 local mapID = arg[1]
