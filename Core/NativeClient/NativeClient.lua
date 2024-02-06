@@ -394,6 +394,10 @@ function NativeClient:LoadSceneByID(globallyUniqueSceneID)
 
 	local map = RagnarokMap(globallyUniqueSceneID, grfFileSystem) or DebugScene(globallyUniqueSceneID)
 	Renderer:LoadSceneObjects(map)
+
+	if self.isProfilingStartupTime then
+		os.exit(0, true) -- Job's done
+	end
 end
 
 function NativeClient:LoadScenesOneByOne(delayInMilliseconds)
