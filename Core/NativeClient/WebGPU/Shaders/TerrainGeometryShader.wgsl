@@ -137,7 +137,7 @@ fn vs_main(in: VertexInput) -> VertexOutput {
 
 // Magenta background pixels should be discarded (but pre-processing on the CPU is expensive)
 fn isTransparentBackgroundPixel(diffuseTextureColor : vec4f) -> bool {
-	return (diffuseTextureColor.r >= 254/255 && diffuseTextureColor.g <= 3/255 && diffuseTextureColor.b >= 254/255);
+	return (diffuseTextureColor.r >= 254.0/255.0 && diffuseTextureColor.g <= 3.0/255.0 && diffuseTextureColor.b >= 254.0/255.0);
 }
 
 @fragment
