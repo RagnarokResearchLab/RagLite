@@ -149,7 +149,7 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4f {
 	let ambientColor = uPerSceneData.ambientLight.rgb;
 
 	if (isTransparentBackgroundPixel(diffuseTextureColor)) {
-		diffuseTextureColor.a = 0.0;
+		discard;
 	}
 
 	let lightmapTexCoords = in.lightmapTextureCoords;
