@@ -325,7 +325,7 @@ function RagnarokRSW:DecodeAnimatedProps()
 		objectInfo.unknownMysteryByte = 0
 	end
 
-	objectInfo.name = iconv.convert(ffi_string(prop.name), "CP949", "UTF-8") or ""
+	objectInfo.name = RagnarokGRF:DecodeFileName(ffi_string(prop.name))
 	objectInfo.animationTypeID = tonumber(prop.animation_type_id)
 	objectInfo.animationSpeedPercentage = tonumber(prop.animation_speed)
 	objectInfo.isSolid = tonumber(prop.block_type_id) == RagnarokRSW.PROP_COLLISION_TYPE_SOLID
@@ -363,7 +363,7 @@ function RagnarokRSW:DecodeDynamicLightSource()
 	end
 
 	local lightSource = {
-		name = ffi_string(objectInfo.name),
+		name = iconv.convert(ffi_string(objectInfo.name), "CP949", "UTF-8") or "",
 		normalizedWorldPosition = {
 			x = objectInfo.position.x * RagnarokGND.NORMALIZING_SCALE_FACTOR,
 			y = -1 * objectInfo.position.y * RagnarokGND.NORMALIZING_SCALE_FACTOR,
@@ -383,7 +383,7 @@ end
 function RagnarokRSW:DecodeSpatialAudioSource()
 	local reader = self.reader
 	local objectInfo = {
-		name = reader:GetNullTerminatedString(80),
+		name = iconv.convert(reader:GetNullTerminatedString(80), "CP949", "UTF-8") or "",
 		soundFile = reader:GetNullTerminatedString(80),
 		normalizedWorldPosition = {
 			x = reader:GetFloat() * RagnarokGND.NORMALIZING_SCALE_FACTOR,
@@ -427,7 +427,7 @@ function RagnarokRSW:DecodeParticleEffectEmitter()
 	local particleEmissionDelayInSeconds = emitter.emission_speed / expectedFPS
 
 	local objectInfo = {
-		name = ffi_string(emitter.name),
+		name = iconv.convert(ffi_string(emitter.name), "CP949", "UTF-8") or "",
 		normalizedWorldPosition = {
 			x = emitter.position.x * RagnarokGND.NORMALIZING_SCALE_FACTOR,
 			y = -1 * emitter.position.y * RagnarokGND.NORMALIZING_SCALE_FACTOR,
