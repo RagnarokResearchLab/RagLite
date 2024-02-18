@@ -9,6 +9,7 @@ local tinsert = table.insert
 local AnimatedWaterPlane = require("Core.FileFormats.RSW.AnimatedWaterPlane")
 local BinaryReader = require("Core.FileFormats.BinaryReader")
 local RagnarokGND = require("Core.FileFormats.RagnarokGND")
+local RagnarokGRF = require("Core.FileFormats.RagnarokGRF")
 local QuadTreeRange = require("Core.FileFormats.RSW.QuadTreeRange")
 
 local Matrix3D = require("Core.VectorMath.Matrix3D")
@@ -329,7 +330,7 @@ function RagnarokRSW:DecodeAnimatedProps()
 	objectInfo.animationSpeedPercentage = tonumber(prop.animation_speed)
 	objectInfo.isSolid = tonumber(prop.block_type_id) == RagnarokRSW.PROP_COLLISION_TYPE_SOLID
 
-	objectInfo.rsmFile = iconv.convert(ffi_string(prop.rsm_model_name), "CP949", "UTF-8") or ""
+	objectInfo.rsmFile = RagnarokGRF:DecodeFileName(ffi_string(prop.rsm_model_name))
 	objectInfo.rsmNodeName = iconv.convert(ffi_string(prop.rsm_node_name), "CP949", "UTF-8") or ""
 	objectInfo.normalizedWorldPosition = {
 		x = prop.position.x * RagnarokGND.NORMALIZING_SCALE_FACTOR,
