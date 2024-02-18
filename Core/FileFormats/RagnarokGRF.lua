@@ -184,6 +184,10 @@ function RagnarokGRF:DecodeFileEntries()
 end
 
 function RagnarokGRF:DecodeFileName(input)
+	if input == "" then
+		return input
+	end
+
 	-- This should likely be moved since it won't happen at decoding time, only on demand (in other decoders)
 	if type(input) == "string" then
 		local unicodeFilePath, err = iconv.convert(input, "CP949", "UTF-8")
