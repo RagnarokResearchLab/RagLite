@@ -32,14 +32,14 @@ function RagnarokRSM:Construct()
 		boundingBoxes = {},
 	}
 
-	setmetatable(instance, self)
+	setmetatable(instance, {
+		__index = self,
+	})
 
 	return instance
 end
 
-RagnarokRSM.__index = RagnarokRSM
-RagnarokRSM.__call = RagnarokRSM.Construct
-setmetatable(RagnarokRSM, RagnarokRSM)
+class("RagnarokRSM", RagnarokRSM)
 
 function RagnarokRSM:DecodeFileContents(fileContents)
 	local startTime = uv.hrtime()
@@ -91,12 +91,14 @@ function RagnarokRSM:DecodeNodeHierarchy()
 	self.opacity = 1
 	self.opacity = reader:GetUnsignedInt8() / 255
 
+	self.animationFPS = 60
+	self.numAnimationFramesPerCycle = self.animationDurationInMilliseconds / 1000 * self.animationFPS
 	if self.version >= 2.2 then
 		self.animationFPS = reader:GetFloat()
 
 		-- 2.x: Loop animation after <length> frames
 		self.numAnimationFramesPerCycle = animationLength
-		self.animationDurationInMilliseconds = (animationLength / self.animationFPS) * 1000
+		self.animationDurationInMilliseconds = (self.numAnimationFramesPerCycle / self.animationFPS) * 1000
 	else
 		self.mysteryBytes = reader:GetCountedString(16) -- Probably unused garbage bytes?
 		assert(self.mysteryBytes == string.rep("\000", 16), self.mysteryBytes)
