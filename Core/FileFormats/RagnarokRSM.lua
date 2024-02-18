@@ -1,4 +1,5 @@
 local assertions = require("assertions")
+local iconv = require("iconv")
 local uv = require("uv")
 
 local assert = assert
@@ -186,11 +187,15 @@ function RagnarokRSM:DecodeMeshNode()
 	if self.version >= 2.2 then
 		local numCharactersToRead = reader:GetInt32()
 		mesh.name = reader:GetNullTerminatedString(numCharactersToRead)
+		mesh.name = iconv.convert(mesh.name, "CP949", "UTF-8") or ""
 		numCharactersToRead = reader:GetInt32()
 		mesh.parentNodeName = reader:GetNullTerminatedString(numCharactersToRead)
+		mesh.parentNodeName = iconv.convert(mesh.parentNodeName, "CP949", "UTF-8") or ""
 	else
 		mesh.name = reader:GetNullTerminatedString(40)
+		mesh.name = iconv.convert(mesh.name, "CP949", "UTF-8") or ""
 		mesh.parentNodeName = reader:GetNullTerminatedString(40)
+		mesh.parentNodeName = iconv.convert(mesh.parentNodeName, "CP949", "UTF-8") or ""
 	end
 
 	if self.version >= 2.3 then
