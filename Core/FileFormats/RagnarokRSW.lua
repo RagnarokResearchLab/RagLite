@@ -1,4 +1,5 @@
 local ffi = require("ffi")
+local iconv = require("iconv")
 local uv = require("uv")
 
 local tonumber = tonumber
@@ -323,13 +324,13 @@ function RagnarokRSW:DecodeAnimatedProps()
 		objectInfo.unknownMysteryByte = 0
 	end
 
-	objectInfo.name = ffi_string(prop.name)
+	objectInfo.name = iconv.convert(ffi_string(prop.name), "CP949", "UTF-8") or ""
 	objectInfo.animationTypeID = tonumber(prop.animation_type_id)
 	objectInfo.animationSpeedPercentage = tonumber(prop.animation_speed)
 	objectInfo.isSolid = tonumber(prop.block_type_id) == RagnarokRSW.PROP_COLLISION_TYPE_SOLID
 
-	objectInfo.rsmFile = ffi_string(prop.rsm_model_name)
-	objectInfo.rsmNodeName = ffi_string(prop.rsm_node_name)
+	objectInfo.rsmFile = iconv.convert(ffi_string(prop.rsm_model_name), "CP949", "UTF-8") or ""
+	objectInfo.rsmNodeName = iconv.convert(ffi_string(prop.rsm_node_name), "CP949", "UTF-8") or ""
 	objectInfo.normalizedWorldPosition = {
 		x = prop.position.x * RagnarokGND.NORMALIZING_SCALE_FACTOR,
 		y = -1 * prop.position.y * RagnarokGND.NORMALIZING_SCALE_FACTOR,
