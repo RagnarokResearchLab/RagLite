@@ -1,6 +1,6 @@
 local bit = require("bit")
 local ffi = require("ffi")
-local webgpu = require("webgpu")
+local webgpu = require("wgpu")
 
 local Buffer = {
 	VERTEX_BUFFER_FLAGS = bit.bor(ffi.C.WGPUBufferUsage_CopyDst, ffi.C.WGPUBufferUsage_Vertex),

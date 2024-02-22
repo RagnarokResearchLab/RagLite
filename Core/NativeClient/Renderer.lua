@@ -8,7 +8,7 @@ local rml = require("rml")
 local uv = require("uv")
 local transform = require("transform")
 local validation = require("validation")
-local webgpu = require("webgpu")
+local webgpu = require("wgpu")
 
 local GPU = require("Core.NativeClient.WebGPU.GPU")
 local WidgetDrawingPipeline = require("Core.NativeClient.WebGPU.Pipelines.WidgetDrawingPipeline")

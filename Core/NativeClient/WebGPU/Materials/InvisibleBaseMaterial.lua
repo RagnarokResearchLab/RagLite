@@ -7,7 +7,7 @@ local ScreenshotCaptureTexture = require("Core.NativeClient.WebGPU.RenderTargets
 
 local uuid = require("uuid")
 local ffi = require("ffi")
-local webgpu = require("webgpu")
+local webgpu = require("wgpu")
 
 local InvisibleBaseMaterial = {
 	diffuseColor = {

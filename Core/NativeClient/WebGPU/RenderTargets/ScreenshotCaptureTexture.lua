@@ -1,7 +1,7 @@
 local bit = require("bit")
 local console = require("console")
 local ffi = require("ffi")
-local webgpu = require("webgpu")
+local webgpu = require("wgpu")
 
 local Buffer = require("Core.NativeClient.WebGPU.Buffer")
 local CommandEncoder = require("Core.NativeClient.WebGPU.CommandEncoder")

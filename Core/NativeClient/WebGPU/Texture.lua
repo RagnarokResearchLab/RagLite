@@ -3,7 +3,7 @@ local Color = require("Core.NativeClient.DebugDraw.Color")
 local bit = require("bit")
 local ffi = require("ffi")
 local transform = require("transform")
-local webgpu = require("webgpu")
+local webgpu = require("wgpu")
 
 local cast = ffi.cast
 local new = ffi.new

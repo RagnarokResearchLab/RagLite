@@ -1,6 +1,6 @@
 local bit = require("bit")
 local ffi = require("ffi")
-local webgpu = require("webgpu")
+local webgpu = require("wgpu")
 
 local Device = require("Core.NativeClient.WebGPU.Device")
 local UniformBuffer = require("Core.NativeClient.WebGPU.UniformBuffer")

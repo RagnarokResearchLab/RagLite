@@ -2,7 +2,7 @@ local Texture = require("Core.NativeClient.WebGPU.Texture")
 
 local ffi = require("ffi")
 local glfw = require("glfw")
-local webgpu = require("webgpu")
+local webgpu = require("wgpu")
 
 local new = ffi.new
 local ffi_string = ffi.string

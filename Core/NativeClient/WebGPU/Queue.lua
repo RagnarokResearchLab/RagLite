@@ -1,4 +1,4 @@
-local webgpu = require("webgpu")
+local webgpu = require("wgpu")
 
 local Queue = {}
 

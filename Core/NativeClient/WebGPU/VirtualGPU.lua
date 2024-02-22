@@ -1,6 +1,6 @@
 local etrace = require("etrace")
 local ffi = require("ffi")
-local webgpu = require("webgpu")
+local webgpu = require("wgpu")
 
 local VirtualGPU = {
 	events = {

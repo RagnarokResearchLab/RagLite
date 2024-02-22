@@ -786,23 +786,6 @@ function RagnarokGND:ComputeFlatFaceNormalRight(gridU, gridV)
 	return rightFaceNormal
 end
 
-local function nextPowerOfTwo(n)
-	if n <= 0 then
-		return 1
-	end
-
-	if bit.band(n, (n - 1)) == 0 then
-		return n
-	end
-
-	local power = 1
-	while power < n do
-		power = power * 2
-	end
-
-	return power
-end
-
 function RagnarokGND:GenerateLightmapTextureImage(posterizationLevel)
 	posterizationLevel = posterizationLevel or RagnarokGND.LIGHTMAP_POSTERIZATION_LEVEL
 	console.startTimer("Generate combined lightmap texture image")
@@ -810,7 +793,7 @@ function RagnarokGND:GenerateLightmapTextureImage(posterizationLevel)
 	local width = 2048 -- TBD: Should use MAX_TEXTURE_DIMENSION?
 	local numSlicesPerRow = 2048 / 8
 	local numRows = math.ceil(self.lightmapFormat.numSlices / numSlicesPerRow)
-	local height = nextPowerOfTwo(numRows * 8)
+	local height = bit.ceil(numRows * 8)
 
 	printf("[RagnarokGND] Computed lightmap texture dimensions: %dx%d", width, height)
 	local numBytesWritten = 0
@@ -873,7 +856,7 @@ function RagnarokGND:ComputeLightmapTextureCoords(lightmapSliceID)
 	local textureWidth = 2048 -- TBD: Should use MAX_TEXTURE_DIMENSION?
 	local numSlicesPerRow = 2048 / 8
 	local numRows = math.ceil(self.lightmapFormat.numSlices / numSlicesPerRow)
-	local textureHeight = nextPowerOfTwo(numRows * 8)
+	local textureHeight = bit.ceil(numRows * 8)
 	local sliceSize = 8
 
 	local sliceU = lightmapSliceID % numSlicesPerRow

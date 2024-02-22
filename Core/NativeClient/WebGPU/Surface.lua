@@ -1,6 +1,6 @@
 local ffi = require("ffi")
 local glfw = require("glfw")
-local webgpu = require("webgpu")
+local webgpu = require("wgpu")
 
 local assert = assert
 local tonumber = tonumber
