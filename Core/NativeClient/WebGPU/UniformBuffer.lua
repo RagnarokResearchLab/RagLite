@@ -5,7 +5,7 @@ local _ = require("Core.VectorMath.Matrix4D") -- Only needed for the cdefs right
 
 local bit = require("bit")
 local ffi = require("ffi")
-local webgpu = require("webgpu")
+local webgpu = require("wgpu")
 
 local new = ffi.new
 local sizeof = ffi.sizeof

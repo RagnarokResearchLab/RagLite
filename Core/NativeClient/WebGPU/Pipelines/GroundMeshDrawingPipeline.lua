@@ -1,6 +1,6 @@
 local bit = require("bit")
 local ffi = require("ffi")
-local webgpu = require("webgpu")
+local webgpu = require("wgpu")
 
 local BasicTriangleDrawingPipeline = require("Core.NativeClient.WebGPU.Pipelines.BasicTriangleDrawingPipeline")
 local Device = require("Core.NativeClient.WebGPU.Device")

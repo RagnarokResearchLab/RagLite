@@ -1,7 +1,7 @@
 local Device = require("Core.NativeClient.WebGPU.Device")
 local Queue = require("Core.NativeClient.WebGPU.Queue")
 
-local webgpu = require("webgpu")
+local webgpu = require("wgpu")
 
 local CommandEncoder = {}
 

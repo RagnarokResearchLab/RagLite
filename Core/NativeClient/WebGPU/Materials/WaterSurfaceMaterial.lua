@@ -7,7 +7,7 @@ local Texture = require("Core.NativeClient.WebGPU.Texture")
 local UniformBuffer = require("Core.NativeClient.WebGPU.UniformBuffer")
 
 local ffi = require("ffi")
-local webgpu = require("webgpu")
+local webgpu = require("wgpu")
 
 local WaterSurfaceMaterial = {
 	pipeline = WaterPlaneDrawingPipeline,
