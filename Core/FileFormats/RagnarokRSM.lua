@@ -1,5 +1,6 @@
 local assertions = require("assertions")
 local iconv = require("iconv")
+local json = require("json")
 local uv = require("uv")
 
 local assert = assert
@@ -426,6 +427,25 @@ function RagnarokRSM:DecodeOptionalBoundingBoxes()
 		assert(boundingBox.unknownFlag == 0, boundingBox.unknownFlag) -- Unsupported, so fail loudly
 		table_insert(self.boundingBoxes, boundingBox)
 	end
+end
+
+function RagnarokRSM:ToJSON()
+	local rsmInfo = {
+		signature = self.signature,
+		version = self.version,
+		animationDurationInMilliseconds = self.animationDurationInMilliseconds,
+		shadingModeID = self.shadingModeID,
+		opacity = self.opacity,
+		animationFPS = self.animationFPS,
+		numAnimationFramesPerCycle = self.numAnimationFramesPerCycle,
+		mysteryBytes = self.mysteryBytes,
+		texturePaths = self.texturePaths,
+		rootNodes = self.rootNodes,
+		meshes = self.meshes,
+		scaleKeyframes = self.scaleKeyframes,
+		boundingBoxes = self.boundingBoxes,
+	}
+	return json.prettier(rsmInfo)
 end
 
 return RagnarokRSM
