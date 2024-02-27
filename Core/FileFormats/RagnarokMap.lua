@@ -1,4 +1,5 @@
 local AnimatedWaterPlane = require("Core.FileFormats.RSW.AnimatedWaterPlane")
+local RagnarokGAT = require("Core.FileFormats.RagnarokGAT")
 local RagnarokGND = require("Core.FileFormats.RagnarokGND")
 local RagnarokGRF = require("Core.FileFormats.RagnarokGRF")
 local RagnarokRSW = require("Core.FileFormats.RagnarokRSW")
@@ -85,8 +86,14 @@ function RagnarokMap:LoadResources(mapID)
 	local gndBytes = self:FetchResourceByID(gndName)
 	gnd:DecodeFileContents(gndBytes)
 
+	local gat = RagnarokGAT()
+	local gatName = mapID .. ".gat"
+	local gatBytes = self:FetchResourceByID(gatName)
+	gat:DecodeFileContents(gatBytes)
+
 	self.rsw = rsw
 	self.gnd = gnd
+	self.gat = gat
 end
 
 function RagnarokMap:LoadTerrainGeometry(mapID)
