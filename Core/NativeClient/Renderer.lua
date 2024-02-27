@@ -48,7 +48,7 @@ local DEFAULT_SUNLIGHT_COLOR = DEFAULT_AMBIENT_COLOR
 local DEFAULT_SUNLIGHT_DIRECTION = { x = 1, y = -1, z = 1 }
 
 local Renderer = {
-	clearColorRGBA = { Color.GREY.red, Color.GREY.green, Color.GREY.blue, 0 },
+	clearColorRGBA = { Color.BLACK.red, Color.BLACK.green, Color.BLACK.blue, 0 },
 	userInterfaceTexturesToMaterial = {},
 	meshes = {},
 	ambientLight = {
