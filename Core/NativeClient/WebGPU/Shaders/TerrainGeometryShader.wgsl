@@ -131,7 +131,7 @@ fn vs_main(in: VertexInput) -> VertexOutput {
 	let fogFarLimit = uPerSceneData.fogLimits.y;
 	let fogFactor = (fogFarLimit - distance) / (fogFarLimit - fogNearLimit);
 	out.fogFactor = 1.0 - clamp(fogFactor, 0.0, 1.0);
-	
+
 	return out;
 }
 
@@ -140,10 +140,59 @@ fn isTransparentBackgroundPixel(diffuseTextureColor : vec4f) -> bool {
 	return (diffuseTextureColor.r >= 254.0/255.0 && diffuseTextureColor.g <= 3.0/255.0 && diffuseTextureColor.b >= 254.0/255.0);
 }
 
+fn from_linear(linear: vec4<f32>) -> vec4<f32> {
+    let cutoff = step(linear, vec4<f32>(0.0031308));
+    let higher = vec4<f32>(1.055) * pow(linear, vec4(1.0 / 2.4)) - vec4(0.055);
+    let lower = linear * vec4<f32>(12.92);
+    return mix(higher, lower, cutoff);
+}
+
+// The input isn't really sRGB since lighting computations happen without converting to linear space first
+fn srgb2linear(srgbColor: vec4f) -> vec4f {
+	let cutoff = step(srgbColor, vec4f(0.04045));
+	let higher = pow((srgbColor + vec4f(0.055)) / vec4f(1.055), vec4f(2.4));
+	let lower = srgbColor / vec4f(12.92);
+
+	return mix(higher, lower, cutoff);
+}
+
+
+
+fn to_linear(nonlinear: vec4<f32>) -> vec4<f32> { // TODO look up formula again, maybe it's wrong?
+    let cutoff = step(nonlinear, vec4<f32>(0.04045));
+    let higher = pow((nonlinear + vec4<f32>(0.055)) / vec4<f32>(1.055), vec4<f32>(2.4));
+    let lower = nonlinear / vec4<f32>(12.92);
+    return mix(higher, lower, cutoff);
+}
+
+fn downsample(srgbColor : vec3f) -> vec3f {
+
+
+	// srgbColor = pow(srgbColor, vec3f(1.0 / 2.2)); // looks wrong, guess no gamma correction used here?
+	let c = srgbColor;
+    var color = vec3<u32>(c * 255.0);
+
+	let shiftAmount = u32(3); // TBD
+	color.r = (color.r >> shiftAmount) << shiftAmount;
+	color.g = (color.g >> shiftAmount) << shiftAmount;
+	color.b = (color.b >> shiftAmount) << shiftAmount;
+
+	// color = color + u32(8);
+
+	var linearColor = vec3f(color) / 255.0;
+	// linearColor = mix(linearColor / 12.92, pow((linearColor + vec3(0.055)) / vec3(1.055), vec3(2.4)), step(vec3(0.04045), linearColor));
+	// linearColor = from_linear(vec4f(linearColor, 1.0)).rgb;
+	// linearColor = pow(linearColor, vec3f(1.0 / 2.2));
+	return linearColor;
+}
+
 @fragment
 fn fs_main(in: VertexOutput) -> @location(0) vec4f {
 	let textureCoords = in.diffuseTextureCoords;
-	var diffuseTextureColor = textureSample(diffuseTexture, diffuseTextureSampler, textureCoords);
+
+	var diffuseTextureColor = (textureSample(diffuseTexture, diffuseTextureSampler, textureCoords));
+	// var linearizedDiffuseTextureColor = pow(diffuseTextureColor.rgb, vec3f(1.5 / 2.2));
+
 	let normal = normalize(in.surfaceNormal);
 	let sunlightColor = uPerSceneData.directionalLightColor.rgb;
 	let ambientColor = uPerSceneData.ambientLight.rgb;
@@ -153,17 +202,24 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4f {
 	}
 
 	let lightmapTexCoords = in.lightmapTextureCoords;
-	var lightmapTextureColor = textureSample(lightmapTexture, lightmapTextureSampler, lightmapTexCoords);
+	// TBD alpha also in srgb?
+	var lightmapTextureColor = (textureSample(lightmapTexture, lightmapTextureSampler, lightmapTexCoords));
+	// lightmapTextureColor = vec4f(lightmapTextureColor.r / 2.0, lightmapTextureColor.g / 2.0, lightmapTextureColor.b / 2.0, lightmapTextureColor.a); // TODO remove, use let instead of var
+	// lightmapTextureColor = lightmapTextureColor * 2.0;
 
 	// Simulated fixed-function pipeline (DirectX7/9) - no specular highlights needed AFAICT?
 	let sunlightRayOrigin = -normalize(uPerSceneData.directionalLightDirection.xyz);
 	let sunlightColorContribution = max(dot(sunlightRayOrigin, normal), 0.0);
 	let directionalLightColor = sunlightColorContribution * sunlightColor;
-	let combinedLightContribution = clampToUnitRange(directionalLightColor + ambientColor) * lightmapTextureColor.a;
+	let combinedLightContribution = clampToUnitRange(directionalLightColor + ambientColor);
 
 	// Screen blending increases the vibrancy of colors (see https://en.wikipedia.org/wiki/Blend_modes#Screen)
 	let contrastCorrectionColor = clampToUnitRange(ambientColor + sunlightColor - (sunlightColor * ambientColor));
-	let fragmentColor = clampToUnitRange(in.color * contrastCorrectionColor * combinedLightContribution * diffuseTextureColor.rgb + lightmapTextureColor.rgb);
+	var fragmentColor = clampToUnitRange(in.color * contrastCorrectionColor) * combinedLightContribution
+	 * downsample(diffuseTextureColor.rgb)
+	* lightmapTextureColor.a + lightmapTextureColor.rgb
+// + vec3f(8.0/255.0, 8.0/255.0, 8.0/255.0) // WTF? Gamma correction? Rounding errors? Precision/interpolation? (make adjustable via settings?)
+;
 
 	// Should be a no-op if fog is disabled, since the fogFactor would be zero
 	let foggedColor = mix(fragmentColor.rgb, uPerSceneData.fogColor.rgb, in.fogFactor);
@@ -171,6 +227,10 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4f {
 	// Gamma-correction:
 	// WebGPU assumes that the colors output by the fragment shader are given in linear space
 	// When setting the surface format to BGRA8UnormSrgb it performs a linear to sRGB conversion
-	let gammaCorrectedColor = pow(foggedColor.rgb, vec3f(2.2));
-	return vec4f(gammaCorrectedColor, diffuseTextureColor.a + DEBUG_ALPHA_OFFSET);
+	// let gammaCorrectedColor = pow(foggedColor.rgb, vec3f(2.2)); // linear to srgb (TODO only if surface prefers srgb!)
+	// let gammaCorrectedColor = srgb2linear(vec4f(foggedColor, 1.0)); // TODO revert
+	let gammaCorrectedColor = srgb2linear(vec4f(fragmentColor, 1.0));
+	// let gammaCorrectedColor = from_linear(vec4f(foggedColor, 1.0));
+	// let gammaCorrectedColor = foggedColor;
+	return vec4f(fragmentColor.rgb, diffuseTextureColor.a + DEBUG_ALPHA_OFFSET);
 }

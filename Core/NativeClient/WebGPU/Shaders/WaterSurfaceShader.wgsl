@@ -10,6 +10,7 @@ struct VertexOutput {
 	@builtin(position) position: vec4f,
 	@location(0) color: vec3f,
 	@location(1) diffuseTextureCoords: vec2f,
+	@location(2) fogFactor: f32,
 };
 
 // CameraBindGroup: Updated once per frame
@@ -23,6 +24,9 @@ struct PerSceneData {
 	unusedPadding: f32,
 	directionalLightDirection: vec4f,
 	directionalLightColor: vec4f,
+	cameraWorldPosition: vec4f,
+	fogColor: vec4f,
+	fogLimits: vec4f,
 };
 
 @group(0) @binding(0) var<uniform> uPerSceneData: PerSceneData;
@@ -157,7 +161,41 @@ fn vs_main(in: VertexInput) -> VertexOutput {
 
 	out.color = in.color;
 	out.diffuseTextureCoords = in.diffuseTextureCoords;
+
+	let worldPosition = T1 * S * homogeneousPosition;
+	let distance = length(worldPosition.xyz - uPerSceneData.cameraWorldPosition.xyz);
+
+	let fogNearLimit = uPerSceneData.fogLimits.x;
+	let fogFarLimit = uPerSceneData.fogLimits.y;
+	let fogFactor = (fogFarLimit - distance) / (fogFarLimit - fogNearLimit);
+	out.fogFactor = 1.0 - clamp(fogFactor, 0.0, 1.0);
+
 	return out;
+}
+
+fn downsample(highFidelityColor : vec3f) -> vec3f {
+	// srgbColor = pow(srgbColor, vec3f(1.0 / 2.2)); // looks wrong, guess no gamma correction used here?
+	let c = highFidelityColor;
+    var color = vec3<u32>(c * 255.0);
+
+	let shiftAmount = u32(3); // TBD
+	color.r = (color.r >> shiftAmount) << shiftAmount;
+	color.g = (color.g >> shiftAmount) << shiftAmount;
+	color.b = (color.b >> shiftAmount) << shiftAmount;
+
+	// color = color + u32(8);
+
+	var lowFidelityColor = vec3f(color) / 255.0;
+
+	return lowFidelityColor;
+}
+
+fn srgb2linear(srgbColor: vec4f) -> vec4f {
+	let cutoff = step(srgbColor, vec4f(0.04045)); // 1.0/2.2
+	let higher = pow((srgbColor + vec4f(0.055)) / vec4f(1.055), vec4f(2.4));
+	let lower = srgbColor / vec4f(12.92);
+
+	return mix(higher, lower, cutoff);
 }
 
 @fragment
@@ -168,11 +206,19 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4f {
 	let textureIndex = uMaterialInstanceData.textureIndex;
 	let diffuseTextureColor = textureSampleLevel(diffuseTextureArray[textureIndex], diffuseTextureSamplerArray[textureIndex], textureCoords, mipLevel);
 	let materialColor = vec4f(uMaterialInstanceData.diffuseRed, uMaterialInstanceData.diffuseGreen, uMaterialInstanceData.diffuseBlue, uMaterialInstanceData.materialOpacity);
-	let finalColor = in.color * diffuseTextureColor.rgb * materialColor.rgb;
+	var fragmentColor = in.color  * downsample(diffuseTextureColor.rgb * materialColor.rgb);
+	// fragmentColor = vec3f(1.0, 1.0, 1.0);
+	// fragmentColor = vec3f(0.0, 0.0, 0.0);
+	// fragmentColor = vec3f(192.0 / 255.0, 128.0 / 255.0, 64.0 / 255.0);
 
+	let foggedColor = mix(fragmentColor.rgb, uPerSceneData.fogColor.rgb, in.fogFactor);
 	// Gamma-correction:
 	// WebGPU assumes that the colors output by the fragment shader are given in linear space
 	// When setting the surface format to BGRA8UnormSrgb it performs a linear to sRGB conversion
-	let gammaCorrectedColor = pow(finalColor.rgb, vec3f(2.2));
-	return vec4f(gammaCorrectedColor, diffuseTextureColor.a * materialColor.a + DEBUG_ALPHA_OFFSET);
+	// let gammaCorrectedColor = srgb2linear(vec4f(foggedColor, 1.0)); // TODO revert
+	var gammaCorrectedColor = srgb2linear(vec4f(fragmentColor, diffuseTextureColor.a * materialColor.a + DEBUG_ALPHA_OFFSET));
+	// gammaCorrectedColor = vec4f(1.0, 1.0, 1.0, 1.0);
+	// return vec4f(gammaCorrectedColor.rgb, diffuseTextureColor.a * materialColor.a + DEBUG_ALPHA_OFFSET);
+	// return vec4f(gammaCorrectedColor.rgb, gammaCorrectedColor.a );
+	return vec4f(fragmentColor.rgb, diffuseTextureColor.a * materialColor.a + DEBUG_ALPHA_OFFSET );
 }

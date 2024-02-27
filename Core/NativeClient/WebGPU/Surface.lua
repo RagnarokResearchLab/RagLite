@@ -33,12 +33,18 @@ function Surface:Construct(wgpuInstance, wgpuAdapter, wgpuDevice, glfwWindow)
 end
 
 function Surface:UpdateConfiguration()
-	local preferredTextureFormat = webgpu.bindings.wgpu_surface_get_preferred_format(self.wgpuSurface, self.wgpuAdapter)
-	self.preferredTextureFormat = preferredTextureFormat -- Required to create the render pipeline
-	assert(
-		preferredTextureFormat == ffi.C.WGPUTextureFormat_BGRA8UnormSrgb,
-		"Only sRGB texture formats are currently supported"
-	)
+	-- local preferredTextureFormat = webgpu.bindings.wgpu_surface_get_preferred_format(self.wgpuSurface, self.wgpuAdapter)
+	-- local preferredTextureFormat = webgpu.bindings.wgpu_surface_get_preferred_format(self.wgpuSurface, self.wgpuAdapter)
+	-- assert(
+	-- preferredTextureFormat == ffi.C.WGPUTextureFormat_BGRA8UnormSrgb,
+	-- "Only sRGB texture formats are currently supported"
+	-- )
+
+	-- Using a suboptimal format is required for correct blending operations (cannot write to sRGB)
+	-- WebGPU must copy the buffer, so there's unavoidable conversion overhead either way
+	-- Also, modern devices should have hardware support for RGB <-> sRGB
+	local preferredTextureFormat = ffi.C.WGPUTextureFormat_BGRA8Unorm -- Texture.DEFAULT_TEXTURE_FORMAT
+	self.preferredTextureFormat = preferredTextureFormat
 
 	local textureViewDescriptor = self.wgpuTextureViewDescriptor
 	textureViewDescriptor.dimension = ffi.C.WGPUTextureViewDimension_2D
@@ -58,6 +64,7 @@ function Surface:UpdateConfiguration()
 	assert(viewportHeight > 0, "Viewport height should be set")
 	surfaceConfiguration.width = viewportWidth
 	surfaceConfiguration.height = viewportHeight
+	surfaceConfiguration.alphaMode = ffi.C.WGPUCompositeAlphaMode_Opaque
 	surfaceConfiguration.presentMode = ffi.C.WGPUPresentMode_Fifo
 
 	webgpu.bindings.wgpu_surface_configure(self.wgpuSurface, surfaceConfiguration)
