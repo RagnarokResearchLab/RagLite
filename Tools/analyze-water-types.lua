@@ -7,13 +7,23 @@ local FileAnalyzer = require("Tools.FileAnalyzer")
 local console = require("console")
 local json = require("json")
 
+local table_insert = table.insert
+
 local grfPath = "data.grf"
 local grf = RagnarokGRF()
 grf:Open(grfPath)
 
 local rswFileList = grf:FindFilesByType("rsw")
 local gndFileList = grf:FindFilesByType("gnd")
-local fileList = { unpack(rswFileList), unpack(gndFileList) }
+local fileList = {}
+
+for index, grfEntry in ipairs(rswFileList) do
+	table_insert(fileList, grfEntry)
+end
+
+for index, grfEntry in ipairs(gndFileList) do
+	table_insert(fileList, grfEntry)
+end
 
 AnimatedWaterPlane.PREALLOCATE_GEOMETRY_BUFFERS = false -- Will run OOM here if preallocating all these buffers
 
