@@ -10,7 +10,7 @@ local new = ffi.new
 local math_floor = math.floor
 
 local Texture = {
-	DEFAULT_TEXTURE_FORMAT = ffi.C.WGPUTextureFormat_RGBA8Unorm, -- TBD: WGPUTextureFormat_BGRA8UnormSrgb ?
+	DEFAULT_TEXTURE_FORMAT = ffi.C.WGPUTextureFormat_RGBA8Unorm,
 	MAX_TEXTURE_DIMENSION = 4096,
 	ERROR_DIMENSIONS_NOT_POWER_OF_TWO = "Texture dimensions should always be a power of two",
 	ERROR_DIMENSIONS_EXCEEDING_LIMIT = "Texture dimensions must not exceed the configured GPU limit",

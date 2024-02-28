@@ -167,10 +167,5 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4f {
 
 	// Should be a no-op if fog is disabled, since the fogFactor would be zero
 	let foggedColor = mix(fragmentColor.rgb, uPerSceneData.fogColor.rgb, in.fogFactor);
-
-	// Gamma-correction:
-	// WebGPU assumes that the colors output by the fragment shader are given in linear space
-	// When setting the surface format to BGRA8UnormSrgb it performs a linear to sRGB conversion
-	let gammaCorrectedColor = pow(foggedColor.rgb, vec3f(2.2));
-	return vec4f(gammaCorrectedColor, diffuseTextureColor.a + DEBUG_ALPHA_OFFSET);
+	return vec4f(foggedColor.rgb, diffuseTextureColor.a + DEBUG_ALPHA_OFFSET);
 }

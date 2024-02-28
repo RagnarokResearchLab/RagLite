@@ -46,6 +46,11 @@ function GroundMeshDrawingPipeline:Construct(wgpuDeviceHandle, textureFormatID)
 							dstFactor = ffi.C.WGPUBlendFactor_OneMinusSrcAlpha,
 							operation = ffi.C.WGPUBlendOperation_Add,
 						},
+						alpha = {
+							srcFactor = ffi.C.WGPUBlendFactor_One,
+							dstFactor = ffi.C.WGPUBlendFactor_OneMinusSrcAlpha,
+							operation = ffi.C.WGPUBlendOperation_Add,
+						},
 					}),
 					writeMask = ffi.C.WGPUColorWriteMask_All,
 				}),
