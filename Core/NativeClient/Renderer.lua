@@ -99,10 +99,7 @@ local Renderer = {
 
 function Renderer:InitializeWithGLFW(nativeWindowHandle)
 	Renderer:CreateGraphicsContext(nativeWindowHandle)
-
-	-- Need to compute the preferred texture format first
-	self.backingSurface:UpdateConfiguration()
-	Renderer:CompileMaterials(self.backingSurface.preferredTextureFormat)
+	Renderer:CompileMaterials(self.backingSurface.textureFormat)
 
 	Renderer:CreateUniformBuffers()
 
@@ -134,6 +131,8 @@ function Renderer:CreateGraphicsContext(nativeWindowHandle)
 
 	printf("Creating depth buffer with texture dimensions %d x %d", viewportWidth, viewportHeight)
 	self.depthStencilTexture = DepthStencilTexture(device, viewportWidth, viewportHeight)
+
+	self.backingSurface:UpdateConfiguration()
 end
 
 function Renderer:CompileMaterials(outputTextureFormat)

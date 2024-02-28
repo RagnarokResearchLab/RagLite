@@ -16,6 +16,7 @@ local Surface = {
 		BACKING_SURFACE_OUTDATED = "The backing surface is outdated and can't be used (window resized or moved?)",
 		BACKING_SURFACE_TIMEOUT = "The backing surface couldn't be accessed in time (CPU or GPU too busy?)",
 	},
+	textureFormat = ffi.C.WGPUTextureFormat_BGRA8Unorm,
 }
 
 function Surface:Construct(wgpuInstance, wgpuAdapter, wgpuDevice, glfwWindow)
@@ -33,23 +34,16 @@ function Surface:Construct(wgpuInstance, wgpuAdapter, wgpuDevice, glfwWindow)
 end
 
 function Surface:UpdateConfiguration()
-	local preferredTextureFormat = webgpu.bindings.wgpu_surface_get_preferred_format(self.wgpuSurface, self.wgpuAdapter)
-	self.preferredTextureFormat = preferredTextureFormat -- Required to create the render pipeline
-	assert(
-		preferredTextureFormat == ffi.C.WGPUTextureFormat_BGRA8UnormSrgb,
-		"Only sRGB texture formats are currently supported"
-	)
-
 	local textureViewDescriptor = self.wgpuTextureViewDescriptor
 	textureViewDescriptor.dimension = ffi.C.WGPUTextureViewDimension_2D
-	textureViewDescriptor.format = preferredTextureFormat
+	textureViewDescriptor.format = self.textureFormat
 	textureViewDescriptor.mipLevelCount = 1
 	textureViewDescriptor.arrayLayerCount = 1
 	textureViewDescriptor.aspect = ffi.C.WGPUTextureAspect_All
 
 	local surfaceConfiguration = self.wgpuSurfaceConfiguration
 	surfaceConfiguration.device = self.wgpuDevice
-	surfaceConfiguration.format = preferredTextureFormat
+	surfaceConfiguration.format = self.textureFormat
 	surfaceConfiguration.usage = ffi.C.WGPUTextureUsage_RenderAttachment
 
 	-- The underlying framebuffer may be different if DPI scaling is applied, but let's ignore that for now
@@ -62,12 +56,14 @@ function Surface:UpdateConfiguration()
 
 	webgpu.bindings.wgpu_surface_configure(self.wgpuSurface, surfaceConfiguration)
 
+	local preferredTextureFormat = webgpu.bindings.wgpu_surface_get_preferred_format(self.wgpuSurface, self.wgpuAdapter)
 	printf(
 		"Surface configuration changed: Frame buffer size is now %dx%d (preferred texture format: %d)",
 		viewportWidth,
 		viewportHeight,
 		tonumber(preferredTextureFormat)
 	)
+	self.preferredTextureFormat = preferredTextureFormat
 end
 
 function Surface:AcquireTextureView()

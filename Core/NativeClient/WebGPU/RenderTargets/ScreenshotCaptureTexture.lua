@@ -10,7 +10,7 @@ local Device = require("Core.NativeClient.WebGPU.Device")
 local format = string.format
 
 local ScreenshotCaptureTexture = {
-	OUTPUT_TEXTURE_FORMAT = ffi.C.WGPUTextureFormat_RGBA8UnormSrgb,
+	OUTPUT_TEXTURE_FORMAT = ffi.C.WGPUTextureFormat_RGBA8Unorm,
 }
 
 function ScreenshotCaptureTexture:Construct(wgpuDevice, width, height)

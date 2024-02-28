@@ -87,9 +87,5 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4f {
 	// Currently the same buffer is used when RML assigns the same texture, which won't work
 	let finalColor = in.color * diffuseTextureColor * vec4f(1.0, 1.0, 1.0, 1.0);
 
-	// Gamma-correction:
-	// WebGPU assumes that the colors output by the fragment shader are given in linear space
-	// When setting the surface format to BGRA8UnormSrgb it performs a linear to sRGB conversion
-	let gammaCorrectedColor = vec4f(pow(finalColor.rgb, vec3f(2.2)), finalColor.w);
-	return vec4f(gammaCorrectedColor);
+	return vec4f(finalColor);
 }
