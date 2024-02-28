@@ -28,8 +28,8 @@ local C_Camera = {
 	orbitDistanceInWorldUnits = 60,
 	DEGREES_PER_ZOOM_LEVEL = 5,
 	MIN_ORBIT_DISTANCE = 45,
-	MAX_ORBIT_DISTANCE = 80,
-	targetWorldPosition = Vector3D(0, 0, 0),
+	MAX_ORBIT_DISTANCE = 150,
+	targetWorldPosition = Vector3D(0.5, 0, 0.5),
 	TARGET_DEBUG_STEPSIZE_IN_WORLD_UNITS = 12,
 }
 
