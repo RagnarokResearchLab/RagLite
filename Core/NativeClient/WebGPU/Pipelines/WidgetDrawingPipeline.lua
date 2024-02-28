@@ -92,10 +92,10 @@ function WidgetDrawingPipeline:Construct(wgpuDeviceHandle, textureFormatID)
 
 	return instance
 end
-
+local vfs = require("vfs")
 function WidgetDrawingPipeline:CreateShaderModule(wgpuDeviceHandle)
 	local shaderCodeDescriptor = new("WGPUShaderModuleWGSLDescriptor", {
-		code = C_FileSystem.ReadFile(self.WGSL_SHADER_SOURCE_LOCATION),
+		code = vfs.extract(self.WGSL_SHADER_SOURCE_LOCATION) or C_FileSystem.ReadFile(self.WGSL_SHADER_SOURCE_LOCATION),
 		chain = {
 			sType = ffi.C.WGPUSType_ShaderModuleWGSLDescriptor,
 		},
