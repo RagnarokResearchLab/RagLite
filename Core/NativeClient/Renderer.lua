@@ -157,7 +157,7 @@ function Renderer:CreateUserInterface()
 	local ROBOTO_FILE_PATH = path.join("Core", "NativeClient", "Assets", "Fonts", "Roboto-Regular.ttf")
 	local RML_TEST_FILE_PATH = path.join("Tests", "Fixtures", "test.rml")
 
-	local glfwSystemInterface = rml.bindings.rml_create_glfw_system_interface()
+	local glfwSystemInterface = rml.bindings.rml_create_glfw_system_interface() -- rml.initializeCommandQueue(wgpuDevice)
 	self.rmlCommandQueue = interop.bindings.queue_create()
 	local wgpuRenderInterface = rml.bindings.rml_create_wgpu_render_interface(self.wgpuDevice, self.rmlCommandQueue)
 	rml.bindings.rml_set_system_interface(glfwSystemInterface)
@@ -166,16 +166,16 @@ function Renderer:CreateUserInterface()
 
 	assert(rml.bindings.rml_initialise(), "Failed to initialise RML library context")
 	assert(
-		rml.bindings.rml_load_font_face(ROBOTO_FILE_PATH, true),
+		rml.bindings.rml_load_font_face(ROBOTO_FILE_PATH, true), -- rml.loadFontFace() -> rmlui.LoadFontFace
 		"Failed to load default font face " .. ROBOTO_FILE_PATH
 	)
 
 	local viewportWidth, viewportHeight = self.backingSurface:GetViewportSize()
-	local rmlContext = rml.bindings.rml_context_create("default", viewportWidth, viewportHeight)
+	local rmlContext = rml.bindings.rml_context_create("default", viewportWidth, viewportHeight) -- C_Widget.SetViewportSize() -> RML.Context("default", width, height) -> rml.createContext("default", width, height) -> rmlui:CreateContext('hud', Vector2i.new(1024, 768))
 	assert(rmlContext, "Failed to create RML library context")
 	self.rmlContext = rmlContext
 
-	local document = rml.bindings.rml_context_load_document(rmlContext, RML_TEST_FILE_PATH)
+	local document = rml.bindings.rml_context_load_document(rmlContext, RML_TEST_FILE_PATH) -- C_Widget.LoadDocument(UI_PARENT_FILE_PATH)
 	assert(document ~= ffi.NULL, "Failed to load default RML document " .. RML_TEST_FILE_PATH)
 	rml.bindings.rml_document_show(document)
 end
@@ -261,6 +261,8 @@ function Renderer:RenderNextFrame(deltaTime)
 		else
 			RenderPassEncoder:SetPipeline(uiRenderPass, UserInterfaceMaterial.surfaceRenderingPipeline.wgpuPipeline)
 		end
+
+		-- etrace.publish("USER_INTERFACE_UPDATE", { renderPass = userInterfaceRenderPass, deltaTimeInNanoseconds = deltaTime } )
 		self.numWidgetTransformsUsedThisFrame = 0
 		rml.bindings.rml_context_update(self.rmlContext)
 		-- NO MORE CHANGES here before rendering the updated state!
