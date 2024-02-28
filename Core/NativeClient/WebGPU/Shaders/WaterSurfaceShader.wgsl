@@ -10,6 +10,7 @@ struct VertexOutput {
 	@builtin(position) position: vec4f,
 	@location(0) color: vec3f,
 	@location(1) diffuseTextureCoords: vec2f,
+	@location(2) fogFactor: f32,
 };
 
 // CameraBindGroup: Updated once per frame
@@ -23,6 +24,9 @@ struct PerSceneData {
 	unusedPadding: f32,
 	directionalLightDirection: vec4f,
 	directionalLightColor: vec4f,
+	cameraWorldPosition: vec4f,
+	fogColor: vec4f,
+	fogLimits: vec4f,
 };
 
 @group(0) @binding(0) var<uniform> uPerSceneData: PerSceneData;
@@ -157,6 +161,15 @@ fn vs_main(in: VertexInput) -> VertexOutput {
 
 	out.color = in.color;
 	out.diffuseTextureCoords = in.diffuseTextureCoords;
+
+	let worldPosition = T1 * S * homogeneousPosition;
+	let distance = length(worldPosition.xyz - uPerSceneData.cameraWorldPosition.xyz);
+
+	let fogNearLimit = uPerSceneData.fogLimits.x;
+	let fogFarLimit = uPerSceneData.fogLimits.y;
+	let fogFactor = (fogFarLimit - distance) / (fogFarLimit - fogNearLimit);
+	out.fogFactor = 1.0 - clamp(fogFactor, 0.0, 1.0);
+
 	return out;
 }
 
@@ -170,5 +183,6 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4f {
 	let materialColor = vec4f(uMaterialInstanceData.diffuseRed, uMaterialInstanceData.diffuseGreen, uMaterialInstanceData.diffuseBlue, uMaterialInstanceData.materialOpacity);
 	let finalColor = in.color * diffuseTextureColor.rgb * materialColor.rgb;
 
-	return vec4f(finalColor.rgb, diffuseTextureColor.a * materialColor.a + DEBUG_ALPHA_OFFSET );
+	let foggedColor = mix(finalColor.rgb, uPerSceneData.fogColor.rgb, in.fogFactor);
+	return vec4f(foggedColor.rgb, diffuseTextureColor.a * materialColor.a + DEBUG_ALPHA_OFFSET );
 }
