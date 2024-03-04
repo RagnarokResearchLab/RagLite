@@ -105,7 +105,7 @@ function RagnarokACT:DecodeAnimationFrame()
 		table_insert(frame.spriteLayers, layer)
 	end
 
-	frame.animationEventID = (self.version >= 2.0) and reader:GetInt32() or -1
+	frame.animationEventID = reader:GetInt32() -- TBD Maybe in Arcturus?
 
 	local hasSpriteAnchors = (self.version >= 2.3)
 
@@ -118,6 +118,7 @@ function RagnarokACT:DecodeAnimationFrame()
 			unknown = reader:GetInt32(),
 		}
 		table_insert(frame.anchors, anchorPoint)
+		print("UNKNOWN: %d", anchorPoint.unknown)
 	end
 
 	return frame
@@ -147,7 +148,7 @@ function RagnarokACT:DecodeSpriteLayer()
 		imageType = RagnarokACT.IMAGE_TYPES.BITMAP,
 	}
 
-	if self.version >= 2.0 then
+	if self.version >= 2.0 then -- TBD Arcturus? check versions branch
 		layer.colorTint = {
 			red = reader:GetUnsignedInt8() / 255,
 			green = reader:GetUnsignedInt8() / 255,
@@ -190,7 +191,7 @@ end
 
 function RagnarokACT:DecodeFrameTimes()
 	local reader = self.reader
-	local hasIndividualFrameTimings = (self.version >= 2.2)
+	local hasIndividualFrameTimings = (self.version >= 2.2) -- TBD 2.3? Or do we have a 2.2 ACT? (anubis test file?)
 	for animationClipID = 1, self.numAnimationClips do
 		local ticksPerFrame = hasIndividualFrameTimings and reader:GetFloat() or 4
 		local frameTimeInMilliseconds = RagnarokACT.UPDATE_INTERVAL_IN_MILLISECONDS * ticksPerFrame
