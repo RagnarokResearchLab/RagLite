@@ -78,7 +78,7 @@ function GPU:RequestLogicalDevice(adapter, options)
 				maxBindGroups = 3, -- Camera, material, transforms
 				maxUniformBuffersPerShaderStage = 1, -- Camera properties (increase for material, soon?)
 				maxSampledTexturesPerShaderStage = GPU.MAX_TEXTURE_ARRAY_SIZE,
-				maxSamplersPerShaderStage = GPU.MAX_TEXTURE_ARRAY_SIZE,
+				maxSamplersPerShaderStage = 4, -- GPU.MAX_TEXTURE_ARRAY_SIZE,
 				maxUniformBufferBindingSize = GPU.MAX_UNIFORM_BUFFER_BINDING_SIZE,
 				maxBindingsPerBindGroup = 2, -- Max. allowed binding index
 				maxDynamicUniformBuffersPerPipelineLayout = 1,
