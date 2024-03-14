@@ -157,9 +157,8 @@ function UniformBuffer:CreateMaterialBindGroupLayouts(wgpuDevice)
 		}),
 	})
 
-	-- Texture arrays (wgpu extension) for water surface textures should be added here
 	local extras = new("WGPUBindGroupLayoutEntryExtras", {
-		count = GPU.MAX_TEXTURE_ARRAY_SIZE,
+		count = 1,
 		chain = {
 			sType = ffi.C.WGPUSType_BindGroupLayoutEntryExtras,
 		},
