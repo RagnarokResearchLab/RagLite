@@ -65,12 +65,13 @@ function WaterSurfaceMaterial:CreateMaterialPropertiesBindGroup(textureArray)
 			sType = ffi.C.WGPUSType_BindGroupEntryExtras,
 		},
 	})
-	local textureSamplers = ffi.new("WGPUSampler[?]", 1)
+	local textureSamplers = ffi.new("WGPUSampler[?]", GPU.MAX_TEXTURE_ARRAY_SIZE)
 	-- There's no reason to use different samplers here, nor to allocate more than one (wasteful)
-	textureSamplers[0] = Texture.sharedTrilinearSampler
-
+	for index = 1, GPU.MAX_TEXTURE_ARRAY_SIZE, 1 do
+		textureSamplers[index - 1] = Texture.sharedTrilinearSampler
+	end
 	local textureSamplerExtras = new("WGPUBindGroupEntryExtras", {
-		samplerCount = 1,
+		samplerCount = GPU.MAX_TEXTURE_ARRAY_SIZE,
 		samplers = textureSamplers,
 		chain = {
 			sType = ffi.C.WGPUSType_BindGroupEntryExtras,
