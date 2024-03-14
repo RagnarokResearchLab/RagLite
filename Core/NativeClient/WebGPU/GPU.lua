@@ -82,7 +82,7 @@ function GPU:RequestLogicalDevice(adapter, options)
 				maxUniformBufferBindingSize = GPU.MAX_UNIFORM_BUFFER_BINDING_SIZE,
 				maxBindingsPerBindGroup = 2, -- Max. allowed binding index
 				maxDynamicUniformBuffersPerPipelineLayout = 1,
-				minStorageBufferOffsetAlignment = 32,
+				minStorageBufferOffsetAlignment = 256,
 				minUniformBufferOffsetAlignment = ffi.sizeof("mesh_uniform_t"),
 			},
 		}),
