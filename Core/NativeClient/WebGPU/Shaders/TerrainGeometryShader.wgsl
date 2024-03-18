@@ -159,11 +159,11 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4f {
 	let sunlightRayOrigin = -normalize(uPerSceneData.directionalLightDirection.xyz);
 	let sunlightColorContribution = max(dot(sunlightRayOrigin, normal), 0.0);
 	let directionalLightColor = sunlightColorContribution * sunlightColor;
-	let combinedLightContribution = clampToUnitRange(directionalLightColor + ambientColor) * lightmapTextureColor.a;
+	let combinedLightContribution = clampToUnitRange(directionalLightColor + ambientColor);
 
 	// Screen blending increases the vibrancy of colors (see https://en.wikipedia.org/wiki/Blend_modes#Screen)
 	let contrastCorrectionColor = clampToUnitRange(ambientColor + sunlightColor - (sunlightColor * ambientColor));
-	let fragmentColor = clampToUnitRange(in.color * contrastCorrectionColor * combinedLightContribution * diffuseTextureColor.rgb + lightmapTextureColor.rgb);
+	let fragmentColor = in.color * contrastCorrectionColor * combinedLightContribution * diffuseTextureColor.rgb * lightmapTextureColor.a + lightmapTextureColor.rgb;
 
 	// Should be a no-op if fog is disabled, since the fogFactor would be zero
 	let foggedColor = mix(fragmentColor.rgb, uPerSceneData.fogColor.rgb, in.fogFactor);
