@@ -821,14 +821,16 @@ function RagnarokGND:GenerateLightmapTextureImage(posterizationLevel)
 				local posterizedRed = bit.rshift(red, posterizationLevel)
 				local posterizedGreen = bit.rshift(green, posterizationLevel)
 				local posterizedBlue = bit.rshift(blue, posterizationLevel)
+				local posterizedAlpha = bit.rshift(alpha, posterizationLevel)
 				posterizedRed = bit.lshift(posterizedRed, posterizationLevel)
 				posterizedGreen = bit.lshift(posterizedGreen, posterizationLevel)
 				posterizedBlue = bit.lshift(posterizedBlue, posterizationLevel)
+				posterizedAlpha = bit.lshift(posterizedAlpha, posterizationLevel)
 
 				bufferStartPointer[writableAreaStartIndex + 0] = posterizedRed
 				bufferStartPointer[writableAreaStartIndex + 1] = posterizedGreen
 				bufferStartPointer[writableAreaStartIndex + 2] = posterizedBlue
-				bufferStartPointer[writableAreaStartIndex + 3] = alpha
+				bufferStartPointer[writableAreaStartIndex + 3] = posterizedAlpha
 			else -- Slightly wasteful, but the determinism enables testing (and it's barely noticeable anyway)
 				bufferStartPointer[writableAreaStartIndex + 0] = 255
 				bufferStartPointer[writableAreaStartIndex + 1] = 0

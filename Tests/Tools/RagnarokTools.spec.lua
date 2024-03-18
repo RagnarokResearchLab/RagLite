@@ -49,7 +49,7 @@ describe("RagnarokTools", function()
 		it("should export the GND lightmap data in a human-readable format if a valid GND buffer is passed", function()
 			local expectedLightmapChecksum = "be735bab85771a54892d4129d7aba3126e0f7f41f2c9891a28aa8dcfc897d2fa"
 			local expectedShadowmapChecksum = "4a7a36bedbb8e73797b91b2f568b59b8d4600dc3975e2265114339a5142e9175"
-			local expectedTextureChecksum = "a740daf79dda0245b71824d441f42baa9cb9c9449458090b983ec7b80a05b3bc"
+			local expectedTextureChecksum = "dfbff3a58a516c0990147567388431dee2d05dae12a01bd5fb4d30230bb79573"
 
 			local gndFileContents = C_FileSystem.ReadFile(path.join("Tests", "Fixtures", "no-water-plane.gnd"))
 			RagnarokTools:ExportLightmapsFromGND(gndFileContents)

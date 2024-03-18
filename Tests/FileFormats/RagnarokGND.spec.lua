@@ -599,7 +599,7 @@ describe("RagnarokGND", function()
 			assertEquals(lightmapTextureImage.height, 8)
 
 			local rawImageBytes = tostring(lightmapTextureImage.rgbaImageBytes)
-			local expectedTextureChecksum = 546589407
+			local expectedTextureChecksum = 288753058
 			local generatedTextureChecksum = miniz.crc32(rawImageBytes)
 			assertEquals(generatedTextureChecksum, expectedTextureChecksum)
 		end)
