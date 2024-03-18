@@ -4,6 +4,7 @@ local RagnarokGRF = require("Core.FileFormats.RagnarokGRF")
 local RagnarokRSW = require("Core.FileFormats.RagnarokRSW")
 
 local C_Resources = require("Core.NativeClient.C_Resources")
+local Texture = require("Core.NativeClient.WebGPU.Texture")
 
 local NormalsVisualization = require("Core.NativeClient.DebugDraw.NormalsVisualization")
 
@@ -99,6 +100,8 @@ function RagnarokMap:LoadTerrainGeometry(mapID)
 		local normalizedTextureImagePath = RagnarokGRF:DecodeFileName(texturePath)
 		local textureImageBytes = self:FetchResourceByID(normalizedTextureImagePath)
 		local rgbaImageBytes, width, height = C_ImageProcessing.DecodeFileContents(textureImageBytes)
+
+		rgbaImageBytes, width, height = Texture:CreateReducedColorImage(rgbaImageBytes, width, height)
 
 		printf(
 			"[RagnarokMap] Loading GND ground mesh section %d with diffuse texture %s (%d x %d)",

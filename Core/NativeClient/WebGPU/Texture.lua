@@ -209,6 +209,45 @@ function Texture:CreateTextureView(wgpuTexture, wgpuTextureViewDescriptor)
 	return webgpu.bindings.wgpu_texture_create_view(wgpuTexture, wgpuTextureViewDescriptor)
 end
 
+-- Should probably be replaced with an optimized version (via the ImageProcessing API)?
+function Texture:CreateReducedColorImage(inputImageBytes, width, height, posterizationLevel)
+	posterizationLevel = posterizationLevel or 3
+
+	local numBytesWritten = 0
+	local rgbaImageBytes = buffer.new(width * height * 4)
+	local bufferStartPointer = rgbaImageBytes:reserve(width * height * 4)
+	local inputPixels = buffer.new():put(inputImageBytes):ref()
+	for pixelV = 0, height - 1, 1 do
+		for pixelU = 0, width - 1, 1 do
+			local writableAreaStartIndex = (pixelV * width + pixelU) * 4
+			local red = inputPixels[writableAreaStartIndex + 0]
+			local green = inputPixels[writableAreaStartIndex + 1]
+			local blue = inputPixels[writableAreaStartIndex + 2]
+			local alpha = inputPixels[writableAreaStartIndex + 3]
+
+			local posterizedRed = bit.rshift(red, posterizationLevel)
+			local posterizedGreen = bit.rshift(green, posterizationLevel)
+			local posterizedBlue = bit.rshift(blue, posterizationLevel)
+			local posterizedAlpha = bit.rshift(alpha, posterizationLevel)
+			posterizedRed = bit.lshift(posterizedRed, posterizationLevel)
+			posterizedGreen = bit.lshift(posterizedGreen, posterizationLevel)
+			posterizedBlue = bit.lshift(posterizedBlue, posterizationLevel)
+			posterizedAlpha = bit.lshift(posterizedAlpha, posterizationLevel)
+
+			bufferStartPointer[writableAreaStartIndex + 0] = posterizedRed
+			bufferStartPointer[writableAreaStartIndex + 1] = posterizedGreen
+			bufferStartPointer[writableAreaStartIndex + 2] = posterizedBlue
+			bufferStartPointer[writableAreaStartIndex + 3] = posterizedAlpha
+
+			numBytesWritten = numBytesWritten + 4
+		end
+	end
+
+	rgbaImageBytes:commit(numBytesWritten)
+
+	return rgbaImageBytes, width, height
+end
+
 Texture.__call = Texture.Construct
 Texture.__index = Texture
 setmetatable(Texture, Texture)
