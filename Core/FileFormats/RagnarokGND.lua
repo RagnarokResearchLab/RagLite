@@ -10,7 +10,7 @@ local ffi = require("ffi")
 local uv = require("uv")
 
 local assert = assert
-local math_floor = math.floor
+local floor = math.floor
 local format = string.format
 local table_insert = table.insert
 local tonumber = tonumber
@@ -800,9 +800,9 @@ function RagnarokGND:GenerateLightmapTextureImage(posterizationLevel)
 	local rgbaImageBytes = buffer.new(width * height * 4)
 	local bufferStartPointer, reservedlength = rgbaImageBytes:reserve(width * height * 4)
 	for pixelV = 0, height - 1, 1 do
-		local sliceV = math_floor(pixelV / 8)
+		local sliceV = floor(pixelV / 8)
 		for pixelU = 0, width - 1, 1 do
-			local sliceU = math_floor(pixelU / 8)
+			local sliceU = floor(pixelU / 8)
 			local sliceID = sliceV * numSlicesPerRow + sliceU
 			local offsetU = pixelU % 8
 			local offsetV = pixelV % 8
@@ -827,10 +827,14 @@ function RagnarokGND:GenerateLightmapTextureImage(posterizationLevel)
 				posterizedBlue = bit.lshift(posterizedBlue, posterizationLevel)
 				posterizedAlpha = bit.lshift(posterizedAlpha, posterizationLevel)
 
-				bufferStartPointer[writableAreaStartIndex + 0] = posterizedRed
-				bufferStartPointer[writableAreaStartIndex + 1] = posterizedGreen
-				bufferStartPointer[writableAreaStartIndex + 2] = posterizedBlue
-				bufferStartPointer[writableAreaStartIndex + 3] = posterizedAlpha
+				local remainingColorDepthInBitsPerPixel = math.max(1, 8 - posterizationLevel)
+				local numAvailableColorValues = math.pow(2, remainingColorDepthInBitsPerPixel) -- 256, 128, 64, 32, 16, 8
+				local errorCorrection = 1 / numAvailableColorValues
+
+				bufferStartPointer[writableAreaStartIndex + 0] = posterizedRed + floor(errorCorrection * red)
+				bufferStartPointer[writableAreaStartIndex + 1] = posterizedGreen + floor(errorCorrection * green)
+				bufferStartPointer[writableAreaStartIndex + 2] = posterizedBlue + floor(errorCorrection * blue)
+				bufferStartPointer[writableAreaStartIndex + 3] = posterizedAlpha + floor(errorCorrection * alpha)
 			else -- Slightly wasteful, but the determinism enables testing (and it's barely noticeable anyway)
 				bufferStartPointer[writableAreaStartIndex + 0] = 255
 				bufferStartPointer[writableAreaStartIndex + 1] = 0
