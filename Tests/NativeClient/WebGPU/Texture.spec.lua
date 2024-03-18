@@ -204,4 +204,15 @@ describe("Texture", function()
 			end, Texture.ERROR_DIMENSIONS_EXCEEDING_LIMIT)
 		end)
 	end)
+
+	describe("CreateReducedColorImage", function()
+		it("should reduce the color depth of the texture image", function()
+			local testImage = "\255\192\128\000" .. "\007\007\007\007"
+			local reducedColorImage, width, height = Texture:CreateReducedColorImage(testImage, 2, 1)
+			local expectedimageBytes = "\248\192\128\000\000\000\000\000"
+			assertEquals(width, 2)
+			assertEquals(height, 1)
+			assertEquals(tostring(reducedColorImage), expectedimageBytes)
+		end)
+	end)
 end)

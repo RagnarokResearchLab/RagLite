@@ -5,6 +5,16 @@ local RagnarokRSW = require("Core.FileFormats.RagnarokRSW")
 
 local Texture = require("Core.NativeClient.WebGPU.Texture")
 
+local openssl = require("openssl")
+local digest = openssl.digest.digest
+
+local function assertImageChecksumMatches(actualImageBytes, expectedImageBytes)
+	local checksum = digest("sha256", tostring(actualImageBytes))
+	expectedImageBytes = Texture:CreateReducedColorImage(expectedImageBytes, 256, 256)
+	local expectedChecksum = digest("sha256", tostring(expectedImageBytes))
+	assertEquals(checksum, expectedChecksum)
+end
+
 local function makeFileSystem(name)
 	local testFileSystem = {
 		ROOT_DIR = path.join("Tests", "Fixtures", "Borftopia"),
@@ -80,7 +90,7 @@ describe("RagnarokMap", function()
 			assertEquals(#map.meshes, 2 + 1)
 			assertEquals(#map.meshes, #groundMeshSections + #waterPlanes)
 
-			assertEquals(map.meshes[1].diffuseTextureImage.rgbaImageBytes, gradientTexture)
+			assertImageChecksumMatches(map.meshes[1].diffuseTextureImage.rgbaImageBytes, gradientTexture)
 			assertEquals(map.meshes[1].diffuseTextureImage.width, 256)
 			assertEquals(map.meshes[1].diffuseTextureImage.height, 256)
 			assertEquals(map.meshes[1].vertexPositions, groundMeshSections[1].vertexPositions)
@@ -88,7 +98,7 @@ describe("RagnarokMap", function()
 			assertEquals(map.meshes[1].triangleConnections, groundMeshSections[1].triangleConnections)
 			assertEquals(map.meshes[1].diffuseTextureCoords, groundMeshSections[1].diffuseTextureCoords)
 
-			assertEquals(map.meshes[2].diffuseTextureImage.rgbaImageBytes, gridTexture)
+			assertImageChecksumMatches(map.meshes[2].diffuseTextureImage.rgbaImageBytes, gridTexture)
 			assertEquals(map.meshes[2].diffuseTextureImage.width, 256)
 			assertEquals(map.meshes[2].diffuseTextureImage.height, 256)
 			assertEquals(map.meshes[2].vertexPositions, groundMeshSections[2].vertexPositions)
