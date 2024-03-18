@@ -7,7 +7,7 @@ local webgpu = require("wgpu")
 
 local cast = ffi.cast
 local new = ffi.new
-local math_floor = math.floor
+local floor = math.floor
 
 local Texture = {
 	DEFAULT_TEXTURE_FORMAT = ffi.C.WGPUTextureFormat_RGBA8Unorm,
@@ -192,7 +192,7 @@ function Texture:GenerateCheckeredGridImage(textureWidthInPixels, textureHeightI
 		for v = 0, textureHeightInPixels - 1 do
 			local index = 4 * (v * textureWidthInPixels + u)
 
-			local useAlternateColor = math_floor(u / GRID_CELL_SIZE) % 2 == math_floor(v / GRID_CELL_SIZE) % 2
+			local useAlternateColor = floor(u / GRID_CELL_SIZE) % 2 == floor(v / GRID_CELL_SIZE) % 2
 			local cellColor = useAlternateColor and firstColor or secondColor
 
 			pixels[index + RGBA_OFFSET_RED] = ffi.cast("uint8_t", cellColor.red * 255)
@@ -234,10 +234,14 @@ function Texture:CreateReducedColorImage(inputImageBytes, width, height, posteri
 			posterizedBlue = bit.lshift(posterizedBlue, posterizationLevel)
 			posterizedAlpha = bit.lshift(posterizedAlpha, posterizationLevel)
 
-			bufferStartPointer[writableAreaStartIndex + 0] = posterizedRed
-			bufferStartPointer[writableAreaStartIndex + 1] = posterizedGreen
-			bufferStartPointer[writableAreaStartIndex + 2] = posterizedBlue
-			bufferStartPointer[writableAreaStartIndex + 3] = posterizedAlpha
+			local remainingColorDepthInBitsPerPixel = math.max(1, 8 - posterizationLevel)
+			local numAvailableColorValues = math.pow(2, remainingColorDepthInBitsPerPixel) -- 256, 128, 64, 32, 16, 8
+			local errorCorrection = 1 / numAvailableColorValues
+
+			bufferStartPointer[writableAreaStartIndex + 0] = posterizedRed + floor(errorCorrection * red)
+			bufferStartPointer[writableAreaStartIndex + 1] = posterizedGreen + floor(errorCorrection * green)
+			bufferStartPointer[writableAreaStartIndex + 2] = posterizedBlue + floor(errorCorrection * blue)
+			bufferStartPointer[writableAreaStartIndex + 3] = posterizedAlpha + floor(errorCorrection * alpha)
 
 			numBytesWritten = numBytesWritten + 4
 		end
