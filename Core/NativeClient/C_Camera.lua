@@ -26,9 +26,9 @@ local C_Camera = {
 	horizontalRotationAngleInDegrees = 0,
 	verticalRotationAngleInDegrees = 50,
 	orbitDistanceInWorldUnits = 60,
-	DEGREES_PER_ZOOM_LEVEL = 5,
+	DEGREES_PER_ZOOM_LEVEL = 25,
 	MIN_ORBIT_DISTANCE = 45,
-	MAX_ORBIT_DISTANCE = 80,
+	MAX_ORBIT_DISTANCE = 200,
 	targetWorldPosition = Vector3D(0, 0, 0),
 	TARGET_DEBUG_STEPSIZE_IN_WORLD_UNITS = 12,
 }

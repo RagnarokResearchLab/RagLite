@@ -324,6 +324,7 @@ function NativeClient:KEYPRESS_STATUS_CHANGED(eventID, payload)
 	local GLFW_KEY_RIGHT = glfw.bindings.glfw_find_constant("GLFW_KEY_RIGHT")
 	local GLFW_KEY_DOWN = glfw.bindings.glfw_find_constant("GLFW_KEY_DOWN")
 	local GLFW_KEY_UP = glfw.bindings.glfw_find_constant("GLFW_KEY_UP")
+	local GLFW_MOD_CTRL = glfw.bindings.glfw_find_constant("GLFW_MOD_CTRL")
 	local GLFW_MOD_SHIFT = glfw.bindings.glfw_find_constant("GLFW_MOD_SHIFT")
 	local GLFW_PRESS = glfw.bindings.glfw_find_constant("GLFW_PRESS")
 	local wasKeyPressed = tonumber(payload.key_details.action) == GLFW_PRESS
@@ -346,8 +347,24 @@ function NativeClient:KEYPRESS_STATUS_CHANGED(eventID, payload)
 		return
 	end
 
+	local GLFW_KEY_X = glfw.bindings.glfw_find_constant("GLFW_KEY_X")
+	local GLFW_KEY_Z = glfw.bindings.glfw_find_constant("GLFW_KEY_Z")
+	local wasX = payload.key_details.key == GLFW_KEY_X
+	local wasZ = payload.key_details.key == GLFW_KEY_Z
+
+	if wasX then
+		C_Camera.ZoomIn()
+		return
+	end
+
+	if wasZ then
+		C_Camera.ZoomOut()
+		return
+	end
+
+	local isModifiedByCTRL = bit.band(payload.key_details.mods, GLFW_MOD_CTRL) == 1
 	local isModifiedBySHIFT = bit.band(payload.key_details.mods, GLFW_MOD_SHIFT) == 1
-	if not isModifiedBySHIFT then
+	if not isModifiedBySHIFT and not isModifiedByCTRL then
 		return
 	end
 
@@ -355,6 +372,7 @@ function NativeClient:KEYPRESS_STATUS_CHANGED(eventID, payload)
 	local wasRightKey = payload.key_details.key == GLFW_KEY_RIGHT
 	local wasUpKey = payload.key_details.key == GLFW_KEY_UP
 	local wasDownKey = payload.key_details.key == GLFW_KEY_DOWN
+
 	local movementDirectionX = wasLeftKey and -1 or 0
 	movementDirectionX = wasRightKey and 1 or movementDirectionX
 	local movementDirectionZ = wasUpKey and 1 or 0
