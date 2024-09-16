@@ -127,6 +127,9 @@ describe("FileAnalyzer", function()
 			assertEquals(analysisResult.fields.iniFile[""], 6)
 			assertEquals(analysisResult.fields.scrFile[""], 6)
 
+			assertEquals(analysisResult.fields.animationTypeID[1], 6)
+			assertEquals(analysisResult.fields.animationTypeID[2], 6)
+
 			assertEquals(analysisResult.fields.unknownRenewalPropFlag[0], 10)
 			assertEquals(analysisResult.fields.unknownRenewalPropFlag[171], 1)
 			assertEquals(analysisResult.fields.unknownRenewalPropFlag[188], 1)
