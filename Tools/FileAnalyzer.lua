@@ -98,6 +98,7 @@ function FileAnalyzer:AnalyzeRSW(rswFiles)
 			numSpatialAudioSources = {},
 			numParticleEffectEmitters = {},
 			unknownRenewalPropFlag = {},
+			animationTypeID = {},
 			isSolid = {},
 		},
 	}
@@ -155,6 +156,11 @@ function FileAnalyzer:AnalyzeRSW(rswFiles)
 			analysisResult.fields.unknownRenewalPropFlag[doodad.unknownMysteryByte] = analysisResult.fields.unknownRenewalPropFlag[doodad.unknownMysteryByte]
 				or 0
 			analysisResult.fields.unknownRenewalPropFlag[doodad.unknownMysteryByte] = analysisResult.fields.unknownRenewalPropFlag[doodad.unknownMysteryByte]
+				+ 1
+
+			analysisResult.fields.animationTypeID[doodad.animationTypeID] = analysisResult.fields.animationTypeID[doodad.animationTypeID]
+				or 0
+			analysisResult.fields.animationTypeID[doodad.animationTypeID] = analysisResult.fields.animationTypeID[doodad.animationTypeID]
 				+ 1
 
 			analysisResult.fields.isSolid[doodad.isSolid] = analysisResult.fields.isSolid[doodad.isSolid] or 0
