@@ -71,6 +71,14 @@ end
 function RagnarokSPR:DecodeColorPalette()
 	local reader = self.reader
 
+	-- dump(self)
+	if self.bmpImagesCount == 0 then -- TODO unit test
+		printf("Ignoring color palette since this sprite has no BMP image segment")
+		-- Consume incomplete color palette bytes (TBD: Analyze them to see if it might be something else)
+		self.reader.virtualFilePointer = self.reader.endOfFilePointer
+		return
+	end
+
 	self.paletteStartOffset = reader.endOfFilePointer - sizeof("spr_palette_t")
 	self.palette = reader:GetTypedArray("spr_palette_t")
 end
