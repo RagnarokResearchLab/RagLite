@@ -156,6 +156,38 @@ describe("FileAnalyzer", function()
 			assertEquals(analysisResult.fields.version[2.5], 1)
 
 			assertEquals(analysisResult.fields.numAnimationClips[1], 5)
+
+			assertEquals(analysisResult.fields.animationFrameMysteryBytes, {
+				[-2004318072] = 1,
+				[-1532779871] = 1,
+				[-1465473371] = 1,
+				[-1263291727] = 1,
+				[0] = 11,
+				[4] = 1,
+				[32] = 1,
+				[66] = 1,
+				[145] = 1,
+				[480] = 1,
+				[640] = 1,
+				[724] = 1,
+				[904] = 1,
+				[1750] = 1,
+				[2366] = 1,
+				[3535] = 1,
+				[6757] = 1,
+				[6778] = 1,
+				[54647] = 1,
+				[67305985] = 2,
+				[134678021] = 2,
+				[286331153] = 1,
+				[572662306] = 1,
+				[858993459] = 1,
+				[1145324612] = 1,
+				[1431655765] = 1,
+				[1717986918] = 1,
+				[2004318071] = 1,
+			})
+			assertEquals(analysisResult.fields.spriteAnchorMysteryBytes, {})
 		end)
 	end)
 

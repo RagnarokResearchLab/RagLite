@@ -180,6 +180,8 @@ function FileAnalyzer:AnalyzeACT(actFiles)
 			version = {},
 			numAnimationClips = {},
 			unknownHeaderField = {},
+			animationFrameMysteryBytes = {},
+			spriteAnchorMysteryBytes = {},
 		},
 	}
 
@@ -212,6 +214,23 @@ function FileAnalyzer:AnalyzeACT(actFiles)
 			or 0
 		analysisResult.fields.unknownHeaderField[act.unknownHeaderField] = analysisResult.fields.unknownHeaderField[act.unknownHeaderField]
 			+ 1
+
+		for _, clip in ipairs(act.animationClips) do
+			for _, frame in ipairs(clip.animationFrames) do
+				for _, bytes in ipairs(frame.mysteryBytes) do
+					analysisResult.fields.animationFrameMysteryBytes[bytes] = analysisResult.fields.animationFrameMysteryBytes[bytes]
+						or 0
+					analysisResult.fields.animationFrameMysteryBytes[bytes] = analysisResult.fields.animationFrameMysteryBytes[bytes]
+						+ 1
+					for _, anchor in ipairs(frame.anchors) do
+						analysisResult.fields.spriteAnchorMysteryBytes[anchor.mysteryBytes] = analysisResult.fields.spriteAnchorMysteryBytes[anchor.mysteryBytes]
+							or 0
+						analysisResult.fields.spriteAnchorMysteryBytes[anchor.mysteryBytes] = analysisResult.fields.spriteAnchorMysteryBytes[anchor.mysteryBytes]
+							+ 1
+					end
+				end
+			end
+		end
 
 		analysisResult.numFilesAnalyzed = analysisResult.numFilesAnalyzed + 1
 	end
