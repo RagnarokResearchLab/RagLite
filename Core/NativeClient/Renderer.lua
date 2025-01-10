@@ -311,9 +311,8 @@ end
 local rmlEventNames = {
 	[ffi.C.ERROR_EVENT] = "UNKNOWN_RENDER_COMMAND",
 	[ffi.C.GEOMETRY_RENDER_EVENT] = "GEOMETRY_RENDER_EVENT",
-	[ffi.C.GEOMETRY_COMPILE_EVENT] = "GEOMETRY_COMPILE_EVENT",
-	[ffi.C.COMPILATION_RENDER_EVENT] = "COMPILATION_RENDER_EVENT",
-	[ffi.C.COMPILATION_RELEASE_EVENT] = "COMPILATION_RELEASE_EVENT",
+	[ffi.C.GEOMETRY_COMPILATION_EVENT] = "GEOMETRY_COMPILATION_EVENT",
+	[ffi.C.GEOMETRY_RELEASE_EVENT] = "GEOMETRY_RELEASE_EVENT",
 	[ffi.C.SCISSORTEST_STATUS_EVENT] = "SCISSORTEST_STATUS_EVENT",
 	[ffi.C.SCISSORTEST_REGION_EVENT] = "SCISSORTEST_REGION_EVENT",
 	[ffi.C.TEXTURE_LOAD_EVENT] = "TEXTURE_LOAD_EVENT",
@@ -341,24 +340,20 @@ function Renderer:UNKNOWN_RENDER_COMMAND(eventID, payload)
 	error("UNKNOWN_RENDER_COMMAND")
 end
 
-function Renderer:GEOMETRY_RENDER_EVENT(eventID, payload)
-	-- This should never happen: ALL geometry has to be compiled for the render interface to work
-	error("GEOMETRY_RENDER_EVENT")
+function Renderer:GEOMETRY_RENDER_EVENT(eventID, payload, uiRenderPass)
+	local geometry = payload.geometry_render_details.compiled_geometry
+	local offsetU = payload.geometry_render_details.translate_u
+	local offsetV = payload.geometry_render_details.translate_v
+	local texture = payload.geometry_render_details.texture
+	self:DrawWidget(uiRenderPass, geometry, offsetU, offsetV, texture)
 end
 
-function Renderer:GEOMETRY_COMPILE_EVENT(eventID, payload)
+function Renderer:GEOMETRY_COMPILATION_EVENT(eventID, payload)
 	-- NOOP since all the required work is done inside the render interface (C++ layer of the runtime)
 end
 
-function Renderer:COMPILATION_RENDER_EVENT(eventID, payload, uiRenderPass)
-	local geometry = payload.compilation_render_details.compiled_geometry
-	local offsetU = payload.compilation_render_details.translate_u
-	local offsetV = payload.compilation_render_details.translate_v
-	self:DrawWidget(uiRenderPass, geometry, offsetU, offsetV)
-end
-
-function Renderer:COMPILATION_RELEASE_EVENT(eventID, payload)
-	error("COMPILATION_RELEASE_EVENT") -- NYI (the memory leak doesn't matter, for now)
+function Renderer:GEOMETRY_RELEASE_EVENT(eventID, payload)
+	error("GEOMETRY_RELEASE_EVENT") -- NYI (the memory leak doesn't matter, for now)
 end
 
 function Renderer:SCISSORTEST_STATUS_EVENT(eventID, payload, uiRenderPass)
@@ -496,7 +491,7 @@ function Renderer:DrawMesh(renderPass, mesh)
 	)
 end
 
-function Renderer:DrawWidget(renderPass, compiledWidgetGeometry, offsetU, offsetV)
+function Renderer:DrawWidget(renderPass, compiledWidgetGeometry, offsetU, offsetV, texture)
 	local SIZEOF_RML_VERTEX = 20
 	local vertexBufferSize = compiledWidgetGeometry.num_vertices * SIZEOF_RML_VERTEX
 	local indexBufferSize = compiledWidgetGeometry.num_indices * ffi.sizeof("int")
@@ -529,10 +524,10 @@ function Renderer:DrawWidget(renderPass, compiledWidgetGeometry, offsetU, offset
 		indexBufferSize
 	)
 
-	if compiledWidgetGeometry.texture == ffi.NULL then
+	if texture == ffi.NULL then
 		RenderPassEncoder:SetBindGroup(renderPass, 1, self.dummyTextureMaterial.diffuseTextureBindGroup, 0, nil)
 	else
-		local wgpuTexture = ffi.cast("WGPUTexture", compiledWidgetGeometry.texture)
+		local wgpuTexture = ffi.cast("WGPUTexture", texture)
 		local wgpuTexturePointer = tonumber(ffi.cast("intptr_t", wgpuTexture))
 		local materialInstance = self.userInterfaceTexturesToMaterial[wgpuTexturePointer]
 		local textureBindGroup = materialInstance.diffuseTextureBindGroup
