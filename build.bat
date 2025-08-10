@@ -1,7 +1,7 @@
 @echo off
 
 set CPP_MAIN=Core\RagLite2.cpp
-set RUNTIME_LIBS=user32.lib
+set RUNTIME_LIBS=gdi32.lib user32.lib
 
 set ICON_RC=Assets/RagLite2.rc
 set ICON_RES=BuildArtifacts\RagLite2.res
