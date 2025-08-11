@@ -297,6 +297,10 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE unused, LPSTR commandLine,
                    int showFlag) {
 
   WNDCLASSEX windowClass = {};
+  // TODO Is this really a good idea? Beware the CS_OWNDC footguns...
+  // TODO https://devblogs.microsoft.com/oldnewthing/20060601-06/?p=31003
+  windowClass.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
+
   windowClass.cbSize = sizeof(windowClass);
   windowClass.lpfnWndProc = OnMessage;
   windowClass.hInstance = instance;
@@ -316,8 +320,10 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE unused, LPSTR commandLine,
         WS_OVERLAPPEDWINDOW | WS_VISIBLE, CW_USEDEFAULT, CW_USEDEFAULT,
         CW_USEDEFAULT, CW_USEDEFAULT, 0, 0, instance, 0);
     if (mainWindow) {
+      HDC displayDeviceContext = GetDC(mainWindow);
+
       RECT clientRect;
-      // TODO Can remove?
+      // TODO Can safely remove?
       GetClientRect(mainWindow, &clientRect);
       ResizeBackBuffer(GDI_BACKBUFFER, clientRect.right - clientRect.left,
                        clientRect.bottom - clientRect.top);
@@ -335,15 +341,11 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE unused, LPSTR commandLine,
         DebugDraw_UpdatePattern();
         DebugDraw_WriteBitmap(GDI_BACKBUFFER, offsetX, offsetY);
 
-        // TODO Consider CS_OWNC? Might be faster, but there are footguns...
-        // SEE https://devblogs.microsoft.com/oldnewthing/20060601-06/?p=31003
-        HDC displayDeviceContext = GetDC(mainWindow);
         RECT clientRect;
         GetClientRect(mainWindow, &clientRect);
         int windowWidth = clientRect.right - clientRect.left;
         int windowHeight = clientRect.bottom - clientRect.top;
         OnUpdate(displayDeviceContext, &clientRect, 0, 0, GDI_BACKBUFFER);
-        ReleaseDC(mainWindow, displayDeviceContext);
 
         ++offsetX;
         offsetY += 2;
