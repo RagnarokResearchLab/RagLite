@@ -7,15 +7,16 @@
 
 #define TODO(msg) OutputDebugStringA(msg);
 
-struct BitmapDimensions {
+typedef struct gdi_bitmap {
   int width;
   int height;
-};
+  BITMAPINFO info;
+  void *pixelBuffer;
+  int bytesPerPixel;
+  int stride;
+} gdi_bitmap_t;
 
-GLOBAL BITMAPINFO bitmapInfo;
-GLOBAL void *bitmapBuffer;
-GLOBAL BitmapDimensions bitmapSize;
-GLOBAL int bitmapColorDepthBytesPerPixel = 4;
+GLOBAL gdi_bitmap_t GDI_BACKBUFFER = {.bytesPerPixel = 4};
 
 GLOBAL bool APPLICATION_SHOULD_EXIT = false;
 GLOBAL const char *WINDOW_TITLE = "RagLite2";
@@ -41,41 +42,41 @@ void DebugDraw_UpdatePattern() {
       (gdi_debug_pattern)((seconds / updateInterval) % PATTERN_COUNT);
 }
 
-INTERNAL void DebugDraw_ShiftingGradient(int offsetBlue, int offsetGreen) {
-  if (!bitmapBuffer)
+INTERNAL void DebugDraw_ShiftingGradient(gdi_bitmap_t &bitmap, int offsetBlue,
+                                         int offsetGreen) {
+  if (!bitmap.pixelBuffer)
     return;
 
-  int stride = bitmapSize.width * bitmapColorDepthBytesPerPixel;
-  uint8 *row = (uint8 *)bitmapBuffer;
-  for (int y = 0; y < bitmapSize.height; ++y) {
+  uint8 *row = (uint8 *)bitmap.pixelBuffer;
+  for (int y = 0; y < bitmap.height; ++y) {
     uint32 *pixel = (uint32 *)row;
-    for (int x = 0; x < bitmapSize.width; ++x) {
+    for (int x = 0; x < bitmap.width; ++x) {
       uint8 blue = (x + offsetBlue) & 0xFF;
       uint8 green = (y + offsetGreen) & 0xFF;
 
       *pixel++ = ((green << 8) | blue);
     }
 
-    row += stride;
+    row += bitmap.stride;
   }
 }
 
 // TODO Eliminate this
 #include <math.h>
 
-INTERNAL void DebugDraw_CircularRipple(int time, int dummy) {
-  if (!bitmapBuffer)
+INTERNAL void DebugDraw_CircularRipple(gdi_bitmap_t &bitmap, int time,
+                                       int unused) {
+  if (!bitmap.pixelBuffer)
     return;
 
-  int stride = bitmapSize.width * bitmapColorDepthBytesPerPixel;
-  uint8 *row = (uint8 *)bitmapBuffer;
+  uint8 *row = (uint8 *)bitmap.pixelBuffer;
 
-  for (int y = 0; y < bitmapSize.height; ++y) {
+  for (int y = 0; y < bitmap.height; ++y) {
     uint32 *pixel = (uint32 *)row;
-    for (int x = 0; x < bitmapSize.width; ++x) {
+    for (int x = 0; x < bitmap.width; ++x) {
 
-      int centerX = bitmapSize.width / 2;
-      int centerY = bitmapSize.height / 2;
+      int centerX = bitmap.width / 2;
+      int centerY = bitmap.height / 2;
       float dx = (float)(x - centerX);
       float dy = (float)(y - centerY);
       float dist = sqrtf(dx * dx + dy * dy);
@@ -87,29 +88,29 @@ INTERNAL void DebugDraw_CircularRipple(int time, int dummy) {
 
       *pixel++ = (red << 16) | (green << 8) | blue;
     }
-    row += stride;
+    row += bitmap.stride;
   }
 }
 
-INTERNAL void DebugDraw_Checkerboard(int time, int unused) {
-  if (!bitmapBuffer)
+INTERNAL void DebugDraw_Checkerboard(gdi_bitmap_t &bitmap, int time,
+                                     int unused) {
+  if (!bitmap.pixelBuffer)
     return;
 
-  int stride = bitmapSize.width * bitmapColorDepthBytesPerPixel;
-  uint8 *row = (uint8 *)bitmapBuffer;
+  uint8 *row = (uint8 *)bitmap.pixelBuffer;
 
   float angle = time * 0.02f;
   float cosA = cosf(angle);
   float sinA = sinf(angle);
 
-  int cx = bitmapSize.width / 2;
-  int cy = bitmapSize.height / 2;
+  int cx = bitmap.width / 2;
+  int cy = bitmap.height / 2;
 
   int squareSize = 32;
 
-  for (int y = 0; y < bitmapSize.height; ++y) {
+  for (int y = 0; y < bitmap.height; ++y) {
     uint32 *pixel = (uint32 *)row;
-    for (int x = 0; x < bitmapSize.width; ++x) {
+    for (int x = 0; x < bitmap.width; ++x) {
       int rx = x - cx;
       int ry = y - cy;
 
@@ -122,25 +123,25 @@ INTERNAL void DebugDraw_Checkerboard(int time, int unused) {
       uint8 c = (checkerX ^ checkerY) ? 200 : 80;
       *pixel++ = (c << 16) | (c << 8) | c;
     }
-    row += stride;
+    row += bitmap.stride;
   }
 }
 
-INTERNAL void DebugDraw_AxisGradients(int time, int unused) {
-  if (!bitmapBuffer)
+INTERNAL void DebugDraw_AxisGradients(gdi_bitmap_t &bitmap, int time,
+                                      int unused) {
+  if (!bitmap.pixelBuffer)
     return;
 
-  int stride = bitmapSize.width * bitmapColorDepthBytesPerPixel;
-  uint8 *row = (uint8 *)bitmapBuffer;
+  uint8 *row = (uint8 *)bitmap.pixelBuffer;
 
-  int cx = bitmapSize.width / 2;
-  int cy = bitmapSize.height / 2;
+  int cx = bitmap.width / 2;
+  int cy = bitmap.height / 2;
 
-  for (int y = 0; y < bitmapSize.height; ++y) {
+  for (int y = 0; y < bitmap.height; ++y) {
     uint32 *pixel = (uint32 *)row;
-    for (int x = 0; x < bitmapSize.width; ++x) {
-      uint8 red = (uint8)((x * 255) / bitmapSize.width);
-      uint8 green = (uint8)((y * 255) / bitmapSize.height);
+    for (int x = 0; x < bitmap.width; ++x) {
+      uint8 red = (uint8)((x * 255) / bitmap.width);
+      uint8 green = (uint8)((y * 255) / bitmap.height);
       uint8 blue = 0;
 
       if (x == cx || y == cy) {
@@ -149,23 +150,23 @@ INTERNAL void DebugDraw_AxisGradients(int time, int unused) {
 
       *pixel++ = (red << 16) | (green << 8) | blue;
     }
-    row += stride;
+    row += bitmap.stride;
   }
 }
 
-INTERNAL void DebugDraw_GridScanline(int time, int unused) {
-  if (!bitmapBuffer)
+INTERNAL void DebugDraw_GridScanline(gdi_bitmap_t &bitmap, int time,
+                                     int unused) {
+  if (!bitmap.pixelBuffer)
     return;
 
-  int stride = bitmapSize.width * bitmapColorDepthBytesPerPixel;
-  uint8 *row = (uint8 *)bitmapBuffer;
+  uint8 *row = (uint8 *)bitmap.pixelBuffer;
 
   int gridSpacing = 32;
-  int scanY = (time / 2) % bitmapSize.height;
+  int scanY = (time / 2) % bitmap.height;
 
-  for (int y = 0; y < bitmapSize.height; ++y) {
+  for (int y = 0; y < bitmap.height; ++y) {
     uint32 *pixel = (uint32 *)row;
-    for (int x = 0; x < bitmapSize.width; ++x) {
+    for (int x = 0; x < bitmap.width; ++x) {
       uint8 c = 180;
 
       if (x % gridSpacing == 0 || y % gridSpacing == 0)
@@ -176,63 +177,64 @@ INTERNAL void DebugDraw_GridScanline(int time, int unused) {
 
       *pixel++ = (c << 16) | (c << 8) | c;
     }
-    row += stride;
+    row += bitmap.stride;
   }
 }
 
-INTERNAL void DebugDraw_WriteBitmap(int paramA, int paramB) {
+INTERNAL void DebugDraw_WriteBitmap(gdi_bitmap_t &bitmap, int paramA,
+                                    int paramB) {
   switch (GDI_DEBUG_PATTERN) {
   case PATTERN_SHIFTING_GRADIENT:
-    DebugDraw_ShiftingGradient(paramA, paramB);
+    DebugDraw_ShiftingGradient(bitmap, paramA, paramB);
     break;
   case PATTERN_CIRCULAR_RIPPLE:
-    DebugDraw_CircularRipple(paramA, paramB);
+    DebugDraw_CircularRipple(bitmap, paramA, paramB);
     break;
   case PATTERN_CHECKERBOARD:
-    DebugDraw_Checkerboard(paramA, paramB);
+    DebugDraw_Checkerboard(bitmap, paramA, paramB);
     break;
   case PATTERN_AXIS_GRADIENTS:
-    DebugDraw_AxisGradients(paramA, paramB);
+    DebugDraw_AxisGradients(bitmap, paramA, paramB);
     break;
   case PATTERN_GRID_SCANLINE:
-    DebugDraw_GridScanline(paramA, paramB);
+    DebugDraw_GridScanline(bitmap, paramA, paramB);
     break;
   }
 }
 
 // TODO Might want to fix the stretching/aspect ratio bugs
-INTERNAL void ResizeBackBuffer(int width, int height) {
-  if (bitmapBuffer) {
-    VirtualFree(bitmapBuffer, 0, MEM_RELEASE);
+INTERNAL void ResizeBackBuffer(gdi_bitmap_t &bitmap, int width, int height) {
+  if (bitmap.pixelBuffer) {
+    VirtualFree(bitmap.pixelBuffer, 0, MEM_RELEASE);
   }
 
-  bitmapSize.width = width;
-  bitmapSize.height = height;
+  bitmap.width = width;
+  bitmap.height = height;
 
-  bitmapInfo.bmiHeader.biSize = sizeof(bitmapInfo.bmiHeader);
-  bitmapInfo.bmiHeader.biWidth = bitmapSize.width;
-  bitmapInfo.bmiHeader.biHeight = -bitmapSize.height; // Inverted y
-  bitmapInfo.bmiHeader.biPlanes = 1;
-  bitmapInfo.bmiHeader.biBitCount = 32;
-  bitmapInfo.bmiHeader.biCompression = BI_RGB; // Alpha is unused
+  bitmap.info.bmiHeader.biSize = sizeof(bitmap.info.bmiHeader);
+  bitmap.info.bmiHeader.biWidth = bitmap.width;
+  bitmap.info.bmiHeader.biHeight = -bitmap.height; // Inverted y
+  bitmap.info.bmiHeader.biPlanes = 1;
+  bitmap.info.bmiHeader.biBitCount = 32;
+  bitmap.info.bmiHeader.biCompression = BI_RGB; // Alpha is unused
 
-  int bitmapBufferLength = (width * height) * bitmapColorDepthBytesPerPixel;
-
+  bitmap.stride = width * bitmap.bytesPerPixel;
+  int bufferSize = height * bitmap.stride;
   TODO("VirtualAlloc outside global arena\n")
-  bitmapBuffer = VirtualAlloc(0, bitmapBufferLength, MEM_COMMIT | MEM_RESERVE,
-                              PAGE_READWRITE);
+  bitmap.pixelBuffer =
+      VirtualAlloc(0, bufferSize, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
   // TODO Reset to clear color here?
 }
 
 INTERNAL void OnUpdate(HDC displayDeviceContext, RECT *clientRect, int x, int y,
-                       int width, int height) {
+                       gdi_bitmap_t &bitmap) {
   int xDest = 0;
   int yDest = 0;
   int xSrc = 0;
   int ySrc = 0;
 
-  int destWidth = bitmapSize.width;
-  int destHeight = bitmapSize.height;
+  int destWidth = bitmap.width;
+  int destHeight = bitmap.height;
 
   int windowWidth = clientRect->right - clientRect->left;
   int windowHeight = clientRect->bottom - clientRect->top;
@@ -240,7 +242,7 @@ INTERNAL void OnUpdate(HDC displayDeviceContext, RECT *clientRect, int x, int y,
   int srcHeight = windowHeight;
 
   StretchDIBits(displayDeviceContext, xDest, yDest, destWidth, destHeight, xSrc,
-                ySrc, srcWidth, srcHeight, bitmapBuffer, &bitmapInfo,
+                ySrc, srcWidth, srcHeight, bitmap.pixelBuffer, &bitmap.info,
                 DIB_RGB_COLORS, SRCCOPY);
 }
 
@@ -254,7 +256,7 @@ LRESULT CALLBACK OnMessage(HWND window, UINT message, WPARAM argW,
     GetClientRect(window, &clientRec);
     int width = clientRec.right - clientRec.left;
     int height = clientRec.bottom - clientRec.top;
-    ResizeBackBuffer(width, height);
+    ResizeBackBuffer(GDI_BACKBUFFER, width, height);
   } break;
 
   case WM_CLOSE: {
@@ -279,7 +281,7 @@ LRESULT CALLBACK OnMessage(HWND window, UINT message, WPARAM argW,
     int height = paintInfo.rcPaint.bottom - paintInfo.rcPaint.top;
     RECT clientRect;
     GetClientRect(window, &clientRect);
-    OnUpdate(displayDeviceContext, &clientRect, x, y, width, height);
+    OnUpdate(displayDeviceContext, &clientRect, x, y, GDI_BACKBUFFER);
     EndPaint(window, &paintInfo);
   } break;
 
@@ -315,8 +317,9 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE unused, LPSTR commandLine,
         CW_USEDEFAULT, CW_USEDEFAULT, 0, 0, instance, 0);
     if (mainWindow) {
       RECT clientRect;
+      // TODO Can remove?
       GetClientRect(mainWindow, &clientRect);
-      ResizeBackBuffer(clientRect.right - clientRect.left,
+      ResizeBackBuffer(GDI_BACKBUFFER, clientRect.right - clientRect.left,
                        clientRect.bottom - clientRect.top);
 
       MSG message;
@@ -330,17 +333,16 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE unused, LPSTR commandLine,
             APPLICATION_SHOULD_EXIT = true;
         }
         DebugDraw_UpdatePattern();
-        DebugDraw_WriteBitmap(offsetX, offsetY);
+        DebugDraw_WriteBitmap(GDI_BACKBUFFER, offsetX, offsetY);
 
         // TODO Consider CS_OWNC? Might be faster, but there are footguns...
-        // See https://devblogs.microsoft.com/oldnewthing/20060601-06/?p=31003
+        // SEE https://devblogs.microsoft.com/oldnewthing/20060601-06/?p=31003
         HDC displayDeviceContext = GetDC(mainWindow);
         RECT clientRect;
         GetClientRect(mainWindow, &clientRect);
         int windowWidth = clientRect.right - clientRect.left;
         int windowHeight = clientRect.bottom - clientRect.top;
-        OnUpdate(displayDeviceContext, &clientRect, 0, 0, windowWidth,
-                 windowHeight);
+        OnUpdate(displayDeviceContext, &clientRect, 0, 0, GDI_BACKBUFFER);
         ReleaseDC(mainWindow, displayDeviceContext);
 
         ++offsetX;
