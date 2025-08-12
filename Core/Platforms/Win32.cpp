@@ -233,7 +233,8 @@ INTERNAL void ResizeBackBuffer(gdi_bitmap_t &bitmap, int width, int height) {
   // TODO Reset to clear color here?
 }
 
-INTERNAL void OnUpdate(gdi_surface_t &windowSurface, gdi_bitmap_t &bitmap) {
+INTERNAL void SurfaceDisplayBitmap(gdi_surface_t &windowSurface,
+                                   gdi_bitmap_t &bitmap) {
   int xDest = 0;
   int yDest = 0;
   int xSrc = 0;
@@ -289,7 +290,7 @@ LRESULT CALLBACK OnMessage(HWND window, UINT message, WPARAM argW,
     PAINTSTRUCT paintInfo;
     GDI_SURFACE.displayDeviceContext = BeginPaint(window, &paintInfo);
     SurfaceGetWindowDimensions(GDI_SURFACE, window);
-    OnUpdate(GDI_SURFACE, GDI_BACKBUFFER);
+    SurfaceDisplayBitmap(GDI_SURFACE, GDI_BACKBUFFER);
     EndPaint(window, &paintInfo);
   } break;
 
@@ -350,7 +351,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE unused, LPSTR commandLine,
         DebugDraw_WriteBitmap(GDI_BACKBUFFER, offsetX, offsetY);
 
         SurfaceGetWindowDimensions(GDI_SURFACE, mainWindow);
-        OnUpdate(GDI_SURFACE, GDI_BACKBUFFER);
+        SurfaceDisplayBitmap(GDI_SURFACE, GDI_BACKBUFFER);
 
         ++offsetX;
         offsetY += 2;
