@@ -16,7 +16,14 @@ typedef struct gdi_bitmap {
   int stride;
 } gdi_bitmap_t;
 
-GLOBAL gdi_bitmap_t GDI_BACKBUFFER = {.bytesPerPixel = 4};
+typedef struct gdi_surface {
+  HDC displayDeviceContext;
+  int width;
+  int height;
+} gdi_surface_t;
+
+GLOBAL gdi_bitmap_t GDI_BACKBUFFER = {};
+GLOBAL gdi_surface_t GDI_SURFACE = {};
 
 GLOBAL bool APPLICATION_SHOULD_EXIT = false;
 GLOBAL const char *WINDOW_TITLE = "RagLite2";
@@ -226,8 +233,7 @@ INTERNAL void ResizeBackBuffer(gdi_bitmap_t &bitmap, int width, int height) {
   // TODO Reset to clear color here?
 }
 
-INTERNAL void OnUpdate(HDC displayDeviceContext, RECT *clientRect, int x, int y,
-                       gdi_bitmap_t &bitmap) {
+INTERNAL void OnUpdate(gdi_surface_t &windowSurface, gdi_bitmap_t &bitmap) {
   int xDest = 0;
   int yDest = 0;
   int xSrc = 0;
@@ -236,14 +242,21 @@ INTERNAL void OnUpdate(HDC displayDeviceContext, RECT *clientRect, int x, int y,
   int destWidth = bitmap.width;
   int destHeight = bitmap.height;
 
-  int windowWidth = clientRect->right - clientRect->left;
-  int windowHeight = clientRect->bottom - clientRect->top;
-  int srcWidth = windowWidth;
-  int srcHeight = windowHeight;
+  int srcWidth = windowSurface.width;
+  int srcHeight = windowSurface.height;
 
-  StretchDIBits(displayDeviceContext, xDest, yDest, destWidth, destHeight, xSrc,
-                ySrc, srcWidth, srcHeight, bitmap.pixelBuffer, &bitmap.info,
-                DIB_RGB_COLORS, SRCCOPY);
+  StretchDIBits(windowSurface.displayDeviceContext, xDest, yDest, destWidth,
+                destHeight, xSrc, ySrc, srcWidth, srcHeight, bitmap.pixelBuffer,
+                &bitmap.info, DIB_RGB_COLORS, SRCCOPY);
+}
+
+void SurfaceGetWindowDimensions(gdi_surface_t &surface, HWND window) {
+  RECT clientRect;
+  GetClientRect(window, &clientRect);
+  int windowWidth = clientRect.right - clientRect.left;
+  int windowHeight = clientRect.bottom - clientRect.top;
+  surface.width = windowWidth;
+  surface.height = windowHeight;
 }
 
 LRESULT CALLBACK OnMessage(HWND window, UINT message, WPARAM argW,
@@ -274,14 +287,9 @@ LRESULT CALLBACK OnMessage(HWND window, UINT message, WPARAM argW,
 
   case WM_PAINT: {
     PAINTSTRUCT paintInfo;
-    HDC displayDeviceContext = BeginPaint(window, &paintInfo);
-    int x = paintInfo.rcPaint.left;
-    int y = paintInfo.rcPaint.top;
-    int width = paintInfo.rcPaint.right - paintInfo.rcPaint.left;
-    int height = paintInfo.rcPaint.bottom - paintInfo.rcPaint.top;
-    RECT clientRect;
-    GetClientRect(window, &clientRect);
-    OnUpdate(displayDeviceContext, &clientRect, x, y, GDI_BACKBUFFER);
+    GDI_SURFACE.displayDeviceContext = BeginPaint(window, &paintInfo);
+    SurfaceGetWindowDimensions(GDI_SURFACE, window);
+    OnUpdate(GDI_SURFACE, GDI_BACKBUFFER);
     EndPaint(window, &paintInfo);
   } break;
 
@@ -320,7 +328,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE unused, LPSTR commandLine,
         WS_OVERLAPPEDWINDOW | WS_VISIBLE, CW_USEDEFAULT, CW_USEDEFAULT,
         CW_USEDEFAULT, CW_USEDEFAULT, 0, 0, instance, 0);
     if (mainWindow) {
-      HDC displayDeviceContext = GetDC(mainWindow);
+      GDI_SURFACE.displayDeviceContext = GetDC(mainWindow);
 
       RECT clientRect;
       // TODO Can safely remove?
@@ -341,11 +349,8 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE unused, LPSTR commandLine,
         DebugDraw_UpdatePattern();
         DebugDraw_WriteBitmap(GDI_BACKBUFFER, offsetX, offsetY);
 
-        RECT clientRect;
-        GetClientRect(mainWindow, &clientRect);
-        int windowWidth = clientRect.right - clientRect.left;
-        int windowHeight = clientRect.bottom - clientRect.top;
-        OnUpdate(displayDeviceContext, &clientRect, 0, 0, GDI_BACKBUFFER);
+        SurfaceGetWindowDimensions(GDI_SURFACE, mainWindow);
+        OnUpdate(GDI_SURFACE, GDI_BACKBUFFER);
 
         ++offsetX;
         offsetY += 2;
