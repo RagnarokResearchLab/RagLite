@@ -185,8 +185,8 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE unused, LPSTR commandLine,
     }
 
     if (!APPLICATION_SHOULD_PAUSE) {
-      DebugDraw_UpdatePattern();
-      DebugDraw_WriteBitmap(GDI_BACKBUFFER, offsetX, offsetY);
+      DebugDrawUpdateBackgroundPattern();
+      DebugDrawUpdateFrameBuffer(GDI_BACKBUFFER, offsetX, offsetY);
       InvalidateRect(mainWindow, NULL, FALSE);
     }
 

@@ -35,7 +35,7 @@ GLOBAL gdi_debug_pattern GDI_DEBUG_PATTERN = PATTERN_SHIFTING_GRADIENT;
 
 constexpr uint32 UNINITIALIZED_WINDOW_COLOR = 0xFF202020;
 
-void DebugDraw_UpdatePattern() {
+void DebugDrawUpdateBackgroundPattern() {
   DWORD MS_PER_SECOND = 1000;
 
   DWORD ticks = GetTickCount();
@@ -46,8 +46,9 @@ void DebugDraw_UpdatePattern() {
       (gdi_debug_pattern)((seconds / updateInterval) % PATTERN_COUNT);
 }
 
-INTERNAL void DebugDraw_ShiftingGradient(gdi_bitmap_t &bitmap, int offsetBlue,
-                                         int offsetGreen) {
+INTERNAL void DebugDrawUseMarchingGradientPattern(gdi_bitmap_t &bitmap,
+                                                  int offsetBlue,
+                                                  int offsetGreen) {
   if (!bitmap.pixelBuffer)
     return;
 
@@ -65,8 +66,8 @@ INTERNAL void DebugDraw_ShiftingGradient(gdi_bitmap_t &bitmap, int offsetBlue,
   }
 }
 
-INTERNAL void DebugDraw_CircularRipple(gdi_bitmap_t &bitmap, int time,
-                                       int unused) {
+INTERNAL void DebugDrawUseRipplingSpiralPattern(gdi_bitmap_t &bitmap, int time,
+                                                int unused) {
   if (!bitmap.pixelBuffer)
     return;
 
@@ -93,8 +94,8 @@ INTERNAL void DebugDraw_CircularRipple(gdi_bitmap_t &bitmap, int time,
   }
 }
 
-INTERNAL void DebugDraw_Checkerboard(gdi_bitmap_t &bitmap, int time,
-                                     int unused) {
+INTERNAL void DebugDrawUseCheckeredFloorPattern(gdi_bitmap_t &bitmap, int time,
+                                                int unused) {
   if (!bitmap.pixelBuffer)
     return;
 
@@ -128,8 +129,8 @@ INTERNAL void DebugDraw_Checkerboard(gdi_bitmap_t &bitmap, int time,
   }
 }
 
-INTERNAL void DebugDraw_AxisGradients(gdi_bitmap_t &bitmap, int time,
-                                      int unused) {
+INTERNAL void DebugDrawUseColorGradientPattern(gdi_bitmap_t &bitmap, int time,
+                                               int unused) {
   if (!bitmap.pixelBuffer)
     return;
 
@@ -155,8 +156,8 @@ INTERNAL void DebugDraw_AxisGradients(gdi_bitmap_t &bitmap, int time,
   }
 }
 
-INTERNAL void DebugDraw_GridScanline(gdi_bitmap_t &bitmap, int time,
-                                     int unused) {
+INTERNAL void DebugDrawUseMovingScanlinePattern(gdi_bitmap_t &bitmap, int time,
+                                                int unused) {
   if (!bitmap.pixelBuffer)
     return;
 
@@ -182,23 +183,23 @@ INTERNAL void DebugDraw_GridScanline(gdi_bitmap_t &bitmap, int time,
   }
 }
 
-INTERNAL void DebugDraw_WriteBitmap(gdi_bitmap_t &bitmap, int paramA,
-                                    int paramB) {
+INTERNAL void DebugDrawUpdateFrameBuffer(gdi_bitmap_t &bitmap, int paramA,
+                                         int paramB) {
   switch (GDI_DEBUG_PATTERN) {
   case PATTERN_SHIFTING_GRADIENT:
-    DebugDraw_ShiftingGradient(bitmap, paramA, paramB);
+    DebugDrawUseMarchingGradientPattern(bitmap, paramA, paramB);
     break;
   case PATTERN_CIRCULAR_RIPPLE:
-    DebugDraw_CircularRipple(bitmap, paramA, paramB);
+    DebugDrawUseRipplingSpiralPattern(bitmap, paramA, paramB);
     break;
   case PATTERN_CHECKERBOARD:
-    DebugDraw_Checkerboard(bitmap, paramA, paramB);
+    DebugDrawUseCheckeredFloorPattern(bitmap, paramA, paramB);
     break;
   case PATTERN_AXIS_GRADIENTS:
-    DebugDraw_AxisGradients(bitmap, paramA, paramB);
+    DebugDrawUseColorGradientPattern(bitmap, paramA, paramB);
     break;
   case PATTERN_GRID_SCANLINE:
-    DebugDraw_GridScanline(bitmap, paramA, paramB);
+    DebugDrawUseMovingScanlinePattern(bitmap, paramA, paramB);
     break;
   }
 }
