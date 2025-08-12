@@ -31,6 +31,7 @@ GLOBAL gdi_surface_t GDI_SURFACE = {};
 constexpr uint32 UNINITIALIZED_WINDOW_COLOR = 0xFF202020;
 
 GLOBAL bool APPLICATION_SHOULD_EXIT = false;
+GLOBAL bool APPLICATION_SHOULD_PAUSE = false;
 GLOBAL const char *WINDOW_TITLE = "RagLite2";
 
 enum gdi_debug_pattern {
@@ -755,6 +756,10 @@ LRESULT CALLBACK WindowProcessMessage(HWND window, UINT message, WPARAM wParam,
         if (wasKeyDown && !isKeyDown) {
           WindowToggleFullscreen(window);
         }
+      } else if (virtualKeyCode == VK_RETURN) {
+        if (wasKeyDown && !isKeyDown) {
+          APPLICATION_SHOULD_PAUSE = !APPLICATION_SHOULD_PAUSE;
+        }
       }
     }
   } break;
@@ -833,9 +838,11 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE unused, LPSTR commandLine,
         APPLICATION_SHOULD_EXIT = true;
     }
 
-    DebugDraw_UpdatePattern();
-    DebugDraw_WriteBitmap(GDI_BACKBUFFER, offsetX, offsetY);
-    InvalidateRect(mainWindow, NULL, FALSE);
+    if (!APPLICATION_SHOULD_PAUSE) {
+      DebugDraw_UpdatePattern();
+      DebugDraw_WriteBitmap(GDI_BACKBUFFER, offsetX, offsetY);
+      InvalidateRect(mainWindow, NULL, FALSE);
+    }
 
     ++offsetX;
     offsetY += 2;
