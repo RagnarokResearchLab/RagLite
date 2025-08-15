@@ -1,12 +1,15 @@
 @echo off
 
 set CPP_MAIN=Core\RagLite2.cpp
+set DEBUG_EXE=RagLite2Dbg.exe
+set RELEASE_EXE=RagLite2.exe
 set RUNTIME_LIBS=gdi32.lib user32.lib
 
-set ICON_RC=Assets/RagLite2.rc
-set ICON_RES=BuildArtifacts\RagLite2.res
+set DEFAULT_BUILD_DIR=BuildArtifacts
+if not exist %DEFAULT_BUILD_DIR% mkdir %DEFAULT_BUILD_DIR%
 
-if not exist BuildArtifacts mkdir BuildArtifacts
+set ICON_RC=Assets/RagLite2.rc
+set ICON_RES=%DEFAULT_BUILD_DIR%\RagLite2.res
 
 :: Generate app icon
 rc /nologo /fo %ICON_RES% %ICON_RC%
@@ -69,7 +72,14 @@ set DEBUG_LINK_FLAGS=%DEBUG_LINK_FLAGS% /DEBUG
 
 set DEBUG_COMPILE_FLAGS=%DEBUG_COMPILE_FLAGS% %SHARED_COMPILE_FLAGS%
 set DEBUG_LINK_FLAGS=%DEBUG_LINK_FLAGS% %SHARED_LINK_FLAGS%
-cl %DEBUG_COMPILE_FLAGS% %CPP_MAIN% %RUNTIME_LIBS% /link %DEBUG_LINK_FLAGS% %ICON_RES% /out:RagLite2Dbg.exe
+
+echo The Ancient One speaketh:
+echo 	Let us now turn %CPP_MAIN% into %DEBUG_EXE%!
+echo 	Harken, mortal, as I prepare thy unholy incantation...
+echo 	cl%DEBUG_COMPILE_FLAGS% %CPP_MAIN% %RUNTIME_LIBS% /link %DEBUG_LINK_FLAGS% %ICON_RES% /out:%DEBUG_EXE%
+echo --------------------------------------------------------------------------------------------------------
+cl %DEBUG_COMPILE_FLAGS% %CPP_MAIN% %RUNTIME_LIBS% /link %DEBUG_LINK_FLAGS% %ICON_RES% /out:%DEBUG_EXE%
+echo --------------------------------------------------------------------------------------------------------
 
 :::::: Build release binary
 set RELEASE_COMPILE_FLAGS=
@@ -101,10 +111,17 @@ set RELEASE_LINK_FLAGS=%RELEASE_LINK_FLAGS% /OPT:ICF
 
 set RELEASE_COMPILE_FLAGS=%RELEASE_COMPILE_FLAGS% %SHARED_COMPILE_FLAGS%
 set RELEASE_LINK_FLAGS=%RELEASE_LINK_FLAGS% %SHARED_LINK_FLAGS%
-cl %RELEASE_COMPILE_FLAGS% %CPP_MAIN% %RUNTIME_LIBS% /link %RELEASE_LINK_FLAGS% %ICON_RES% /out:RagLite2.exe
+
+echo The Ancient One speaketh:
+echo 	Let us now turn %CPP_MAIN% into %RELEASE_EXE%!
+echo 	Harken, mortal, as I prepare thy unholy incantation...
+echo 	cl%RELEASE_COMPILE_FLAGS% %CPP_MAIN% %RUNTIME_LIBS% /link %RELEASE_LINK_FLAGS% %ICON_RES% /out:%RELEASE_EXE%
+echo --------------------------------------------------------------------------------------------------------
+cl %RELEASE_COMPILE_FLAGS% %CPP_MAIN% %RUNTIME_LIBS% /link %RELEASE_LINK_FLAGS% %ICON_RES% /out:%RELEASE_EXE%
+echo --------------------------------------------------------------------------------------------------------
 
 :: Cleanup
-move RagLite2*.exe BuildArtifacts 2> NUL
-move *.idb BuildArtifacts 2> NUL
-move *.obj BuildArtifacts 2> NUL
-move *.pdb BuildArtifacts 2> NUL
+move RagLite2*.exe %DEFAULT_BUILD_DIR% 2> NUL
+move *.idb %DEFAULT_BUILD_DIR% 2> NUL
+move *.obj %DEFAULT_BUILD_DIR% 2> NUL
+move *.pdb %DEFAULT_BUILD_DIR% 2> NUL
