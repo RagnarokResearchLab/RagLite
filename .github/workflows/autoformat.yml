@@ -21,11 +21,11 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set up StyLua
-        uses: JohnnyMorganz/stylua-action@v2.0.0
+        uses: JohnnyMorganz/stylua-action@v4.1.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           args: --check . --verbose
-          version: v0.17.1
+          version: v2.1.0
 
       - name: Run autoformat
         run: ./autoformat.sh
