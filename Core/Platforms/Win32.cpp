@@ -8,6 +8,7 @@
 #define TODO(msg) OutputDebugStringA(msg);
 
 #include "Win32/DebugDraw.cpp"
+#include "Win32/GamePad.cpp"
 #include "Win32/Keyboard.cpp"
 #include "Win32/Windowing.cpp"
 
@@ -88,6 +89,10 @@ LRESULT CALLBACK WindowProcessMessage(HWND window, UINT message, WPARAM wParam,
 			} else if(virtualKeyCode == 'A') {
 			} else if(virtualKeyCode == 'S') {
 			} else if(virtualKeyCode == 'D') {
+			} else if(virtualKeyCode == 'G') {
+				if(wasKeyDown && !isKeyDown) {
+					APPLICATION_USES_GAMEPAD = !APPLICATION_USES_GAMEPAD;
+				}
 			} else if(virtualKeyCode == 'Q') {
 			} else if(virtualKeyCode == 'E') {
 			} else if(virtualKeyCode == VK_UP) {
@@ -183,6 +188,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE unused, LPSTR commandLine,
 		}
 
 		if(!APPLICATION_SHOULD_PAUSE) {
+			GamePadPollControllers(offsetX, offsetY);
 			DebugDrawUpdateBackgroundPattern();
 			DebugDrawUpdateFrameBuffer(GDI_BACKBUFFER, offsetX, offsetY);
 			InvalidateRect(mainWindow, NULL, FALSE);
