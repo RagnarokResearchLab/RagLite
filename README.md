@@ -1,132 +1,266 @@
-# RagLite
+# RagLite2
 
-Standalone client with built-in backend server that allows running a persistent world simulation on your computer.
+RagLite is a collection of various tools intended to help others understand and work with the file formats used in [Ragnarok Online](https://en.wikipedia.org/wiki/Ragnarok_Online). RO is a MMORPG created by Gravity Co, which shares many file formats with its predecessor [Arcturus](https://en.namu.wiki/w/%EC%95%85%ED%8A%9C%EB%9F%AC%EC%8A%A4). The source code mainly aims to serve as a reference implementation for other developers, as well as validate all information published on the [Ragnarok Research Lab](https://ragnarokresearchlab.github.io/) website.
 
-> [!IMPORTANT]
-> Standalone in this context means that all scripts should "just work" in the [Evo.lua](https://evo-lua.github.io/) runtime environment.
-
-*Evo is a custom [Lua](https://www.lua.org/about.html) interpreter written in C++ (and C), which comes with a host of useful libraries to do the heavy lifting. You can see it as the "engine" for this and other programs, providing core features like graphics and networking. Despite being a separate project unrelated to this one, it's similarly created and maintained by me.*
-
-Please note that RagLite is explicitly **NOT** a full game client or server implementation. If you want one, there are [many other projects](https://ragnarokresearchlab.github.io/community-projects/) aiming to accomplish this lofty goal. My focus is on research, and the tool reflects that.
-
-## Overview
-
-This project is built on a few core technologies:
-
-* A [WebGPU](https://en.wikipedia.org/wiki/WebGPU)-based 3D rendering engine is included (uses [wgpu-native](https://github.com/gfx-rs/wgpu-native))
-* Simple networking layer based on the [HTTP](https://en.wikipedia.org/wiki/HTTP) and [WebSocket](https://en.wikipedia.org/wiki/WebSocket) protocols
-* Native [C++ runtime](https://github.com/evo-lua/evo-runtime) with a focus on Lua scripting (powered by [LuaJIT](https://luajit.org/))
-* Asynchronous [libuv](https://github.com/libuv/libuv)-based [event loop](http://docs.libuv.org/en/v1.x/guide/basics.html) running in the host application
-* Integrated tooling to analyze and work with various binary file formats
-
-Lua is the primary language, augmented with C/C++ libraries and glue code.
-
-## Why does it exist?
-
-I've developed many different tools to help with my research over the years. This is just the latest iteration, but fully integrated to make my life easier. Some people have expressed interest in seeing the code, so here you go?
-
-The previous iterations were written in JavaScript/TypeScript, with [BabylonJS](https://www.babylonjs.com/) as the rendering engine and [Electron](https://www.electronjs.org/) as the runtime. This version is powered by native technologies instead, mainly because I wanted more control.
+Please note that RagLite is explicitly **NOT** a full game client or server implementation. If you want one, there are [many other projects](https://ragnarokresearchlab.github.io/community-projects/) aiming to accomplish this lofty goal. My focus is on research, and the tool reflects that. Even though this necessitates that some of the core concepts and gameplay mechanics need to be implemented, the program is not intended as a replacement for the original game client and/or server, per se.
 
 ## Status
 
-Work in progress. Developed in public, to make use of GitHub Actions for automated testing. I haven't ported over most features from older versions and likely won't add things I no longer need - unless someone specifically asks.
+RagLite2 is the second (published) version of my RO-specific toolkit. This repository also contains the source code of the first *RagLite* toolkit. Both versions will coexist until the second reaches feature parity, or the first one breaks in a way that's too painful for me to fix. You can still use the "old" RagLite tools and read all of the source code. Indeed, they might see further development as they're better suited to prototyping.
 
-> [!NOTE]
-> This is a developer tool and not very advanced. Don't expect too much or you'll be disappointed. 
+This latest iteration is based largely on the previous version, which had too many dependencies that have now been eliminated. I believe that a minimalist approach will make it easier to use for non-developers and people without the willingness, time, or ability to set up and use tools written in multiple programming languages. As a bonus, the program is now significantly faster to run and it consumes far fewer resources.
 
-If you want to follow the development more closely, check out the [roadmap](https://github.com/orgs/RagnarokResearchLab/projects/2) (includes both my documentation work and tools). To view the implementation status, [milestones](https://github.com/RagnarokResearchLab/RagLite/milestones) are your best bet - although they're necessarily incomplete.
+Since I've only just started working on RagLite2, you'll have to see for yourself (read issues, commits, etc.). As for the first version: There's plenty of context for the initially-released version in this repository already. Older versions cover some of the areas not included here, such as sprite animations, GR2 model rendering, and various niche Renewal/Alpha/Beta/Arcturus features. It's largely spaghetti code and I don't have time to rewrite it, but I might be able to dig up individual notes or code snippets if prompted. Maybe the code will end up being archived separately.
 
-## Roadmap & Features
+## Features
 
-Because this tool is an interactive aid that's part of my ongoing research efforts, you can expect the following:
+RagLite (original version):
 
-* Complete, well-tested and documented decoders for all file formats that are of interest
-* Data mining/analysis toolkit that allows importing, exporting, and converting their contents
-* Approximate recreation of 3D scenes with key actors, interactions, animations, and effects
-* CLI or UI-based control flow that's suitable for developers, though not necessarily "end users"
-* Proof-of-concept or prototype implementations of gameplay mechanics and simulation steps (server)
+* Support for most of the RO and Arcturus file formats:
+	* `ACT`: Decoding all known versions, exporting, analysis
+	* `ADP`: Decoding all known versions, exporting, analysis, rendering (WIP)
+	* `BIK`: Decoding, analysis (WIP)
+	* `GAT`: Decoding all known versions, exporting, analysis, rendering
+	* `GND`: Decoding all known versions, exporting, analysis, rendering
+	* `GR2`: Decoding uncompressed versions, analysis
+	* `GRF`: Decoding unencrypted versions, exporting, analysis
+	* `IMF`: Decoding, analysis
+	* `PAL`: Decoding all known versions, exporting, analysis
+	* `PAK`: Decoding all known versions, exporting (WIP)
+	* `RGZ`: Decoding all known versions
+	* `RSM`: Decoding all known versions, exporting, analysis
+	* `RSM2`: Decoding all known versions, exporting, analysis
+	* `RSW`: Decoding all known versions, exporting, analysis, rendering
+	* `SPR`: Decoding all known versions, exporting, analysis
+* Visualization via the built-in WebGPU/3D renderer:
+	* Terrain: Complete rendition of the game world (without props) - highly accurate (?)
+	* Water: Complete GPU-accelerated rendition of all water surfaces, including waves - highest accuracy (TMK)
+	* Lighting: Complete GPU-accelerated implementation of the original lighting model - highest accuracy (TMK)
+	* Camera controls: Basic implementation without smoothing, interpolation, or screen shake - high accuracy (?)
+	* Keybindings: Some hardcoded bindings and controls - the input system is somewhat lackluster, however
+	* Screenshots: Saved automatically and in PNG format (the entire thing isn't very configurable though)
+	* Keyframe Animations: Delta-time based animations are functional, but probably not 100% accurate
+* Miscellaneous: Debug drawing utilities, blending, materials, metrics, cursors, resource caching, UI layer, ... (meh)
+* Tests and documentation: Kind of goes without saying, although there's certainly room for improvements
+* Low memory footprint and performance is "OK"-ish thanks to FFI and JIT, for whatever that's worth
 
-Needless to say, it will take a lot more time and work until all of the above has been fully implemented.
+RagLite2 (this version):
 
-## System Requirements
+* Win32 platform layer
+	* GDI "software" rendering for Windows: Works, but it's slow
+	* Windowing and input handling: Works, but needs refinement further down the line
+	* Memory management facilities: WIP
+	* Audio processing and playback: WIP
+	* Debug tools and visualization: Works, but very limited
+* Support for most of the RO and Arcturus file formats
+	* Will port the LuaJIT version once an initial version of the platform layer is done
+	* Data mining tools will gradually be ported after the graphics engine is capable enough
+* 3D rendering and other visualization features
+	* Will integrate a crossplatform solution (likely WebGPU), with software-rendering as fallback
 
-Not much to say here; hopefully the software will run on most systems:
+This list is merely intended as a quick overview and by no means authoritative.
 
-* Recent versions of macOS, Linux, or Windows
-* Any graphics backend supported by WebGPU (DirectX/Metal/Vulkan)
-* CPU architecture must be supported by the LuaJIT engine
+## Limitations
 
-General rule of thumb: All platforms undergoing automated testing via [GitHub Actions](https://github.com/RagnarokResearchLab/RagLite/actions) are officially supported.
+RagLite (original version):
 
-> [!TIP]
-> For Linux users: To see what system dependencies may be required, check out the [build workflow](https://github.com/RagnarokResearchLab/RagLite/blob/main/.github/workflows/ci-linux.yml).
+* Requires custom Lua runtime and libraries to use effectively - reading the code should be easy, though
+* CLI frontend for the development tools only; 3D visualization exists but has placeholder UI elements
+* The dedicated WebGPU renderer isn't production ready (crashes/resource hogging/glitches/you name it)
+* Not all file formats/versions are fully supported, although most are covered well enough by now
+* Kind of slow when it comes to large data processing tasks, due to poor optimization/Lua scripting
 
-Mobile platforms aren't supported, and likely won't ever be (by me). It just doesn't make sense (again, to me).
+RagLite2 (current version):
 
-## Usage
+* The platform layers for macOS and Linux are NYI, so you'll have to wait (or plug the holes with external libraries)
+* Because the focus is on self-reliance and dropping as many dependencies as possible, features are still lacking
+* There's no Lua scripting engine built in right now, so you can't use the Lua scripts written for the first version
+* I know a lot less about programming in C++ than Lua, so apologies in advance to anyone reading the code
+* Only a few toolchains and architectures may be supported out of the box (listed separately)
 
-There isn't much to see yet, but if you want to give it a try:
+Both versions: This is a hobbyist project and progress might halt for extended periods of time. (I'll be back!)
 
-1. Clone this repository (obviously requires [git](https://git-scm.com/))
-1. Download a release of the Lua runtime for your platform
-	* Run ``./download-runtime.sh``, or download from [GitHub Releases](https://github.com/evo-lua/evo-runtime/releases)
-	* The required version is usually the latest, but check the above script
-	* You can also build it from source (see [docs](https://evo-lua.github.io/docs/how-to-guides/building-from-source) here; for advanced users)
-	* Linux users only: You may need to [install additional dependencies](https://evo-lua.github.io/docs/getting-started/installation#external-dependencies)
-1. Copy (or better yet, [symlink](https://en.wikipedia.org/wiki/Symbolic_link)) in a suitable asset container, e.g., `data.grf`
-1. Now you can start one of the core apps, e.g., via `./evo client.lua`
-1. Datamining or debugging tools can be run via `./evo Tools/<script>.lua`
+## System requirements
 
-A window should pop up with a basic 3D scene being visible. Tools are CLI only.
+**To build the applications**:
 
-### Loading Scenes
+* You will need a reasonably modern C++ compiler, paired with a non-obscure and well-supported, up-to-date operating system
 
-To load a specific map, you can pass the `mapID` (unique scene identifier) to the client via CLI args:
+**To merely use the applications**:
 
-```sh
-# Valid scene IDs are any map that's listed in the DB/Maps.lua table
-# You can also directly load debug scenes (e.g., 'cube3d' or 'webgpu') this way
-./evo client.lua aldebaran
+* You can download prebuilt binaries from GitHub releases (*once I've bothered to set that up, I mean...*), then simply run them
+
+### Third-party libraries
+
+On Windows and macOS:
+
+* No external libraries should be required, at least for features I'd consider mandatory
+* If that ever changes, anything not provided by the OS shall be bundled with the applications
+
+On Linux:
+
+* There's probably no way around installing *something*, using your distribution's package manager
+* I don't know how much will be required, yet - this documentation will be updated once that changes
+* Both X11 and Wayland must obviously be supported; in the event that Wayland causes problems, use X11
+
+### Support tiers
+
+The following table shows all supported system configurations:
+
+| Platform | Operating System | Compiler Toolchain | Support Level |
+| :---: | :---: | :---: | :---: |
+| x64 (AMD64) | Windows 10 | MSVC v19 (Visual Studio 2022)| `S` |
+| x64 (AMD64) | Windows 11 | MSVC v19 (Visual Studio 2022)| `A` |
+| x64 (AMD64) | Linux (Ubuntu) | GCC v15 | `A` |
+| x64 (AMD64) | Linux (Ubuntu) | CLANG v20 | `A` |
+| x64 (AMD64) | Windows 10 | CLANG v20| `A` |
+| x64 (AMD64) | Windows 11 | CLANG v20| `A` |
+| ARM (M1) | macOS (OSX) | CLANG v?? (XCODE ??) | `A` |
+| ARM (M2) | macOS (OSX) | CLANG v?? (XCODE ??) | `A` |
+| x64 (AMD64) | Windows 10 | GCC v15 (MSYS2/MINGW64) | `B` |
+| x64 (AMD64) | Windows 11 | GCC v15 (MSYS2/MINGW64) | `B` |
+| x64 (AMD64) | Windows 10 | GCC v15 (MSYS2/UCRT64) | `B` |
+| x64 (AMD64) | Windows 11 | GCC v15 (MSYS2/UCRT64) | `B` |
+| x64 (AMD64) | macOS (OSX) | CLANG v?? (XCODE ??) | `B` |
+| ARM (M3) | macOS (OSX) | CLANG v?? (XCODE ??) | `C` |
+
+Support levels:
+
+* `S`: Primary target for local development, automated testing, and performance optimization
+* `A`: Secondary target for local development, with testing largely covered by automated CI workflows
+* `B`: Testing may be performed less frequently, if at all - although troubleshooting issues could be feasible
+* `C`: There's no way of testing currently, so you're on your own - good luck, and godspeed!
+* `D`: There's no way of testing whatsoever, and it probably won't work without major adjustments
+
+Note that the above applies only to platform layers that have been implemented at all (the rest will follow in due time).
+
+Platforms that are explicitly NOT supported (corresponding to `D` tier, at best):
+
+* Web Browsers (WebAssembly/Emscripten)
+* Proprietary video game consoles of any kind
+* Mobile phones and other handheld devices (Android/iOS)
+* Legacy versions of popular operating systems (Windows XP, Windows 7, macOS 9, ...)
+
+If you're feeling lucky, you might nevertheless be able to port the toolkit to some of those platforms.
+
+Even though I've no idea why anyone would want to do this, you're welcome to look into what it would take.
+
+## Building from source
+
+### Windows
+
+Building on Windows requires Microsoft's Visual C++ compiler toolchain, commonly referred to as [MSVC](https://en.wikipedia.org/wiki/Microsoft_Visual_C%2B%2B):
+
+```bat
+cl
+Microsoft (R) C/C++ Optimizing Compiler Version 19.44.35214 for x64
+Copyright (C) Microsoft Corporation.  All rights reserved.
+
+usage: cl [ option... ] filename... [ /link linkoption... ]
 ```
 
-If all you're seeing is the "hello world" fallback scene, then the map wasn't found in the database.
+You could use Visual Studio itself, open a `x64 Native Tools Command Prompt for VS 2022`, or manually run `vcvars64.bat`.
 
-### Camera Controls
+#### Installing the MSVC toolchain
 
-The following controls have been implemented so far:
+To get a copy of Visual Studio, go to the [Microsoft website](https://visualstudio.microsoft.com/vs/features/cplusplus/). The latest "free" (Community) version should work.
 
-* Hold right-click and drag: Adjust camera rotation (horizontal)
-* SHIFT + mouse wheel (scrolling): Adjust camera rotation (vertical)
-* Double-right-click: Instantly reset camera rotation (horizontal *and* vertical)
-* Mouse wheel (scrolling): Adjust zoom level
-* SHIFT + Arrow keys: Move the camera position (by a fixed amount) in the given direction
+While running the `Visual Studio Installer`, make sure to select at at least the following workloads:
 
-They're of course very rough, but should allow inspecting the rendered scene.
+* `C++ core features` - mandatory (?)
+* `C++ core desktop features` - mandatory
+* `Windows Universal C Runtime` - mandatory (?)
+* `MSVC vXXX - VS 2022 C++ x64/x86 build tools (Latest)` - mandatory
+* `C++ ATL for latest vXXX build tools (x86 & x64)` - mandatory
+* `Windows 11 SDK (10.0.XXXXX.X)` - just pick the latest, even on Windows 10
+* Optional: `C++ AdressSanitizer` - highly recommended
+* Optional: `C++ profiling tools` - situationally recommended
 
-### Other Keybindings
+Alternatively, you can download the build tools only ([here](https://visualstudio.microsoft.com/downloads/#build-tools-for-visual-studio-2022)). You must be able to invoke `cl.exe` and `rc.exe` in your terminal to proceed:
 
-You can take a screenshot by pressing the `SPACE` key. The result will be saved in the `Screenshots/` directory.
+```sh
+where cl
+C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.44.35207\bin\Hostx64\x64\cl.exe
+--------------------------------------------------------------------------------------------------------
+where rc
+C:\Program Files (x86)\Windows Kits\10\bin\10.0.22621.0\x64\rc.exe
+--------------------------------------------------------------------------------------------------------
+cl
+Microsoft (R) C/C++ Optimizing Compiler Version 19.44.35214 for x64
+Copyright (C) Microsoft Corporation.  All rights reserved.
 
-## Goals
+usage: cl [ option... ] filename... [ /link linkoption... ]
+```
 
-I'm building this software with the following guidelines in mind:
+#### Compilation with Visual Studio (MSVC)
 
-* Usability: It should be easy to use and "just work" for local development and testing
-* Independent: No external dependencies that require extensive orchestration to get started
-* Evolutionary: Small improvements over time should eventually add up to something (hopefully) useful
+To create all build artifacts in their default configuration, simply run `build.bat` in the same environment:
 
-This is an interactive resource intended to aid learning. It is provided for educational purposes only.
+```bat
+build.bat
+--------------------------------------------------------------------------------------------------------
+RagLite2.cpp
+RagLite2.cpp
+Generating code
+100%
+Finished generating code
+```
 
-## Non-Goals
+This should generate both the release and debug binaries located in the `BuildArtifacts` folder:
 
-There's a number of things I explicitly don't care about, at least for the time being:
+```
+dir BuildArtifacts
+--------------------------------------------------------------------------------------------------------
+XX/XX/XXXX  00:00    <DIR>          .
+XX/XX/XXXX  00:00    <DIR>          ..
+XX/XX/XXXX  00:00           183.808 RagLite2.exe
+XX/XX/XXXX  00:00           180.667 RagLite2.obj
+XX/XX/XXXX  00:00            50.776 RagLite2.res
+XX/XX/XXXX  00:00         1.024.512 RagLite2Dbg.exe
+XX/XX/XXXX  00:00         5.984.256 RagLite2Dbg.pdb
+```
 
-* Compatibility with existing software ecosystems and third-party projects
-* Features that are moving targets, impossible to maintain, or infeasible to create
-* Security, performance, and other "production quality" metrics ("spaghetti code" still isn't acceptable, though)
+During local development, you can then run `RagLite2Dbg.exe` in a debugger of your choice.
 
-I'm just one person, so anything that I can't implement or that exceedingly annoys me likely won't make the cut.
+> [!TIP]
+> If you're not already familiar, the [RAD Debugger](https://github.com/EpicGamesExt/raddebugger/) is definitely worth checking out!
+
+Some other resources that might be useful:
+
+* [MSDN: Compiling a C/C++ project from the command line](https://learn.microsoft.com/en-us/cpp/build/reference/compiling-a-c-cpp-program#from-the-command-line)
+	* This reference can help you understand the compiler and linker switches used in `build.bat`
+* [MSDN: Use the Microsoft C++ toolset from the command line](https://learn.microsoft.com/en-us/cpp/build/building-on-the-command-line)
+	* A practical tutorial if you're less experienced with C++ development on Windows (or a bit rusty)
+* [MSDN: Devenv command-line switches](https://learn.microsoft.com/en-us/visualstudio/ide/reference/devenv-command-line-switches)
+	* If you prefer to use the Visual Studio debugger, `devenv` might save you quite some time
+
+## Licensing information
+
+You may of course integrate parts of the code into your own projects, subject to the permissive [license terms](LICENSE).
+
+### Multi-licensing approach
+
+This project's source code and documentation is made available under any one of the following licenses:
+
+* Public Domain (for those ~~silly~~ non-EU countries who do recognize the construct)
+* Apache 2.0 License
+* GPL2 License
+* GPL3 License
+
+You can pick whichever option suits you best. If you need the code to be distributed under a different license, please get in touch.
+
+> [!NOTE]
+> Attribution isn't required, but of course it is good etiquette to acknowledge the work of others if you find it useful.
+
+### Legal notice
+
+This repository contains no ingame assets whatsoever. The source code was written entirely from scratch, based on freely-available information, educated guesses, trial & error, black-box testing, or technical documentation derived in a [clean-room environment](https://en.wikipedia.org/wiki/Clean-room_design) (if necessary). The approach chosen should allow just about anyone to make use of the resulting software - without having to worry about non-technical concerns.
+
+All trademarks referenced herein are the properties of their respective owners.
 
 ## Contributing
 
 Contributions of all kinds are welcome. There's no process, just [open an issue](https://github.com/RagnarokResearchLab/RagLite/issues/new) (or [pull request](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/about-pull-requests)) if you like.
+
+> [!IMPORTANT]
+> Needless to say, all contributions must be offered under the same multi-licensing scheme as the existing files.

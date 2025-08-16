@@ -28,17 +28,18 @@ jobs:
       - name: Check out Git repository
         uses: actions/checkout@v4
 
-      - name: Install dependencies
-        run: sudo apt update && sudo apt install libgtk-3-0 libwebkit2gtk-4.0-37 --yes
+      # TODO: Re-enable once the WGPU issues have been resolved (tests still run on macOS/Win32)
+      # - name: Install dependencies
+      #   run: sudo apt update && sudo apt install libgtk-3-0 libwebkit2gtk-4.0-37 --yes
 
-      - name: Download Lua runtime
-        run: ./download-runtime.sh && ./evo version
+      # - name: Download Lua runtime
+      #   run: ./download-runtime.sh && ./evo version
 
-      - name: Run automated tests
-        run: ./test.sh
+      # - name: Run automated tests
+      #   run: ./test.sh
 
-      - name: Publish new release
-        if: startsWith(github.ref, 'refs/tags/v')
-        uses: softprops/action-gh-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # - name: Publish new release
+      #   if: startsWith(github.ref, 'refs/tags/v')
+      #   uses: softprops/action-gh-release@v1
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
