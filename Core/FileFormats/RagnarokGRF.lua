@@ -199,20 +199,13 @@ function RagnarokGRF:DecodeFileName(input)
 	local pointerToNullTerminatedStringBytes = input
 
 	local originalLength = cstring.size(pointerToNullTerminatedStringBytes)
-	self.preallocatedConversionBuffer:reset()
-	local ptr, len = self.preallocatedConversionBuffer:reserve(originalLength * 3) -- Worst case (no 4-byte chars exist for EUC-KR)
-	local result =
-		iconv.bindings.iconv_convert(pointerToNullTerminatedStringBytes, originalLength, "CP949", "UTF-8", ptr, len)
-	local numBytesWritten = tonumber(result.num_bytes_written)
-	self.preallocatedConversionBuffer:commit(numBytesWritten)
-	local decodedFileName, decodedLength = self.preallocatedConversionBuffer:ref()
+	local decodedFileName =
+		iconv.convert(ffi.string(pointerToNullTerminatedStringBytes, originalLength), "CP949", "UTF-8")
 
+	local decodedLength = #decodedFileName
 	assert(decodedLength > 0, "Failed to decode file name (no bytes written while translating from CP949 to UTF-8)")
 
-	cstring.tolower(decodedFileName, decodedLength)
-	cstring.normalize(decodedFileName, decodedLength)
-
-	return ffi_string(decodedFileName), originalLength
+	return self:GetNormalizedFilePath(decodedFileName), originalLength
 end
 
 -- To measure (and optimize) the worst-case decompression time, it'll be convenient to find the largest files easily
