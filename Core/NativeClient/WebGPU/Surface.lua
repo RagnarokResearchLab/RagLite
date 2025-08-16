@@ -25,7 +25,7 @@ function Surface:Construct(wgpuInstance, wgpuAdapter, wgpuDevice, glfwWindow)
 	self.wgpuDevice = wgpuDevice
 	self.glfwWindow = glfwWindow
 
-	self.wgpuSurface = glfw.bindings.glfw_get_wgpu_surface(wgpuInstance, glfwWindow)
+	self.wgpuSurface = glfw.bindings.glfw_create_window_wgpu_surface(wgpuInstance, glfwWindow)
 	self.wgpuSurfaceConfiguration = new("WGPUSurfaceConfiguration")
 	self.wgpuSurfaceTexture = new("WGPUSurfaceTexture")
 	self.wgpuTextureViewDescriptor = new("WGPUTextureViewDescriptor")

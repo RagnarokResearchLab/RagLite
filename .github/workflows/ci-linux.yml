@@ -29,7 +29,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install dependencies
-        run: sudo apt update && sudo apt install libgtk-3-0 libwebkit2gtk-4.0-37 --yes
+        run: sudo apt-get install gtk+-3.0-dev webkit2gtk-4.1-dev --yes
 
       - name: Download Lua runtime
         run: ./download-runtime.sh && ./evo version
