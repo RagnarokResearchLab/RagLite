@@ -26,7 +26,7 @@ end
 
 function GPU:RequestAdapter(instance, window)
 	local adapterOptions = new("WGPURequestAdapterOptions", {
-		compatibleSurface = glfw.bindings.glfw_get_wgpu_surface(instance, window),
+		compatibleSurface = glfw.bindings.glfw_create_window_wgpu_surface(instance, window),
 		powerPreference = ffi.C.WGPUPowerPreference_HighPerformance,
 	})
 
@@ -80,7 +80,7 @@ function GPU:RequestLogicalDevice(adapter, options)
 				maxSampledTexturesPerShaderStage = GPU.MAX_TEXTURE_ARRAY_SIZE,
 				maxSamplersPerShaderStage = GPU.MAX_TEXTURE_ARRAY_SIZE,
 				maxUniformBufferBindingSize = GPU.MAX_UNIFORM_BUFFER_BINDING_SIZE,
-				maxBindingsPerBindGroup = 2, -- Max. allowed binding index
+				maxBindingsPerBindGroup = 3, -- Max. allowed binding index
 				maxDynamicUniformBuffersPerPipelineLayout = 1,
 				minStorageBufferOffsetAlignment = 32,
 				minUniformBufferOffsetAlignment = ffi.sizeof("mesh_uniform_t"),
@@ -102,17 +102,19 @@ function GPU:RequestLogicalDevice(adapter, options)
 		end
 		requestedDevice = device
 	end
-	webgpu.bindings.wgpu_adapter_request_device(adapter, deviceDescriptor, onDeviceRequested, nil)
-
-	-- This is blocking in the wgpu-native implementation, but it might change in the future...
-	assert(requestedDevice, "onDeviceRequested did not trigger, but it should have")
 
 	local function onDeviceError(errorType, message, userdata)
 		local errorDetails = format("Type: %s, Message: %s", tonumber(errorType), ffi_string(message))
 		error("Uncaptured device error - " .. errorDetails)
 	end
 
-	webgpu.bindings.wgpu_device_set_uncaptured_error_callback(requestedDevice, onDeviceError, nil)
+	local jit = require("jit")
+	jit.off(onDeviceError)
+
+	deviceDescriptor.uncapturedErrorCallbackInfo.callback = onDeviceError
+	webgpu.bindings.wgpu_adapter_request_device(adapter, deviceDescriptor, onDeviceRequested, nil)
+
+	-- This is blocking in the wgpu-native implementation, but it might change in the future...
 
 	local canUseTextureArrays =
 		webgpu.bindings.wgpu_device_has_feature(requestedDevice, ffi.C.WGPUNativeFeature_TextureBindingArray)
