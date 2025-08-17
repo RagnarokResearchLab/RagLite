@@ -38,14 +38,18 @@ constexpr uint32 UNINITIALIZED_WINDOW_COLOR = 0xFF202020;
 constexpr int DEBUG_OVERLAY_PADDING_SIZE = 8;
 constexpr int DEBUG_OVERLAY_LINE_HEIGHT = 18;
 
-constexpr COLORREF RGB_COLOR_DARK = RGB(30, 30, 30);
+constexpr COLORREF RGB_COLOR_DARKEST = RGB(0, 0, 00);
+constexpr COLORREF RGB_COLOR_DARKER = RGB(30, 30, 30);
+constexpr COLORREF RGB_COLOR_DARK = RGB(50, 50, 50);
 constexpr COLORREF RGB_COLOR_GREEN = RGB(0, 200, 0);
 constexpr COLORREF RGB_COLOR_ORANGE = RGB(255, 128, 0);
 constexpr COLORREF RGB_COLOR_RED = RGB(200, 0, 0);
 constexpr COLORREF RGB_COLOR_YELLOW = RGB(200, 200, 0);
 constexpr COLORREF RGB_COLOR_WHITE = RGB(200, 200, 200);
+constexpr COLORREF RGB_COLOR_BRIGHTEST = RGB(255, 255, 255);
 
-constexpr COLORREF UI_PANEL_COLOR = RGB_COLOR_DARK;
+constexpr COLORREF UI_PANEL_COLOR = RGB_COLOR_DARKER;
+constexpr COLORREF UI_BACKGROUND_COLOR = RGB_COLOR_DARK;
 constexpr COLORREF UI_TEXT_COLOR = RGB_COLOR_WHITE;
 
 COLORREF GetUsageColor(int percent) {
@@ -64,7 +68,7 @@ typedef struct gdi_progress_bar {
 } progress_bar_t;
 
 void DrawProgressBar(HDC displayDeviceContext, progress_bar_t& bar) {
-	HBRUSH backgroundBrush = CreateSolidBrush(RGB(50, 50, 50));
+	HBRUSH backgroundBrush = CreateSolidBrush(UI_BACKGROUND_COLOR);
 	RECT rect = { bar.x, bar.y, bar.x + bar.width, bar.y + bar.height };
 	FillRect(displayDeviceContext, &rect, backgroundBrush);
 	DeleteObject(backgroundBrush);
@@ -418,7 +422,7 @@ INTERNAL void DebugDrawKeyboardOverlay(gdi_surface_t& surface) {
 		WORD repeatCount = LOWORD(keyFlags);
 		BOOL isKeyReleased = (keyFlags & KF_UP) == KF_UP;
 
-		COLORREF backgroundColor = RGB(50, 50, 50);
+		COLORREF backgroundColor = UI_BACKGROUND_COLOR;
 		if(wasKeyDown)
 			backgroundColor = RGB(0, 120, 0);
 
