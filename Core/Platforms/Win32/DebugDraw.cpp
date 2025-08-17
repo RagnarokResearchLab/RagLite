@@ -127,7 +127,7 @@ void DebugDrawMemoryUsageOverlay(gdi_surface_t& surface) {
 	// Arena stats
 	//-------------------------------------------------
 	TextOutA(offscreenDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY,
-		"=== Arena ===", lstrlenA("=== Arena ==="));
+		"=== PREALLOCATED MEMORY ARENA ===", lstrlenA("=== PREALLOCATED MEMORY ARENA ==="));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
 	wsprintfA(buffer, "Base: 0x%p", MAIN_MEMORY.base);
@@ -187,40 +187,6 @@ void DebugDrawMemoryUsageOverlay(gdi_surface_t& surface) {
 	}
 
 	lineY = arenaY + ((totalBlocks / blocksPerRow) + 1) * (blockHeight + 1); // + DEBUG_OVERLAY_LINE_HEIGHT;
-
-	//-------------------------------------------------
-	// Process stats
-	//-------------------------------------------------
-	TextOutA(offscreenDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY,
-		"=== Process ===", lstrlenA("=== Process ==="));
-	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
-
-	PROCESS_MEMORY_COUNTERS_EX pmc;
-	if(GetProcessMemoryInfo(GetCurrentProcess(), (PROCESS_MEMORY_COUNTERS*)&pmc, sizeof(pmc))) {
-		wsprintfA(buffer, "Working Set: %d MB", (int)(pmc.WorkingSetSize / (1024 * 1024)));
-		TextOutA(offscreenDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
-		lineY += DEBUG_OVERLAY_LINE_HEIGHT;
-
-		wsprintfA(buffer, "Private Bytes: %d MB", (int)(pmc.PrivateUsage / (1024 * 1024)));
-		TextOutA(offscreenDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
-		lineY += DEBUG_OVERLAY_LINE_HEIGHT;
-
-		wsprintfA(buffer, "Pagefile: %d MB", (int)(pmc.PagefileUsage / (1024 * 1024)));
-		TextOutA(offscreenDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
-		lineY += DEBUG_OVERLAY_LINE_HEIGHT;
-
-		wsprintfA(buffer, "Peak Working Set: %d MB", (int)(pmc.PeakWorkingSetSize / (1024 * 1024)));
-		TextOutA(offscreenDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
-		lineY += DEBUG_OVERLAY_LINE_HEIGHT;
-
-		wsprintfA(buffer, "Peak Pagefile: %d MB", (int)(pmc.PeakPagefileUsage / (1024 * 1024)));
-		TextOutA(offscreenDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
-		lineY += DEBUG_OVERLAY_LINE_HEIGHT;
-	} else {
-		wsprintfA(buffer, "GetProcessMemoryInfo failed");
-		TextOutA(offscreenDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
-		lineY += DEBUG_OVERLAY_LINE_HEIGHT;
-	}
 
 	SelectObject(offscreenDeviceContext, oldFont);
 }
@@ -316,7 +282,7 @@ void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
 	// System stats
 	//-------------------------------------------------
 	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY,
-		"=== System ===", lstrlenA("=== System ==="));
+		"=== SYSTEM MEMORY USAGE ===", lstrlenA("=== SYSTEM MEMORY USAGE ==="));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
 	MEMORYSTATUSEX memoryUsageInfo = {};
@@ -385,6 +351,40 @@ void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
 				lineY, "Process stats unavailable", lstrlenA("Process stats unavailable"));
 			lineY += DEBUG_OVERLAY_LINE_HEIGHT * 2;
 		}
+	}
+
+	//-------------------------------------------------
+	// Process stats
+	//-------------------------------------------------
+	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY,
+		"=== PROCESS MEMORY USAGE ===", lstrlenA("=== PROCESS MEMORY USAGE ==="));
+	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
+
+	PROCESS_MEMORY_COUNTERS_EX pmc;
+	if(GetProcessMemoryInfo(GetCurrentProcess(), (PROCESS_MEMORY_COUNTERS*)&pmc, sizeof(pmc))) {
+		wsprintfA(buffer, "Working Set: %d MB", (int)(pmc.WorkingSetSize / (1024 * 1024)));
+		TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
+		lineY += DEBUG_OVERLAY_LINE_HEIGHT;
+
+		wsprintfA(buffer, "Private Bytes: %d MB", (int)(pmc.PrivateUsage / (1024 * 1024)));
+		TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
+		lineY += DEBUG_OVERLAY_LINE_HEIGHT;
+
+		wsprintfA(buffer, "Pagefile: %d MB", (int)(pmc.PagefileUsage / (1024 * 1024)));
+		TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
+		lineY += DEBUG_OVERLAY_LINE_HEIGHT;
+
+		wsprintfA(buffer, "Peak Working Set: %d MB", (int)(pmc.PeakWorkingSetSize / (1024 * 1024)));
+		TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
+		lineY += DEBUG_OVERLAY_LINE_HEIGHT;
+
+		wsprintfA(buffer, "Peak Pagefile: %d MB", (int)(pmc.PeakPagefileUsage / (1024 * 1024)));
+		TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
+		lineY += DEBUG_OVERLAY_LINE_HEIGHT;
+	} else {
+		wsprintfA(buffer, "GetProcessMemoryInfo failed");
+		TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
+		lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 	}
 
 	SelectObject(displayDeviceContext, oldFont);
