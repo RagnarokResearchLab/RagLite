@@ -54,7 +54,6 @@ typedef struct gdi_progress_bar {
 } progress_bar_t;
 
 void DrawUsageBar(HDC displayDeviceContext, progress_bar_t& bar) {
-	// int x, int y, int width, int height, int percent) {
 	HBRUSH backgroundBrush = CreateSolidBrush(RGB(50, 50, 50));
 	RECT rect = { bar.x, bar.y, bar.x + bar.width, bar.y + bar.height };
 	FillRect(displayDeviceContext, &rect, backgroundBrush);
