@@ -1,6 +1,7 @@
 #define VC_EXTRALEAN
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#include <timeapi.h>
 
 #define GLOBAL static
 #define INTERNAL static
@@ -170,6 +171,14 @@ constexpr int EXIT_FAILURE = -1;
 int WINAPI WinMain(HINSTANCE instance, HINSTANCE unused, LPSTR commandLine,
 	int showFlag) {
 
+	// TODO visualize in perf metrics also (just in case it ever fails...)
+	UINT requestedSchedulerGranularityInMilliseconds = 1;
+	// TODO check TIMERR_NOCANDO  and TIMERR_NOERROR
+	bool didAdjustGranularity = (timeBeginPeriod(requestedSchedulerGranularityInMilliseconds) == TIMERR_NOERROR);
+	// TODO set process granularity to 1ms
+	// TODO check timer caps of the platform?
+	DWORD sleepTimeInMilliseconds = 1000.0 / TARGET_FPS;
+
 	WNDCLASSEX windowClass = {};
 	// TODO Is this really a good idea? Beware the CS_OWNDC footguns...
 	// TODO https://devblogs.microsoft.com/oldnewthing/20060601-06/?p=31003
@@ -226,18 +235,14 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE unused, LPSTR commandLine,
 
 		++offsetX;
 		offsetY += 2;
-		// TODO visualize in perf metrics also (just in case it ever fails...)
-		//  UINT requestedSchedulerGranularityInMilliseconds = 1;
-		// bool didAdjustGranularity = (timeBeginPeriod(requestedSchedulerGranularityInMilliseconds) == TIMERR_NOERROR);
-		// TODO set process granularity to 1ms
-		DWORD sleepTimeInMilliseconds = 1000 / 30; // TODO ms, compute from target frame time, show in overlay
+
 		Sleep(sleepTimeInMilliseconds);
-
-		// TBD
-		// To increase the accuracy of the sleep interval, call the timeGetDevCaps function to determine the supported minimum timer resolution and the timeBeginPeriod function to set the timer resolution to its minimum. Use caution when calling timeBeginPeriod, as frequent calls can significantly affect the system clock, system power usage, and the scheduler. If you call timeBeginPeriod, call it one time early in the application and be sure to call the timeEndPeriod function at the very end of the application.
-
-		// TBD WaitForSingleObject might be appropriate in some cases?
 	}
 
+	timeEndPeriod(requestedSchedulerGranularityInMilliseconds); // TODO not here, but ensure it matches regardless
+																// TBD
+																// To increase the accuracy of the sleep interval, call the timeGetDevCaps function to determine the supported minimum timer resolution and the timeBeginPeriod function to set the timer resolution to its minimum. Use caution when calling timeBeginPeriod, as frequent calls can significantly affect the system clock, system power usage, and the scheduler. If you call timeBeginPeriod, call it one time early in the application and be sure to call the timeEndPeriod function at the very end of the application.
+
+	// TBD WaitForSingleObject might be appropriate in some cases?
 	return 0;
 }
