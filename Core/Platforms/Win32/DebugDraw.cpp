@@ -480,7 +480,19 @@ wsprintfA(buffer, "Total Phys: %d MB", (int)(memoryUsageInfo.ullTotalPhys / (102
 	}
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
+	const char* arch = "Unknown";
+switch (CPU_PERFORMANCE_METRICS.hardwareSystemInfo.wProcessorArchitecture) {
+    case PROCESSOR_ARCHITECTURE_AMD64: arch = "x64"; break;
+    case PROCESSOR_ARCHITECTURE_INTEL: arch = "x86"; break;
+    case PROCESSOR_ARCHITECTURE_ARM:   arch = "ARM"; break;
+    case PROCESSOR_ARCHITECTURE_ARM64: arch = "ARM64"; break;
+    case PROCESSOR_ARCHITECTURE_IA64:  arch = "Itanium"; break;
+}
 
+wsprintfA(buffer, "Architecture: %s", arch);
+TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY,
+         buffer, lstrlenA(buffer));
+lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 	// TODO useless
 	wsprintfA(buffer, "OEM ID: %u", CPU_PERFORMANCE_METRICS.hardwareSystemInfo.dwOemId);
 	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
@@ -516,7 +528,7 @@ wsprintfA(buffer, "Total Phys: %d MB", (int)(memoryUsageInfo.ullTotalPhys / (102
 
 	// TODO unit?
 	// TODO macro KILOBYTES(amount)
-	wsprintfA(buffer, "Allocation Granularity: %u KB", CPU_PERFORMANCE_METRICS.hardwareSystemInfo.dwAllocationGranularity)  / 1024;
+	wsprintfA(buffer, "Allocation Granularity: %u KB", CPU_PERFORMANCE_METRICS.hardwareSystemInfo.dwAllocationGranularity  / 1024);
 	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
@@ -531,6 +543,10 @@ wsprintfA(buffer, "Total Phys: %d MB", (int)(memoryUsageInfo.ullTotalPhys / (102
 
 	// TODO show meaningful info for these
 	// GetNativeSystemInfo -> Architecture
+
+
+
+
 	// CPUID -> Brand string
 
 	SelectObject(displayDeviceContext, oldFont);
