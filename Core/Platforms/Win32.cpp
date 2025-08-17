@@ -167,8 +167,7 @@ LRESULT CALLBACK WindowProcessMessage(HWND window, UINT message, WPARAM wParam,
 constexpr int EXIT_FAILURE = -1;
 int WINAPI WinMain(HINSTANCE instance, HINSTANCE unused, LPSTR commandLine,
 	int showFlag) {
-		IntrinsicsReadCPUID();
-
+	IntrinsicsReadCPUID();
 
 	// TODO visualize in perf metrics also (just in case it ever fails...)
 	UINT requestedSchedulerGranularityInMilliseconds = 1;
