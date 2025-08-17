@@ -319,7 +319,7 @@ INTERNAL void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
 		TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
 		lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
-		wsprintfA(buffer, "Available Physical Memory: %lld MB", memoryUsageInfo.ullAvailPhys);
+		wsprintfA(buffer, "Available Physical Memory: %d MB", memoryUsageInfo.ullAvailPhys / (1024 * 1024));
 		TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
 		lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
