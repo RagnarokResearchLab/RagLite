@@ -337,62 +337,60 @@ INTERNAL void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
 		DrawProgressBar(displayDeviceContext,
 			progressBar);
 		lineY += 24;
-	//-------------------------------------------------
-	// Process stats
-	//-------------------------------------------------
-	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
-	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY,
-		"=== PROCESS MEMORY	 ===", lstrlenA("=== PROCESS MEMORY ==="));
-	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
-
-	if(GetProcessMemoryInfo(GetCurrentProcess(), (PROCESS_MEMORY_COUNTERS*)&pmc, sizeof(pmc))) {
-		wsprintfA(buffer, "Virtual Memory Commit Limit: %d MB", (int)(memoryUsageInfo.ullTotalPageFile / (1024 * 1024)));
-		TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
+		//-------------------------------------------------
+		// Process stats
+		//-------------------------------------------------
+		lineY += DEBUG_OVERLAY_LINE_HEIGHT;
+		TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY,
+			"=== PROCESS MEMORY	 ===", lstrlenA("=== PROCESS MEMORY ==="));
 		lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
-		wsprintfA(buffer, "Virtual Memory Commit Capacity : %d MB", (int)(memoryUsageInfo.ullAvailPageFile / (1024 * 1024)));
-		TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
-		lineY += DEBUG_OVERLAY_LINE_HEIGHT;
+		if(GetProcessMemoryInfo(GetCurrentProcess(), (PROCESS_MEMORY_COUNTERS*)&pmc, sizeof(pmc))) {
+			wsprintfA(buffer, "Virtual Memory Commit Limit: %d MB", (int)(memoryUsageInfo.ullTotalPageFile / (1024 * 1024)));
+			TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
+			lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
-		lineY += DEBUG_OVERLAY_LINE_HEIGHT;
-		// TODO use real32 instead of double, unless necessary (2x speedup due to better FPU utilization in HW)
-		progress_bar_t progressBar = { .x = startX + DEBUG_OVERLAY_PADDING_SIZE, .y = lineY, .width = 200, .height = 16, .percent = Percent((double)memoryUsageInfo.ullAvailPageFile / memoryUsageInfo.ullTotalPageFile) };
-		wsprintfA(buffer, "Virtual Memory Load: %d%%", progressBar.percent);
-		progressBar.y += DEBUG_OVERLAY_LINE_HEIGHT;
-		TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
-		lineY += DEBUG_OVERLAY_LINE_HEIGHT;
-		DrawProgressBar(displayDeviceContext, progressBar);
-			lineY += 24;
-
+			wsprintfA(buffer, "Virtual Memory Commit Capacity : %d MB", (int)(memoryUsageInfo.ullAvailPageFile / (1024 * 1024)));
+			TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
+			lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
 			lineY += DEBUG_OVERLAY_LINE_HEIGHT;
-		wsprintfA(buffer, "Private Set Size: %d MB", (int)(pmc.PrivateUsage / (1024 * 1024)));
-		TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
-		lineY += DEBUG_OVERLAY_LINE_HEIGHT;
+			// TODO use real32 instead of double, unless necessary (2x speedup due to better FPU utilization in HW)
+			progress_bar_t progressBar = { .x = startX + DEBUG_OVERLAY_PADDING_SIZE, .y = lineY, .width = 200, .height = 16, .percent = Percent((double)memoryUsageInfo.ullAvailPageFile / memoryUsageInfo.ullTotalPageFile) };
+			wsprintfA(buffer, "Virtual Memory Load: %d%%", progressBar.percent);
+			progressBar.y += DEBUG_OVERLAY_LINE_HEIGHT;
+			TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
+			lineY += DEBUG_OVERLAY_LINE_HEIGHT;
+			DrawProgressBar(displayDeviceContext, progressBar);
+			lineY += 24;
 
-		wsprintfA(buffer, "Working Set Size: %d MB (Peak: %d MB)", (int)(pmc.WorkingSetSize / (1024 * 1024)), (int)(pmc.PeakWorkingSetSize / (1024 * 1024)));
-		TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
-		lineY += DEBUG_OVERLAY_LINE_HEIGHT;
+			lineY += DEBUG_OVERLAY_LINE_HEIGHT;
+			wsprintfA(buffer, "Private Set: %d MB", (int)(pmc.PrivateUsage / (1024 * 1024)));
+			TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
+			lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
-		wsprintfA(buffer, "Page File Usage: %d MB (Peak: %d MB)", (int)(pmc.PagefileUsage / (1024 * 1024)), (int)(pmc.PeakPagefileUsage / (1024 * 1024)));
-		TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
-		lineY += DEBUG_OVERLAY_LINE_HEIGHT;
+			wsprintfA(buffer, "Working Set: %d MB (Peak: %d MB)", (int)(pmc.WorkingSetSize / (1024 * 1024)), (int)(pmc.PeakWorkingSetSize / (1024 * 1024)));
+			TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
+			lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
-		// wsprintfA(buffer, "Peak Working Set Size: %d MB", (int)(pmc.PeakWorkingSetSize / (1024 * 1024)));
-		// TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
-		// lineY += DEBUG_OVERLAY_LINE_HEIGHT;
+			wsprintfA(buffer, "Page File Usage: %d MB (Peak: %d MB)", (int)(pmc.PagefileUsage / (1024 * 1024)), (int)(pmc.PeakPagefileUsage / (1024 * 1024)));
+			TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
+			lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
-		// wsprintfA(buffer, "Peak Page File Usage: %d MB", (int)(pmc.PeakPagefileUsage / (1024 * 1024)));
-		// TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
-		// lineY += DEBUG_OVERLAY_LINE_HEIGHT;
+			// wsprintfA(buffer, "Peak Working Set Size: %d MB", (int)(pmc.PeakWorkingSetSize / (1024 * 1024)));
+			// TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
+			// lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
+			// wsprintfA(buffer, "Peak Page File Usage: %d MB", (int)(pmc.PeakPagefileUsage / (1024 * 1024)));
+			// TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
+			// lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
-		lineY += DEBUG_OVERLAY_LINE_HEIGHT;
-				int procPercent = (int)((pmc.WorkingSetSize * 100) / memoryUsageInfo.ullTotalPhys);
+			lineY += DEBUG_OVERLAY_LINE_HEIGHT;
+			int procPercent = (int)((pmc.WorkingSetSize * 100) / memoryUsageInfo.ullTotalPhys);
 
-			wsprintfA(buffer, "Process: %d MB / %d MB",
+			wsprintfA(buffer, "Process: %d MB / %d MB (%d%%)",
 				(int)(pmc.WorkingSetSize / (1024 * 1024)),
-				(int)(memoryUsageInfo.ullTotalPhys / (1024 * 1024)));
+				(int)(memoryUsageInfo.ullTotalPhys / (1024 * 1024)), procPercent);
 
 			TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE,
 				lineY, buffer, lstrlenA(buffer));
@@ -403,14 +401,14 @@ INTERNAL void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
 			DrawProgressBar(displayDeviceContext, progressBar);
 			lineY += 24;
 
-	} else {
-				DWORD err = GetLastError();
-		LPTSTR errStr = FormatErrorString(err);
+		} else {
+			DWORD err = GetLastError();
+			LPTSTR errStr = FormatErrorString(err);
 
-		wsprintfA(buffer, "N/A: %lu (%s)", err, errStr);
-		TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
-		lineY += DEBUG_OVERLAY_LINE_HEIGHT;
-	}
+			wsprintfA(buffer, "N/A: %lu (%s)", err, errStr);
+			TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
+			lineY += DEBUG_OVERLAY_LINE_HEIGHT;
+		}
 	}
 
 	//-------------------------------------------------
@@ -511,11 +509,11 @@ INTERNAL void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
 		buffer, lstrlenA(buffer));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
-	wsprintfA(buffer, "Page Size: %u KB", CPU_PERFORMANCE_METRICS.hardwareSystemInfo.dwPageSize);
+	wsprintfA(buffer, "Number of Cores: %u", CPU_PERFORMANCE_METRICS.hardwareSystemInfo.dwNumberOfProcessors);
 	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
-	wsprintfA(buffer, "Number of Processors: %u", CPU_PERFORMANCE_METRICS.hardwareSystemInfo.dwNumberOfProcessors);
+	wsprintfA(buffer, "Page Size: %u KB", CPU_PERFORMANCE_METRICS.hardwareSystemInfo.dwPageSize);
 	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
