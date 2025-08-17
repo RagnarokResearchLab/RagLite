@@ -320,9 +320,25 @@ INTERNAL void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
 		TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
 		lineY += DEBUG_OVERLAY_LINE_HEIGHT * 1;
 
-		wsprintfA(buffer, "Memory Load: %d%%", memoryUsageInfo.dwMemoryLoad);
+				wsprintfA(buffer, "Memory Load: %d%%", memoryUsageInfo.dwMemoryLoad);
 		TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
 		lineY += DEBUG_OVERLAY_LINE_HEIGHT;
+
+
+		// // TODO process
+		// wsprintfA(buffer, "Total Commit Limit (RAM + Page File + Overhead): %ull", memoryUsageInfo.ullTotalPageFile);
+		// TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
+		// lineY += DEBUG_OVERLAY_LINE_HEIGHT;
+
+		// // TODO process
+		// 		wsprintfA(buffer, "Max Commit Amount (CommitLimit - CommitCharge): %ull", memoryUsageInfo.ullAvailPageFile);
+		// TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
+		// lineY += DEBUG_OVERLAY_LINE_HEIGHT;
+
+
+		// 		wsprintfA(buffer, "Virtual Address Space Size (User-Mode): %ull", memoryUsageInfo.ullTotalVirtual);
+		// TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
+		// lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
 		// TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY,
 		// 	"System Usage:", lstrlenA("System Usage:"));
