@@ -388,7 +388,7 @@ INTERNAL void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
 			lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 			int procPercent = (int)((pmc.WorkingSetSize * 100) / memoryUsageInfo.ullTotalPhys);
 
-			wsprintfA(buffer, "Process: %d MB / %d MB (%d%%)",
+			wsprintfA(buffer, "Memory Usage: %d MB / %d MB (%d%%)",
 				(int)(pmc.WorkingSetSize / (1024 * 1024)),
 				(int)(memoryUsageInfo.ullTotalPhys / (1024 * 1024)), procPercent);
 
