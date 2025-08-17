@@ -226,9 +226,11 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE unused, LPSTR commandLine,
 
 		++offsetX;
 		offsetY += 2;
-
+		// TODO visualize in perf metrics also (just in case it ever fails...)
+		//  UINT requestedSchedulerGranularityInMilliseconds = 1;
+		// bool didAdjustGranularity = (timeBeginPeriod(requestedSchedulerGranularityInMilliseconds) == TIMERR_NOERROR);
 		// TODO set process granularity to 1ms
-		DWORD sleepTimeInMilliseconds = 16; // TODO ms
+		DWORD sleepTimeInMilliseconds = 16; // TODO ms, compute from target frame time, show in overlay
 		Sleep(sleepTimeInMilliseconds);
 	}
 
