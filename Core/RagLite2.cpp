@@ -27,6 +27,55 @@ inline uint32 Terabytes(uint32 bytes) {
 	return Gigabytes(bytes) / 1024;
 }
 
+typedef float percentage;
+constexpr float EPSILON = 0.001;
+
+inline int Percent(double percentage) {
+	if(percentage - 1.0 > EPSILON) return 100;
+	if(percentage < EPSILON) return 0;
+	percentage *= 100.0;
+	return (int)percentage;
+}
+
+#define GLOBAL static
+#define INTERNAL static
+
+GLOBAL float TARGET_FPS = 120;
+
+int FloatToString(char* buffer, float value, int decimals) {
+	if(value < 0) {
+		*buffer++ = '-';
+		value = -value;
+	}
+
+	uint32 intPart = (uint32)value;
+	float frac = value - (float)intPart;
+
+	char temp[32];
+	int intLen = 0;
+	do {
+		temp[intLen++] = '0' + (int)(intPart % 10);
+		intPart /= 10;
+	} while(intPart > 0);
+
+	for(int i = intLen - 1; i >= 0; --i) {
+		*buffer++ = temp[i];
+	}
+
+	if(decimals > 0) {
+		*buffer++ = '.';
+		for(int d = 0; d < decimals; d++) {
+			frac *= 10.0;
+			int digit = (int)frac;
+			*buffer++ = '0' + digit;
+			frac -= digit;
+		}
+	}
+
+	*buffer = '\0';
+	return (int)(buffer - temp);
+}
+
 #ifdef RAGLITE_PLATFORM_WINDOWS
 #include "Platforms/Win32.cpp"
 #endif
