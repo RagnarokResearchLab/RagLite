@@ -35,7 +35,7 @@ GLOBAL gdi_debug_pattern GDI_DEBUG_PATTERN = PATTERN_SHIFTING_GRADIENT;
 
 constexpr uint32 UNINITIALIZED_WINDOW_COLOR = 0xFF202020;
 
-constexpr int MEMORY_DEBUG_OVERLAY_PADDING_SIZE = 8;
+constexpr int DEBUG_OVERLAY_PADDING_SIZE = 8;
 constexpr int MEMORY_DEBUG_OVERLAY_LINE_HEIGHT = 18;
 
 constexpr COLORREF RGB_COLOR_GREEN = RGB(0, 200, 0);
@@ -104,40 +104,40 @@ void DebugDrawMemoryUsageOverlay(gdi_surface_t& surface) {
 	SetTextColor(offscreenDeviceContext, RGB(200, 200, 200));
 
 	char buffer[256];
-	int lineY = startY + MEMORY_DEBUG_OVERLAY_PADDING_SIZE;
+	int lineY = startY + DEBUG_OVERLAY_PADDING_SIZE;
 
 	//-------------------------------------------------
 	// Arena stats
 	//-------------------------------------------------
-	TextOutA(offscreenDeviceContext, startX + MEMORY_DEBUG_OVERLAY_PADDING_SIZE, lineY,
+	TextOutA(offscreenDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY,
 		"=== Arena ===", lstrlenA("=== Arena ==="));
 	lineY += MEMORY_DEBUG_OVERLAY_LINE_HEIGHT;
 
 	wsprintfA(buffer, "Base: 0x%p", MAIN_MEMORY.base);
-	TextOutA(offscreenDeviceContext, startX + MEMORY_DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
+	TextOutA(offscreenDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
 	lineY += MEMORY_DEBUG_OVERLAY_LINE_HEIGHT;
 
 	wsprintfA(buffer, "Reserved: %d KB", MAIN_MEMORY.reservedSize / 1024);
-	TextOutA(offscreenDeviceContext, startX + MEMORY_DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
+	TextOutA(offscreenDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
 	lineY += MEMORY_DEBUG_OVERLAY_LINE_HEIGHT;
 
 	wsprintfA(buffer, "Committed: %d KB", MAIN_MEMORY.committedSize / 1024);
-	TextOutA(offscreenDeviceContext, startX + MEMORY_DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
+	TextOutA(offscreenDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
 	lineY += MEMORY_DEBUG_OVERLAY_LINE_HEIGHT;
 
 	wsprintfA(buffer, "Used: %d KB", MAIN_MEMORY.used / 1024);
-	TextOutA(offscreenDeviceContext, startX + MEMORY_DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
+	TextOutA(offscreenDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
 	lineY += MEMORY_DEBUG_OVERLAY_LINE_HEIGHT;
 
 	wsprintfA(buffer, "Free: %d KB", (MAIN_MEMORY.committedSize - MAIN_MEMORY.used) / 1024);
-	TextOutA(offscreenDeviceContext, startX + MEMORY_DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
+	TextOutA(offscreenDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
 	lineY += MEMORY_DEBUG_OVERLAY_LINE_HEIGHT;
 
 	wsprintfA(buffer, "Allocations: %d", MAIN_MEMORY.allocationCount);
-	TextOutA(offscreenDeviceContext, startX + MEMORY_DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
+	TextOutA(offscreenDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
 	lineY += MEMORY_DEBUG_OVERLAY_LINE_HEIGHT * 1;
 
-	// 	TextOutA(offscreenDeviceContext, startX + MEMORY_DEBUG_OVERLAY_PADDING_SIZE, lineY,
+	// 	TextOutA(offscreenDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY,
 	//          "Arena Usage:", lstrlenA("Arena Usage:"));
 	// lineY += MEMORY_DEBUG_OVERLAY_LINE_HEIGHT;
 
@@ -149,7 +149,7 @@ void DebugDrawMemoryUsageOverlay(gdi_surface_t& surface) {
 	int blockWidth = 1; // 6;
 	int blockHeight = 2; // 12;
 	int blocksPerRow = 400; // wrap to multiple rows if arena is large
-	int arenaX = startX + MEMORY_DEBUG_OVERLAY_PADDING_SIZE;
+	int arenaX = startX + DEBUG_OVERLAY_PADDING_SIZE;
 	int arenaY = lineY;
 
 	for(int i = 0; i < totalBlocks; ++i) {
@@ -178,7 +178,7 @@ void DebugDrawMemoryUsageOverlay(gdi_surface_t& surface) {
 	//-------------------------------------------------
 	// System stats
 	//-------------------------------------------------
-	TextOutA(offscreenDeviceContext, startX + MEMORY_DEBUG_OVERLAY_PADDING_SIZE, lineY,
+	TextOutA(offscreenDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY,
 		"=== System ===", lstrlenA("=== System ==="));
 	lineY += MEMORY_DEBUG_OVERLAY_LINE_HEIGHT;
 
@@ -190,22 +190,22 @@ void DebugDrawMemoryUsageOverlay(gdi_surface_t& surface) {
 		LPTSTR errStr = GetErrorString(err);
 
 		wsprintfA(buffer, "ERROR: %lu (%s)", err, errStr);
-		TextOutA(offscreenDeviceContext, startX + MEMORY_DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
+		TextOutA(offscreenDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
 		lineY += MEMORY_DEBUG_OVERLAY_LINE_HEIGHT;
 	} else {
 		wsprintfA(buffer, "Avail Phys: %d MB", (int)(memoryUsageInfo.ullAvailPhys / (1024 * 1024)));
-		TextOutA(offscreenDeviceContext, startX + MEMORY_DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
+		TextOutA(offscreenDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
 		lineY += MEMORY_DEBUG_OVERLAY_LINE_HEIGHT;
 
 		wsprintfA(buffer, "Avail Virtual: %d MB", (int)(memoryUsageInfo.ullAvailVirtual / (1024 * 1024)));
-		TextOutA(offscreenDeviceContext, startX + MEMORY_DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
+		TextOutA(offscreenDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
 		lineY += MEMORY_DEBUG_OVERLAY_LINE_HEIGHT * 1;
 
 		wsprintfA(buffer, "Memory Load: %d%%", memoryUsageInfo.dwMemoryLoad);
-		TextOutA(offscreenDeviceContext, startX + MEMORY_DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
+		TextOutA(offscreenDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
 		lineY += MEMORY_DEBUG_OVERLAY_LINE_HEIGHT;
 
-		// TextOutA(offscreenDeviceContext, startX + MEMORY_DEBUG_OVERLAY_PADDING_SIZE, lineY,
+		// TextOutA(offscreenDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY,
 		// 	"System Usage:", lstrlenA("System Usage:"));
 		// lineY += MEMORY_DEBUG_OVERLAY_LINE_HEIGHT;
 
@@ -213,11 +213,11 @@ void DebugDrawMemoryUsageOverlay(gdi_surface_t& surface) {
 		// System usage bar
 		//-------------------------------------------------
 		int sysUsage = memoryUsageInfo.dwMemoryLoad;
-		TextOutA(offscreenDeviceContext, startX + MEMORY_DEBUG_OVERLAY_PADDING_SIZE, lineY,
+		TextOutA(offscreenDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY,
 			"System Usage:", lstrlenA("System Usage:"));
 		lineY += MEMORY_DEBUG_OVERLAY_LINE_HEIGHT;
 
-		progress_bar_t progressBar = { .x = startX + MEMORY_DEBUG_OVERLAY_PADDING_SIZE, .y = lineY, .width = 200, .height = 16, .percent = sysUsage };
+		progress_bar_t progressBar = { .x = startX + DEBUG_OVERLAY_PADDING_SIZE, .y = lineY, .width = 200, .height = 16, .percent = sysUsage };
 		DrawProgressBar(offscreenDeviceContext,
 			progressBar);
 		lineY += 24;
@@ -228,34 +228,34 @@ void DebugDrawMemoryUsageOverlay(gdi_surface_t& surface) {
 	//-------------------------------------------------
 	// Process stats
 	//-------------------------------------------------
-	TextOutA(offscreenDeviceContext, startX + MEMORY_DEBUG_OVERLAY_PADDING_SIZE, lineY,
+	TextOutA(offscreenDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY,
 		"=== Process ===", lstrlenA("=== Process ==="));
 	lineY += MEMORY_DEBUG_OVERLAY_LINE_HEIGHT;
 
 	PROCESS_MEMORY_COUNTERS_EX pmc;
 	if(GetProcessMemoryInfo(GetCurrentProcess(), (PROCESS_MEMORY_COUNTERS*)&pmc, sizeof(pmc))) {
 		wsprintfA(buffer, "Working Set: %d MB", (int)(pmc.WorkingSetSize / (1024 * 1024)));
-		TextOutA(offscreenDeviceContext, startX + MEMORY_DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
+		TextOutA(offscreenDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
 		lineY += MEMORY_DEBUG_OVERLAY_LINE_HEIGHT;
 
 		wsprintfA(buffer, "Private Bytes: %d MB", (int)(pmc.PrivateUsage / (1024 * 1024)));
-		TextOutA(offscreenDeviceContext, startX + MEMORY_DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
+		TextOutA(offscreenDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
 		lineY += MEMORY_DEBUG_OVERLAY_LINE_HEIGHT;
 
 		wsprintfA(buffer, "Pagefile: %d MB", (int)(pmc.PagefileUsage / (1024 * 1024)));
-		TextOutA(offscreenDeviceContext, startX + MEMORY_DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
+		TextOutA(offscreenDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
 		lineY += MEMORY_DEBUG_OVERLAY_LINE_HEIGHT;
 
 		wsprintfA(buffer, "Peak Working Set: %d MB", (int)(pmc.PeakWorkingSetSize / (1024 * 1024)));
-		TextOutA(offscreenDeviceContext, startX + MEMORY_DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
+		TextOutA(offscreenDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
 		lineY += MEMORY_DEBUG_OVERLAY_LINE_HEIGHT;
 
 		wsprintfA(buffer, "Peak Pagefile: %d MB", (int)(pmc.PeakPagefileUsage / (1024 * 1024)));
-		TextOutA(offscreenDeviceContext, startX + MEMORY_DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
+		TextOutA(offscreenDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
 		lineY += MEMORY_DEBUG_OVERLAY_LINE_HEIGHT;
 	} else {
 		wsprintfA(buffer, "GetProcessMemoryInfo failed");
-		TextOutA(offscreenDeviceContext, startX + MEMORY_DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
+		TextOutA(offscreenDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
 		lineY += MEMORY_DEBUG_OVERLAY_LINE_HEIGHT;
 	}
 
@@ -269,16 +269,16 @@ void DebugDrawMemoryUsageOverlay(gdi_surface_t& surface) {
 			(int)(pmc.WorkingSetSize / (1024 * 1024)),
 			(int)(memoryUsageInfo.ullTotalPhys / (1024 * 1024)));
 
-		TextOutA(offscreenDeviceContext, startX + MEMORY_DEBUG_OVERLAY_PADDING_SIZE,
+		TextOutA(offscreenDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE,
 			lineY, buffer, lstrlenA(buffer));
 		lineY += MEMORY_DEBUG_OVERLAY_LINE_HEIGHT;
 
-		progress_bar_t progressBar = { .x = startX + MEMORY_DEBUG_OVERLAY_PADDING_SIZE, .y = lineY, .width = 200, .height = 16, .percent = procPercent };
+		progress_bar_t progressBar = { .x = startX + DEBUG_OVERLAY_PADDING_SIZE, .y = lineY, .width = 200, .height = 16, .percent = procPercent };
 
 		DrawProgressBar(offscreenDeviceContext, progressBar);
 		lineY += 24;
 	} else {
-		TextOutA(offscreenDeviceContext, startX + MEMORY_DEBUG_OVERLAY_PADDING_SIZE,
+		TextOutA(offscreenDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE,
 			lineY, "Process stats unavailable", lstrlenA("Process stats unavailable"));
 		lineY += MEMORY_DEBUG_OVERLAY_LINE_HEIGHT * 2;
 	}
@@ -308,9 +308,9 @@ void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
 	SetTextColor(displayDeviceContext, RGB(200, 200, 200));
 
 	char buffer[128];
-	int lineY = startY + MEMORY_DEBUG_OVERLAY_PADDING_SIZE;
+	int lineY = startY + DEBUG_OVERLAY_PADDING_SIZE;
 
-	TextOutA(displayDeviceContext, startX + MEMORY_DEBUG_OVERLAY_PADDING_SIZE, lineY,
+	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY,
 		"=== PERFORMANCE ===", lstrlenA("=== PERFORMANCE ==="));
 	lineY += MEMORY_DEBUG_OVERLAY_LINE_HEIGHT;
 
