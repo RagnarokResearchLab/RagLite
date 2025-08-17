@@ -321,7 +321,7 @@ INTERNAL void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
 		TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
 		lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
-		wsprintfA(buffer, "Available Physical Memory: %d MB", Megabytes(memoryUsageInfo.ullAvailPhys));
+		wsprintfA(buffer, "Available Physical Memory: %lld MB", memoryUsageInfo.ullAvailPhys);
 		TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
 		lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
@@ -329,6 +329,7 @@ INTERNAL void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
 		// TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
 		// lineY += DEBUG_OVERLAY_LINE_HEIGHT * 1;
 
+		lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 		wsprintfA(buffer, "Physical Memory Load: %d%%", memoryUsageInfo.dwMemoryLoad);
 		TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
 		lineY += DEBUG_OVERLAY_LINE_HEIGHT;
@@ -390,6 +391,7 @@ INTERNAL void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
 		TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
 		lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
+		lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 		// TODO use real32 instead of double, unless necessary (2x speedup due to better FPU utilization in HW)
 		progress_bar_t progressBar = { .x = startX + DEBUG_OVERLAY_PADDING_SIZE, .y = lineY, .width = 200, .height = 16, .percent = Percent((double)memoryUsageInfo.ullAvailPageFile / memoryUsageInfo.ullTotalPageFile) };
 		wsprintfA(buffer, "Virtual Memory Load: %d%%", progressBar.percent);
