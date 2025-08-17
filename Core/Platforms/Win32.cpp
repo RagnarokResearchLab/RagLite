@@ -3,9 +3,6 @@
 #include <windows.h>
 #include <timeapi.h>
 
-#define GLOBAL static
-#define INTERNAL static
-
 #define TODO(msg) OutputDebugStringA(msg);
 constexpr size_t MAX_ERROR_MSG_SIZE = 512;
 static TCHAR SYSTEM_ERROR_MESSAGE[MAX_ERROR_MSG_SIZE];
