@@ -130,7 +130,7 @@ void DebugDrawMemoryUsageOverlay(gdi_surface_t& surface) {
 	// Arena stats
 	//-------------------------------------------------
 	TextOutA(offscreenDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY,
-		"=== MEMORY ARENAS ===", lstrlenA("=== MEMORY ARENA ==="));
+		"=== MEMORY ALLOCATIONS ===", lstrlenA("=== MEMORY ALLOCATIONS ==="));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
 	wsprintfA(buffer, "Name: %s", MAIN_MEMORY.name);
