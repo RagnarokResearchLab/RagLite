@@ -281,12 +281,12 @@ void DebugDrawMemoryUsageOverlay(gdi_surface_t& surface) {
 }
 
 void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
-	HDC dc = surface.offscreenDeviceContext;
-	if(!dc) return;
+	HDC displayDeviceContext = surface.offscreenDeviceContext;
+	if(!displayDeviceContext) return;
 
-	SetBkMode(dc, TRANSPARENT);
+	SetBkMode(displayDeviceContext, TRANSPARENT);
 	HFONT font = (HFONT)GetStockObject(ANSI_VAR_FONT);
-	HFONT oldFont = (HFONT)SelectObject(dc, font);
+	HFONT oldFont = (HFONT)SelectObject(displayDeviceContext, font);
 
 	int startX = 1024 + 16;
 	int startY = 300;
@@ -297,36 +297,36 @@ void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
 		startY + (MEMORY_DEBUG_OVERLAY_LINE_HEIGHT * 11)
 	};
 	HBRUSH panelBrush = CreateSolidBrush(RGB(30, 30, 30));
-	FillRect(dc, &panelRect, panelBrush);
+	FillRect(displayDeviceContext, &panelRect, panelBrush);
 	DeleteObject(panelBrush);
 
-	SetTextColor(dc, RGB(200, 200, 200));
+	SetTextColor(displayDeviceContext, RGB(200, 200, 200));
 
 	char buffer[128];
 	int lineY = startY + MEMORY_DEBUG_OVERLAY_PADDING_SIZE;
 
-	TextOutA(dc, startX + MEMORY_DEBUG_OVERLAY_PADDING_SIZE, lineY,
+	TextOutA(displayDeviceContext, startX + MEMORY_DEBUG_OVERLAY_PADDING_SIZE, lineY,
 		"=== PERFORMANCE ===", lstrlenA("=== PERFORMANCE ==="));
 	lineY += MEMORY_DEBUG_OVERLAY_LINE_HEIGHT;
 
 	// CPU
 	int cpuUsage = Percent(CPU_PERFORMANCE_METRICS.processorUsageSingleCore);
 	wsprintfA(buffer, "Main Thread (Single Core): %d%%", cpuUsage);
-	TextOutA(dc, startX + 8, lineY, buffer, lstrlenA(buffer));
+	TextOutA(displayDeviceContext, startX + 8, lineY, buffer, lstrlenA(buffer));
 	lineY += MEMORY_DEBUG_OVERLAY_LINE_HEIGHT;
 	progress_bar_t progressBar = { .x = startX + 8, .y = lineY, .width = 200, .height = 16, .percent = cpuUsage };
-	DrawProgressBar(dc, progressBar);
+	DrawProgressBar(displayDeviceContext, progressBar);
 	lineY += MEMORY_DEBUG_OVERLAY_LINE_HEIGHT;
 	lineY += MEMORY_DEBUG_OVERLAY_LINE_HEIGHT;
 
 	cpuUsage = Percent(CPU_PERFORMANCE_METRICS.processorUsageAllCores);
 	wsprintfA(buffer, "Process (All Cores): %d%%", cpuUsage);
-	TextOutA(dc, startX + 8, lineY, buffer, lstrlenA(buffer));
+	TextOutA(displayDeviceContext, startX + 8, lineY, buffer, lstrlenA(buffer));
 	lineY += MEMORY_DEBUG_OVERLAY_LINE_HEIGHT;
 
 	progressBar.y = lineY;
 	progressBar.percent = cpuUsage;
-	DrawProgressBar(dc, progressBar);
+	DrawProgressBar(displayDeviceContext, progressBar);
 	lineY += MEMORY_DEBUG_OVERLAY_LINE_HEIGHT;
 	lineY += MEMORY_DEBUG_OVERLAY_LINE_HEIGHT;
 
@@ -336,19 +336,19 @@ void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
 	lstrcpyA(buffer, "Frame: "); // Clear buffer first
 	lstrcatA(buffer, num); // Append
 	lstrcatA(buffer, " ms");
-	// TextOutA(dc, startX + 8, lineY, buffer, lstrlenA(buffer));
+	// TextOutA(displayDeviceContext, startX + 8, lineY, buffer, lstrlenA(buffer));
 
 	lstrcatA(buffer, " (smoothed: ");
 	FloatToString(num, CPU_PERFORMANCE_METRICS.deltaTimeMs, 2);
 	lstrcatA(buffer, num);
 	lstrcatA(buffer, " ms)");
-	TextOutA(dc, startX + 8, lineY, buffer, lstrlenA(buffer));
+	TextOutA(displayDeviceContext, startX + 8, lineY, buffer, lstrlenA(buffer));
 	lineY += MEMORY_DEBUG_OVERLAY_LINE_HEIGHT;
 	// lineY += MEMORY_DEBUG_OVERLAY_LINE_HEIGHT;
 	// wsprintfA(buffer, "Frame: %.2f ms (smoothed: %.2f)",
 	// CPU_PERFORMANCE_METRICS.deltaTimeMs,
 	// CPU_PERFORMANCE_METRICS.smoothedDeltaTimeMs);
-	// TextOutA(dc, startX + 8, lineY, buffer, lstrlenA(buffer));
+	// TextOutA(displayDeviceContext, startX + 8, lineY, buffer, lstrlenA(buffer));
 	// lineY += MEMORY_DEBUG_OVERLAY_LINE_HEIGHT;
 
 	lstrcpyA(buffer, "FPS: ");
@@ -358,7 +358,7 @@ void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
 	FloatToString(num, CPU_PERFORMANCE_METRICS.smoothedFps, 1);
 	lstrcatA(buffer, num);
 	lstrcatA(buffer, ")");
-	TextOutA(dc, startX + 8, lineY, buffer, lstrlenA(buffer));
+	TextOutA(displayDeviceContext, startX + 8, lineY, buffer, lstrlenA(buffer));
 	lineY += MEMORY_DEBUG_OVERLAY_LINE_HEIGHT;
 
 	// Sleep accuracy
@@ -369,18 +369,18 @@ void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
 	FloatToString(num, CPU_PERFORMANCE_METRICS.actualSleepMs, 2);
 	lstrcatA(buffer, num);
 	lstrcatA(buffer, ")");
-	TextOutA(dc, startX + 8, lineY, buffer, lstrlenA(buffer));
+	TextOutA(displayDeviceContext, startX + 8, lineY, buffer, lstrlenA(buffer));
 	lineY += MEMORY_DEBUG_OVERLAY_LINE_HEIGHT;
 
 	wsprintfA(buffer, "Sleep requested: %.2f ms", CPU_PERFORMANCE_METRICS.requestedSleepMs);
-	// TextOutA(dc, startX + 8, lineY, buffer, lstrlenA(buffer));
+	// TextOutA(displayDeviceContext, startX + 8, lineY, buffer, lstrlenA(buffer));
 	// lineY += MEMORY_DEBUG_OVERLAY_LINE_HEIGHT;
 
 	// wsprintfA(buffer, "Sleep actual: %.2f ms", CPU_PERFORMANCE_METRICS.actualSleepMs);
-	// TextOutA(dc, startX + 8, lineY, buffer, lstrlenA(buffer));
+	// TextOutA(displayDeviceContext, startX + 8, lineY, buffer, lstrlenA(buffer));
 	// lineY += MEMORY_DEBUG_OVERLAY_LINE_HEIGHT;
 
-	SelectObject(dc, oldFont);
+	SelectObject(displayDeviceContext, oldFont);
 }
 
 constexpr int KEYBOARD_DEBUG_OVERLAY_CELL_WIDTH = 100;
