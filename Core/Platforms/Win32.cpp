@@ -38,6 +38,7 @@ LRESULT CALLBACK WindowProcessMessage(HWND window, UINT message, WPARAM wParam,
 			return 0;
 		}
 
+		DebugDrawMemoryUsageOverlay(GDI_SURFACE);
 		DebugDrawKeyboardOverlay(GDI_SURFACE);
 
 		int srcW = GDI_BACKBUFFER.width;
@@ -59,6 +60,7 @@ LRESULT CALLBACK WindowProcessMessage(HWND window, UINT message, WPARAM wParam,
 	case WM_KEYDOWN:
 	case WM_KEYUP: {
 		DebugDrawKeyboardOverlay(GDI_SURFACE);
+		DebugDrawMemoryUsageOverlay(GDI_SURFACE);
 
 		WORD virtualKeyCode = LOWORD(wParam);
 		WORD keyFlags = HIWORD(lParam);
