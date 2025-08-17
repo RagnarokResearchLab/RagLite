@@ -1,7 +1,3 @@
-typedef double percentage; // TBD float or double?
-constexpr double EPSILON = 0.001;
-GLOBAL double TARGET_FPS = 120;
-
 // typedef struct cpu_performance_metrics {
 // 	bool isInitialized; // TODO count samples?
 // 	bool wasUpdatedThisFrame; // TODO use system utime
@@ -98,47 +94,6 @@ double GetProcessorUsageAllCores() {
 
 // }
 
-inline int Percent(double percentage) {
-	if(percentage - 1.0 > EPSILON) return 100;
-	if(percentage < EPSILON) return 0;
-	percentage *= 100.0;
-	return (int)percentage;
-}
-
-int FloatToString(char* buffer, double value, int decimals) {
-	if(value < 0) {
-		*buffer++ = '-';
-		value = -value;
-	}
-
-	ULONGLONG intPart = (ULONGLONG)value;
-	double frac = value - (double)intPart;
-
-	char temp[32];
-	int intLen = 0;
-	do {
-		temp[intLen++] = '0' + (int)(intPart % 10);
-		intPart /= 10;
-	} while(intPart > 0);
-
-	for(int i = intLen - 1; i >= 0; --i) {
-		*buffer++ = temp[i];
-	}
-
-	if(decimals > 0) {
-		*buffer++ = '.';
-		for(int d = 0; d < decimals; d++) {
-			frac *= 10.0;
-			int digit = (int)frac;
-			*buffer++ = '0' + digit;
-			frac -= digit;
-		}
-	}
-
-	*buffer = '\0';
-	return (int)(buffer - temp);
-}
-
 void PerformanceMetricsUpdateNow() {
 	LARGE_INTEGER freq, now;
 	QueryPerformanceFrequency(&freq);
@@ -179,6 +134,5 @@ void PerformanceMetricsUpdateNow() {
 	CPU_PERFORMANCE_METRICS.requestedSleepMs = req;
 	CPU_PERFORMANCE_METRICS.actualSleepMs = actualMs;
 
-	// TODO Check if this makes any difference (unlikely); if so, write only once and skip this part
 	CPU_PERFORMANCE_METRICS.hardwareSystemInfo = sysInfo;
 }
