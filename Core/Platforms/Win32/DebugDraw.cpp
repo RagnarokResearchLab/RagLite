@@ -207,6 +207,8 @@ typedef struct gdi_overlay_t {
 } ui_overlay_t;
 
 
+GLOBAL ui_overlay_t PROCESSOR_USAGE_OVERLAY = {};
+
 void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
 	HDC displayDeviceContext = surface.offscreenDeviceContext;
 	if(!displayDeviceContext) return;
@@ -216,14 +218,14 @@ void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
 	HFONT oldFont = (HFONT)SelectObject(displayDeviceContext, font);
 
 	int LINE_COUNT = 28;
-
+	int PANEL_WIDTH = 360;
 
 	int startX = MEMORY_OVERLAY_WIDTH + DEBUG_OVERLAY_MARGIN_SIZE;
 	int startY = 300;
 	RECT panelRect = {
 		startX,
 		startY,
-		startX + 360,
+		startX + PANEL_WIDTH,
 		startY + (DEBUG_OVERLAY_LINE_HEIGHT * LINE_COUNT)
 	};
 	HBRUSH panelBrush = CreateSolidBrush(UI_PANEL_COLOR);
