@@ -286,7 +286,7 @@ void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
 	//-------------------------------------------------
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY,
-		"=== SYSTEM MEMORY USAGE ===", lstrlenA("=== SYSTEM MEMORY USAGE ==="));
+		"=== SYSTEM MEMORY ===", lstrlenA("=== SYSTEM MEMORY ==="));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
 	MEMORYSTATUSEX memoryUsageInfo = {};
@@ -362,7 +362,7 @@ void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
 	//-------------------------------------------------
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY,
-		"=== PROCESS MEMORY USAGE ===", lstrlenA("=== PROCESS MEMORY USAGE ==="));
+		"=== PROCESS MEMORY	 ===", lstrlenA("=== PROCESS MEMORY ==="));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
 	PROCESS_MEMORY_COUNTERS_EX pmc;
