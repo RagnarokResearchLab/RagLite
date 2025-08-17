@@ -53,7 +53,7 @@ typedef struct gdi_progress_bar {
 	int percent;
 } progress_bar_t;
 
-void DrawUsageBar(HDC displayDeviceContext, progress_bar_t& bar) {
+void DrawProgressBar(HDC displayDeviceContext, progress_bar_t& bar) {
 	HBRUSH backgroundBrush = CreateSolidBrush(RGB(50, 50, 50));
 	RECT rect = { bar.x, bar.y, bar.x + bar.width, bar.y + bar.height };
 	FillRect(displayDeviceContext, &rect, backgroundBrush);
@@ -213,7 +213,7 @@ void DebugDrawMemoryUsageOverlay(gdi_surface_t& surface) {
 		lineY += MEMORY_DEBUG_OVERLAY_LINE_HEIGHT;
 
 		progress_bar_t progressBar = { .x = startX + MEMORY_DEBUG_OVERLAY_PADDING_SIZE, .y = lineY, .width = 200, .height = 16, .percent = sysUsage };
-		DrawUsageBar(offscreenDeviceContext,
+		DrawProgressBar(offscreenDeviceContext,
 			progressBar);
 		lineY += 24;
 
@@ -270,7 +270,7 @@ void DebugDrawMemoryUsageOverlay(gdi_surface_t& surface) {
 
 		progress_bar_t progressBar = { .x = startX + MEMORY_DEBUG_OVERLAY_PADDING_SIZE, .y = lineY, .width = 200, .height = 16, .percent = procPercent };
 
-		DrawUsageBar(offscreenDeviceContext, progressBar);
+		DrawProgressBar(offscreenDeviceContext, progressBar);
 		lineY += 24;
 	} else {
 		TextOutA(offscreenDeviceContext, startX + MEMORY_DEBUG_OVERLAY_PADDING_SIZE,
@@ -315,7 +315,7 @@ void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
 	TextOutA(dc, startX + 8, lineY, buffer, lstrlenA(buffer));
 	lineY += MEMORY_DEBUG_OVERLAY_LINE_HEIGHT;
 	progress_bar_t progressBar = { .x = startX + 8, .y = lineY, .width = 200, .height = 16, .percent = cpuUsage };
-	DrawUsageBar(dc, progressBar);
+	DrawProgressBar(dc, progressBar);
 	lineY += MEMORY_DEBUG_OVERLAY_LINE_HEIGHT;
 	lineY += MEMORY_DEBUG_OVERLAY_LINE_HEIGHT;
 
@@ -326,7 +326,7 @@ void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
 
 	progressBar.y = lineY;
 	progressBar.percent = cpuUsage;
-	DrawUsageBar(dc, progressBar);
+	DrawProgressBar(dc, progressBar);
 	lineY += MEMORY_DEBUG_OVERLAY_LINE_HEIGHT;
 	lineY += MEMORY_DEBUG_OVERLAY_LINE_HEIGHT;
 
