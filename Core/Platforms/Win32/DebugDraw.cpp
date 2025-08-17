@@ -306,6 +306,9 @@ INTERNAL void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
 	MEMORYSTATUSEX memoryUsageInfo = {};
 	memoryUsageInfo.dwLength = sizeof(memoryUsageInfo);
 
+
+
+
 	if(!GlobalMemoryStatusEx(&memoryUsageInfo)) {
 		DWORD err = GetLastError();
 		LPTSTR errStr = FormatErrorString(err);
@@ -314,11 +317,11 @@ INTERNAL void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
 		TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
 		lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 	} else {
-		wsprintfA(buffer, "Total Phys: %d MB", (int)(memoryUsageInfo.ullTotalPhys / (1024 * 1024)));
+		wsprintfA(buffer, "Total Physical Memory: %d MB", (int)(memoryUsageInfo.ullTotalPhys / (1024 * 1024)));
 		TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
 		lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
-		wsprintfA(buffer, "Avail Phys: %d MB", (int)(memoryUsageInfo.ullAvailPhys / (1024 * 1024)));
+		wsprintfA(buffer, "Available Physical Memory: %d MB", Megabytes(memoryUsageInfo.ullAvailPhys));
 		TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
 		lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
@@ -329,6 +332,12 @@ INTERNAL void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
 		wsprintfA(buffer, "Memory Load: %d%%", memoryUsageInfo.dwMemoryLoad);
 		TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
 		lineY += DEBUG_OVERLAY_LINE_HEIGHT;
+
+		int sysUsage = memoryUsageInfo.dwMemoryLoad;
+		progress_bar_t progressBar = { .x = startX + DEBUG_OVERLAY_PADDING_SIZE, .y = lineY, .width = 200, .height = 16, .percent = sysUsage };
+		DrawProgressBar(displayDeviceContext,
+			progressBar);
+		lineY += 24;
 
 		// // TODO process
 		// wsprintfA(buffer, "Total Commit Limit (RAM + Page File + Overhead): %ull", memoryUsageInfo.ullTotalPageFile);
@@ -349,19 +358,6 @@ INTERNAL void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
 		// TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY,
 		// 	"System Usage:", lstrlenA("System Usage:"));
 		// lineY += DEBUG_OVERLAY_LINE_HEIGHT;
-
-		//-------------------------------------------------
-		// System usage bar
-		//-------------------------------------------------
-		int sysUsage = memoryUsageInfo.dwMemoryLoad;
-		TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY,
-			"System Usage:", lstrlenA("System Usage:"));
-		lineY += DEBUG_OVERLAY_LINE_HEIGHT;
-
-		progress_bar_t progressBar = { .x = startX + DEBUG_OVERLAY_PADDING_SIZE, .y = lineY, .width = 200, .height = 16, .percent = sysUsage };
-		DrawProgressBar(displayDeviceContext,
-			progressBar);
-		lineY += 24;
 
 		// lineY += DEBUG_OVERLAY_LINE_HEIGHT * 1;
 
