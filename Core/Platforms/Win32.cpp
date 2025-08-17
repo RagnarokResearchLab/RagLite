@@ -217,6 +217,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE unused, LPSTR commandLine,
 		}
 
 		if(!APPLICATION_SHOULD_PAUSE) {
+			PerformanceMetricsUpdateNow();
 			GamePadPollControllers(offsetX, offsetY);
 			DebugDrawUpdateBackgroundPattern();
 			DebugDrawUpdateFrameBuffer(GDI_BACKBUFFER, offsetX, offsetY);

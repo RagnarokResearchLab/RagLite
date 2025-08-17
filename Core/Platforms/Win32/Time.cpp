@@ -1,5 +1,10 @@
+typedef double percentage; // TBD float or double?
+constexpr double EPSILON = 0.001;
+
 typedef struct cpu_performance_metrics {
 	bool isInitialized; // TODO count samples?
+	bool wasUpdatedThisFrame; // TODO use system utime
+	// TODO update these also, or remove them? Not sure if useful in practice...
 	FILETIME previousSystemTimesIdle;
 	FILETIME previousSystemTimesKernel;
 	FILETIME previousSystemTimesUser;
@@ -7,8 +12,11 @@ typedef struct cpu_performance_metrics {
 	FILETIME processExitTime; // TBD err, what?
 	FILETIME processKernelTime;
 	FILETIME processUserTime;
-	double cpuUsageLastFrame; // TODO update once, query afterwards
+	percentage processorUsageAllCores; // TODO update once, query afterwards
+	percentage processorUsageSingleCore;
 } performance_metrics_t;
+
+GLOBAL performance_metrics_t CPU_PERFORMANCE_METRICS = {};
 
 double GetProcessorUsageAllCores() {
 	static FILETIME prevSysKernel, prevSysUser; // TODO store GLOBAL in perf struct (same as perf counter)
@@ -50,19 +58,31 @@ double GetProcessorUsageAllCores() {
 	if(sysTotal == 0)
 		return 0.0;
 
-
 	// denominator = (global_kernel_time - old_global_kernel_time) + (global_user_time - old_global_user_time)
 	// ((kernel_time - old_kernel_time) + (user_time - old_user_time)) / denominator * 100
-	double cpuUsage = (100.0 * (double)procTotal / (double)sysTotal);
-	constexpr double EPSILON = 0.001;
-	if(cpuUsage - 100.0 > EPSILON) return 100.0; // TODO clamp
-	return cpuUsage;
+	return (double)procTotal / (double)sysTotal;
 }
 
-double GetProcessorUsageSingleCore() {
-	// TODO Calling this twice in the same frame needs to recompute (revisit later)
-	// It's not exactly an accurate interpolation, but alas...
-SYSTEM_INFO sysInfo;
+// double GetProcessorUsageSingleCore() {
+// 	// TODO Calling this twice in the same frame needs to recompute (revisit later)
+// 	// It's not exactly an accurate interpolation, but alas...
+
+// }
+
+inline int Percent(double percentage) {
+	if(percentage - 1.0 > EPSILON) return 100;
+	if(percentage < EPSILON) return 0;
+	percentage *= 100.0;
+	return (int)percentage;
+}
+
+void PerformanceMetricsUpdateNow() {
+	// TODO use system utime
+	// CPU_PERFORMANCE_METRICS.wasUpdatedThisFrame = true;
+
+	SYSTEM_INFO sysInfo;
 	GetSystemInfo(&sysInfo);
- return GetProcessorUsageAllCores() * sysInfo.dwNumberOfProcessors;
+
+	CPU_PERFORMANCE_METRICS.processorUsageAllCores = GetProcessorUsageAllCores();
+	CPU_PERFORMANCE_METRICS.processorUsageSingleCore = CPU_PERFORMANCE_METRICS.processorUsageAllCores * sysInfo.dwNumberOfProcessors;
 }

@@ -321,7 +321,7 @@ void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
 		startX,
 		startY,
 		startX + 320,
-		startY + (MEMORY_DEBUG_OVERLAY_LINE_HEIGHT * 4)
+		startY + (MEMORY_DEBUG_OVERLAY_LINE_HEIGHT * 6)
 	};
 	HBRUSH panelBrush = CreateSolidBrush(RGB(30, 30, 30));
 	FillRect(dc, &panelRect, panelBrush);
@@ -336,32 +336,30 @@ void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
 		"=== CPU ===", lstrlenA("=== CPU ==="));
 	lineY += MEMORY_DEBUG_OVERLAY_LINE_HEIGHT;
 
-	double cpuUsage = GetProcessorUsageSingleCore();
-
+	int cpuUsage = Percent(CPU_PERFORMANCE_METRICS.processorUsageSingleCore);
 	// TODO remove wsprintfA -> swprintf
 	// TODO stdlib - eliminate swprintf also?
-	wsprintfA (buffer, "Main Thread (Single Core): %d%%", (int)cpuUsage);
+	wsprintfA(buffer, "Main Thread (Single Core): %d%%", cpuUsage);
 	TextOutA(dc, startX + MEMORY_DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
 	lineY += MEMORY_DEBUG_OVERLAY_LINE_HEIGHT;
 	DrawUsageBar(dc,
 		startX + MEMORY_DEBUG_OVERLAY_PADDING_SIZE,
 		lineY,
 		200, 16,
-		(int)cpuUsage);
+		cpuUsage);
 	lineY += 24;
 
-	cpuUsage = GetProcessorUsageAllCores();
+	cpuUsage = Percent(CPU_PERFORMANCE_METRICS.processorUsageAllCores);
 
-	wsprintfA (buffer, "Main Thread (All Cores): %d%%", (int)cpuUsage);
+	wsprintfA(buffer, "Main Thread (All Cores): %d%%", cpuUsage);
 	TextOutA(dc, startX + MEMORY_DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
 	lineY += MEMORY_DEBUG_OVERLAY_LINE_HEIGHT;
 	DrawUsageBar(dc,
 		startX + MEMORY_DEBUG_OVERLAY_PADDING_SIZE,
 		lineY,
 		200, 16,
-		(int)cpuUsage);
+		cpuUsage);
 	lineY += 24;
-
 
 	SelectObject(dc, oldFont);
 }
