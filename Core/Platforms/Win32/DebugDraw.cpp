@@ -45,51 +45,29 @@ COLORREF GetUsageColor(int percent) {
 	return RGB(200, 0, 0); // Red
 }
 
-void DrawUsageBar(HDC dc, int x, int y, int width, int height, int percent) {
+typedef struct gdi_progress_bar {
+	int x;
+	int y;
+	int width;
+	int height;
+	int percent;
+} progress_bar_t;
+
+void DrawUsageBar(HDC displayDeviceContext, progress_bar_t& bar) {
+	// int x, int y, int width, int height, int percent) {
 	HBRUSH backgroundBrush = CreateSolidBrush(RGB(50, 50, 50));
-	RECT rect = { x, y, x + width, y + height };
-	FillRect(dc, &rect, backgroundBrush);
+	RECT rect = { bar.x, bar.y, bar.x + bar.width, bar.y + bar.height };
+	FillRect(displayDeviceContext, &rect, backgroundBrush);
 	DeleteObject(backgroundBrush);
 
-	int filledWidth = (width * percent) / 100;
-	HBRUSH foregroundBrush = CreateSolidBrush(GetUsageColor(percent));
-	RECT fillRect = { x, y, x + filledWidth, y + height };
-	FillRect(dc, &fillRect, foregroundBrush);
+	int filledWidth = (bar.width * bar.percent) / 100;
+	HBRUSH foregroundBrush = CreateSolidBrush(GetUsageColor(bar.percent));
+	RECT fillRect = { bar.x, bar.y, bar.x + filledWidth, bar.y + bar.height };
+	FillRect(displayDeviceContext, &fillRect, foregroundBrush);
 	DeleteObject(foregroundBrush);
 
-	FrameRect(dc, &rect, (HBRUSH)GetStockObject(WHITE_BRUSH));
+	FrameRect(displayDeviceContext, &rect, (HBRUSH)GetStockObject(WHITE_BRUSH));
 }
-
-// LPTSTR EMPTY_STRING = "";
-// GLOBAL LPTSTR SYSTEM_ERROR_TEXT = NULL; // TODO store in global arena (never free)
-// LPTSTR GetErrorString(HRESULT& result) {
-
-// FormatMessage(
-//    // use system message tables to retrieve error text
-//    FORMAT_MESSAGE_FROM_SYSTEM
-//    // allocate buffer on local heap for error text
-//    |FORMAT_MESSAGE_ALLOCATE_BUFFER
-//    // Important! will fail otherwise, since we're not
-//    // (and CANNOT) pass insertion parameters
-//    |FORMAT_MESSAGE_IGNORE_INSERTS,
-//    NULL,    // unused with FORMAT_MESSAGE_FROM_SYSTEM
-//    result,
-//    MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-//    (LPTSTR)&SYSTEM_ERROR_TEXT,  // output
-//    0, // minimum size for output buffer
-//    NULL);   // arguments - see note
-
-// if ( NULL != SYSTEM_ERROR_TEXT )
-// {
-//    // ... do something with the string `SYSTEM_ERROR_TEXT` - log it, display it to the user, etc.
-// 	return SYSTEM_ERROR_TEXT;
-//    // release memory allocated by FormatMessage()
-// //    LocalFree(SYSTEM_ERROR_TEXT);
-// //    SYSTEM_ERROR_TEXT = NULL;
-// }
-// 	// TODO else default to placeholder text
-// 	return EMPTY_STRING;
-// }
 
 void DebugDrawMemoryUsageOverlay(gdi_surface_t& surface) {
 	// TODO param arena, startX, startY
@@ -235,11 +213,9 @@ void DebugDrawMemoryUsageOverlay(gdi_surface_t& surface) {
 			"System Usage:", lstrlenA("System Usage:"));
 		lineY += MEMORY_DEBUG_OVERLAY_LINE_HEIGHT;
 
+		progress_bar_t progressBar = { .x = startX + MEMORY_DEBUG_OVERLAY_PADDING_SIZE, .y = lineY, .width = 200, .height = 16, .percent = sysUsage };
 		DrawUsageBar(offscreenDeviceContext,
-			startX + MEMORY_DEBUG_OVERLAY_PADDING_SIZE,
-			lineY,
-			200, 16,
-			sysUsage);
+			progressBar);
 		lineY += 24;
 
 		// lineY += MEMORY_DEBUG_OVERLAY_LINE_HEIGHT * 1;
@@ -293,11 +269,9 @@ void DebugDrawMemoryUsageOverlay(gdi_surface_t& surface) {
 			lineY, buffer, lstrlenA(buffer));
 		lineY += MEMORY_DEBUG_OVERLAY_LINE_HEIGHT;
 
-		DrawUsageBar(offscreenDeviceContext,
-			startX + MEMORY_DEBUG_OVERLAY_PADDING_SIZE,
-			lineY,
-			200, 16,
-			procPercent);
+		progress_bar_t progressBar = { .x = startX + MEMORY_DEBUG_OVERLAY_PADDING_SIZE, .y = lineY, .width = 200, .height = 16, .percent = procPercent };
+
+		DrawUsageBar(offscreenDeviceContext, progressBar);
 		lineY += 24;
 	} else {
 		TextOutA(offscreenDeviceContext, startX + MEMORY_DEBUG_OVERLAY_PADDING_SIZE,
@@ -341,7 +315,8 @@ void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
 	wsprintfA(buffer, "Main Thread (Single Core): %d%%", cpuUsage);
 	TextOutA(dc, startX + 8, lineY, buffer, lstrlenA(buffer));
 	lineY += MEMORY_DEBUG_OVERLAY_LINE_HEIGHT;
-	DrawUsageBar(dc, startX + 8, lineY, 200, 16, cpuUsage);
+	progress_bar_t progressBar = { .x = startX + 8, .y = lineY, .width = 200, .height = 16, .percent = cpuUsage };
+	DrawUsageBar(dc, progressBar);
 	lineY += MEMORY_DEBUG_OVERLAY_LINE_HEIGHT;
 	lineY += MEMORY_DEBUG_OVERLAY_LINE_HEIGHT;
 
@@ -349,7 +324,10 @@ void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
 	wsprintfA(buffer, "Process (All Cores): %d%%", cpuUsage);
 	TextOutA(dc, startX + 8, lineY, buffer, lstrlenA(buffer));
 	lineY += MEMORY_DEBUG_OVERLAY_LINE_HEIGHT;
-	DrawUsageBar(dc, startX + 8, lineY, 200, 16, cpuUsage);
+
+	progressBar.y = lineY;
+	progressBar.percent = cpuUsage;
+	DrawUsageBar(dc, progressBar);
 	lineY += MEMORY_DEBUG_OVERLAY_LINE_HEIGHT;
 	lineY += MEMORY_DEBUG_OVERLAY_LINE_HEIGHT;
 
