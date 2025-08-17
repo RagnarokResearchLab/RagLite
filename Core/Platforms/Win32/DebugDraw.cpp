@@ -516,10 +516,6 @@ INTERNAL void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
 	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY,
 		buffer, lstrlenA(buffer));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
-	// TODO useless
-	// wsprintfA(buffer, "OEM ID: %u", CPU_PERFORMANCE_METRICS.hardwareSystemInfo.dwOemId);
-	// TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
-	// lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
 	wsprintfA(buffer, "Page Size: %u KB", CPU_PERFORMANCE_METRICS.hardwareSystemInfo.dwPageSize);
 	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
@@ -529,21 +525,11 @@ INTERNAL void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
 	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
-	// TODO useless
-	wsprintfA(buffer, "Processor Type: %u", CPU_PERFORMANCE_METRICS.hardwareSystemInfo.dwProcessorType);
-	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
-	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
-
 	// TODO unit?
 	// TODO macro KILOBYTES(amount)
 	wsprintfA(buffer, "Allocation Granularity: %u KB", CPU_PERFORMANCE_METRICS.hardwareSystemInfo.dwAllocationGranularity / 1024);
 	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
-
-	// TODO show meaningful info for these
-	// GetNativeSystemInfo -> Architecture
-
-	// CPUID -> Brand string
 
 	SelectObject(displayDeviceContext, oldFont);
 }
