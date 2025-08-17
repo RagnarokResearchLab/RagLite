@@ -176,5 +176,6 @@ void PerformanceMetricsUpdateNow() {
 	CPU_PERFORMANCE_METRICS.requestedSleepMs = req;
 	CPU_PERFORMANCE_METRICS.actualSleepMs = actualMs;
 
+	// TODO remove?
 	CPU_PERFORMANCE_METRICS.wasUpdatedThisFrame = true;
 }
