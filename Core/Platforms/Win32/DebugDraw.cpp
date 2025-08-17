@@ -40,7 +40,9 @@ constexpr int DEBUG_OVERLAY_LINE_HEIGHT = 18;
 
 constexpr COLORREF RGB_COLOR_DARKEST = RGB(0, 0, 00);
 constexpr COLORREF RGB_COLOR_DARKER = RGB(30, 30, 30);
+// constexpr COLORREF RGB_COLOR_DARKER = RGB(40, 40, 40);
 constexpr COLORREF RGB_COLOR_DARK = RGB(50, 50, 50);
+constexpr COLORREF RGB_COLOR_GRAY = RGB(80, 80, 80);
 constexpr COLORREF RGB_COLOR_GREEN = RGB(0, 200, 0);
 constexpr COLORREF RGB_COLOR_ORANGE = RGB(255, 128, 0);
 constexpr COLORREF RGB_COLOR_RED = RGB(200, 0, 0);
@@ -51,6 +53,10 @@ constexpr COLORREF RGB_COLOR_BRIGHTEST = RGB(255, 255, 255);
 constexpr COLORREF UI_PANEL_COLOR = RGB_COLOR_DARKER;
 constexpr COLORREF UI_BACKGROUND_COLOR = RGB_COLOR_DARK;
 constexpr COLORREF UI_TEXT_COLOR = RGB_COLOR_WHITE;
+
+constexpr COLORREF USED_MEMORY_BLOCK_COLOR = RGB_COLOR_GREEN;
+constexpr COLORREF COMMITTED_MEMORY_BLOCK_COLOR = RGB_COLOR_GRAY;
+constexpr COLORREF RESERVED_MEMORY_BLOCK_COLOR = RGB_COLOR_DARK;
 
 COLORREF GetUsageColor(int percent) {
 	if(percent < 50) return RGB_COLOR_GREEN;
@@ -164,11 +170,11 @@ void DebugDrawMemoryUsageOverlay(gdi_surface_t& surface) {
 	for(int i = 0; i < totalBlocks; ++i) {
 		COLORREF color;
 		if(i < usedBlocks) {
-			color = RGB(0, 200, 0); // used
+			color = USED_MEMORY_BLOCK_COLOR;
 		} else if(i < committedBlocks) {
-			color = RGB(80, 80, 80); // committed but unused
+			color = COMMITTED_MEMORY_BLOCK_COLOR;
 		} else {
-			color = RGB(40, 40, 40); // reserved but not committed
+			color = RESERVED_MEMORY_BLOCK_COLOR;
 		}
 
 		HBRUSH brush = CreateSolidBrush(color);
