@@ -201,13 +201,23 @@ typedef enum gdi_line_type {
 	LINE_PROGRESS_BAR,
 } gdi_line_t;
 
+typedef struct gdi_panel_content {
+	gdi_line_t type;
+	const char* text;
+} gdi_content_t;
+
 constexpr size_t GDI_MAX_LINES_PER_PANEL = 32;
 typedef struct gdi_overlay_t {
-	gdi_line_t lines[GDI_MAX_LINES_PER_PANEL];
+	gdi_content_t lines[GDI_MAX_LINES_PER_PANEL];
 } ui_overlay_t;
 
 
-GLOBAL ui_overlay_t PROCESSOR_USAGE_OVERLAY = {};
+GLOBAL ui_overlay_t PROCESSOR_USAGE_OVERLAY = {
+	.lines = {{
+		.type = LINE_FONT_STRING,
+		.text = "=== PERFORMANCE ===",
+	}}
+};
 
 void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
 	HDC displayDeviceContext = surface.offscreenDeviceContext;
