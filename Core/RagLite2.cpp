@@ -12,26 +12,26 @@ typedef uint16_t uint16;
 typedef uint32_t uint32;
 typedef uint64_t uint64;
 
-inline uint32 Kilobytes(uint32 bytes) {
+INTERNAL inline uint32 Kilobytes(uint32 bytes) {
 	return bytes / 1024;
 }
 
-inline uint32 Megabytes(uint32 bytes) {
+INTERNAL inline uint32 Megabytes(uint32 bytes) {
 	return Kilobytes(bytes) / 1024;
 }
 
-inline uint32 Gigabytes(uint32 bytes) {
+INTERNAL inline uint32 Gigabytes(uint32 bytes) {
 	return Megabytes(bytes) / 1024;
 }
 
-inline uint32 Terabytes(uint32 bytes) {
+INTERNAL inline uint32 Terabytes(uint32 bytes) {
 	return Gigabytes(bytes) / 1024;
 }
 
 typedef float percentage;
 constexpr float EPSILON = 0.001;
 
-inline int Percent(double percentage) {
+INTERNAL inline int Percent(double percentage) {
 	if(percentage - 1.0 > EPSILON) return 100;
 	if(percentage < EPSILON) return 0;
 	percentage *= 100.0;
@@ -46,7 +46,7 @@ inline int Percent(double percentage) {
 GLOBAL float TARGET_FPS = 120;
 
 // String utilities (TODO Move elsewhere later)
-int FloatToString(char* buffer, float value, int decimals) {
+INTERNAL int FloatToString(char* buffer, float value, int decimals) {
 	if(value < 0) {
 		*buffer++ = '-';
 		value = -value;
