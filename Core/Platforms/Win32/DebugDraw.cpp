@@ -312,13 +312,17 @@ INTERNAL void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
 		TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
 		lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 	} else {
+wsprintfA(buffer, "Total Phys: %d MB", (int)(memoryUsageInfo.ullTotalPhys / (1024*1024)));
+		TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
+		lineY += DEBUG_OVERLAY_LINE_HEIGHT;
+
 		wsprintfA(buffer, "Avail Phys: %d MB", (int)(memoryUsageInfo.ullAvailPhys / (1024 * 1024)));
 		TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
 		lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
-		wsprintfA(buffer, "Avail Virtual: %d MB", (int)(memoryUsageInfo.ullAvailVirtual / (1024 * 1024)));
-		TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
-		lineY += DEBUG_OVERLAY_LINE_HEIGHT * 1;
+		// wsprintfA(buffer, "Avail Virtual: %d MB", (int)(memoryUsageInfo.ullAvailVirtual / (1024 * 1024)));
+		// TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
+		// lineY += DEBUG_OVERLAY_LINE_HEIGHT * 1;
 
 				wsprintfA(buffer, "Memory Load: %d%%", memoryUsageInfo.dwMemoryLoad);
 		TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
@@ -327,13 +331,15 @@ INTERNAL void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
 
 		// // TODO process
 		// wsprintfA(buffer, "Total Commit Limit (RAM + Page File + Overhead): %ull", memoryUsageInfo.ullTotalPageFile);
-		// TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
-		// lineY += DEBUG_OVERLAY_LINE_HEIGHT;
+		wsprintfA(buffer, "Commit Limit: %d MB", (int)(memoryUsageInfo.ullTotalPageFile / (1024*1024)));
+		TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
+		lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
 		// // TODO process
+		wsprintfA(buffer, "Commit Available: %d MB", (int)(memoryUsageInfo.ullAvailPageFile / (1024*1024)));
 		// 		wsprintfA(buffer, "Max Commit Amount (CommitLimit - CommitCharge): %ull", memoryUsageInfo.ullAvailPageFile);
-		// TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
-		// lineY += DEBUG_OVERLAY_LINE_HEIGHT;
+		TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
+		lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
 
 		// 		wsprintfA(buffer, "Virtual Address Space Size (User-Mode): %ull", memoryUsageInfo.ullTotalVirtual);
@@ -403,7 +409,7 @@ INTERNAL void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
 		TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
 		lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
-		wsprintfA(buffer, "Pagefile: %d MB", (int)(pmc.PagefileUsage / (1024 * 1024)));
+		wsprintfA(buffer, "Commit Size: %d MB", (int)(pmc.PagefileUsage / (1024 * 1024)));
 		TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
 		lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
@@ -475,6 +481,7 @@ INTERNAL void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
 
+	// TODO useless
 	wsprintfA(buffer, "OEM ID: %u", CPU_PERFORMANCE_METRICS.hardwareSystemInfo.dwOemId);
 	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
@@ -483,14 +490,17 @@ INTERNAL void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
 	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
+	// TODO useless
 	wsprintfA(buffer, "Minimum Application Address: 0x%lX", CPU_PERFORMANCE_METRICS.hardwareSystemInfo.lpMinimumApplicationAddress);
 	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
+	// TODO useless
 	wsprintfA(buffer, "Maximum Application Address: 0x%lX", CPU_PERFORMANCE_METRICS.hardwareSystemInfo.lpMaximumApplicationAddress);
 	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
+	// TODO useless
 	wsprintfA(buffer, "Active Processor Mask: %u", CPU_PERFORMANCE_METRICS.hardwareSystemInfo.dwActiveProcessorMask);
 	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
@@ -499,12 +509,14 @@ INTERNAL void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
 	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
+	// TODO useless
 	wsprintfA(buffer, "Processor Type: %u", CPU_PERFORMANCE_METRICS.hardwareSystemInfo.dwProcessorType);
 	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
 	// TODO unit?
-	wsprintfA(buffer, "Allocation Granularity: %u", CPU_PERFORMANCE_METRICS.hardwareSystemInfo.dwAllocationGranularity);
+	// TODO macro KILOBYTES(amount)
+	wsprintfA(buffer, "Allocation Granularity: %u KB", CPU_PERFORMANCE_METRICS.hardwareSystemInfo.dwAllocationGranularity)  / 1024;
 	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
@@ -512,9 +524,14 @@ INTERNAL void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
 	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
+	// TODO useless
 	wsprintfA(buffer, "Processor Revision: %u", CPU_PERFORMANCE_METRICS.hardwareSystemInfo.wProcessorRevision);
 	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
+
+	// TODO show meaningful info for these
+	// GetNativeSystemInfo -> Architecture
+	// CPUID -> Brand string
 
 	SelectObject(displayDeviceContext, oldFont);
 }
