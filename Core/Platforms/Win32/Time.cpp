@@ -40,6 +40,9 @@ typedef struct performance_metrics_t {
 	double requestedSleepMs;
 	double actualSleepMs;
 
+	// Even though this info won't change, store it here for cache locality
+	SYSTEM_INFO hardwareSystemInfo;
+
 } performance_metrics_t;
 
 GLOBAL performance_metrics_t CPU_PERFORMANCE_METRICS = {};
@@ -175,6 +178,9 @@ void PerformanceMetricsUpdateNow() {
 
 	CPU_PERFORMANCE_METRICS.requestedSleepMs = req;
 	CPU_PERFORMANCE_METRICS.actualSleepMs = actualMs;
+
+	// TODO Check if this makes any difference (unlikely); if so, write only once and skip this part
+	CPU_PERFORMANCE_METRICS.hardwareSystemInfo = sysInfo;
 
 	// TODO remove?
 	CPU_PERFORMANCE_METRICS.wasUpdatedThisFrame = true;
