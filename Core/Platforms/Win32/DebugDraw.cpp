@@ -211,7 +211,7 @@ void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
 	HFONT font = (HFONT)GetStockObject(ANSI_VAR_FONT);
 	HFONT oldFont = (HFONT)SelectObject(displayDeviceContext, font);
 
-	int LINE_COUNT = 28;
+	int LINE_COUNT = 28 + 8; // CPU/performance + system memory + process memory + hardware info
 	int PANEL_WIDTH = 360;
 
 	int startX = MEMORY_OVERLAY_WIDTH + DEBUG_OVERLAY_MARGIN_SIZE;
@@ -403,6 +403,44 @@ void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
 		TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
 		lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 	}
+
+	// #pragma comment(lib, "user32.lib")
+	//-------------------------------------------------
+	// Native system info
+	// (TODO doesn't change, no need to fetch it more than once?)
+	//-------------------------------------------------
+	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
+	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY,
+		"=== HARDWARE INFORMATION ===", lstrlenA("=== HARDWARE INFORMATION ==="));
+	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
+
+	wsprintfA(buffer, "OEM ID: %u", CPU_PERFORMANCE_METRICS.hardwareSystemInfo.dwOemId);
+	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
+	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
+
+	wsprintfA(buffer, "Number of processors: %u", CPU_PERFORMANCE_METRICS.hardwareSystemInfo.dwNumberOfProcessors);
+	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
+	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
+
+	wsprintfA(buffer, "Page size: %u", CPU_PERFORMANCE_METRICS.hardwareSystemInfo.dwPageSize);
+	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
+	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
+
+	wsprintfA(buffer, "Processor type: %u", CPU_PERFORMANCE_METRICS.hardwareSystemInfo.dwProcessorType);
+	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
+	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
+
+	wsprintfA(buffer, "Minimum application address: %lx", CPU_PERFORMANCE_METRICS.hardwareSystemInfo.lpMinimumApplicationAddress);
+	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
+	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
+
+	wsprintfA(buffer, "Maximum application address: %lx", CPU_PERFORMANCE_METRICS.hardwareSystemInfo.lpMaximumApplicationAddress);
+	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
+	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
+
+	wsprintfA(buffer, "Active processor mask: %u", CPU_PERFORMANCE_METRICS.hardwareSystemInfo.dwActiveProcessorMask);
+	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
+	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
 	SelectObject(displayDeviceContext, oldFont);
 }
