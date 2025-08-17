@@ -40,7 +40,6 @@ constexpr int DEBUG_OVERLAY_LINE_HEIGHT = 18;
 
 constexpr COLORREF RGB_COLOR_DARKEST = RGB(0, 0, 00);
 constexpr COLORREF RGB_COLOR_DARKER = RGB(30, 30, 30);
-// constexpr COLORREF RGB_COLOR_DARKER = RGB(40, 40, 40);
 constexpr COLORREF RGB_COLOR_DARK = RGB(50, 50, 50);
 constexpr COLORREF RGB_COLOR_GRAY = RGB(80, 80, 80);
 constexpr COLORREF RGB_COLOR_GREEN = RGB(0, 200, 0);
@@ -53,6 +52,7 @@ constexpr COLORREF RGB_COLOR_BRIGHTEST = RGB(255, 255, 255);
 constexpr COLORREF UI_PANEL_COLOR = RGB_COLOR_DARKER;
 constexpr COLORREF UI_BACKGROUND_COLOR = RGB_COLOR_DARK;
 constexpr COLORREF UI_TEXT_COLOR = RGB_COLOR_WHITE;
+constexpr COLORREF UI_HIGHLIGHT_COLOR = RGB_COLOR_GREEN;
 
 constexpr COLORREF USED_MEMORY_BLOCK_COLOR = RGB_COLOR_GREEN;
 constexpr COLORREF COMMITTED_MEMORY_BLOCK_COLOR = RGB_COLOR_GRAY;
@@ -428,15 +428,15 @@ INTERNAL void DebugDrawKeyboardOverlay(gdi_surface_t& surface) {
 		WORD repeatCount = LOWORD(keyFlags);
 		BOOL isKeyReleased = (keyFlags & KF_UP) == KF_UP;
 
-		COLORREF backgroundColor = UI_BACKGROUND_COLOR;
+		COLORREF backgroundColor = UI_PANEL_COLOR;
 		if(wasKeyDown)
-			backgroundColor = RGB(0, 120, 0);
+			backgroundColor = UI_HIGHLIGHT_COLOR;
 
 		HBRUSH brush = CreateSolidBrush(backgroundColor);
 		FillRect(offscreenDeviceContext, &textArea, brush);
 		DeleteObject(brush);
 
-		SetTextColor(offscreenDeviceContext, RGB(255, 255, 255));
+		SetTextColor(offscreenDeviceContext, UI_TEXT_COLOR);
 		const char* label = KeyCodeToDebugName(virtualKeyCode);
 		DrawTextA(offscreenDeviceContext, label, -1, &textArea,
 			DT_CENTER | DT_VCENTER | DT_SINGLELINE);
