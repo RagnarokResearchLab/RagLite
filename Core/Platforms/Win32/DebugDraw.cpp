@@ -305,9 +305,7 @@ INTERNAL void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
 
 	MEMORYSTATUSEX memoryUsageInfo = {};
 	memoryUsageInfo.dwLength = sizeof(memoryUsageInfo);
-
-
-
+	PROCESS_MEMORY_COUNTERS_EX pmc;
 
 	if(!GlobalMemoryStatusEx(&memoryUsageInfo)) {
 		DWORD err = GetLastError();
@@ -349,7 +347,6 @@ INTERNAL void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
 		//-------------------------------------------------
 		// Process usage bar
 		//-------------------------------------------------
-		PROCESS_MEMORY_COUNTERS_EX pmc;
 		// TODO Eliminate the redundant fetch
 		if(GetProcessMemoryInfo(GetCurrentProcess(), (PROCESS_MEMORY_COUNTERS*)&pmc, sizeof(pmc))) {
 			int procPercent = (int)((pmc.WorkingSetSize * 100) / memoryUsageInfo.ullTotalPhys);
@@ -381,7 +378,6 @@ INTERNAL void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
 		"=== PROCESS MEMORY	 ===", lstrlenA("=== PROCESS MEMORY ==="));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
-	PROCESS_MEMORY_COUNTERS_EX pmc;
 	if(GetProcessMemoryInfo(GetCurrentProcess(), (PROCESS_MEMORY_COUNTERS*)&pmc, sizeof(pmc))) {
 		wsprintfA(buffer, "Virtual Memory Commit Limit: %d MB", (int)(memoryUsageInfo.ullTotalPageFile / (1024 * 1024)));
 		TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
