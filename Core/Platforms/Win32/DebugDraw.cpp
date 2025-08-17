@@ -35,8 +35,9 @@ GLOBAL gdi_debug_pattern GDI_DEBUG_PATTERN = PATTERN_SHIFTING_GRADIENT;
 
 constexpr uint32 UNINITIALIZED_WINDOW_COLOR = 0xFF202020;
 
-constexpr int DEBUG_OVERLAY_PADDING_SIZE = 8;
 constexpr int DEBUG_OVERLAY_LINE_HEIGHT = 18;
+constexpr int DEBUG_OVERLAY_MARGIN_SIZE = 8;
+constexpr int DEBUG_OVERLAY_PADDING_SIZE = 8;
 
 constexpr COLORREF RGB_COLOR_CYAN = RGB(120, 192, 255);
 constexpr COLORREF RGB_COLOR_DARKEST = RGB(0, 0, 00);
@@ -106,7 +107,7 @@ void DebugDrawMemoryUsageOverlay(gdi_surface_t& surface) {
 	constexpr int NUM_SECTIONS = 5;
 	constexpr int Y_PER_SECTION = 8; // Questionable
 
-	int startX = 16;
+	int startX = 0;
 	int startY = 300;
 	RECT backgroundPanelRect = {
 		startX,
@@ -199,9 +200,9 @@ void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
 	HFONT font = (HFONT)GetStockObject(ANSI_VAR_FONT);
 	HFONT oldFont = (HFONT)SelectObject(displayDeviceContext, font);
 
-	int LINE_COUNT = 26;
+	int LINE_COUNT = 28;
 
-	int startX = 1024 + 16;
+	int startX = 1024 + DEBUG_OVERLAY_MARGIN_SIZE;
 	int startY = 300;
 	RECT panelRect = {
 		startX,
@@ -283,6 +284,7 @@ void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
 	//-------------------------------------------------
 	// System stats
 	//-------------------------------------------------
+	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY,
 		"=== SYSTEM MEMORY USAGE ===", lstrlenA("=== SYSTEM MEMORY USAGE ==="));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
@@ -358,6 +360,7 @@ void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
 	//-------------------------------------------------
 	// Process stats
 	//-------------------------------------------------
+	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY,
 		"=== PROCESS MEMORY USAGE ===", lstrlenA("=== PROCESS MEMORY USAGE ==="));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
