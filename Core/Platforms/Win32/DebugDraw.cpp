@@ -2,8 +2,6 @@
 // TODO Eliminate this
 #include <math.h>
 
-#include <intrin.h>
-
 typedef struct gdi_bitmap {
 	HBITMAP activeHandle;
 	HBITMAP inactiveHandle;
@@ -460,30 +458,10 @@ INTERNAL void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
 			lstrlenA(buffer));
 		lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 	}
-
-	// TODO Does that work on GCC? Move to platform defines.
-	// TODO intrinsics -> not here
-	int cpuInfo[4] = { 0 };
-	char cpuBrand[0x40] = { 0 };
-
-	__cpuid(cpuInfo, 0x80000000);
-	unsigned int nExIds = cpuInfo[0];
-
-	if(nExIds >= 0x80000004) {
-		__cpuid((int*)cpuInfo, 0x80000002);
-		memcpy(cpuBrand, cpuInfo, sizeof(cpuInfo));
-
-		__cpuid((int*)cpuInfo, 0x80000003);
-		memcpy(cpuBrand + 16, cpuInfo, sizeof(cpuInfo));
-
-		__cpuid((int*)cpuInfo, 0x80000004);
-		memcpy(cpuBrand + 32, cpuInfo, sizeof(cpuInfo));
-
-		wsprintfA(buffer, "CPU: %s", cpuBrand);
+		wsprintfA(buffer, "CPU: %s", CPU_BRAND_STRING);
 		TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY,
 			buffer, lstrlenA(buffer));
 		lineY += DEBUG_OVERLAY_LINE_HEIGHT;
-	}
 
 	const char* arch = "Unknown";
 	switch(CPU_PERFORMANCE_METRICS.hardwareSystemInfo.wProcessorArchitecture) {
