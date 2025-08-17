@@ -130,7 +130,7 @@ void DebugDrawMemoryUsageOverlay(gdi_surface_t& surface) {
 	// Arena stats
 	//-------------------------------------------------
 	TextOutA(offscreenDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY,
-		"=== MEMORY ALLOCATIONS ===", lstrlenA("=== MEMORY ALLOCATIONS ==="));
+		"=== MEMORY ARENAS ===", lstrlenA("=== MEMORY ARENAS ==="));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
 	wsprintfA(buffer, "Name: %s", MAIN_MEMORY.name);
@@ -306,7 +306,7 @@ void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
 
 	if(!GlobalMemoryStatusEx(&memoryUsageInfo)) {
 		DWORD err = GetLastError();
-		LPTSTR errStr = GetErrorString(err);
+		LPTSTR errStr = FormatErrorString(err);
 
 		wsprintfA(buffer, "ERROR: %lu (%s)", err, errStr);
 		TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
