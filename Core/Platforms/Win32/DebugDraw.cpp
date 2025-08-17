@@ -195,6 +195,18 @@ void DebugDrawMemoryUsageOverlay(gdi_surface_t& surface) {
 	SelectObject(offscreenDeviceContext, oldFont);
 }
 
+typedef enum gdi_line_type {
+	LINE_EMPTY_SPACING,
+	LINE_FONT_STRING,
+	LINE_PROGRESS_BAR,
+} gdi_line_t;
+
+constexpr size_t GDI_MAX_LINES_PER_PANEL = 32;
+typedef struct gdi_overlay_t {
+	gdi_line_t lines[GDI_MAX_LINES_PER_PANEL];
+} ui_overlay_t;
+
+
 void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
 	HDC displayDeviceContext = surface.offscreenDeviceContext;
 	if(!displayDeviceContext) return;
@@ -204,6 +216,7 @@ void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
 	HFONT oldFont = (HFONT)SelectObject(displayDeviceContext, font);
 
 	int LINE_COUNT = 28;
+
 
 	int startX = MEMORY_OVERLAY_WIDTH + DEBUG_OVERLAY_MARGIN_SIZE;
 	int startY = 300;
