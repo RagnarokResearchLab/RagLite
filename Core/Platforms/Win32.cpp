@@ -6,6 +6,29 @@
 #define INTERNAL static
 
 #define TODO(msg) OutputDebugStringA(msg);
+constexpr size_t MAX_ERROR_MSG_SIZE = 512;
+static TCHAR SYSTEM_ERROR_MESSAGE[MAX_ERROR_MSG_SIZE];
+
+LPTSTR GetErrorString(DWORD errorCode) {
+	DWORD size = FormatMessage(
+		FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+		NULL,
+		errorCode,
+		MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+		SYSTEM_ERROR_MESSAGE,
+		MAX_ERROR_MSG_SIZE,
+		NULL);
+
+	if(size == 0) {
+		wsprintf(SYSTEM_ERROR_MESSAGE, TEXT("Unknown error %lu"), errorCode);
+	} else {
+		LPTSTR end = SYSTEM_ERROR_MESSAGE + lstrlen(SYSTEM_ERROR_MESSAGE);
+		while(end > SYSTEM_ERROR_MESSAGE && (end[-1] == TEXT('\r') || end[-1] == TEXT('\n') || end[-1] == TEXT('.')))
+			*--end = TEXT('\0');
+	}
+
+	return SYSTEM_ERROR_MESSAGE;
+}
 
 #include "Win32/GamePad.cpp"
 #include "Win32/Keyboard.cpp"

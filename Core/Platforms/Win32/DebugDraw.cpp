@@ -60,30 +60,6 @@ void DrawUsageBar(HDC dc, int x, int y, int width, int height, int percent) {
 	FrameRect(dc, &rect, (HBRUSH)GetStockObject(WHITE_BRUSH));
 }
 
-constexpr size_t MAX_ERROR_MSG_SIZE = 512;
-static TCHAR SYSTEM_ERROR_MESSAGE[MAX_ERROR_MSG_SIZE];
-
-LPTSTR GetErrorString(DWORD errorCode) {
-	DWORD size = FormatMessage(
-		FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-		NULL,
-		errorCode,
-		MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-		SYSTEM_ERROR_MESSAGE,
-		MAX_ERROR_MSG_SIZE,
-		NULL);
-
-	if(size == 0) {
-		wsprintf(SYSTEM_ERROR_MESSAGE, TEXT("Unknown error %lu"), errorCode);
-	} else {
-		LPTSTR end = SYSTEM_ERROR_MESSAGE + lstrlen(SYSTEM_ERROR_MESSAGE);
-		while(end > SYSTEM_ERROR_MESSAGE && (end[-1] == TEXT('\r') || end[-1] == TEXT('\n') || end[-1] == TEXT('.')))
-			*--end = TEXT('\0');
-	}
-
-	return SYSTEM_ERROR_MESSAGE;
-}
-
 // LPTSTR EMPTY_STRING = "";
 // GLOBAL LPTSTR SYSTEM_ERROR_TEXT = NULL; // TODO store in global arena (never free)
 // LPTSTR GetErrorString(HRESULT& result) {
@@ -114,8 +90,6 @@ LPTSTR GetErrorString(DWORD errorCode) {
 // 	// TODO else default to placeholder text
 // 	return EMPTY_STRING;
 // }
-
-#include <psapi.h>
 
 void DebugDrawMemoryUsageOverlay(gdi_surface_t& surface) {
 	// TODO param arena, startX, startY
