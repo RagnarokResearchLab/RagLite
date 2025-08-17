@@ -2,6 +2,8 @@
 // TODO Eliminate this
 #include <math.h>
 
+#include <intrin.h>
+
 typedef struct gdi_bitmap {
 	HBITMAP activeHandle;
 	HBITMAP inactiveHandle;
@@ -312,7 +314,7 @@ INTERNAL void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
 		TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
 		lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 	} else {
-wsprintfA(buffer, "Total Phys: %d MB", (int)(memoryUsageInfo.ullTotalPhys / (1024*1024)));
+		wsprintfA(buffer, "Total Phys: %d MB", (int)(memoryUsageInfo.ullTotalPhys / (1024 * 1024)));
 		TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
 		lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
@@ -324,23 +326,21 @@ wsprintfA(buffer, "Total Phys: %d MB", (int)(memoryUsageInfo.ullTotalPhys / (102
 		// TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
 		// lineY += DEBUG_OVERLAY_LINE_HEIGHT * 1;
 
-				wsprintfA(buffer, "Memory Load: %d%%", memoryUsageInfo.dwMemoryLoad);
+		wsprintfA(buffer, "Memory Load: %d%%", memoryUsageInfo.dwMemoryLoad);
 		TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
 		lineY += DEBUG_OVERLAY_LINE_HEIGHT;
-
 
 		// // TODO process
 		// wsprintfA(buffer, "Total Commit Limit (RAM + Page File + Overhead): %ull", memoryUsageInfo.ullTotalPageFile);
-		wsprintfA(buffer, "Commit Limit: %d MB", (int)(memoryUsageInfo.ullTotalPageFile / (1024*1024)));
+		wsprintfA(buffer, "Commit Limit: %d MB", (int)(memoryUsageInfo.ullTotalPageFile / (1024 * 1024)));
 		TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
 		lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
 		// // TODO process
-		wsprintfA(buffer, "Commit Available: %d MB", (int)(memoryUsageInfo.ullAvailPageFile / (1024*1024)));
+		wsprintfA(buffer, "Commit Available: %d MB", (int)(memoryUsageInfo.ullAvailPageFile / (1024 * 1024)));
 		// 		wsprintfA(buffer, "Max Commit Amount (CommitLimit - CommitCharge): %ull", memoryUsageInfo.ullAvailPageFile);
 		TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
 		lineY += DEBUG_OVERLAY_LINE_HEIGHT;
-
 
 		// 		wsprintfA(buffer, "Virtual Address Space Size (User-Mode): %ull", memoryUsageInfo.ullTotalVirtual);
 		// TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
@@ -426,8 +426,6 @@ wsprintfA(buffer, "Total Phys: %d MB", (int)(memoryUsageInfo.ullTotalPhys / (102
 		lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 	}
 
-
-
 	//-------------------------------------------------
 	// Native system info
 	// (TODO doesn't change, no need to fetch it more than once?)
@@ -476,41 +474,74 @@ wsprintfA(buffer, "Total Phys: %d MB", (int)(memoryUsageInfo.ullTotalPhys / (102
 			buffer,
 			lstrlenA(buffer));
 		lineY += DEBUG_OVERLAY_LINE_HEIGHT;
+	}
+	// lineY += DEBUG_OVERLAY_LINE_HEIGHT;
+
+	// TODO Does that work on GCC? Move to platform defines.
+	// TODO intrinsics -> not here
+	int cpuInfo[4] = { 0 };
+	char cpuBrand[0x40] = { 0 };
+
+	__cpuid(cpuInfo, 0x80000000);
+	unsigned int nExIds = cpuInfo[0];
+
+	if(nExIds >= 0x80000004) {
+		__cpuid((int*)cpuInfo, 0x80000002);
+		memcpy(cpuBrand, cpuInfo, sizeof(cpuInfo));
+
+		__cpuid((int*)cpuInfo, 0x80000003);
+		memcpy(cpuBrand + 16, cpuInfo, sizeof(cpuInfo));
+
+		__cpuid((int*)cpuInfo, 0x80000004);
+		memcpy(cpuBrand + 32, cpuInfo, sizeof(cpuInfo));
+
+		wsprintfA(buffer, "CPU: %s", cpuBrand);
+		TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY,
+			buffer, lstrlenA(buffer));
 		lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 	}
-	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
 	const char* arch = "Unknown";
-switch (CPU_PERFORMANCE_METRICS.hardwareSystemInfo.wProcessorArchitecture) {
-    case PROCESSOR_ARCHITECTURE_AMD64: arch = "x64"; break;
-    case PROCESSOR_ARCHITECTURE_INTEL: arch = "x86"; break;
-    case PROCESSOR_ARCHITECTURE_ARM:   arch = "ARM"; break;
-    case PROCESSOR_ARCHITECTURE_ARM64: arch = "ARM64"; break;
-    case PROCESSOR_ARCHITECTURE_IA64:  arch = "Itanium"; break;
-}
+	switch(CPU_PERFORMANCE_METRICS.hardwareSystemInfo.wProcessorArchitecture) {
+	case PROCESSOR_ARCHITECTURE_AMD64:
+		arch = "x64";
+		break;
+	case PROCESSOR_ARCHITECTURE_INTEL:
+		arch = "x86";
+		break;
+	case PROCESSOR_ARCHITECTURE_ARM:
+		arch = "ARM";
+		break;
+	case PROCESSOR_ARCHITECTURE_ARM64:
+		arch = "ARM64";
+		break;
+	case PROCESSOR_ARCHITECTURE_IA64:
+		arch = "Itanium";
+		break;
+	}
 
-wsprintfA(buffer, "Architecture: %s", arch);
-TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY,
-         buffer, lstrlenA(buffer));
-lineY += DEBUG_OVERLAY_LINE_HEIGHT;
-	// TODO useless
-	wsprintfA(buffer, "OEM ID: %u", CPU_PERFORMANCE_METRICS.hardwareSystemInfo.dwOemId);
-	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
+	wsprintfA(buffer, "Processor Architecture: %s", arch);
+	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY,
+		buffer, lstrlenA(buffer));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
+	// TODO useless
+	// wsprintfA(buffer, "OEM ID: %u", CPU_PERFORMANCE_METRICS.hardwareSystemInfo.dwOemId);
+	// TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
+	// lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
 	wsprintfA(buffer, "Page Size: %u KB", CPU_PERFORMANCE_METRICS.hardwareSystemInfo.dwPageSize);
 	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
 	// TODO useless
-	wsprintfA(buffer, "Minimum Application Address: 0x%lX", CPU_PERFORMANCE_METRICS.hardwareSystemInfo.lpMinimumApplicationAddress);
-	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
-	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
+	// wsprintfA(buffer, "Minimum Application Address: 0x%lX", CPU_PERFORMANCE_METRICS.hardwareSystemInfo.lpMinimumApplicationAddress);
+	// TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
+	// lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
 	// TODO useless
-	wsprintfA(buffer, "Maximum Application Address: 0x%lX", CPU_PERFORMANCE_METRICS.hardwareSystemInfo.lpMaximumApplicationAddress);
-	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
-	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
+		// wsprintfA(buffer, "Maximum Application Address: 0x%lX", CPU_PERFORMANCE_METRICS.hardwareSystemInfo.lpMaximumApplicationAddress);
+		// TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
+		// lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
 	// TODO useless
 	wsprintfA(buffer, "Active Processor Mask: %u", CPU_PERFORMANCE_METRICS.hardwareSystemInfo.dwActiveProcessorMask);
@@ -528,7 +559,7 @@ lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
 	// TODO unit?
 	// TODO macro KILOBYTES(amount)
-	wsprintfA(buffer, "Allocation Granularity: %u KB", CPU_PERFORMANCE_METRICS.hardwareSystemInfo.dwAllocationGranularity  / 1024);
+	wsprintfA(buffer, "Allocation Granularity: %u KB", CPU_PERFORMANCE_METRICS.hardwareSystemInfo.dwAllocationGranularity / 1024);
 	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
@@ -543,9 +574,6 @@ lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
 	// TODO show meaningful info for these
 	// GetNativeSystemInfo -> Architecture
-
-
-
 
 	// CPUID -> Brand string
 
