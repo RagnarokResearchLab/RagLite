@@ -60,13 +60,6 @@ constexpr COLORREF USED_MEMORY_BLOCK_COLOR = RGB_COLOR_GREEN;
 constexpr COLORREF COMMITTED_MEMORY_BLOCK_COLOR = RGB_COLOR_GRAY;
 constexpr COLORREF RESERVED_MEMORY_BLOCK_COLOR = RGB_COLOR_DARK;
 
-COLORREF GetUsageColor(int percent) {
-	if(percent < 50) return RGB_COLOR_GREEN;
-	if(percent < 75) return RGB_COLOR_YELLOW;
-	if(percent < 90) return RGB_COLOR_ORANGE;
-	return RGB_COLOR_RED;
-}
-
 typedef struct gdi_progress_bar {
 	int x;
 	int y;
@@ -75,6 +68,13 @@ typedef struct gdi_progress_bar {
 	int percent;
 } progress_bar_t;
 
+COLORREF ProgressBarGetColor(int percent) {
+	if(percent < 50) return RGB_COLOR_GREEN;
+	if(percent < 75) return RGB_COLOR_YELLOW;
+	if(percent < 90) return RGB_COLOR_ORANGE;
+	return RGB_COLOR_RED;
+}
+
 void DrawProgressBar(HDC displayDeviceContext, progress_bar_t& bar) {
 	HBRUSH backgroundBrush = CreateSolidBrush(UI_BACKGROUND_COLOR);
 	RECT rect = { bar.x, bar.y, bar.x + bar.width, bar.y + bar.height };
@@ -82,7 +82,7 @@ void DrawProgressBar(HDC displayDeviceContext, progress_bar_t& bar) {
 	DeleteObject(backgroundBrush);
 
 	int filledWidth = (bar.width * bar.percent) / 100;
-	HBRUSH foregroundBrush = CreateSolidBrush(GetUsageColor(bar.percent));
+	HBRUSH foregroundBrush = CreateSolidBrush(ProgressBarGetColor(bar.percent));
 	RECT fillRect = { bar.x, bar.y, bar.x + filledWidth, bar.y + bar.height };
 	FillRect(displayDeviceContext, &fillRect, foregroundBrush);
 	DeleteObject(foregroundBrush);
