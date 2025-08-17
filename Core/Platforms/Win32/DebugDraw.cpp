@@ -91,6 +91,8 @@ void DrawProgressBar(HDC displayDeviceContext, progress_bar_t& bar) {
 	FrameRect(displayDeviceContext, &rect, (HBRUSH)GetStockObject(WHITE_BRUSH));
 }
 
+GLOBAL int MEMORY_OVERLAY_WIDTH = 1024 + 128 + 16;
+
 void DebugDrawMemoryUsageOverlay(gdi_surface_t& surface) {
 	// TODO param arena, startX, startY
 	HDC offscreenDeviceContext = surface.offscreenDeviceContext;
@@ -112,7 +114,7 @@ void DebugDrawMemoryUsageOverlay(gdi_surface_t& surface) {
 	RECT backgroundPanelRect = {
 		startX,
 		startY,
-		startX + 1024,
+		startX + MEMORY_OVERLAY_WIDTH,
 		startY + (DEBUG_OVERLAY_LINE_HEIGHT * NUM_SECTIONS * Y_PER_SECTION)
 	};
 	HBRUSH panelBrush = CreateSolidBrush(UI_PANEL_COLOR);
@@ -153,16 +155,17 @@ void DebugDrawMemoryUsageOverlay(gdi_surface_t& surface) {
 
 	wsprintfA(buffer, "Allocations: %d", MAIN_MEMORY.allocationCount);
 	TextOutA(offscreenDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
-	lineY += DEBUG_OVERLAY_LINE_HEIGHT * 1;
+	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
+	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
 	const int blockSize = 64 * 1024; // 64KB
 	int totalBlocks = MAIN_MEMORY.reservedSize / blockSize;
 	int usedBlocks = MAIN_MEMORY.used / blockSize;
 	int committedBlocks = MAIN_MEMORY.committedSize / blockSize;
 
-	int blockWidth = 1; // 6;
-	int blockHeight = 2; // 12;
-	int blocksPerRow = 400; // wrap to multiple rows if arena is large
+	int blockWidth = 2; // 6;
+	int blockHeight = 4; // 12;
+	int blocksPerRow = 256 + 128; // wrap to multiple rows if arena is large
 	int arenaX = startX + DEBUG_OVERLAY_PADDING_SIZE;
 	int arenaY = lineY;
 
@@ -202,7 +205,7 @@ void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
 
 	int LINE_COUNT = 28;
 
-	int startX = 1024 + DEBUG_OVERLAY_MARGIN_SIZE;
+	int startX = MEMORY_OVERLAY_WIDTH + DEBUG_OVERLAY_MARGIN_SIZE;
 	int startY = 300;
 	RECT panelRect = {
 		startX,
