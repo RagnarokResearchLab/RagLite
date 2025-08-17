@@ -115,7 +115,7 @@ void DebugDrawMemoryUsageOverlay(gdi_surface_t& surface) {
 		startX,
 		startY,
 		startX + MEMORY_OVERLAY_WIDTH,
-		startY + (DEBUG_OVERLAY_LINE_HEIGHT * NUM_SECTIONS * Y_PER_SECTION)
+		startY + (DEBUG_OVERLAY_LINE_HEIGHT * NUM_SECTIONS * Y_PER_SECTION) + DEBUG_OVERLAY_LINE_HEIGHT
 	};
 	HBRUSH panelBrush = CreateSolidBrush(UI_PANEL_COLOR);
 	FillRect(offscreenDeviceContext, &backgroundPanelRect, panelBrush);
@@ -130,7 +130,15 @@ void DebugDrawMemoryUsageOverlay(gdi_surface_t& surface) {
 	// Arena stats
 	//-------------------------------------------------
 	TextOutA(offscreenDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY,
-		"=== PREALLOCATED MEMORY ARENA ===", lstrlenA("=== PREALLOCATED MEMORY ARENA ==="));
+		"=== MEMORY ARENAS ===", lstrlenA("=== MEMORY ARENA ==="));
+	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
+
+	wsprintfA(buffer, "Name: %s", MAIN_MEMORY.name);
+	TextOutA(offscreenDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
+	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
+
+	wsprintfA(buffer, "Lifetime: %s", MAIN_MEMORY.lifetime);
+	TextOutA(offscreenDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
 	wsprintfA(buffer, "Base: 0x%p", MAIN_MEMORY.base);
@@ -156,7 +164,7 @@ void DebugDrawMemoryUsageOverlay(gdi_surface_t& surface) {
 	wsprintfA(buffer, "Allocations: %d", MAIN_MEMORY.allocationCount);
 	TextOutA(offscreenDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
-	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
+	// lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
 	const int blockSize = 64 * 1024; // 64KB
 	int totalBlocks = MAIN_MEMORY.reservedSize / blockSize;
@@ -195,30 +203,6 @@ void DebugDrawMemoryUsageOverlay(gdi_surface_t& surface) {
 	SelectObject(offscreenDeviceContext, oldFont);
 }
 
-typedef enum gdi_line_type {
-	LINE_EMPTY_SPACING,
-	LINE_FONT_STRING,
-	LINE_PROGRESS_BAR,
-} gdi_line_t;
-
-typedef struct gdi_panel_content {
-	gdi_line_t type;
-	const char* text;
-} gdi_content_t;
-
-constexpr size_t GDI_MAX_LINES_PER_PANEL = 32;
-typedef struct gdi_overlay_t {
-	gdi_content_t lines[GDI_MAX_LINES_PER_PANEL];
-} ui_overlay_t;
-
-
-GLOBAL ui_overlay_t PROCESSOR_USAGE_OVERLAY = {
-	.lines = {{
-		.type = LINE_FONT_STRING,
-		.text = "=== PERFORMANCE ===",
-	}}
-};
-
 void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
 	HDC displayDeviceContext = surface.offscreenDeviceContext;
 	if(!displayDeviceContext) return;
@@ -229,8 +213,6 @@ void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
 
 	int LINE_COUNT = 28;
 	int PANEL_WIDTH = 360;
-
-
 
 	int startX = MEMORY_OVERLAY_WIDTH + DEBUG_OVERLAY_MARGIN_SIZE;
 	int startY = 300;
@@ -250,7 +232,7 @@ void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
 	int lineY = startY + DEBUG_OVERLAY_PADDING_SIZE;
 
 	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY,
-		PROCESSOR_USAGE_OVERLAY.lines[0].text, lstrlenA(PROCESSOR_USAGE_OVERLAY.lines[0].text));
+		"=== PERFORMANCE ===", lstrlenA("=== PERFORMANCE ==="));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
 	// CPU
