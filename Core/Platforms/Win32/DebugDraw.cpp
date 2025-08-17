@@ -154,10 +154,6 @@ void DebugDrawMemoryUsageOverlay(gdi_surface_t& surface) {
 	TextOutA(offscreenDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT * 1;
 
-	// 	TextOutA(offscreenDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY,
-	//          "Arena Usage:", lstrlenA("Arena Usage:"));
-	// lineY += DEBUG_OVERLAY_LINE_HEIGHT;
-
 	const int blockSize = 64 * 1024; // 64KB
 	int totalBlocks = MAIN_MEMORY.reservedSize / blockSize;
 	int usedBlocks = MAIN_MEMORY.used / blockSize;
