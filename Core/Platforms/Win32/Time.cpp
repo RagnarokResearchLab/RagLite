@@ -17,7 +17,7 @@ GLOBAL double TARGET_FPS = 120;
 // 	percentage processorUsageSingleCore;
 // } performance_metrics_t;
 
-typedef struct performance_metrics_t {
+typedef struct system_performance_metrics {
 	bool isInitialized;
 	bool wasUpdatedThisFrame;
 
@@ -150,7 +150,7 @@ void PerformanceMetricsUpdateNow() {
 		return;
 	}
 
-	// --- Frame time
+	// Frame time
 	LONGLONG counterDiff = now.QuadPart - CPU_PERFORMANCE_METRICS.prevCounter.QuadPart;
 	CPU_PERFORMANCE_METRICS.prevCounter = now;
 	double deltaMs = (1000.0 * (double)counterDiff) / (double)freq.QuadPart;
