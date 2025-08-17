@@ -39,9 +39,12 @@ constexpr int DEBUG_OVERLAY_PADDING_SIZE = 8;
 constexpr int DEBUG_OVERLAY_LINE_HEIGHT = 18;
 
 constexpr COLORREF RGB_COLOR_GREEN = RGB(0, 200, 0);
-constexpr COLORREF RGB_COLOR_YELLOW = RGB(200, 200, 0);
 constexpr COLORREF RGB_COLOR_ORANGE = RGB(255, 128, 0);
 constexpr COLORREF RGB_COLOR_RED = RGB(200, 0, 0);
+constexpr COLORREF RGB_COLOR_YELLOW = RGB(200, 200, 0);
+constexpr COLORREF RGB_COLOR_WHITE = RGB(200, 200, 200);
+
+constexpr COLORREF UI_TEXT_COLOR = RGB_COLOR_WHITE;
 
 COLORREF GetUsageColor(int percent) {
 	if(percent < 50) return RGB_COLOR_GREEN;
@@ -101,7 +104,7 @@ void DebugDrawMemoryUsageOverlay(gdi_surface_t& surface) {
 	FillRect(offscreenDeviceContext, &backgroundPanelRect, panelBrush);
 	DeleteObject(panelBrush);
 
-	SetTextColor(offscreenDeviceContext, RGB(200, 200, 200));
+	SetTextColor(offscreenDeviceContext, UI_TEXT_COLOR);
 
 	char buffer[256];
 	int lineY = startY + DEBUG_OVERLAY_PADDING_SIZE;
@@ -305,7 +308,7 @@ void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
 	FillRect(displayDeviceContext, &panelRect, panelBrush);
 	DeleteObject(panelBrush);
 
-	SetTextColor(displayDeviceContext, RGB(200, 200, 200));
+	SetTextColor(displayDeviceContext, UI_TEXT_COLOR);
 
 	char buffer[128];
 	int lineY = startY + DEBUG_OVERLAY_PADDING_SIZE;
