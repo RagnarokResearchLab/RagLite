@@ -162,17 +162,17 @@ void PerformanceMetricsUpdateNow() {
 	CPU_PERFORMANCE_METRICS.fps = (deltaMs > 0.0) ? (1000.0 / deltaMs) : 0.0;
 	CPU_PERFORMANCE_METRICS.smoothedFps = CPU_PERFORMANCE_METRICS.smoothedFps * 0.9 + CPU_PERFORMANCE_METRICS.fps * 0.1;
 
-	// --- CPU usage (same as before)
+	// --- CPU usage
 	CPU_PERFORMANCE_METRICS.processorUsageAllCores = GetProcessorUsageAllCores();
 	SYSTEM_INFO sysInfo;
 	GetSystemInfo(&sysInfo);
 	CPU_PERFORMANCE_METRICS.processorUsageSingleCore = CPU_PERFORMANCE_METRICS.processorUsageAllCores * sysInfo.dwNumberOfProcessors;
 
-	// --- Sleep measurement
+	// Sleep
 	double req = 1000.0 / TARGET_FPS;
 	LARGE_INTEGER beforeSleep, afterSleep;
 	QueryPerformanceCounter(&beforeSleep);
-	Sleep((DWORD)req); // later replace with high-accuracy sleep
+	Sleep((DWORD)req); // TODO replace with high-accuracy sleep
 	QueryPerformanceCounter(&afterSleep);
 	double actualMs = (1000.0 * (afterSleep.QuadPart - beforeSleep.QuadPart)) / (double)freq.QuadPart;
 
