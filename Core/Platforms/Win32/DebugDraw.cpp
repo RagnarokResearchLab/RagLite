@@ -350,6 +350,48 @@ void DebugDrawMemoryUsageOverlay(gdi_surface_t& surface) {
 	SelectObject(offscreenDeviceContext, oldFont);
 }
 
+constexpr int KEYBOARD_DEBUG_OVERLAY_CELL_WIDTH = 100;
+constexpr int KEYBOARD_DEBUG_OVERLAY_CELL_HEIGHT = 18;
+
+INTERNAL void DebugDrawKeyboardOverlay(gdi_surface_t& surface) {
+	HDC offscreenDeviceContext = surface.offscreenDeviceContext;
+	if(!offscreenDeviceContext)
+		return;
+
+	SetBkMode(offscreenDeviceContext, TRANSPARENT);
+	HFONT font = (HFONT)GetStockObject(ANSI_VAR_FONT);
+	HFONT oldFont = (HFONT)SelectObject(offscreenDeviceContext, font);
+
+	for(int virtualKeyCode = 0; virtualKeyCode < 256; ++virtualKeyCode) {
+		int column = virtualKeyCode % 16;
+		int row = virtualKeyCode / 16;
+		int x = column * KEYBOARD_DEBUG_OVERLAY_CELL_WIDTH;
+		int y = row * KEYBOARD_DEBUG_OVERLAY_CELL_HEIGHT;
+		RECT textArea = { x, y, x + KEYBOARD_DEBUG_OVERLAY_CELL_WIDTH,
+			y + KEYBOARD_DEBUG_OVERLAY_CELL_HEIGHT };
+
+		SHORT keyFlags = GetKeyState(virtualKeyCode);
+		BOOL wasKeyDown = (keyFlags & KF_REPEAT) == KF_REPEAT;
+		WORD repeatCount = LOWORD(keyFlags);
+		BOOL isKeyReleased = (keyFlags & KF_UP) == KF_UP;
+
+		COLORREF backgroundColor = RGB(50, 50, 50);
+		if(wasKeyDown)
+			backgroundColor = RGB(0, 120, 0);
+
+		HBRUSH brush = CreateSolidBrush(backgroundColor);
+		FillRect(offscreenDeviceContext, &textArea, brush);
+		DeleteObject(brush);
+
+		SetTextColor(offscreenDeviceContext, RGB(255, 255, 255));
+		const char* label = KeyCodeToDebugName(virtualKeyCode);
+		DrawTextA(offscreenDeviceContext, label, -1, &textArea,
+			DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+	}
+
+	SelectObject(offscreenDeviceContext, oldFont);
+}
+
 void DebugDrawUpdateBackgroundPattern() {
 	DWORD MS_PER_SECOND = 1000;
 

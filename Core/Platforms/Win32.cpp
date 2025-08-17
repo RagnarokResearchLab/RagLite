@@ -7,10 +7,12 @@
 
 #define TODO(msg) OutputDebugStringA(msg);
 
-#include "Win32/DebugDraw.cpp"
 #include "Win32/GamePad.cpp"
 #include "Win32/Keyboard.cpp"
+#include "Win32/Memory.cpp"
 #include "Win32/Windowing.cpp"
+
+#include "Win32/DebugDraw.cpp"
 
 LRESULT CALLBACK WindowProcessMessage(HWND window, UINT message, WPARAM wParam,
 	LPARAM lParam) {
