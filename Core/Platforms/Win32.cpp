@@ -5,9 +5,9 @@
 
 #define TODO(msg) OutputDebugStringA(msg);
 constexpr size_t MAX_ERROR_MSG_SIZE = 512;
-static TCHAR SYSTEM_ERROR_MESSAGE[MAX_ERROR_MSG_SIZE];
+GLOBAL TCHAR SYSTEM_ERROR_MESSAGE[MAX_ERROR_MSG_SIZE];
 
-LPTSTR FormatErrorString(DWORD errorCode) {
+INTERNAL LPTSTR FormatErrorString(DWORD errorCode) {
 	DWORD size = FormatMessage(
 		FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
 		NULL,
