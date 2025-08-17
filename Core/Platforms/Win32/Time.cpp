@@ -42,5 +42,7 @@ double GetProcessorUsage() {
 	GetSystemInfo(&sysInfo);
 
 	double cpuUsage = (100.0 * (double)procTotal / (double)sysTotal) * sysInfo.dwNumberOfProcessors;
+	constexpr double EPSILON = 0.001;
+	if(cpuUsage - 100.0 > EPSILON) return 100.0; // TODO clamp
 	return cpuUsage;
 }
