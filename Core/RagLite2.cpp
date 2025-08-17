@@ -52,7 +52,7 @@ GLOBAL float TARGET_FPS = 120;
 // TODO Does that work on GCC? Move to platform defines.
 // TODO intrinsics -> not here
 GLOBAL int CPU_INFO_MASK[4] = {};
-GLOBAL char CPU_BRAND_STRING[0x40] = { "N/A: Intrinsic __cpuid not emitted)" };
+GLOBAL char CPU_BRAND_STRING[0x40] = { "N/A (__cpuid intrinsic not yet supported)" };
 
 #ifdef RAGLITE_COMPILER_MSVC
 INTERNAL void IntrinsicsReadCPUID() {
