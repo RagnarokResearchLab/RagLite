@@ -1,5 +1,6 @@
 typedef double percentage; // TBD float or double?
 constexpr double EPSILON = 0.001;
+GLOBAL double TARGET_FPS = 120;
 
 // typedef struct cpu_performance_metrics {
 // 	bool isInitialized; // TODO count samples?
@@ -136,7 +137,6 @@ int FloatToString(char* buffer, double value, int decimals) {
 }
 
 void PerformanceMetricsUpdateNow() {
-	double targetFrameMs = 1000 / 30; // TODO
 	LARGE_INTEGER freq, now;
 	QueryPerformanceFrequency(&freq);
 	QueryPerformanceCounter(&now);
@@ -166,7 +166,7 @@ void PerformanceMetricsUpdateNow() {
 	CPU_PERFORMANCE_METRICS.processorUsageSingleCore = CPU_PERFORMANCE_METRICS.processorUsageAllCores * sysInfo.dwNumberOfProcessors;
 
 	// --- Sleep measurement
-	double req = targetFrameMs;
+	double req = 1000.0 / TARGET_FPS;
 	LARGE_INTEGER beforeSleep, afterSleep;
 	QueryPerformanceCounter(&beforeSleep);
 	Sleep((DWORD)req); // later replace with high-accuracy sleep
