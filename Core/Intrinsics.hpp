@@ -23,6 +23,6 @@ INTERNAL void IntrinsicsReadCPUID() {
 		memcpy(CPU_BRAND_STRING + 32, CPU_INFO_MASK, sizeof(CPU_INFO_MASK));
 	}
 #else
-	// TODO Support for other toolchains
+	// TODO Support for the other toolchains
 #endif
 }
