@@ -1,19 +1,44 @@
 typedef double percentage; // TBD float or double?
 constexpr double EPSILON = 0.001;
 
-typedef struct cpu_performance_metrics {
-	bool isInitialized; // TODO count samples?
-	bool wasUpdatedThisFrame; // TODO use system utime
-	// TODO update these also, or remove them? Not sure if useful in practice...
-	FILETIME previousSystemTimesIdle;
-	FILETIME previousSystemTimesKernel;
-	FILETIME previousSystemTimesUser;
-	FILETIME processCreationTime;
-	FILETIME processExitTime; // TBD err, what?
-	FILETIME processKernelTime;
-	FILETIME processUserTime;
-	percentage processorUsageAllCores; // TODO update once, query afterwards
+// typedef struct cpu_performance_metrics {
+// 	bool isInitialized; // TODO count samples?
+// 	bool wasUpdatedThisFrame; // TODO use system utime
+// 	// TODO update these also, or remove them? Not sure if useful in practice...
+// 	FILETIME previousSystemTimesIdle;
+// 	FILETIME previousSystemTimesKernel;
+// 	FILETIME previousSystemTimesUser;
+// 	FILETIME processCreationTime;
+// 	FILETIME processExitTime; // TBD err, what?
+// 	FILETIME processKernelTime;
+// 	FILETIME processUserTime;
+// 	percentage processorUsageAllCores; // TODO update once, query afterwards
+// 	percentage processorUsageSingleCore;
+// } performance_metrics_t;
+
+typedef struct performance_metrics_t {
+	bool isInitialized;
+	bool wasUpdatedThisFrame;
+
+	// CPU
+	FILETIME prevSysKernel;
+	FILETIME prevSysUser;
+	FILETIME prevProcKernel;
+	FILETIME prevProcUser;
+	percentage processorUsageAllCores;
 	percentage processorUsageSingleCore;
+
+	// Frame timing
+	LARGE_INTEGER prevCounter;
+	double deltaTimeMs;
+	double smoothedDeltaTimeMs;
+	double fps;
+	double smoothedFps;
+
+	// Sleep accuracy
+	double requestedSleepMs;
+	double actualSleepMs;
+
 } performance_metrics_t;
 
 GLOBAL performance_metrics_t CPU_PERFORMANCE_METRICS = {};
@@ -76,13 +101,81 @@ inline int Percent(double percentage) {
 	return (int)percentage;
 }
 
-void PerformanceMetricsUpdateNow() {
-	// TODO use system utime
-	// CPU_PERFORMANCE_METRICS.wasUpdatedThisFrame = true;
+int FloatToString(char* buffer, double value, int decimals) {
+	if (value < 0) {
+		*buffer++ = '-';
+		value = -value;
+	}
 
+	ULONGLONG intPart = (ULONGLONG)value;
+	double frac = value - (double)intPart;
+
+	char temp[32];
+	int intLen = 0;
+	do {
+		temp[intLen++] = '0' + (int)(intPart % 10);
+		intPart /= 10;
+	} while (intPart > 0);
+
+	for (int i = intLen - 1; i >= 0; --i) {
+		*buffer++ = temp[i];
+	}
+
+	if (decimals > 0) {
+		*buffer++ = '.';
+		for (int d = 0; d < decimals; d++) {
+			frac *= 10.0;
+			int digit = (int)frac;
+			*buffer++ = '0' + digit;
+			frac -= digit;
+		}
+	}
+
+	*buffer = '\0';
+	return (int)(buffer - temp);
+}
+
+
+void PerformanceMetricsUpdateNow() {
+	double targetFrameMs = 1000 / 30; // TODO
+	LARGE_INTEGER freq, now;
+	QueryPerformanceFrequency(&freq);
+	QueryPerformanceCounter(&now);
+
+	if(!CPU_PERFORMANCE_METRICS.isInitialized) {
+		CPU_PERFORMANCE_METRICS.prevCounter = now;
+		CPU_PERFORMANCE_METRICS.isInitialized = true;
+		return;
+	}
+
+	// --- Frame time
+	LONGLONG counterDiff = now.QuadPart - CPU_PERFORMANCE_METRICS.prevCounter.QuadPart;
+	CPU_PERFORMANCE_METRICS.prevCounter = now;
+	double deltaMs = (1000.0 * (double)counterDiff) / (double)freq.QuadPart;
+	CPU_PERFORMANCE_METRICS.deltaTimeMs = deltaMs;
+
+	// Smooth with exponential moving average
+	CPU_PERFORMANCE_METRICS.smoothedDeltaTimeMs = CPU_PERFORMANCE_METRICS.smoothedDeltaTimeMs * 0.9 + deltaMs * 0.1;
+
+	CPU_PERFORMANCE_METRICS.fps = (deltaMs > 0.0) ? (1000.0 / deltaMs) : 0.0;
+	CPU_PERFORMANCE_METRICS.smoothedFps = CPU_PERFORMANCE_METRICS.smoothedFps * 0.9 + CPU_PERFORMANCE_METRICS.fps * 0.1;
+
+	// --- CPU usage (same as before)
+	CPU_PERFORMANCE_METRICS.processorUsageAllCores = GetProcessorUsageAllCores();
 	SYSTEM_INFO sysInfo;
 	GetSystemInfo(&sysInfo);
-
-	CPU_PERFORMANCE_METRICS.processorUsageAllCores = GetProcessorUsageAllCores();
 	CPU_PERFORMANCE_METRICS.processorUsageSingleCore = CPU_PERFORMANCE_METRICS.processorUsageAllCores * sysInfo.dwNumberOfProcessors;
+
+	// --- Sleep measurement
+	double req = targetFrameMs;
+	LARGE_INTEGER beforeSleep, afterSleep;
+	QueryPerformanceCounter(&beforeSleep);
+	Sleep((DWORD)req); // later replace with high-accuracy sleep
+	QueryPerformanceCounter(&afterSleep);
+	double actualMs = (1000.0 * (afterSleep.QuadPart - beforeSleep.QuadPart)) / (double)freq.QuadPart;
+
+	CPU_PERFORMANCE_METRICS.requestedSleepMs = req;
+	CPU_PERFORMANCE_METRICS.actualSleepMs = actualMs;
+
+	CPU_PERFORMANCE_METRICS.wasUpdatedThisFrame = true;
 }
