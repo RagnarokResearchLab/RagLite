@@ -181,7 +181,4 @@ void PerformanceMetricsUpdateNow() {
 
 	// TODO Check if this makes any difference (unlikely); if so, write only once and skip this part
 	CPU_PERFORMANCE_METRICS.hardwareSystemInfo = sysInfo;
-
-	// TODO remove?
-	CPU_PERFORMANCE_METRICS.wasUpdatedThisFrame = true;
 }
