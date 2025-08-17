@@ -368,7 +368,7 @@ INTERNAL void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
 		TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
 		lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
-		wsprintfA(buffer, "Private Bytes: %d MB", (int)(pmc.PrivateUsage / (1024 * 1024)));
+		wsprintfA(buffer, "Private Set: %d MB", (int)(pmc.PrivateUsage / (1024 * 1024)));
 		TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
 		lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
@@ -467,7 +467,6 @@ INTERNAL void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
 			lstrlenA(buffer));
 		lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 	}
-	// lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
 	// TODO Does that work on GCC? Move to platform defines.
 	// TODO intrinsics -> not here
