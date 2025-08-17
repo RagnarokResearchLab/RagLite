@@ -38,12 +38,14 @@ constexpr uint32 UNINITIALIZED_WINDOW_COLOR = 0xFF202020;
 constexpr int DEBUG_OVERLAY_PADDING_SIZE = 8;
 constexpr int DEBUG_OVERLAY_LINE_HEIGHT = 18;
 
+constexpr COLORREF RGB_COLOR_DARK = RGB(30, 30, 30);
 constexpr COLORREF RGB_COLOR_GREEN = RGB(0, 200, 0);
 constexpr COLORREF RGB_COLOR_ORANGE = RGB(255, 128, 0);
 constexpr COLORREF RGB_COLOR_RED = RGB(200, 0, 0);
 constexpr COLORREF RGB_COLOR_YELLOW = RGB(200, 200, 0);
 constexpr COLORREF RGB_COLOR_WHITE = RGB(200, 200, 200);
 
+constexpr COLORREF UI_BACKGROUND_COLOR = RGB_COLOR_DARK;
 constexpr COLORREF UI_TEXT_COLOR = RGB_COLOR_WHITE;
 
 COLORREF GetUsageColor(int percent) {
@@ -100,7 +102,7 @@ void DebugDrawMemoryUsageOverlay(gdi_surface_t& surface) {
 		startX + 1024,
 		startY + (DEBUG_OVERLAY_LINE_HEIGHT * NUM_SECTIONS * Y_PER_SECTION)
 	};
-	HBRUSH panelBrush = CreateSolidBrush(RGB(30, 30, 30));
+	HBRUSH panelBrush = CreateSolidBrush(UI_BACKGROUND_COLOR);
 	FillRect(offscreenDeviceContext, &backgroundPanelRect, panelBrush);
 	DeleteObject(panelBrush);
 
@@ -304,7 +306,7 @@ void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
 		startX + 360,
 		startY + (DEBUG_OVERLAY_LINE_HEIGHT * 11)
 	};
-	HBRUSH panelBrush = CreateSolidBrush(RGB(30, 30, 30));
+	HBRUSH panelBrush = CreateSolidBrush(UI_BACKGROUND_COLOR);
 	FillRect(displayDeviceContext, &panelRect, panelBrush);
 	DeleteObject(panelBrush);
 
