@@ -413,9 +413,9 @@ void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY,
 		"=== HARDWARE INFORMATION ===", lstrlenA("=== HARDWARE INFORMATION ==="));
-		lineY += DEBUG_OVERLAY_LINE_HEIGHT;
+	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
-		wsprintfA(buffer, "OEM ID: %u", CPU_PERFORMANCE_METRICS.hardwareSystemInfo.dwOemId);
+	wsprintfA(buffer, "OEM ID: %u", CPU_PERFORMANCE_METRICS.hardwareSystemInfo.dwOemId);
 	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
@@ -423,40 +423,36 @@ void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
 	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
-
 	wsprintfA(buffer, "Minimum Application Address: 0x%lX", CPU_PERFORMANCE_METRICS.hardwareSystemInfo.lpMinimumApplicationAddress);
 	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
-		wsprintfA(buffer, "Maximum Application Address: 0x%lX", CPU_PERFORMANCE_METRICS.hardwareSystemInfo.lpMaximumApplicationAddress);
+	wsprintfA(buffer, "Maximum Application Address: 0x%lX", CPU_PERFORMANCE_METRICS.hardwareSystemInfo.lpMaximumApplicationAddress);
 	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
-
 
 	wsprintfA(buffer, "Active Processor Mask: %u", CPU_PERFORMANCE_METRICS.hardwareSystemInfo.dwActiveProcessorMask);
 	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
-
 	wsprintfA(buffer, "Number of Processors: %u", CPU_PERFORMANCE_METRICS.hardwareSystemInfo.dwNumberOfProcessors);
 	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
-
 
 	wsprintfA(buffer, "Processor Type: %u", CPU_PERFORMANCE_METRICS.hardwareSystemInfo.dwProcessorType);
 	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
 	// TODO unit?
-		wsprintfA(buffer, "Allocation Granularity: %u", CPU_PERFORMANCE_METRICS.hardwareSystemInfo.dwAllocationGranularity);
+	wsprintfA(buffer, "Allocation Granularity: %u", CPU_PERFORMANCE_METRICS.hardwareSystemInfo.dwAllocationGranularity);
 	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
-		wsprintfA(buffer, "Processor Level: %u", CPU_PERFORMANCE_METRICS.hardwareSystemInfo.wProcessorLevel);
+	wsprintfA(buffer, "Processor Level: %u", CPU_PERFORMANCE_METRICS.hardwareSystemInfo.wProcessorLevel);
 	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
-		wsprintfA(buffer, "Processor Revision: %u", CPU_PERFORMANCE_METRICS.hardwareSystemInfo.wProcessorRevision);
+	wsprintfA(buffer, "Processor Revision: %u", CPU_PERFORMANCE_METRICS.hardwareSystemInfo.wProcessorRevision);
 	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
