@@ -339,10 +339,6 @@ INTERNAL void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
 			progressBar);
 		lineY += 24;
 
-		// 		wsprintfA(buffer, "Virtual Address Space Size (User-Mode): %ull", memoryUsageInfo.ullTotalVirtual);
-		// TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
-		// lineY += DEBUG_OVERLAY_LINE_HEIGHT;
-
 		// TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY,
 		// 	"System Usage:", lstrlenA("System Usage:"));
 		// lineY += DEBUG_OVERLAY_LINE_HEIGHT;
