@@ -1,6 +1,8 @@
 #include <psapi.h>
 
 typedef struct virtual_memory_arena {
+	const char* name;
+	const char* lifetime;
 	void* base; // Base of VirtualAlloc region TODO baseAddress
 	size_t reservedSize; // Total reserved with VirtualAlloc TODO inBytes
 	size_t committedSize; // Pages committed so far TBD or bytes?
@@ -10,6 +12,8 @@ typedef struct virtual_memory_arena {
 
 // TODO Actually create via VirtualAlloc
 GLOBAL memory_arena_t MAIN_MEMORY = {
+	.name = "Preallocated (Main Memory)",
+	.lifetime = "Forever (Global Arena)",
 	.base = (void*)0xDEADBEEFull,
 	.reservedSize = 64u * 1024 * 42 * 1024,
 	.committedSize = 64u * 1024 * 42 * 512,
