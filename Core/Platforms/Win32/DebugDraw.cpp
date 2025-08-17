@@ -211,7 +211,7 @@ INTERNAL void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
 	HFONT font = (HFONT)GetStockObject(ANSI_VAR_FONT);
 	HFONT oldFont = (HFONT)SelectObject(displayDeviceContext, font);
 
-	int LINE_COUNT = 28 + 11; // CPU/performance + system memory + process memory + hardware info
+	int LINE_COUNT = 28 + 13; // CPU/performance + system memory + process memory + hardware info
 	int PANEL_WIDTH = 360;
 
 	int startX = MEMORY_OVERLAY_WIDTH + DEBUG_OVERLAY_MARGIN_SIZE;
@@ -404,6 +404,8 @@ INTERNAL void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
 		lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 	}
 
+
+
 	//-------------------------------------------------
 	// Native system info
 	// (TODO doesn't change, no need to fetch it more than once?)
@@ -413,6 +415,49 @@ INTERNAL void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
 	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY,
 		"=== HARDWARE INFORMATION ===", lstrlenA("=== HARDWARE INFORMATION ==="));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
+
+	// TODO Disable outside debug mode? Let's not risk messing with the OS too much in releases
+	// TODO avoid doing this every frame
+	typedef LONG(WINAPI * RtlGetVersionPtr)(PRTL_OSVERSIONINFOW);
+
+	RTL_OSVERSIONINFOW vi = { 0 };
+	vi.dwOSVersionInfoSize = sizeof(vi);
+
+	HMODULE hNtdll = GetModuleHandleW(L"ntdll.dll");
+	if(hNtdll) {
+
+		RtlGetVersionPtr pRtlGetVersion = (RtlGetVersionPtr)GetProcAddress(hNtdll, "RtlGetVersion");
+		if(pRtlGetVersion && pRtlGetVersion((PRTL_OSVERSIONINFOW)&vi) == 0) {
+			wsprintfA(buffer,
+				"Operating System: Windows %u.%u (Build %u) %S",
+				vi.dwMajorVersion,
+				vi.dwMinorVersion,
+				vi.dwBuildNumber,
+				vi.szCSDVersion);
+			TextOutA(displayDeviceContext,
+				startX + DEBUG_OVERLAY_PADDING_SIZE,
+				lineY,
+				buffer,
+				lstrlenA(buffer));
+			lineY += DEBUG_OVERLAY_LINE_HEIGHT;
+		}
+	} else {
+		wsprintfA(buffer,
+			"Operating System: N/A (Failed to GetModuleHandle for NTDLL.DLL) %S",
+			vi.dwMajorVersion,
+			vi.dwMinorVersion,
+			vi.dwBuildNumber,
+			vi.szCSDVersion);
+		TextOutA(displayDeviceContext,
+			startX + DEBUG_OVERLAY_PADDING_SIZE,
+			lineY,
+			buffer,
+			lstrlenA(buffer));
+		lineY += DEBUG_OVERLAY_LINE_HEIGHT;
+		lineY += DEBUG_OVERLAY_LINE_HEIGHT;
+	}
+	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
+
 
 	wsprintfA(buffer, "OEM ID: %u", CPU_PERFORMANCE_METRICS.hardwareSystemInfo.dwOemId);
 	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
@@ -500,7 +545,7 @@ INTERNAL void DebugDrawKeyboardOverlay(gdi_surface_t& surface) {
 	SelectObject(displayDeviceContext, oldFont);
 }
 
-void DebugDrawUpdateBackgroundPattern() {
+INTERNAL void DebugDrawUpdateBackgroundPattern() {
 	DWORD MS_PER_SECOND = 1000;
 
 	DWORD ticks = GetTickCount();
