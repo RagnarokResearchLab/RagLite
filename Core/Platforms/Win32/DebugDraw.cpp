@@ -76,7 +76,7 @@ COLORREF ProgressBarGetColor(int percent) {
 	return RGB_COLOR_RED;
 }
 
-void DrawProgressBar(HDC displayDeviceContext, progress_bar_t& bar) {
+INTERNAL void DrawProgressBar(HDC displayDeviceContext, progress_bar_t& bar) {
 	HBRUSH backgroundBrush = CreateSolidBrush(UI_BACKGROUND_COLOR);
 	RECT rect = { bar.x, bar.y, bar.x + bar.width, bar.y + bar.height };
 	FillRect(displayDeviceContext, &rect, backgroundBrush);
@@ -93,7 +93,7 @@ void DrawProgressBar(HDC displayDeviceContext, progress_bar_t& bar) {
 
 GLOBAL int MEMORY_OVERLAY_WIDTH = 1024 + 128 + 16;
 
-void DebugDrawMemoryUsageOverlay(gdi_surface_t& surface) {
+INTERNAL void DebugDrawMemoryUsageOverlay(gdi_surface_t& surface) {
 	// TODO param arena, startX, startY
 	HDC offscreenDeviceContext = surface.offscreenDeviceContext;
 	if(!offscreenDeviceContext)
@@ -203,7 +203,7 @@ void DebugDrawMemoryUsageOverlay(gdi_surface_t& surface) {
 	SelectObject(offscreenDeviceContext, oldFont);
 }
 
-void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
+INTERNAL void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
 	HDC displayDeviceContext = surface.offscreenDeviceContext;
 	if(!displayDeviceContext) return;
 
@@ -308,7 +308,7 @@ void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
 		DWORD err = GetLastError();
 		LPTSTR errStr = FormatErrorString(err);
 
-		wsprintfA(buffer, "ERROR: %lu (%s)", err, errStr);
+		wsprintfA(buffer, "N/A: %lu (%s)", err, errStr);
 		TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
 		lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 	} else {
