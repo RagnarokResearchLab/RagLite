@@ -230,8 +230,13 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE unused, LPSTR commandLine,
 		//  UINT requestedSchedulerGranularityInMilliseconds = 1;
 		// bool didAdjustGranularity = (timeBeginPeriod(requestedSchedulerGranularityInMilliseconds) == TIMERR_NOERROR);
 		// TODO set process granularity to 1ms
-		DWORD sleepTimeInMilliseconds = 16; // TODO ms, compute from target frame time, show in overlay
+		DWORD sleepTimeInMilliseconds = 1000 / 30; // TODO ms, compute from target frame time, show in overlay
 		Sleep(sleepTimeInMilliseconds);
+
+		// TBD
+		// To increase the accuracy of the sleep interval, call the timeGetDevCaps function to determine the supported minimum timer resolution and the timeBeginPeriod function to set the timer resolution to its minimum. Use caution when calling timeBeginPeriod, as frequent calls can significantly affect the system clock, system power usage, and the scheduler. If you call timeBeginPeriod, call it one time early in the application and be sure to call the timeEndPeriod function at the very end of the application.
+
+		// TBD WaitForSingleObject might be appropriate in some cases?
 	}
 
 	return 0;
