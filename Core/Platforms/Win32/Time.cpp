@@ -102,7 +102,7 @@ inline int Percent(double percentage) {
 }
 
 int FloatToString(char* buffer, double value, int decimals) {
-	if (value < 0) {
+	if(value < 0) {
 		*buffer++ = '-';
 		value = -value;
 	}
@@ -115,15 +115,15 @@ int FloatToString(char* buffer, double value, int decimals) {
 	do {
 		temp[intLen++] = '0' + (int)(intPart % 10);
 		intPart /= 10;
-	} while (intPart > 0);
+	} while(intPart > 0);
 
-	for (int i = intLen - 1; i >= 0; --i) {
+	for(int i = intLen - 1; i >= 0; --i) {
 		*buffer++ = temp[i];
 	}
 
-	if (decimals > 0) {
+	if(decimals > 0) {
 		*buffer++ = '.';
-		for (int d = 0; d < decimals; d++) {
+		for(int d = 0; d < decimals; d++) {
 			frac *= 10.0;
 			int digit = (int)frac;
 			*buffer++ = '0' + digit;
@@ -134,7 +134,6 @@ int FloatToString(char* buffer, double value, int decimals) {
 	*buffer = '\0';
 	return (int)(buffer - temp);
 }
-
 
 void PerformanceMetricsUpdateNow() {
 	double targetFrameMs = 1000 / 30; // TODO
