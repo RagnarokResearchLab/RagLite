@@ -417,7 +417,10 @@ INTERNAL void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
 		TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
 		lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 	} else {
-		wsprintfA(buffer, "GetProcessMemoryInfo failed");
+				DWORD err = GetLastError();
+		LPTSTR errStr = FormatErrorString(err);
+
+		wsprintfA(buffer, "N/A: %lu (%s)", err, errStr);
 		TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
 		lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 	}
