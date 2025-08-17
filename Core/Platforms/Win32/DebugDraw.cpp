@@ -337,39 +337,6 @@ INTERNAL void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
 		DrawProgressBar(displayDeviceContext,
 			progressBar);
 		lineY += 24;
-
-		// TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY,
-		// 	"System Usage:", lstrlenA("System Usage:"));
-		// lineY += DEBUG_OVERLAY_LINE_HEIGHT;
-
-		// lineY += DEBUG_OVERLAY_LINE_HEIGHT * 1;
-
-		//-------------------------------------------------
-		// Process usage bar
-		//-------------------------------------------------
-		// TODO Eliminate the redundant fetch
-		if(GetProcessMemoryInfo(GetCurrentProcess(), (PROCESS_MEMORY_COUNTERS*)&pmc, sizeof(pmc))) {
-			int procPercent = (int)((pmc.WorkingSetSize * 100) / memoryUsageInfo.ullTotalPhys);
-
-			wsprintfA(buffer, "Process: %d MB / %d MB",
-				(int)(pmc.WorkingSetSize / (1024 * 1024)),
-				(int)(memoryUsageInfo.ullTotalPhys / (1024 * 1024)));
-
-			TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE,
-				lineY, buffer, lstrlenA(buffer));
-			lineY += DEBUG_OVERLAY_LINE_HEIGHT;
-
-			progress_bar_t progressBar = { .x = startX + DEBUG_OVERLAY_PADDING_SIZE, .y = lineY, .width = 200, .height = 16, .percent = procPercent };
-
-			DrawProgressBar(displayDeviceContext, progressBar);
-			lineY += 24;
-		} else {
-			TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE,
-				lineY, "Process stats unavailable", lstrlenA("Process stats unavailable"));
-			lineY += DEBUG_OVERLAY_LINE_HEIGHT * 2;
-		}
-	}
-
 	//-------------------------------------------------
 	// Process stats
 	//-------------------------------------------------
@@ -423,6 +390,32 @@ INTERNAL void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
 		wsprintfA(buffer, "N/A: %lu (%s)", err, errStr);
 		TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
 		lineY += DEBUG_OVERLAY_LINE_HEIGHT;
+	}
+
+	//-------------------------------------------------
+		// Process usage bar
+		//-------------------------------------------------
+		// TODO Eliminate the redundant fetch
+		if(GetProcessMemoryInfo(GetCurrentProcess(), (PROCESS_MEMORY_COUNTERS*)&pmc, sizeof(pmc))) {
+			int procPercent = (int)((pmc.WorkingSetSize * 100) / memoryUsageInfo.ullTotalPhys);
+
+			wsprintfA(buffer, "Process: %d MB / %d MB",
+				(int)(pmc.WorkingSetSize / (1024 * 1024)),
+				(int)(memoryUsageInfo.ullTotalPhys / (1024 * 1024)));
+
+			TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE,
+				lineY, buffer, lstrlenA(buffer));
+			lineY += DEBUG_OVERLAY_LINE_HEIGHT;
+
+			progress_bar_t progressBar = { .x = startX + DEBUG_OVERLAY_PADDING_SIZE, .y = lineY, .width = 200, .height = 16, .percent = procPercent };
+
+			DrawProgressBar(displayDeviceContext, progressBar);
+			lineY += 24;
+		} else {
+			TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE,
+				lineY, "Process stats unavailable", lstrlenA("Process stats unavailable"));
+			lineY += DEBUG_OVERLAY_LINE_HEIGHT * 2;
+		}
 	}
 
 	//-------------------------------------------------
@@ -532,21 +525,6 @@ INTERNAL void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
 	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
-	// TODO useless
-	// wsprintfA(buffer, "Minimum Application Address: 0x%lX", CPU_PERFORMANCE_METRICS.hardwareSystemInfo.lpMinimumApplicationAddress);
-	// TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
-	// lineY += DEBUG_OVERLAY_LINE_HEIGHT;
-
-	// TODO useless
-		// wsprintfA(buffer, "Maximum Application Address: 0x%lX", CPU_PERFORMANCE_METRICS.hardwareSystemInfo.lpMaximumApplicationAddress);
-		// TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
-		// lineY += DEBUG_OVERLAY_LINE_HEIGHT;
-
-	// TODO useless
-	wsprintfA(buffer, "Active Processor Mask: %u", CPU_PERFORMANCE_METRICS.hardwareSystemInfo.dwActiveProcessorMask);
-	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
-	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
-
 	wsprintfA(buffer, "Number of Processors: %u", CPU_PERFORMANCE_METRICS.hardwareSystemInfo.dwNumberOfProcessors);
 	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
@@ -559,15 +537,6 @@ INTERNAL void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
 	// TODO unit?
 	// TODO macro KILOBYTES(amount)
 	wsprintfA(buffer, "Allocation Granularity: %u KB", CPU_PERFORMANCE_METRICS.hardwareSystemInfo.dwAllocationGranularity / 1024);
-	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
-	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
-
-	wsprintfA(buffer, "Processor Level: %u", CPU_PERFORMANCE_METRICS.hardwareSystemInfo.wProcessorLevel);
-	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
-	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
-
-	// TODO useless
-	wsprintfA(buffer, "Processor Revision: %u", CPU_PERFORMANCE_METRICS.hardwareSystemInfo.wProcessorRevision);
 	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
