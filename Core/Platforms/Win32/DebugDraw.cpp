@@ -189,56 +189,6 @@ void DebugDrawMemoryUsageOverlay(gdi_surface_t& surface) {
 	lineY = arenaY + ((totalBlocks / blocksPerRow) + 1) * (blockHeight + 1); // + DEBUG_OVERLAY_LINE_HEIGHT;
 
 	//-------------------------------------------------
-	// System stats
-	//-------------------------------------------------
-	TextOutA(offscreenDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY,
-		"=== System ===", lstrlenA("=== System ==="));
-	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
-
-	MEMORYSTATUSEX memoryUsageInfo = {};
-	memoryUsageInfo.dwLength = sizeof(memoryUsageInfo);
-
-	if(!GlobalMemoryStatusEx(&memoryUsageInfo)) {
-		DWORD err = GetLastError();
-		LPTSTR errStr = GetErrorString(err);
-
-		wsprintfA(buffer, "ERROR: %lu (%s)", err, errStr);
-		TextOutA(offscreenDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
-		lineY += DEBUG_OVERLAY_LINE_HEIGHT;
-	} else {
-		wsprintfA(buffer, "Avail Phys: %d MB", (int)(memoryUsageInfo.ullAvailPhys / (1024 * 1024)));
-		TextOutA(offscreenDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
-		lineY += DEBUG_OVERLAY_LINE_HEIGHT;
-
-		wsprintfA(buffer, "Avail Virtual: %d MB", (int)(memoryUsageInfo.ullAvailVirtual / (1024 * 1024)));
-		TextOutA(offscreenDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
-		lineY += DEBUG_OVERLAY_LINE_HEIGHT * 1;
-
-		wsprintfA(buffer, "Memory Load: %d%%", memoryUsageInfo.dwMemoryLoad);
-		TextOutA(offscreenDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
-		lineY += DEBUG_OVERLAY_LINE_HEIGHT;
-
-		// TextOutA(offscreenDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY,
-		// 	"System Usage:", lstrlenA("System Usage:"));
-		// lineY += DEBUG_OVERLAY_LINE_HEIGHT;
-
-		//-------------------------------------------------
-		// System usage bar
-		//-------------------------------------------------
-		int sysUsage = memoryUsageInfo.dwMemoryLoad;
-		TextOutA(offscreenDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY,
-			"System Usage:", lstrlenA("System Usage:"));
-		lineY += DEBUG_OVERLAY_LINE_HEIGHT;
-
-		progress_bar_t progressBar = { .x = startX + DEBUG_OVERLAY_PADDING_SIZE, .y = lineY, .width = 200, .height = 16, .percent = sysUsage };
-		DrawProgressBar(offscreenDeviceContext,
-			progressBar);
-		lineY += 24;
-
-		// lineY += DEBUG_OVERLAY_LINE_HEIGHT * 1;
-	}
-
-	//-------------------------------------------------
 	// Process stats
 	//-------------------------------------------------
 	TextOutA(offscreenDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY,
@@ -272,29 +222,6 @@ void DebugDrawMemoryUsageOverlay(gdi_surface_t& surface) {
 		lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 	}
 
-	//-------------------------------------------------
-	// Process usage bar
-	//-------------------------------------------------
-	if(GetProcessMemoryInfo(GetCurrentProcess(), (PROCESS_MEMORY_COUNTERS*)&pmc, sizeof(pmc))) {
-		int procPercent = (int)((pmc.WorkingSetSize * 100) / memoryUsageInfo.ullTotalPhys);
-
-		wsprintfA(buffer, "Process: %d MB / %d MB",
-			(int)(pmc.WorkingSetSize / (1024 * 1024)),
-			(int)(memoryUsageInfo.ullTotalPhys / (1024 * 1024)));
-
-		TextOutA(offscreenDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE,
-			lineY, buffer, lstrlenA(buffer));
-		lineY += DEBUG_OVERLAY_LINE_HEIGHT;
-
-		progress_bar_t progressBar = { .x = startX + DEBUG_OVERLAY_PADDING_SIZE, .y = lineY, .width = 200, .height = 16, .percent = procPercent };
-
-		DrawProgressBar(offscreenDeviceContext, progressBar);
-		lineY += 24;
-	} else {
-		TextOutA(offscreenDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE,
-			lineY, "Process stats unavailable", lstrlenA("Process stats unavailable"));
-		lineY += DEBUG_OVERLAY_LINE_HEIGHT * 2;
-	}
 	SelectObject(offscreenDeviceContext, oldFont);
 }
 
@@ -354,7 +281,6 @@ void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
 	lstrcpyA(buffer, "Frame: "); // Clear buffer first
 	lstrcatA(buffer, num); // Append
 	lstrcatA(buffer, " ms");
-	// TextOutA(displayDeviceContext, startX + 8, lineY, buffer, lstrlenA(buffer));
 
 	lstrcatA(buffer, " (smoothed: ");
 	FloatToString(num, CPU_PERFORMANCE_METRICS.deltaTimeMs, 2);
@@ -362,12 +288,6 @@ void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
 	lstrcatA(buffer, " ms)");
 	TextOutA(displayDeviceContext, startX + 8, lineY, buffer, lstrlenA(buffer));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
-	// lineY += DEBUG_OVERLAY_LINE_HEIGHT;
-	// wsprintfA(buffer, "Frame: %.2f ms (smoothed: %.2f)",
-	// CPU_PERFORMANCE_METRICS.deltaTimeMs,
-	// CPU_PERFORMANCE_METRICS.smoothedDeltaTimeMs);
-	// TextOutA(displayDeviceContext, startX + 8, lineY, buffer, lstrlenA(buffer));
-	// lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
 	lstrcpyA(buffer, "FPS: ");
 	FloatToString(num, CPU_PERFORMANCE_METRICS.fps, 1);
@@ -391,12 +311,81 @@ void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
 	wsprintfA(buffer, "Sleep requested: %.2f ms", CPU_PERFORMANCE_METRICS.requestedSleepMs);
-	// TextOutA(displayDeviceContext, startX + 8, lineY, buffer, lstrlenA(buffer));
-	// lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
-	// wsprintfA(buffer, "Sleep actual: %.2f ms", CPU_PERFORMANCE_METRICS.actualSleepMs);
-	// TextOutA(displayDeviceContext, startX + 8, lineY, buffer, lstrlenA(buffer));
-	// lineY += DEBUG_OVERLAY_LINE_HEIGHT;
+	//-------------------------------------------------
+	// System stats
+	//-------------------------------------------------
+	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY,
+		"=== System ===", lstrlenA("=== System ==="));
+	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
+
+	MEMORYSTATUSEX memoryUsageInfo = {};
+	memoryUsageInfo.dwLength = sizeof(memoryUsageInfo);
+
+	if(!GlobalMemoryStatusEx(&memoryUsageInfo)) {
+		DWORD err = GetLastError();
+		LPTSTR errStr = GetErrorString(err);
+
+		wsprintfA(buffer, "ERROR: %lu (%s)", err, errStr);
+		TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
+		lineY += DEBUG_OVERLAY_LINE_HEIGHT;
+	} else {
+		wsprintfA(buffer, "Avail Phys: %d MB", (int)(memoryUsageInfo.ullAvailPhys / (1024 * 1024)));
+		TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
+		lineY += DEBUG_OVERLAY_LINE_HEIGHT;
+
+		wsprintfA(buffer, "Avail Virtual: %d MB", (int)(memoryUsageInfo.ullAvailVirtual / (1024 * 1024)));
+		TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
+		lineY += DEBUG_OVERLAY_LINE_HEIGHT * 1;
+
+		wsprintfA(buffer, "Memory Load: %d%%", memoryUsageInfo.dwMemoryLoad);
+		TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
+		lineY += DEBUG_OVERLAY_LINE_HEIGHT;
+
+		// TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY,
+		// 	"System Usage:", lstrlenA("System Usage:"));
+		// lineY += DEBUG_OVERLAY_LINE_HEIGHT;
+
+		//-------------------------------------------------
+		// System usage bar
+		//-------------------------------------------------
+		int sysUsage = memoryUsageInfo.dwMemoryLoad;
+		TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY,
+			"System Usage:", lstrlenA("System Usage:"));
+		lineY += DEBUG_OVERLAY_LINE_HEIGHT;
+
+		progress_bar_t progressBar = { .x = startX + DEBUG_OVERLAY_PADDING_SIZE, .y = lineY, .width = 200, .height = 16, .percent = sysUsage };
+		DrawProgressBar(displayDeviceContext,
+			progressBar);
+		lineY += 24;
+
+		// lineY += DEBUG_OVERLAY_LINE_HEIGHT * 1;
+
+		//-------------------------------------------------
+		// Process usage bar
+		//-------------------------------------------------
+		PROCESS_MEMORY_COUNTERS_EX pmc;
+		if(GetProcessMemoryInfo(GetCurrentProcess(), (PROCESS_MEMORY_COUNTERS*)&pmc, sizeof(pmc))) {
+			int procPercent = (int)((pmc.WorkingSetSize * 100) / memoryUsageInfo.ullTotalPhys);
+
+			wsprintfA(buffer, "Process: %d MB / %d MB",
+				(int)(pmc.WorkingSetSize / (1024 * 1024)),
+				(int)(memoryUsageInfo.ullTotalPhys / (1024 * 1024)));
+
+			TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE,
+				lineY, buffer, lstrlenA(buffer));
+			lineY += DEBUG_OVERLAY_LINE_HEIGHT;
+
+			progress_bar_t progressBar = { .x = startX + DEBUG_OVERLAY_PADDING_SIZE, .y = lineY, .width = 200, .height = 16, .percent = procPercent };
+
+			DrawProgressBar(displayDeviceContext, progressBar);
+			lineY += 24;
+		} else {
+			TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE,
+				lineY, "Process stats unavailable", lstrlenA("Process stats unavailable"));
+			lineY += DEBUG_OVERLAY_LINE_HEIGHT * 2;
+		}
+	}
 
 	SelectObject(displayDeviceContext, oldFont);
 }
@@ -405,13 +394,13 @@ constexpr int KEYBOARD_DEBUG_OVERLAY_CELL_WIDTH = 100;
 constexpr int KEYBOARD_DEBUG_OVERLAY_CELL_HEIGHT = 18;
 
 INTERNAL void DebugDrawKeyboardOverlay(gdi_surface_t& surface) {
-	HDC offscreenDeviceContext = surface.offscreenDeviceContext;
-	if(!offscreenDeviceContext)
+	HDC displayDeviceContext = surface.offscreenDeviceContext;
+	if(!displayDeviceContext)
 		return;
 
-	SetBkMode(offscreenDeviceContext, TRANSPARENT);
+	SetBkMode(displayDeviceContext, TRANSPARENT);
 	HFONT font = (HFONT)GetStockObject(ANSI_VAR_FONT);
-	HFONT oldFont = (HFONT)SelectObject(offscreenDeviceContext, font);
+	HFONT oldFont = (HFONT)SelectObject(displayDeviceContext, font);
 
 	for(int virtualKeyCode = 0; virtualKeyCode < 256; ++virtualKeyCode) {
 		int column = virtualKeyCode % 16;
@@ -431,16 +420,16 @@ INTERNAL void DebugDrawKeyboardOverlay(gdi_surface_t& surface) {
 			backgroundColor = UI_HIGHLIGHT_COLOR;
 
 		HBRUSH brush = CreateSolidBrush(backgroundColor);
-		FillRect(offscreenDeviceContext, &textArea, brush);
+		FillRect(displayDeviceContext, &textArea, brush);
 		DeleteObject(brush);
 
-		SetTextColor(offscreenDeviceContext, UI_TEXT_COLOR);
+		SetTextColor(displayDeviceContext, UI_TEXT_COLOR);
 		const char* label = KeyCodeToDebugName(virtualKeyCode);
-		DrawTextA(offscreenDeviceContext, label, -1, &textArea,
+		DrawTextA(displayDeviceContext, label, -1, &textArea,
 			DT_CENTER | DT_VCENTER | DT_SINGLELINE);
 	}
 
-	SelectObject(offscreenDeviceContext, oldFont);
+	SelectObject(displayDeviceContext, oldFont);
 }
 
 void DebugDrawUpdateBackgroundPattern() {
