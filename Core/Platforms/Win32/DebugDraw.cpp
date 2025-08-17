@@ -458,10 +458,10 @@ INTERNAL void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
 			lstrlenA(buffer));
 		lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 	}
-		wsprintfA(buffer, "CPU: %s", CPU_BRAND_STRING);
-		TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY,
-			buffer, lstrlenA(buffer));
-		lineY += DEBUG_OVERLAY_LINE_HEIGHT;
+	wsprintfA(buffer, "CPU: %s", CPU_BRAND_STRING);
+	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY,
+		buffer, lstrlenA(buffer));
+	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
 	const char* arch = "Unknown";
 	switch(CPU_PERFORMANCE_METRICS.hardwareSystemInfo.wProcessorArchitecture) {
