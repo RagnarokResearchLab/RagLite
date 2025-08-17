@@ -14,7 +14,6 @@
 #error "Unsupported Platform: OS-specific code paths have yet to be ported"
 #endif
 
-
 #define RAGLITE_COMPILER_GCC 0
 #define RAGLITE_COMPILER_LLVM 0
 #define RAGLITE_COMPILER_MSVC 0
@@ -29,7 +28,6 @@
 #ifdef RAGLITE_UNSUPPORTED_COMPILER
 #error "Unsupported Compiler: Toolchain-specific code paths have yet to be ported"
 #endif
-
 
 static_assert(sizeof(void*) == 8, "Only 64-bit platforms are currently supported");
 
