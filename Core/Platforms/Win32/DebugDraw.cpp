@@ -338,18 +338,20 @@ void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
 
 	// CPU
 	int cpuUsage = Percent(CPU_PERFORMANCE_METRICS.processorUsageSingleCore);
-	wsprintfA(buffer, "CPU (Main, 1 core): %d%%", cpuUsage);
+	wsprintfA(buffer, "Main Thread (Single Core): %d%%", cpuUsage);
 	TextOutA(dc, startX + 8, lineY, buffer, lstrlenA(buffer));
 	lineY += MEMORY_DEBUG_OVERLAY_LINE_HEIGHT;
 	DrawUsageBar(dc, startX + 8, lineY, 200, 16, cpuUsage);
-	lineY += 24;
+	lineY += MEMORY_DEBUG_OVERLAY_LINE_HEIGHT;
+	lineY += MEMORY_DEBUG_OVERLAY_LINE_HEIGHT;
 
 	cpuUsage = Percent(CPU_PERFORMANCE_METRICS.processorUsageAllCores);
-	wsprintfA(buffer, "CPU (Process, all cores): %d%%", cpuUsage);
+	wsprintfA(buffer, "Process (All Cores): %d%%", cpuUsage);
 	TextOutA(dc, startX + 8, lineY, buffer, lstrlenA(buffer));
 	lineY += MEMORY_DEBUG_OVERLAY_LINE_HEIGHT;
 	DrawUsageBar(dc, startX + 8, lineY, 200, 16, cpuUsage);
-	lineY += 24;
+	lineY += MEMORY_DEBUG_OVERLAY_LINE_HEIGHT;
+	lineY += MEMORY_DEBUG_OVERLAY_LINE_HEIGHT;
 
 	// Frame timing
 	char num[32];
