@@ -230,6 +230,8 @@ void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
 	int LINE_COUNT = 28;
 	int PANEL_WIDTH = 360;
 
+
+
 	int startX = MEMORY_OVERLAY_WIDTH + DEBUG_OVERLAY_MARGIN_SIZE;
 	int startY = 300;
 	RECT panelRect = {
@@ -248,7 +250,7 @@ void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
 	int lineY = startY + DEBUG_OVERLAY_PADDING_SIZE;
 
 	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY,
-		"=== PERFORMANCE ===", lstrlenA("=== PERFORMANCE ==="));
+		PROCESSOR_USAGE_OVERLAY.lines[0].text, lstrlenA(PROCESSOR_USAGE_OVERLAY.lines[0].text));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
 	// CPU
