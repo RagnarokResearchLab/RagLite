@@ -346,11 +346,11 @@ INTERNAL void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
 		lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
 		if(GetProcessMemoryInfo(GetCurrentProcess(), (PROCESS_MEMORY_COUNTERS*)&pmc, sizeof(pmc))) {
-			wsprintfA(buffer, "Virtual Memory Commit Limit: %d MB", (int)(memoryUsageInfo.ullTotalPageFile / (1024 * 1024)));
+			wsprintfA(buffer, "Total Virtual Memory: %d MB", (int)(memoryUsageInfo.ullTotalPageFile / (1024 * 1024)));
 			TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
 			lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
-			wsprintfA(buffer, "Virtual Memory Commit Capacity : %d MB", (int)(memoryUsageInfo.ullAvailPageFile / (1024 * 1024)));
+			wsprintfA(buffer, "Available Virtual Memory: %d MB", (int)(memoryUsageInfo.ullAvailPageFile / (1024 * 1024)));
 			TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
 			lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
