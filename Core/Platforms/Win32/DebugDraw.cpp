@@ -199,13 +199,15 @@ void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
 	HFONT font = (HFONT)GetStockObject(ANSI_VAR_FONT);
 	HFONT oldFont = (HFONT)SelectObject(displayDeviceContext, font);
 
+	int LINE_COUNT = 26;
+
 	int startX = 1024 + 16;
 	int startY = 300;
 	RECT panelRect = {
 		startX,
 		startY,
 		startX + 360,
-		startY + (DEBUG_OVERLAY_LINE_HEIGHT * 11)
+		startY + (DEBUG_OVERLAY_LINE_HEIGHT * LINE_COUNT)
 	};
 	HBRUSH panelBrush = CreateSolidBrush(UI_PANEL_COLOR);
 	FillRect(displayDeviceContext, &panelRect, panelBrush);
