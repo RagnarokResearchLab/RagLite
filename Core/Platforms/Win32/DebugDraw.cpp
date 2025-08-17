@@ -364,7 +364,8 @@ INTERNAL void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
 		DrawProgressBar(displayDeviceContext, progressBar);
 			lineY += 24;
 
-		wsprintfA(buffer, "Working Set Size: %d MB", (int)(pmc.WorkingSetSize / (1024 * 1024)));
+			lineY += DEBUG_OVERLAY_LINE_HEIGHT;
+		wsprintfA(buffer, "Working Set Size: %d MB (Peak: %d MB)", (int)(pmc.WorkingSetSize / (1024 * 1024)), (int)(pmc.PeakWorkingSetSize / (1024 * 1024)));
 		TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
 		lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
@@ -372,32 +373,21 @@ INTERNAL void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
 		TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
 		lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
-		wsprintfA(buffer, "Page File Usage: %d MB", (int)(pmc.PagefileUsage / (1024 * 1024)));
+		wsprintfA(buffer, "Page File Usage: %d MB (Peak: %d MB)", (int)(pmc.PagefileUsage / (1024 * 1024)), (int)(pmc.PeakPagefileUsage / (1024 * 1024)));
 		TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
 		lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
-		wsprintfA(buffer, "Peak Working Set Size: %d MB", (int)(pmc.PeakWorkingSetSize / (1024 * 1024)));
-		TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
-		lineY += DEBUG_OVERLAY_LINE_HEIGHT;
+		// wsprintfA(buffer, "Peak Working Set Size: %d MB", (int)(pmc.PeakWorkingSetSize / (1024 * 1024)));
+		// TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
+		// lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
-		wsprintfA(buffer, "Peak Page File Usage: %d MB", (int)(pmc.PeakPagefileUsage / (1024 * 1024)));
-		TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
-		lineY += DEBUG_OVERLAY_LINE_HEIGHT;
-	} else {
-				DWORD err = GetLastError();
-		LPTSTR errStr = FormatErrorString(err);
+		// wsprintfA(buffer, "Peak Page File Usage: %d MB", (int)(pmc.PeakPagefileUsage / (1024 * 1024)));
+		// TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
+		// lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
-		wsprintfA(buffer, "N/A: %lu (%s)", err, errStr);
-		TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
-		lineY += DEBUG_OVERLAY_LINE_HEIGHT;
-	}
 
-	//-------------------------------------------------
-		// Process usage bar
-		//-------------------------------------------------
-		// TODO Eliminate the redundant fetch
-		if(GetProcessMemoryInfo(GetCurrentProcess(), (PROCESS_MEMORY_COUNTERS*)&pmc, sizeof(pmc))) {
-			int procPercent = (int)((pmc.WorkingSetSize * 100) / memoryUsageInfo.ullTotalPhys);
+		lineY += DEBUG_OVERLAY_LINE_HEIGHT;
+				int procPercent = (int)((pmc.WorkingSetSize * 100) / memoryUsageInfo.ullTotalPhys);
 
 			wsprintfA(buffer, "Process: %d MB / %d MB",
 				(int)(pmc.WorkingSetSize / (1024 * 1024)),
@@ -407,15 +397,19 @@ INTERNAL void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
 				lineY, buffer, lstrlenA(buffer));
 			lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
-			progress_bar_t progressBar = { .x = startX + DEBUG_OVERLAY_PADDING_SIZE, .y = lineY, .width = 200, .height = 16, .percent = procPercent };
+			progressBar = { .x = startX + DEBUG_OVERLAY_PADDING_SIZE, .y = lineY, .width = 200, .height = 16, .percent = procPercent };
 
 			DrawProgressBar(displayDeviceContext, progressBar);
 			lineY += 24;
-		} else {
-			TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE,
-				lineY, "Process stats unavailable", lstrlenA("Process stats unavailable"));
-			lineY += DEBUG_OVERLAY_LINE_HEIGHT * 2;
-		}
+
+	} else {
+				DWORD err = GetLastError();
+		LPTSTR errStr = FormatErrorString(err);
+
+		wsprintfA(buffer, "N/A: %lu (%s)", err, errStr);
+		TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
+		lineY += DEBUG_OVERLAY_LINE_HEIGHT;
+	}
 	}
 
 	//-------------------------------------------------
