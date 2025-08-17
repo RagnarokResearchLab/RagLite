@@ -38,11 +38,16 @@ constexpr uint32 UNINITIALIZED_WINDOW_COLOR = 0xFF202020;
 constexpr int MEMORY_DEBUG_OVERLAY_PADDING_SIZE = 8;
 constexpr int MEMORY_DEBUG_OVERLAY_LINE_HEIGHT = 18;
 
+constexpr COLORREF RGB_COLOR_GREEN = RGB(0, 200, 0);
+constexpr COLORREF RGB_COLOR_YELLOW = RGB(200, 200, 0);
+constexpr COLORREF RGB_COLOR_ORANGE = RGB(255, 128, 0);
+constexpr COLORREF RGB_COLOR_RED = RGB(200, 0, 0);
+
 COLORREF GetUsageColor(int percent) {
-	if(percent < 50) return RGB(0, 200, 0); // Green
-	if(percent < 75) return RGB(200, 200, 0); // Yellow
-	if(percent < 90) return RGB(255, 128, 0); // Orange
-	return RGB(200, 0, 0); // Red
+	if(percent < 50) return RGB_COLOR_GREEN;
+	if(percent < 75) return RGB_COLOR_YELLOW;
+	if(percent < 90) return RGB_COLOR_ORANGE;
+	return RGB_COLOR_RED;
 }
 
 typedef struct gdi_progress_bar {
