@@ -226,6 +226,10 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE unused, LPSTR commandLine,
 
 		++offsetX;
 		offsetY += 2;
+
+		// TODO set process granularity to 1ms
+		DWORD sleepTimeInMilliseconds = 16; // TODO ms
+		Sleep(sleepTimeInMilliseconds);
 	}
 
 	return 0;
