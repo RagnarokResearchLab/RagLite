@@ -307,6 +307,51 @@ void DebugDrawMemoryUsageOverlay(gdi_surface_t& surface) {
 	SelectObject(offscreenDeviceContext, oldFont);
 }
 
+void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
+	HDC dc = surface.offscreenDeviceContext;
+	if(!dc) return;
+
+	SetBkMode(dc, TRANSPARENT);
+	HFONT font = (HFONT)GetStockObject(ANSI_VAR_FONT);
+	HFONT oldFont = (HFONT)SelectObject(dc, font);
+
+	int startX = 1024 + 16;
+	int startY = 300;
+	RECT panelRect = {
+		startX,
+		startY,
+		startX + 320,
+		startY + (MEMORY_DEBUG_OVERLAY_LINE_HEIGHT * 4)
+	};
+	HBRUSH panelBrush = CreateSolidBrush(RGB(30, 30, 30));
+	FillRect(dc, &panelRect, panelBrush);
+	DeleteObject(panelBrush);
+
+	SetTextColor(dc, RGB(200, 200, 200));
+
+	char buffer[128];
+	int lineY = startY + MEMORY_DEBUG_OVERLAY_PADDING_SIZE;
+
+	TextOutA(dc, startX + MEMORY_DEBUG_OVERLAY_PADDING_SIZE, lineY,
+		"=== CPU ===", lstrlenA("=== CPU ==="));
+	lineY += MEMORY_DEBUG_OVERLAY_LINE_HEIGHT;
+
+	double cpuUsage = GetProcessorUsage();
+
+	wsprintfA(buffer, "Process CPU: %d%%", (int)100.0f * GetProcessorUsage());
+	TextOutA(dc, startX + MEMORY_DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
+	lineY += MEMORY_DEBUG_OVERLAY_LINE_HEIGHT;
+
+	DrawUsageBar(dc,
+		startX + MEMORY_DEBUG_OVERLAY_PADDING_SIZE,
+		lineY,
+		200, 16,
+		(int)cpuUsage);
+	lineY += 24;
+
+	SelectObject(dc, oldFont);
+}
+
 constexpr int KEYBOARD_DEBUG_OVERLAY_CELL_WIDTH = 100;
 constexpr int KEYBOARD_DEBUG_OVERLAY_CELL_HEIGHT = 18;
 
