@@ -340,12 +340,6 @@ INTERNAL void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
 		lineY += 24;
 
 		// // TODO process
-		// wsprintfA(buffer, "Total Commit Limit (RAM + Page File + Overhead): %ull", memoryUsageInfo.ullTotalPageFile);
-		wsprintfA(buffer, "Commit Limit: %d MB", (int)(memoryUsageInfo.ullTotalPageFile / (1024 * 1024)));
-		TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
-		lineY += DEBUG_OVERLAY_LINE_HEIGHT;
-
-		// // TODO process
 		wsprintfA(buffer, "Commit Available: %d MB", (int)(memoryUsageInfo.ullAvailPageFile / (1024 * 1024)));
 		// 		wsprintfA(buffer, "Max Commit Amount (CommitLimit - CommitCharge): %ull", memoryUsageInfo.ullAvailPageFile);
 		TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
@@ -365,6 +359,7 @@ INTERNAL void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
 		// Process usage bar
 		//-------------------------------------------------
 		PROCESS_MEMORY_COUNTERS_EX pmc;
+		// TODO Eliminate the redundant fetch
 		if(GetProcessMemoryInfo(GetCurrentProcess(), (PROCESS_MEMORY_COUNTERS*)&pmc, sizeof(pmc))) {
 			int procPercent = (int)((pmc.WorkingSetSize * 100) / memoryUsageInfo.ullTotalPhys);
 
@@ -397,6 +392,11 @@ INTERNAL void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
 
 	PROCESS_MEMORY_COUNTERS_EX pmc;
 	if(GetProcessMemoryInfo(GetCurrentProcess(), (PROCESS_MEMORY_COUNTERS*)&pmc, sizeof(pmc))) {
+		// wsprintfA(buffer, "Total Commit Limit (RAM + Page File + Overhead): %ull", memoryUsageInfo.ullTotalPageFile);
+		wsprintfA(buffer, "Virtual Memory Commit Limit: %d MB", (int)(memoryUsageInfo.ullTotalPageFile / (1024 * 1024)));
+		TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
+		lineY += DEBUG_OVERLAY_LINE_HEIGHT;
+
 		wsprintfA(buffer, "Working Set: %d MB", (int)(pmc.WorkingSetSize / (1024 * 1024)));
 		TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
 		lineY += DEBUG_OVERLAY_LINE_HEIGHT;
