@@ -38,14 +38,12 @@ inline int Percent(double percentage) {
 	return (int)percentage;
 }
 
-
 // Macros (TODO Add assertions/ASSUME etc.)
 
 #define GLOBAL static
 #define INTERNAL static
 
 GLOBAL float TARGET_FPS = 120;
-
 
 // String utilities (TODO Move elsewhere later)
 int FloatToString(char* buffer, float value, int decimals) {
@@ -81,7 +79,6 @@ int FloatToString(char* buffer, float value, int decimals) {
 	*buffer = '\0';
 	return (int)(buffer - temp);
 }
-
 
 #ifdef RAGLITE_PLATFORM_WINDOWS
 #include "Platforms/Win32.cpp"
