@@ -140,6 +140,7 @@ LRESULT CALLBACK WindowProcessMessage(HWND window, UINT message, WPARAM wParam,
 constexpr int EXIT_FAILURE = -1;
 int WINAPI WinMain(HINSTANCE instance, HINSTANCE unused, LPSTR commandLine,
 	int showFlag) {
+	IntrinsicsReadCPUID();
 
 	WNDCLASSEX windowClass = {};
 	// TODO Is this really a good idea? Beware the CS_OWNDC footguns...
