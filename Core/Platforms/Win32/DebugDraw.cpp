@@ -364,12 +364,13 @@ INTERNAL void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
 		DrawProgressBar(displayDeviceContext, progressBar);
 			lineY += 24;
 
+
 			lineY += DEBUG_OVERLAY_LINE_HEIGHT;
-		wsprintfA(buffer, "Working Set Size: %d MB (Peak: %d MB)", (int)(pmc.WorkingSetSize / (1024 * 1024)), (int)(pmc.PeakWorkingSetSize / (1024 * 1024)));
+		wsprintfA(buffer, "Private Set Size: %d MB", (int)(pmc.PrivateUsage / (1024 * 1024)));
 		TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
 		lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
-		wsprintfA(buffer, "Private Set Size: %d MB", (int)(pmc.PrivateUsage / (1024 * 1024)));
+		wsprintfA(buffer, "Working Set Size: %d MB (Peak: %d MB)", (int)(pmc.WorkingSetSize / (1024 * 1024)), (int)(pmc.PeakWorkingSetSize / (1024 * 1024)));
 		TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
 		lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
