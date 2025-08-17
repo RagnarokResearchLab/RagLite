@@ -404,7 +404,6 @@ void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
 		lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 	}
 
-	// #pragma comment(lib, "user32.lib")
 	//-------------------------------------------------
 	// Native system info
 	// (TODO doesn't change, no need to fetch it more than once?)
