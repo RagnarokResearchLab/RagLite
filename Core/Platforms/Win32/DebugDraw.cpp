@@ -321,7 +321,7 @@ void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
 		startX,
 		startY,
 		startX + 360,
-		startY + (MEMORY_DEBUG_OVERLAY_LINE_HEIGHT * 12)
+		startY + (MEMORY_DEBUG_OVERLAY_LINE_HEIGHT * 11)
 	};
 	HBRUSH panelBrush = CreateSolidBrush(RGB(30, 30, 30));
 	FillRect(dc, &panelRect, panelBrush);
@@ -355,45 +355,53 @@ void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
 
 	// Frame timing
 	char num[32];
-FloatToString(num, CPU_PERFORMANCE_METRICS.deltaTimeMs, 2);
-lstrcpyA(buffer, "Frame: "); // Clear buffer first
-lstrcatA(buffer, num); // Append
-lstrcatA(buffer, " ms");
-// TextOutA(dc, startX + 8, lineY, buffer, lstrlenA(buffer));
+	FloatToString(num, CPU_PERFORMANCE_METRICS.deltaTimeMs, 2);
+	lstrcpyA(buffer, "Frame: "); // Clear buffer first
+	lstrcatA(buffer, num); // Append
+	lstrcatA(buffer, " ms");
+	// TextOutA(dc, startX + 8, lineY, buffer, lstrlenA(buffer));
 
-lstrcatA(buffer, " (smoothed: ");
-FloatToString(num, CPU_PERFORMANCE_METRICS.deltaTimeMs, 2);
-lstrcatA(buffer, num);
-lstrcatA(buffer, " ms)");
-TextOutA(dc, startX + 8, lineY, buffer, lstrlenA(buffer));
-lineY += MEMORY_DEBUG_OVERLAY_LINE_HEIGHT;
-lineY += MEMORY_DEBUG_OVERLAY_LINE_HEIGHT;
+	lstrcatA(buffer, " (smoothed: ");
+	FloatToString(num, CPU_PERFORMANCE_METRICS.deltaTimeMs, 2);
+	lstrcatA(buffer, num);
+	lstrcatA(buffer, " ms)");
+	TextOutA(dc, startX + 8, lineY, buffer, lstrlenA(buffer));
+	lineY += MEMORY_DEBUG_OVERLAY_LINE_HEIGHT;
+	// lineY += MEMORY_DEBUG_OVERLAY_LINE_HEIGHT;
 	// wsprintfA(buffer, "Frame: %.2f ms (smoothed: %.2f)",
-		// CPU_PERFORMANCE_METRICS.deltaTimeMs,
-		// CPU_PERFORMANCE_METRICS.smoothedDeltaTimeMs);
+	// CPU_PERFORMANCE_METRICS.deltaTimeMs,
+	// CPU_PERFORMANCE_METRICS.smoothedDeltaTimeMs);
 	// TextOutA(dc, startX + 8, lineY, buffer, lstrlenA(buffer));
 	// lineY += MEMORY_DEBUG_OVERLAY_LINE_HEIGHT;
 
-FloatToString(num, CPU_PERFORMANCE_METRICS.fps, 1);
-lstrcpyA(buffer, "FPS: ");
-lstrcatA(buffer, num);
-TextOutA(dc, startX + 8, lineY, buffer, lstrlenA(buffer));
-lineY += MEMORY_DEBUG_OVERLAY_LINE_HEIGHT;
-
-	wsprintfA(buffer, "FPS: %.1f (smoothed: %.1f)",
-		CPU_PERFORMANCE_METRICS.fps,
-		CPU_PERFORMANCE_METRICS.smoothedFps);
+	lstrcpyA(buffer, "FPS: ");
+	FloatToString(num, CPU_PERFORMANCE_METRICS.fps, 1);
+	lstrcatA(buffer, num);
+	lstrcatA(buffer, " (smoothed: ");
+	FloatToString(num, CPU_PERFORMANCE_METRICS.smoothedFps, 1);
+	lstrcatA(buffer, num);
+	lstrcatA(buffer, ")");
 	TextOutA(dc, startX + 8, lineY, buffer, lstrlenA(buffer));
 	lineY += MEMORY_DEBUG_OVERLAY_LINE_HEIGHT;
 
 	// Sleep accuracy
-	wsprintfA(buffer, "Sleep requested: %.2f ms", CPU_PERFORMANCE_METRICS.requestedSleepMs);
+	lstrcpyA(buffer, "Sleep requested: ");
+	FloatToString(num, CPU_PERFORMANCE_METRICS.requestedSleepMs, 2);
+	lstrcatA(buffer, num);
+	lstrcatA(buffer, " (actual: ");
+	FloatToString(num, CPU_PERFORMANCE_METRICS.actualSleepMs, 2);
+	lstrcatA(buffer, num);
+	lstrcatA(buffer, ")");
 	TextOutA(dc, startX + 8, lineY, buffer, lstrlenA(buffer));
 	lineY += MEMORY_DEBUG_OVERLAY_LINE_HEIGHT;
 
-	wsprintfA(buffer, "Sleep actual: %.2f ms", CPU_PERFORMANCE_METRICS.actualSleepMs);
-	TextOutA(dc, startX + 8, lineY, buffer, lstrlenA(buffer));
-	lineY += MEMORY_DEBUG_OVERLAY_LINE_HEIGHT;
+	wsprintfA(buffer, "Sleep requested: %.2f ms", CPU_PERFORMANCE_METRICS.requestedSleepMs);
+	// TextOutA(dc, startX + 8, lineY, buffer, lstrlenA(buffer));
+	// lineY += MEMORY_DEBUG_OVERLAY_LINE_HEIGHT;
+
+	// wsprintfA(buffer, "Sleep actual: %.2f ms", CPU_PERFORMANCE_METRICS.actualSleepMs);
+	// TextOutA(dc, startX + 8, lineY, buffer, lstrlenA(buffer));
+	// lineY += MEMORY_DEBUG_OVERLAY_LINE_HEIGHT;
 
 	SelectObject(dc, oldFont);
 }
