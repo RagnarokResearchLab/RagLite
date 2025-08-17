@@ -336,18 +336,32 @@ void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
 		"=== CPU ===", lstrlenA("=== CPU ==="));
 	lineY += MEMORY_DEBUG_OVERLAY_LINE_HEIGHT;
 
-	double cpuUsage = GetProcessorUsage();
+	double cpuUsage = GetProcessorUsageSingleCore();
 
-	wsprintfA(buffer, "Process CPU: %d%%", (int)100.0f * GetProcessorUsage());
+	// TODO remove wsprintfA -> swprintf
+	// TODO stdlib - eliminate swprintf also?
+	wsprintfA (buffer, "Main Thread (Single Core): %d%%", (int)cpuUsage);
 	TextOutA(dc, startX + MEMORY_DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
 	lineY += MEMORY_DEBUG_OVERLAY_LINE_HEIGHT;
-
 	DrawUsageBar(dc,
 		startX + MEMORY_DEBUG_OVERLAY_PADDING_SIZE,
 		lineY,
 		200, 16,
 		(int)cpuUsage);
 	lineY += 24;
+
+	cpuUsage = GetProcessorUsageAllCores();
+
+	wsprintfA (buffer, "Main Thread (All Cores): %d%%", (int)cpuUsage);
+	TextOutA(dc, startX + MEMORY_DEBUG_OVERLAY_PADDING_SIZE, lineY, buffer, lstrlenA(buffer));
+	lineY += MEMORY_DEBUG_OVERLAY_LINE_HEIGHT;
+	DrawUsageBar(dc,
+		startX + MEMORY_DEBUG_OVERLAY_PADDING_SIZE,
+		lineY,
+		200, 16,
+		(int)cpuUsage);
+	lineY += 24;
+
 
 	SelectObject(dc, oldFont);
 }
