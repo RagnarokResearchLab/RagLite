@@ -69,6 +69,11 @@ void PerformanceMetricsUpdateNow() {
 	QueryPerformanceCounter(&tickTimeNow);
 
 	if(!CPU_PERFORMANCE_METRICS.isInitialized) {
+		// No need to recompute this as it won't ever change
+		SYSTEM_INFO sysInfo;
+		GetSystemInfo(&sysInfo);
+		CPU_PERFORMANCE_METRICS.hardwareSystemInfo = sysInfo;
+
 		CPU_PERFORMANCE_METRICS.prevCounter = tickTimeNow;
 		CPU_PERFORMANCE_METRICS.isInitialized = true;
 		return;
@@ -88,9 +93,7 @@ void PerformanceMetricsUpdateNow() {
 
 	// CPU usage
 	CPU_PERFORMANCE_METRICS.processorUsageAllCores = GetProcessorUsageAllCores();
-	SYSTEM_INFO sysInfo;
-	GetSystemInfo(&sysInfo);
-	CPU_PERFORMANCE_METRICS.processorUsageSingleCore = CPU_PERFORMANCE_METRICS.processorUsageAllCores * sysInfo.dwNumberOfProcessors;
+	CPU_PERFORMANCE_METRICS.processorUsageSingleCore = CPU_PERFORMANCE_METRICS.processorUsageAllCores * CPU_PERFORMANCE_METRICS.hardwareSystemInfo.dwNumberOfProcessors;
 
 	// Sleep timings
 	double desiredSleepTime = MILLISECONDS_PER_SECOND / TARGET_FRAME_RATE;
@@ -102,6 +105,4 @@ void PerformanceMetricsUpdateNow() {
 
 	CPU_PERFORMANCE_METRICS.desiredSleepTime = desiredSleepTime;
 	CPU_PERFORMANCE_METRICS.observedSleepTime = observedSleepTime;
-
-	CPU_PERFORMANCE_METRICS.hardwareSystemInfo = sysInfo;
 }
