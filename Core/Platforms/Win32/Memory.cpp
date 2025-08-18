@@ -50,7 +50,7 @@ void SystemMemoryInitializeArenas() {
 		.name = "Main Memory (Preallocated))",
 		.lifetime = "Forever (Global Arena)",
 		// TODO Commit separately, not ahead of time
-		.baseAddress = VirtualAlloc(mainMemoryBaseAddress, Gigabytes(1) + Megabytes(32), MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE),
+		.baseAddress = VirtualAlloc(mainMemoryBaseAddress, Gigabytes(1) + Megabytes(32), MEM_RESERVE, PAGE_READWRITE),
 		.reservedSize = Gigabytes(1) + Megabytes(32),
 		.committedSize = 0,
 		.used = 0,
@@ -74,6 +74,9 @@ void* SystemMemoryAllocate(memory_arena_t& arena, size_t allocationSize) {
 	arena.allocationCount++;
 	arena.committedSize += allocationSize;
 
+	void* startAddress = VirtualAlloc((uint8*)arena.baseAddress + arena.used, allocationSize, MEM_COMMIT, PAGE_READWRITE);
+	// TODO assert it didn't fail?
+	// TBD What to do with this start address?
 	void* memoryRegionStartPointer = (uint8*)arena.baseAddress + arena.used;
 	arena.used += allocationSize;
 
