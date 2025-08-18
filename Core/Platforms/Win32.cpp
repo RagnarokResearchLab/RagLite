@@ -225,7 +225,10 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE unused, LPSTR commandLine,
 	bool didAdjustGranularity = (timeBeginPeriod(requestedSchedulerGranularityInMilliseconds) == TIMERR_NOERROR);
 	DWORD sleepTimeInMilliseconds = MILLISECONDS_PER_SECOND / TARGET_FRAME_RATE;
 
-	SystemMemoryInitializeArenas();
+	// TODO Override via CLI arguments or something? (Can also compute based on available RAM)
+	constexpr size_t MAIN_MEMORY_SIZE = Megabytes(192);
+	constexpr size_t TRANSIENT_MEMORY_SIZE = Megabytes(1800);
+	SystemMemoryInitializeArenas(MAIN_MEMORY_SIZE, TRANSIENT_MEMORY_SIZE);
 
 	WNDCLASSEX windowClass = {};
 	// TODO Is this really a good idea? Beware the CS_OWNDC footguns...
