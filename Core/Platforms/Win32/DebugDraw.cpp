@@ -269,33 +269,33 @@ INTERNAL void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
 	char timeBuffer[32];
 	FloatToString(timeBuffer, CPU_PERFORMANCE_METRICS.deltaTime, 2);
 	lstrcpyA(formatBuffer, "Delta Time: "); // Clear formatBuffer first
-	lstrcatA(formatBuffer, timeBuffer); // Append
-	lstrcatA(formatBuffer, " ms");
+	StringCchCatA(formatBuffer, FORMAT_BUFFER_SIZE, timeBuffer); // Append
+	StringCchCatA(formatBuffer, FORMAT_BUFFER_SIZE, " ms");
 
-	lstrcatA(formatBuffer, " (Smoothed: ");
+	StringCchCatA(formatBuffer, FORMAT_BUFFER_SIZE, " (Smoothed: ");
 	FloatToString(timeBuffer, CPU_PERFORMANCE_METRICS.smoothedDeltaTime, 2);
-	lstrcatA(formatBuffer, timeBuffer);
-	lstrcatA(formatBuffer, " ms)");
+	StringCchCatA(formatBuffer, FORMAT_BUFFER_SIZE, timeBuffer);
+	StringCchCatA(formatBuffer, FORMAT_BUFFER_SIZE, " ms)");
 	TextOutA(displayDeviceContext, startX + 8, lineY, formatBuffer, lstrlenA(formatBuffer));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
 	lstrcpyA(formatBuffer, "Frame Rate: ");
 	FloatToString(timeBuffer, CPU_PERFORMANCE_METRICS.frameRate, 1);
-	lstrcatA(formatBuffer, timeBuffer);
-	lstrcatA(formatBuffer, " FPS (Smoothed: ");
+	StringCchCatA(formatBuffer, FORMAT_BUFFER_SIZE, timeBuffer);
+	StringCchCatA(formatBuffer, FORMAT_BUFFER_SIZE, " FPS (Smoothed: ");
 	FloatToString(timeBuffer, CPU_PERFORMANCE_METRICS.smoothedFrameRate, 1);
-	lstrcatA(formatBuffer, timeBuffer);
-	lstrcatA(formatBuffer, " FPS )");
+	StringCchCatA(formatBuffer, FORMAT_BUFFER_SIZE, timeBuffer);
+	StringCchCatA(formatBuffer, FORMAT_BUFFER_SIZE, " FPS )");
 	TextOutA(displayDeviceContext, startX + 8, lineY, formatBuffer, lstrlenA(formatBuffer));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
 	lstrcpyA(formatBuffer, "Desired Sleep Time: ");
 	FloatToString(timeBuffer, CPU_PERFORMANCE_METRICS.desiredSleepTime, 2);
-	lstrcatA(formatBuffer, timeBuffer);
-	lstrcatA(formatBuffer, "ms (Observed: ");
+	StringCchCatA(formatBuffer, FORMAT_BUFFER_SIZE, timeBuffer);
+	StringCchCatA(formatBuffer, FORMAT_BUFFER_SIZE, "ms (Observed: ");
 	FloatToString(timeBuffer, CPU_PERFORMANCE_METRICS.observedSleepTime, 2);
-	lstrcatA(formatBuffer, timeBuffer);
-	lstrcatA(formatBuffer, " ms)");
+	StringCchCatA(formatBuffer, FORMAT_BUFFER_SIZE, timeBuffer);
+	StringCchCatA(formatBuffer, FORMAT_BUFFER_SIZE, " ms)");
 	TextOutA(displayDeviceContext, startX + 8, lineY, formatBuffer, lstrlenA(formatBuffer));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
