@@ -55,8 +55,8 @@ void SystemMemoryInitializeArenas() {
 		.baseAddress = VirtualAlloc(mainMemoryBaseAddress, Gigabytes(1) + Megabytes(32), MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE),
 		.reservedSize = Gigabytes(1) + Megabytes(32),
 		// .reservedSize = 64u * 1024 * 42 * 1024,
-		// .commitedSize = 0,
-		.committedSize = 64u * 1024 * 42 * 512,
+		.committedSize = 0,
+		// .committedSize = 64u * 1024 * 42 * 512,
 		.used = 0,
 		// .used = 64 * 1024 * 42 * 256,
 		.allocationCount = 0
