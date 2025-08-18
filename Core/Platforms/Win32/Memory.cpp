@@ -47,8 +47,8 @@ void SystemMemoryInitializeArenas() {
 	// TODO Assert page size matches allocation granularity
 	// TODO lock via flag so it actually crashes when exhausted
 	MAIN_MEMORY = {
-		// .name = "Preallocated (Main Memory)",
-		.name = "SMOLL",
+		.name = "Preallocated (Main Memory)",
+		// .name = "SMOLL",
 		.lifetime = "Forever (Global Arena)",
 		// .baseAddress = (void*)0xDEADBEEFull,
 		.baseAddress = VirtualAlloc(mainMemoryBaseAddress, Gigabytes(1) + Megabytes(32), MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE),
@@ -63,8 +63,8 @@ void SystemMemoryInitializeArenas() {
 	};
 
 	TRANSIENT_MEMORY = {
-		.name = "HUGE",
-		// .name = "Preallocated (Transient Memory)",
+		// .name = "HUGE",
+		.name = "Preallocated (Transient Memory)",
 		.lifetime = "Frame (Scoped Arena)",
 		// .baseAddress = (void*)0xDEADBEEFull,
 		.baseAddress = (uint8*)MAIN_MEMORY.baseAddress + MAIN_MEMORY.reservedSize,
