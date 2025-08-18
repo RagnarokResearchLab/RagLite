@@ -1,7 +1,8 @@
 #define VC_EXTRALEAN
 #define WIN32_LEAN_AND_MEAN
-#include <timeapi.h>
 #include <windows.h>
+#include <strsafe.h>
+#include <timeapi.h>
 
 #define TODO(msg) OutputDebugStringA(msg);
 
@@ -21,7 +22,7 @@ INTERNAL LPTSTR FormatErrorString(DWORD errorCode) {
 		NULL);
 
 	if(size == 0) {
-		wsprintf(SYSTEM_ERROR_MESSAGE, TEXT("Unknown error %lu"), errorCode);
+		StringCbPrintfA(SYSTEM_ERROR_MESSAGE, MAX_ERROR_MSG_SIZE, TEXT("Unknown error %lu"), errorCode);
 	} else {
 		LPTSTR end = SYSTEM_ERROR_MESSAGE + lstrlen(SYSTEM_ERROR_MESSAGE);
 		while(end > SYSTEM_ERROR_MESSAGE && (end[-1] == TEXT('\r') || end[-1] == TEXT('\n') || end[-1] == TEXT('.')))
@@ -43,7 +44,7 @@ void ReadKernelVersionInfo() {
 		kernelVersionInfo.dwOSVersionInfoSize = sizeof(kernelVersionInfo);
 		RtlGetVersionPtr pRtlGetVersion = (RtlGetVersionPtr)GetProcAddress(kernelModuleDLL, "RtlGetVersion");
 		if(pRtlGetVersion && pRtlGetVersion((PRTL_OSVERSIONINFOW)&kernelVersionInfo) == 0) {
-			wsprintfA(NTDLL_VERSION_STRING,
+			StringCbPrintfA(NTDLL_VERSION_STRING, MAX_ERROR_MSG_SIZE,
 				"Operating System: Windows %u.%u (Build %u) %S",
 				kernelVersionInfo.dwMajorVersion,
 				kernelVersionInfo.dwMinorVersion,

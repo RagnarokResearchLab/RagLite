@@ -124,7 +124,8 @@ INTERNAL void DebugDrawMemoryUsageOverlay(gdi_surface_t& surface) {
 
 	SetTextColor(offscreenDeviceContext, UI_TEXT_COLOR);
 
-	char formatBuffer[256];
+	constexpr size_t FORMAT_BUFFER_SIZE = 256;
+	char formatBuffer[FORMAT_BUFFER_SIZE];
 	int lineY = startY + DEBUG_OVERLAY_PADDING_SIZE;
 
 	//-------------------------------------------------
@@ -134,35 +135,35 @@ INTERNAL void DebugDrawMemoryUsageOverlay(gdi_surface_t& surface) {
 		"=== MEMORY ARENAS ===", lstrlenA("=== MEMORY ARENAS ==="));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
-	wsprintfA(formatBuffer, "Name: %s", MAIN_MEMORY.name);
+	StringCbPrintfA(formatBuffer, FORMAT_BUFFER_SIZE, "Name: %s", MAIN_MEMORY.name);
 	TextOutA(offscreenDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, formatBuffer, lstrlenA(formatBuffer));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
-	wsprintfA(formatBuffer, "Lifetime: %s", MAIN_MEMORY.lifetime);
+	StringCbPrintfA(formatBuffer, FORMAT_BUFFER_SIZE, "Lifetime: %s", MAIN_MEMORY.lifetime);
 	TextOutA(offscreenDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, formatBuffer, lstrlenA(formatBuffer));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
-	wsprintfA(formatBuffer, "Base: 0x%p", MAIN_MEMORY.baseAddress);
+	StringCbPrintfA(formatBuffer, FORMAT_BUFFER_SIZE, "Base: 0x%p", MAIN_MEMORY.baseAddress);
 	TextOutA(offscreenDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, formatBuffer, lstrlenA(formatBuffer));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
-	wsprintfA(formatBuffer, "Reserved: %d KB", MAIN_MEMORY.reservedSize / Kilobytes(1));
+	StringCbPrintfA(formatBuffer, FORMAT_BUFFER_SIZE, "Reserved: %d KB", MAIN_MEMORY.reservedSize / Kilobytes(1));
 	TextOutA(offscreenDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, formatBuffer, lstrlenA(formatBuffer));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
-	wsprintfA(formatBuffer, "Committed: %d KB", MAIN_MEMORY.committedSize / Kilobytes(1));
+	StringCbPrintfA(formatBuffer, FORMAT_BUFFER_SIZE, "Committed: %d KB", MAIN_MEMORY.committedSize / Kilobytes(1));
 	TextOutA(offscreenDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, formatBuffer, lstrlenA(formatBuffer));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
-	wsprintfA(formatBuffer, "Used: %d KB", MAIN_MEMORY.used / Kilobytes(1));
+	StringCbPrintfA(formatBuffer, FORMAT_BUFFER_SIZE, "Used: %d KB", MAIN_MEMORY.used / Kilobytes(1));
 	TextOutA(offscreenDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, formatBuffer, lstrlenA(formatBuffer));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
-	wsprintfA(formatBuffer, "Free: %d KB", (MAIN_MEMORY.committedSize - MAIN_MEMORY.used) / Kilobytes(1));
+	StringCbPrintfA(formatBuffer, FORMAT_BUFFER_SIZE, "Free: %d KB", (MAIN_MEMORY.committedSize - MAIN_MEMORY.used) / Kilobytes(1));
 	TextOutA(offscreenDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, formatBuffer, lstrlenA(formatBuffer));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
-	wsprintfA(formatBuffer, "Allocations: %d", MAIN_MEMORY.allocationCount);
+	StringCbPrintfA(formatBuffer, FORMAT_BUFFER_SIZE, "Allocations: %d", MAIN_MEMORY.allocationCount);
 	TextOutA(offscreenDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, formatBuffer, lstrlenA(formatBuffer));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
@@ -230,7 +231,9 @@ INTERNAL void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
 
 	SetTextColor(displayDeviceContext, UI_TEXT_COLOR);
 
-	char formatBuffer[128];
+	constexpr size_t FORMAT_BUFFER_SIZE = 256;
+
+	char formatBuffer[FORMAT_BUFFER_SIZE];
 	int lineY = startY + DEBUG_OVERLAY_PADDING_SIZE;
 
 	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY,
@@ -241,7 +244,7 @@ INTERNAL void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
 	// CPU usage stats
 	//-------------------------------------------------
 	int cpuUsage = Percent(CPU_PERFORMANCE_METRICS.processorUsageSingleCore);
-	wsprintfA(formatBuffer, "Main Thread (Single Core): %d%%", cpuUsage);
+	StringCbPrintfA(formatBuffer, FORMAT_BUFFER_SIZE, "Main Thread (Single Core): %d%%", cpuUsage);
 	TextOutA(displayDeviceContext, startX + 8, lineY, formatBuffer, lstrlenA(formatBuffer));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 	progress_bar_t progressBar = { .x = startX + 8, .y = lineY, .width = PROGRESS_BAR_WIDTH, .height = 16, .percent = cpuUsage };
@@ -250,7 +253,7 @@ INTERNAL void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
 	cpuUsage = Percent(CPU_PERFORMANCE_METRICS.processorUsageAllCores);
-	wsprintfA(formatBuffer, "Process (All Cores): %d%%", cpuUsage);
+	StringCbPrintfA(formatBuffer, FORMAT_BUFFER_SIZE, "Process (All Cores): %d%%", cpuUsage);
 	TextOutA(displayDeviceContext, startX + 8, lineY, formatBuffer, lstrlenA(formatBuffer));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
@@ -312,20 +315,20 @@ INTERNAL void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
 		DWORD err = GetLastError();
 		LPTSTR errStr = FormatErrorString(err);
 
-		wsprintfA(formatBuffer, "N/A: %lu (%s)", err, errStr);
+		StringCbPrintfA(formatBuffer, FORMAT_BUFFER_SIZE, "N/A: %lu (%s)", err, errStr);
 		TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, formatBuffer, lstrlenA(formatBuffer));
 		lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 	} else {
-		wsprintfA(formatBuffer, "Total Physical Memory: %d MB", (int)(memoryUsageInfo.ullTotalPhys / Megabytes(1)));
+		StringCbPrintfA(formatBuffer, FORMAT_BUFFER_SIZE, "Total Physical Memory: %d MB", (int)(memoryUsageInfo.ullTotalPhys / Megabytes(1)));
 		TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, formatBuffer, lstrlenA(formatBuffer));
 		lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
-		wsprintfA(formatBuffer, "Available Physical Memory: %d MB", memoryUsageInfo.ullAvailPhys / Megabytes(1));
+		StringCbPrintfA(formatBuffer, FORMAT_BUFFER_SIZE, "Available Physical Memory: %d MB", memoryUsageInfo.ullAvailPhys / Megabytes(1));
 		TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, formatBuffer, lstrlenA(formatBuffer));
 		lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
 		lineY += DEBUG_OVERLAY_LINE_HEIGHT;
-		wsprintfA(formatBuffer, "Physical Memory Load: %d%%", memoryUsageInfo.dwMemoryLoad);
+		StringCbPrintfA(formatBuffer, FORMAT_BUFFER_SIZE, "Physical Memory Load: %d%%", memoryUsageInfo.dwMemoryLoad);
 		TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, formatBuffer, lstrlenA(formatBuffer));
 		lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
@@ -344,17 +347,17 @@ INTERNAL void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
 		lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
 		if(GetProcessMemoryInfo(GetCurrentProcess(), (PROCESS_MEMORY_COUNTERS*)&pmc, sizeof(pmc))) {
-			wsprintfA(formatBuffer, "Total Virtual Memory: %d MB", (int)(memoryUsageInfo.ullTotalPageFile / Megabytes(1)));
+			StringCbPrintfA(formatBuffer, FORMAT_BUFFER_SIZE, "Total Virtual Memory: %d MB", (int)(memoryUsageInfo.ullTotalPageFile / Megabytes(1)));
 			TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, formatBuffer, lstrlenA(formatBuffer));
 			lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
-			wsprintfA(formatBuffer, "Available Virtual Memory: %d MB", (int)(memoryUsageInfo.ullAvailPageFile / Megabytes(1)));
+			StringCbPrintfA(formatBuffer, FORMAT_BUFFER_SIZE, "Available Virtual Memory: %d MB", (int)(memoryUsageInfo.ullAvailPageFile / Megabytes(1)));
 			TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, formatBuffer, lstrlenA(formatBuffer));
 			lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
 			lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 			progress_bar_t progressBar = { .x = startX + DEBUG_OVERLAY_PADDING_SIZE, .y = lineY, .width = PROGRESS_BAR_WIDTH, .height = 16, .percent = Percent((percentage)memoryUsageInfo.ullAvailPageFile / memoryUsageInfo.ullTotalPageFile) };
-			wsprintfA(formatBuffer, "Virtual Memory Load: %d%%", progressBar.percent);
+			StringCbPrintfA(formatBuffer, FORMAT_BUFFER_SIZE, "Virtual Memory Load: %d%%", progressBar.percent);
 			progressBar.y += DEBUG_OVERLAY_LINE_HEIGHT;
 			TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, formatBuffer, lstrlenA(formatBuffer));
 			lineY += DEBUG_OVERLAY_LINE_HEIGHT;
@@ -362,22 +365,22 @@ INTERNAL void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
 			lineY += 24;
 
 			lineY += DEBUG_OVERLAY_LINE_HEIGHT;
-			wsprintfA(formatBuffer, "Private Set: %d MB", (int)(pmc.PrivateUsage / Megabytes(1)));
+			StringCbPrintfA(formatBuffer, FORMAT_BUFFER_SIZE, "Private Set: %d MB", (int)(pmc.PrivateUsage / Megabytes(1)));
 			TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, formatBuffer, lstrlenA(formatBuffer));
 			lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
-			wsprintfA(formatBuffer, "Working Set: %d MB (Peak: %d MB)", (int)(pmc.WorkingSetSize / Megabytes(1)), (int)(pmc.PeakWorkingSetSize / Megabytes(1)));
+			StringCbPrintfA(formatBuffer, FORMAT_BUFFER_SIZE, "Working Set: %d MB (Peak: %d MB)", (int)(pmc.WorkingSetSize / Megabytes(1)), (int)(pmc.PeakWorkingSetSize / Megabytes(1)));
 			TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, formatBuffer, lstrlenA(formatBuffer));
 			lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
-			wsprintfA(formatBuffer, "Page File Usage: %d MB (Peak: %d MB)", (int)(pmc.PagefileUsage / Megabytes(1)), (int)(pmc.PeakPagefileUsage / Megabytes(1)));
+			StringCbPrintfA(formatBuffer, FORMAT_BUFFER_SIZE, "Page File Usage: %d MB (Peak: %d MB)", (int)(pmc.PagefileUsage / Megabytes(1)), (int)(pmc.PeakPagefileUsage / Megabytes(1)));
 			TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, formatBuffer, lstrlenA(formatBuffer));
 			lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
 			lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 			int procPercent = (int)((pmc.WorkingSetSize * 100) / memoryUsageInfo.ullTotalPhys);
 
-			wsprintfA(formatBuffer, "Memory Usage: %d MB / %d MB (%d%%)",
+			StringCbPrintfA(formatBuffer, FORMAT_BUFFER_SIZE, "Memory Usage: %d MB / %d MB (%d%%)",
 				(int)(pmc.WorkingSetSize / Megabytes(1)),
 				(int)(memoryUsageInfo.ullTotalPhys / Megabytes(1)), procPercent);
 
@@ -394,7 +397,7 @@ INTERNAL void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
 			DWORD err = GetLastError();
 			LPTSTR errStr = FormatErrorString(err);
 
-			wsprintfA(formatBuffer, "N/A: %lu (%s)", err, errStr);
+			StringCbPrintfA(formatBuffer, FORMAT_BUFFER_SIZE, "N/A: %lu (%s)", err, errStr);
 			TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, formatBuffer, lstrlenA(formatBuffer));
 			lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 		}
@@ -408,7 +411,7 @@ INTERNAL void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
 		"=== HARDWARE INFORMATION ===", lstrlenA("=== HARDWARE INFORMATION ==="));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
-	wsprintfA(formatBuffer,
+	StringCbPrintfA(formatBuffer, FORMAT_BUFFER_SIZE,
 		"%s",
 		NTDLL_VERSION_STRING);
 
@@ -419,26 +422,26 @@ INTERNAL void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
 		lstrlenA(formatBuffer));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
-	wsprintfA(formatBuffer, "CPU: %s", CPU_BRAND_STRING);
+	StringCbPrintfA(formatBuffer, FORMAT_BUFFER_SIZE, "CPU: %s", CPU_BRAND_STRING);
 	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY,
 		formatBuffer, lstrlenA(formatBuffer));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
 	const char* arch = ArchitectureToDebugName(CPU_PERFORMANCE_METRICS.hardwareSystemInfo.wProcessorArchitecture);
-	wsprintfA(formatBuffer, "Processor Architecture: %s", arch);
+	StringCbPrintfA(formatBuffer, FORMAT_BUFFER_SIZE, "Processor Architecture: %s", arch);
 	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY,
 		formatBuffer, lstrlenA(formatBuffer));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
-	wsprintfA(formatBuffer, "Number of Cores: %u", CPU_PERFORMANCE_METRICS.hardwareSystemInfo.dwNumberOfProcessors);
+	StringCbPrintfA(formatBuffer, FORMAT_BUFFER_SIZE, "Number of Cores: %u", CPU_PERFORMANCE_METRICS.hardwareSystemInfo.dwNumberOfProcessors);
 	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, formatBuffer, lstrlenA(formatBuffer));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
-	wsprintfA(formatBuffer, "Page Size: %u KB", CPU_PERFORMANCE_METRICS.hardwareSystemInfo.dwPageSize);
+	StringCbPrintfA(formatBuffer, FORMAT_BUFFER_SIZE, "Page Size: %u KB", CPU_PERFORMANCE_METRICS.hardwareSystemInfo.dwPageSize);
 	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, formatBuffer, lstrlenA(formatBuffer));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
-	wsprintfA(formatBuffer, "Allocation Granularity: %u KB", CPU_PERFORMANCE_METRICS.hardwareSystemInfo.dwAllocationGranularity / Kilobytes(1));
+	StringCbPrintfA(formatBuffer, FORMAT_BUFFER_SIZE, "Allocation Granularity: %u KB", CPU_PERFORMANCE_METRICS.hardwareSystemInfo.dwAllocationGranularity / Kilobytes(1));
 	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, formatBuffer, lstrlenA(formatBuffer));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
