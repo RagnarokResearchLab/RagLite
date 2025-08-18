@@ -41,6 +41,10 @@ void SystemMemoryInitializeArenas() {
 	LPVOID transientMemoryBaseAddress = (LPVOID)Terabytes(2);
 #endif
 
+
+// TODO assert aligned with page size (4k)
+
+// TODO assert larger than 4096 page size
 	// TODO Assert page size matches allocation granularity
 
 	MAIN_MEMORY = {
@@ -75,4 +79,20 @@ void SystemMemoryInitializeArenas() {
 		.allocationCount = 0
 
 	};
+}
+
+void* SystemMemoryAllocate(memory_arena_t& arena, size_t size) {
+	// TODO assert arena.reservedSize - arena.used > size else fail loudly?
+	arena.allocationCount++;
+	arena.committedSize += size;
+
+	void* memoryRegionStartPointer = (uint8*)arena.baseAddress + arena.used;
+	// TODO what if it overflows?
+	arena.used += size;
+
+	return memoryRegionStartPointer;
+	// 	.reservedSize = 64u * 1024 * 42 * 1024,
+	// .committedSize = 64u * 1024 * 42 * 512,
+	// .used = 64 * 1024 * 42 * 256,
+	// .allocationCount = 42
 }
