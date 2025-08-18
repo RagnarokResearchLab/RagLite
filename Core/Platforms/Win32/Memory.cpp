@@ -43,7 +43,7 @@ void SystemMemoryInitializeArenas(size_t mainMemorySize, size_t transientMemoryS
 #endif
 
 	DWORD allocationTypeFlags = MEM_RESERVE;
-	if(!SYSTEM_MEMORY_DELAYED_COMMITS) allocationTypeFlags = allocationTypeFlags | MEM_COMMIT;
+	if(!SYSTEM_MEMORY_DELAYED_COMMITS) allocationTypeFlags |= MEM_COMMIT;
 
 	// TODO assert aligned with page size (4k)
 
