@@ -7,5 +7,7 @@ Screenshots/
 *.mp3
 *.bin
 *.exe
+*.obj
+*.pdb
 evo
 /BuildArtifacts
