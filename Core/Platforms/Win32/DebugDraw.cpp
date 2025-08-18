@@ -178,6 +178,8 @@ INTERNAL void DebugDrawMemoryUsageOverlay(gdi_surface_t& surface) {
 	int arenaStartX = startX + DEBUG_OVERLAY_PADDING_SIZE;
 	int arenaStartY = lineY;
 
+	// TODO color red once max reached? (or orange/yellow... maybe add a progress bar, too?)
+
 	//-------------------------------------------------
 	// Blocks
 	//-------------------------------------------------
