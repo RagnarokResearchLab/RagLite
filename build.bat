@@ -3,7 +3,7 @@
 set CPP_MAIN=Core\RagLite2.cpp
 set DEBUG_EXE=RagLite2Dbg.exe
 set RELEASE_EXE=RagLite2.exe
-set RUNTIME_LIBS=gdi32.lib user32.lib xinput.lib
+set RUNTIME_LIBS=gdi32.lib user32.lib xinput.lib winmm.lib
 
 set DEFAULT_BUILD_DIR=BuildArtifacts
 if not exist %DEFAULT_BUILD_DIR% mkdir %DEFAULT_BUILD_DIR%
