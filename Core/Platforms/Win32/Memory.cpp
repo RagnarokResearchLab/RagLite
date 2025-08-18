@@ -53,11 +53,13 @@ void SystemMemoryInitializeArenas(size_t mainMemorySize, size_t transientMemoryS
 
 	PerformanceMetricsUpdateNow(); // Ensure hardware info is cached (required for page alignment)
 	// Sync internal bookkeeping with actual HW alignment to accurately track the allocation
-	mainMemorySize = SystemMemoryAlignToGranularity(mainMemorySize);
-	transientMemorySize = SystemMemoryAlignToGranularity(transientMemorySize);
+	// mainMemorySize = SystemMemoryAlignToGranularity(mainMemorySize);
+	// transientMemorySize = SystemMemoryAlignToGranularity(transientMemorySize);
 
 	DWORD allocationTypeFlags = MEM_RESERVE;
+	DWORD memoryProtectionFlags = PAGE_NOACCESS;
 	if(!SYSTEM_MEMORY_DELAYED_COMMITS) allocationTypeFlags |= MEM_COMMIT;
+	if(!SYSTEM_MEMORY_DELAYED_COMMITS) allocationTypeFlags = PAGE_READWRITE;
 
 	// TODO assert aligned with page size (4k)
 
@@ -68,7 +70,7 @@ void SystemMemoryInitializeArenas(size_t mainMemorySize, size_t transientMemoryS
 		.name = "Main Memory (Preallocated))",
 		.lifetime = "Forever (Global Arena)",
 		// TODO Commit separately, not ahead of time
-		.baseAddress = VirtualAlloc(baseAddress, mainMemorySize + transientMemorySize, allocationTypeFlags, PAGE_READWRITE),
+		.baseAddress = VirtualAlloc(baseAddress, mainMemorySize + transientMemorySize, allocationTypeFlags, memoryProtectionFlags),
 		.reservedSize = mainMemorySize,
 		.committedSize = 0,
 		.used = 0,
