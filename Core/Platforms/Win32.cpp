@@ -225,6 +225,8 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE unused, LPSTR commandLine,
 	bool didAdjustGranularity = (timeBeginPeriod(requestedSchedulerGranularityInMilliseconds) == TIMERR_NOERROR);
 	DWORD sleepTimeInMilliseconds = MILLISECONDS_PER_SECOND / TARGET_FRAME_RATE;
 
+	SystemMemoryInitializeArenas();
+
 	WNDCLASSEX windowClass = {};
 	// TODO Is this really a good idea? Beware the CS_OWNDC footguns...
 	// TODO https://devblogs.microsoft.com/oldnewthing/20060601-06/?p=31003
