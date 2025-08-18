@@ -52,6 +52,9 @@ void SystemMemoryInitializeArenas(size_t mainMemorySize, size_t transientMemoryS
 #endif
 
 	PerformanceMetricsUpdateNow(); // Ensure hardware info is cached (required for page alignment)
+	// Sync internal bookkeeping with actual HW alignment to accurately track the allocation
+	mainMemorySize = SystemMemoryAlignToGranularity(mainMemorySize);
+	transientMemorySize = SystemMemoryAlignToGranularity(transientMemorySize);
 
 	DWORD allocationTypeFlags = MEM_RESERVE;
 	if(!SYSTEM_MEMORY_DELAYED_COMMITS) allocationTypeFlags |= MEM_COMMIT;
@@ -93,10 +96,10 @@ void SystemMemoryInitializeArenas(size_t mainMemorySize, size_t transientMemoryS
 void* SystemMemoryAllocate(memory_arena_t& arena, size_t allocationSize) {
 	size_t totalUsed = arena.used + allocationSize;
 	// TODO assert arena.reservedSize - arena.used > size else fail loudly?
-	// ASSUME(totalUsed <= arena.reservedSize, "Attempting to allocate outside the reserved set")
+	ASSUME(totalUsed <= arena.reservedSize, "Attempting to allocate outside the reserved set");
 	if(SYSTEM_MEMORY_DELAYED_COMMITS) {
 		// Commit only if the working set needs to extend past a page boundary
-		if(SystemMemoryAlignToGranularity(totalUsed) > arena.committedSize) {
+		if(totalUsed > arena.committedSize) {
 			size_t alignedPageEnd = SystemMemoryAlignToGranularity(totalUsed);
 			size_t alignedCommitSize = alignedPageEnd - arena.committedSize;
 
