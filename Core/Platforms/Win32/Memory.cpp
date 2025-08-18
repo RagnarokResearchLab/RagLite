@@ -34,6 +34,15 @@ GLOBAL memory_arena_t TRANSIENT_MEMORY = {
 	.allocationCount = 0
 };
 
+inline size_t SystemMemoryAlign(size_t value, size_t granularity) {
+	return (value + granularity - 1) & ~(granularity - 1);
+}
+
+inline size_t SystemMemoryAlignToGranularity(size_t value) {
+	size_t granularity = CPU_PERFORMANCE_METRICS.hardwareSystemInfo.dwAllocationGranularity;
+	return SystemMemoryAlign(value, granularity);
+}
+
 void SystemMemoryInitializeArenas(size_t mainMemorySize, size_t transientMemorySize) {
 // TODO Pin base address only in debug mode
 #if 0
@@ -41,6 +50,8 @@ void SystemMemoryInitializeArenas(size_t mainMemorySize, size_t transientMemoryS
 #else
 	LPVOID baseAddress = 0;
 #endif
+
+	PerformanceMetricsUpdateNow(); // Ensure hardware info is cached (required for page alignment)
 
 	DWORD allocationTypeFlags = MEM_RESERVE;
 	if(!SYSTEM_MEMORY_DELAYED_COMMITS) allocationTypeFlags |= MEM_COMMIT;
@@ -85,12 +96,8 @@ void* SystemMemoryAllocate(memory_arena_t& arena, size_t allocationSize) {
 	// ASSUME(totalUsed <= arena.reservedSize, "Attempting to allocate outside the reserved set")
 	if(SYSTEM_MEMORY_DELAYED_COMMITS) {
 		// Commit only if the working set needs to extend past a page boundary
-		// TODO allocate in 64KB blocks as needed?
-		// TODO use metrics -> allocation granularity
-		size_t chunkSize = Kilobytes(64);
-		if(totalUsed > arena.committedSize) {
-			// TODO AUse LIGN macro for clarity?
-			size_t alignedPageEnd = (totalUsed + chunkSize - 1) & ~(chunkSize - 1);
+		if(SystemMemoryAlignToGranularity(totalUsed) > arena.committedSize) {
+			size_t alignedPageEnd = SystemMemoryAlignToGranularity(totalUsed);
 			size_t alignedCommitSize = alignedPageEnd - arena.committedSize;
 
 			void* commitResult = VirtualAlloc(
