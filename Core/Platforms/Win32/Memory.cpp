@@ -1,5 +1,8 @@
 #include <psapi.h>
 
+// TODO Check how much of a difference this makes
+constexpr bool SYSTEM_MEMORY_DELAYED_COMMITS = true;
+
 typedef struct virtual_memory_arena {
 	const char* name;
 	const char* lifetime;
@@ -39,6 +42,9 @@ void SystemMemoryInitializeArenas(size_t mainMemorySize, size_t transientMemoryS
 	LPVOID baseAddress = 0;
 #endif
 
+DWORD allocationTypeFlags = MEM_RESERVE;
+if(!SYSTEM_MEMORY_DELAYED_COMMITS) allocationTypeFlags = allocationTypeFlags | MEM_COMMIT;
+
 	// TODO assert aligned with page size (4k)
 
 	// TODO assert larger than 4096 page size
@@ -48,7 +54,7 @@ void SystemMemoryInitializeArenas(size_t mainMemorySize, size_t transientMemoryS
 		.name = "Main Memory (Preallocated))",
 		.lifetime = "Forever (Global Arena)",
 		// TODO Commit separately, not ahead of time
-		.baseAddress = VirtualAlloc(baseAddress, mainMemorySize + transientMemorySize, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE),
+		.baseAddress = VirtualAlloc(baseAddress, mainMemorySize + transientMemorySize, allocationTypeFlags, PAGE_READWRITE),
 		.reservedSize = mainMemorySize,
 		.committedSize = 0,
 		.used = 0,
