@@ -159,7 +159,7 @@ INTERNAL void DebugDrawMemoryUsageOverlay(gdi_surface_t& surface) {
 	TextOutA(offscreenDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, formatBuffer, lstrlenA(formatBuffer));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
-	StringCbPrintfA(formatBuffer, FORMAT_BUFFER_SIZE, "Free: %d KB", (MAIN_MEMORY.committedSize - MAIN_MEMORY.used) / Kilobytes(1));
+	StringCbPrintfA(formatBuffer, FORMAT_BUFFER_SIZE, "Free: %d MB", (MAIN_MEMORY.reservedSize - MAIN_MEMORY.used) / Megabytes(1));
 	TextOutA(offscreenDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, formatBuffer, lstrlenA(formatBuffer));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
