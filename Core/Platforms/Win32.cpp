@@ -1,16 +1,91 @@
 #define VC_EXTRALEAN
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
-
-#define GLOBAL static
-#define INTERNAL static
+#include <strsafe.h>
+#include <timeapi.h>
 
 #define TODO(msg) OutputDebugStringA(msg);
 
-#include "Win32/DebugDraw.cpp"
+GLOBAL FPS TARGET_FRAME_RATE = 120;
+
+constexpr size_t MAX_ERROR_MSG_SIZE = 512;
+GLOBAL TCHAR SYSTEM_ERROR_MESSAGE[MAX_ERROR_MSG_SIZE];
+
+INTERNAL LPTSTR FormatErrorString(DWORD errorCode) {
+	DWORD size = FormatMessage(
+		FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+		NULL,
+		errorCode,
+		MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+		SYSTEM_ERROR_MESSAGE,
+		MAX_ERROR_MSG_SIZE,
+		NULL);
+
+	if(size == 0) {
+		StringCbPrintfA(SYSTEM_ERROR_MESSAGE, MAX_ERROR_MSG_SIZE, TEXT("Unknown error %lu"), errorCode);
+	} else {
+		LPTSTR end = SYSTEM_ERROR_MESSAGE + lstrlen(SYSTEM_ERROR_MESSAGE);
+		while(end > SYSTEM_ERROR_MESSAGE && (end[-1] == TEXT('\r') || end[-1] == TEXT('\n') || end[-1] == TEXT('.')))
+			*--end = TEXT('\0');
+	}
+
+	return SYSTEM_ERROR_MESSAGE;
+}
+
+typedef LONG(WINAPI* RtlGetVersionPtr)(PRTL_OSVERSIONINFOW);
+GLOBAL TCHAR NTDLL_VERSION_STRING[MAX_ERROR_MSG_SIZE] = "OS: N/A (Failed to GetModuleHandle for NTDLL.DLL)";
+
+void ReadKernelVersionInfo() {
+	// TODO Skip this in release builds; it's way too intrusive for no real benefit
+#if 1
+	HMODULE kernelModuleDLL = GetModuleHandleW(L"ntdll.dll");
+	if(kernelModuleDLL) {
+		RTL_OSVERSIONINFOW kernelVersionInfo = {};
+		kernelVersionInfo.dwOSVersionInfoSize = sizeof(kernelVersionInfo);
+		RtlGetVersionPtr pRtlGetVersion = (RtlGetVersionPtr)GetProcAddress(kernelModuleDLL, "RtlGetVersion");
+		if(pRtlGetVersion && pRtlGetVersion((PRTL_OSVERSIONINFOW)&kernelVersionInfo) == 0) {
+			StringCbPrintfA(NTDLL_VERSION_STRING, MAX_ERROR_MSG_SIZE,
+				"Operating System: Windows %u.%u (Build %u) %S",
+				kernelVersionInfo.dwMajorVersion,
+				kernelVersionInfo.dwMinorVersion,
+				kernelVersionInfo.dwBuildNumber,
+				kernelVersionInfo.szCSDVersion);
+		} else {
+		}
+	}
+#endif
+}
+
+const char* ArchitectureToDebugName(WORD wProcessorArchitecture) {
+
+	const char* arch = "Unknown";
+	switch(wProcessorArchitecture) {
+	case PROCESSOR_ARCHITECTURE_AMD64:
+		arch = "x64";
+		break;
+	case PROCESSOR_ARCHITECTURE_INTEL:
+		arch = "x86";
+		break;
+	case PROCESSOR_ARCHITECTURE_ARM:
+		arch = "ARM";
+		break;
+	case PROCESSOR_ARCHITECTURE_ARM64:
+		arch = "ARM64";
+		break;
+	case PROCESSOR_ARCHITECTURE_IA64:
+		arch = "Itanium";
+		break;
+	}
+	return arch;
+}
+
 #include "Win32/GamePad.cpp"
 #include "Win32/Keyboard.cpp"
+#include "Win32/Memory.cpp"
+#include "Win32/Time.cpp"
 #include "Win32/Windowing.cpp"
+
+#include "Win32/DebugDraw.cpp"
 
 LRESULT CALLBACK WindowProcessMessage(HWND window, UINT message, WPARAM wParam,
 	LPARAM lParam) {
@@ -38,6 +113,8 @@ LRESULT CALLBACK WindowProcessMessage(HWND window, UINT message, WPARAM wParam,
 			return 0;
 		}
 
+		DebugDrawMemoryUsageOverlay(GDI_SURFACE);
+		DebugDrawProcessorUsageOverlay(GDI_SURFACE);
 		DebugDrawKeyboardOverlay(GDI_SURFACE);
 
 		int srcW = GDI_BACKBUFFER.width;
@@ -59,6 +136,7 @@ LRESULT CALLBACK WindowProcessMessage(HWND window, UINT message, WPARAM wParam,
 	case WM_KEYDOWN:
 	case WM_KEYUP: {
 		DebugDrawKeyboardOverlay(GDI_SURFACE);
+		DebugDrawMemoryUsageOverlay(GDI_SURFACE);
 
 		WORD virtualKeyCode = LOWORD(wParam);
 		WORD keyFlags = HIWORD(lParam);
@@ -140,6 +218,12 @@ LRESULT CALLBACK WindowProcessMessage(HWND window, UINT message, WPARAM wParam,
 constexpr int EXIT_FAILURE = -1;
 int WINAPI WinMain(HINSTANCE instance, HINSTANCE unused, LPSTR commandLine,
 	int showFlag) {
+	IntrinsicsReadCPUID();
+	ReadKernelVersionInfo();
+
+	UINT requestedSchedulerGranularityInMilliseconds = 1;
+	bool didAdjustGranularity = (timeBeginPeriod(requestedSchedulerGranularityInMilliseconds) == TIMERR_NOERROR);
+	DWORD sleepTimeInMilliseconds = MILLISECONDS_PER_SECOND / TARGET_FRAME_RATE;
 
 	WNDCLASSEX windowClass = {};
 	// TODO Is this really a good idea? Beware the CS_OWNDC footguns...
@@ -188,6 +272,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE unused, LPSTR commandLine,
 		}
 
 		if(!APPLICATION_SHOULD_PAUSE) {
+			PerformanceMetricsUpdateNow();
 			GamePadPollControllers(offsetX, offsetY);
 			DebugDrawUpdateBackgroundPattern();
 			DebugDrawUpdateFrameBuffer(GDI_BACKBUFFER, offsetX, offsetY);
@@ -196,7 +281,11 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE unused, LPSTR commandLine,
 
 		++offsetX;
 		offsetY += 2;
+
+		Sleep(sleepTimeInMilliseconds);
 	}
+
+	timeEndPeriod(requestedSchedulerGranularityInMilliseconds);
 
 	return 0;
 }
