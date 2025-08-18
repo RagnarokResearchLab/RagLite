@@ -285,15 +285,20 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE unused, LPSTR commandLine,
 		offsetY += 2;
 
 		if(!SystemMemoryCanAllocate(MAIN_MEMORY, Megabytes(32))) {
-			SystemMemoryReset(MAIN_MEMORY);
+			// SystemMemoryReset(MAIN_MEMORY);
+			if(SystemMemoryCanAllocate(TRANSIENT_MEMORY, Megabytes(32))) {
+				// SystemMemoryReset(MAIN_MEMORY);
+				uint8* memory = (uint8*)SystemMemoryAllocate(MAIN_MEMORY, Megabytes(32));
+				for(int i = 0; i < Megabytes(32); ++i) {
+					*memory++ = 42;
+				}
+			}
+		} else {
+			uint8* memory = (uint8*)SystemMemoryAllocate(MAIN_MEMORY, Megabytes(32));
+			for(int i = 0; i < Megabytes(32); ++i) {
+				*memory++ = 42;
+			}
 		}
-
-		uint8* memory = (uint8*)SystemMemoryAllocate(MAIN_MEMORY, Megabytes(32));
-		for(int i=0; i<Megabytes(32); ++i) {
-			*memory++ = 42;
-		}
-		// TODO if max alloc size reached, stop doing this?
-
 		Sleep(sleepTimeInMilliseconds);
 	}
 
