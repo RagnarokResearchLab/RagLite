@@ -46,7 +46,7 @@ void SystemMemoryInitializeArenas() {
 
 // TODO assert larger than 4096 page size
 	// TODO Assert page size matches allocation granularity
-
+// TODO lock via flag so it actually crashes when exhausted
 	MAIN_MEMORY = {
 		// .name = "Preallocated (Main Memory)",
 		.name = "SMOLL",
