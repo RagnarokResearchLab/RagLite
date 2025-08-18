@@ -284,7 +284,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE unused, LPSTR commandLine,
 		++offsetX;
 		offsetY += 2;
 
-		SystemMemoryAllocate(MAIN_MEMORY, sizeof(42));
+		SystemMemoryAllocate(MAIN_MEMORY, Kilobytes(4));
 		// TODO if max alloc size reached, stop doing this?
 
 		Sleep(sleepTimeInMilliseconds);
