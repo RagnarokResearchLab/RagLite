@@ -287,12 +287,11 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE unused, LPSTR commandLine,
 		if(!SystemMemoryCanAllocate(MAIN_MEMORY, Megabytes(32))) {
 			// SystemMemoryReset(MAIN_MEMORY);
 			if(SystemMemoryCanAllocate(TRANSIENT_MEMORY, Megabytes(32))) {
-				// SystemMemoryReset(MAIN_MEMORY);
-				uint8* memory = (uint8*)SystemMemoryAllocate(MAIN_MEMORY, Megabytes(32));
+				uint8* memory = (uint8*)SystemMemoryAllocate(TRANSIENT_MEMORY, Megabytes(32));
 				for(int i = 0; i < Megabytes(32); ++i) {
 					*memory++ = 42;
 				}
-			}
+			} else SystemMemoryReset(TRANSIENT_MEMORY);
 		} else {
 			uint8* memory = (uint8*)SystemMemoryAllocate(MAIN_MEMORY, Megabytes(32));
 			for(int i = 0; i < Megabytes(32); ++i) {
