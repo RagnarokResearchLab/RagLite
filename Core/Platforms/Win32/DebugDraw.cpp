@@ -147,15 +147,15 @@ INTERNAL void DebugDrawMemoryUsageOverlay(gdi_surface_t& surface) {
 	TextOutA(offscreenDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, formatBuffer, lstrlenA(formatBuffer));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
-	StringCbPrintfA(formatBuffer, FORMAT_BUFFER_SIZE, "Reserved: %d KB", MAIN_MEMORY.reservedSize / Kilobytes(1));
+	StringCbPrintfA(formatBuffer, FORMAT_BUFFER_SIZE, "Reserved: %d MB", MAIN_MEMORY.reservedSize / Megabytes(1));
 	TextOutA(offscreenDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, formatBuffer, lstrlenA(formatBuffer));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
-	StringCbPrintfA(formatBuffer, FORMAT_BUFFER_SIZE, "Committed: %d KB", MAIN_MEMORY.committedSize / Kilobytes(1));
+	StringCbPrintfA(formatBuffer, FORMAT_BUFFER_SIZE, "Committed: %d MB", MAIN_MEMORY.committedSize / Megabytes(1));
 	TextOutA(offscreenDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, formatBuffer, lstrlenA(formatBuffer));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
-	StringCbPrintfA(formatBuffer, FORMAT_BUFFER_SIZE, "Used: %d KB", MAIN_MEMORY.used / Kilobytes(1));
+	StringCbPrintfA(formatBuffer, FORMAT_BUFFER_SIZE, "Used: %d MB", MAIN_MEMORY.used / Megabytes(1));
 	TextOutA(offscreenDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, formatBuffer, lstrlenA(formatBuffer));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
