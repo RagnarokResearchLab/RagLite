@@ -41,12 +41,11 @@ void SystemMemoryInitializeArenas() {
 	LPVOID transientMemoryBaseAddress = (LPVOID)Terabytes(2);
 #endif
 
+	// TODO assert aligned with page size (4k)
 
-// TODO assert aligned with page size (4k)
-
-// TODO assert larger than 4096 page size
+	// TODO assert larger than 4096 page size
 	// TODO Assert page size matches allocation granularity
-// TODO lock via flag so it actually crashes when exhausted
+	// TODO lock via flag so it actually crashes when exhausted
 	MAIN_MEMORY = {
 		// .name = "Preallocated (Main Memory)",
 		.name = "SMOLL",
