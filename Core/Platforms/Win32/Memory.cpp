@@ -1,7 +1,7 @@
 #include <psapi.h>
 
 // TODO Check how much of a difference this makes
-constexpr bool SYSTEM_MEMORY_DELAYED_COMMITS = false;
+constexpr bool SYSTEM_MEMORY_DELAYED_COMMITS = true;
 
 typedef struct virtual_memory_arena {
 	const char* name;
@@ -103,7 +103,7 @@ void* SystemMemoryAllocate(memory_arena_t& arena, size_t allocationSize) {
 		}
 	} else {
 		// It's already committed
-		arena.committedSize += allocationSize;
+		// arena.committedSize += allocationSize;
 	}
 
 	void* memoryRegionStartPointer = (uint8*)arena.baseAddress + arena.used;
@@ -121,6 +121,5 @@ bool SystemMemoryCanAllocate(memory_arena_t& arena, size_t allocationSize) {
 void SystemMemoryReset(memory_arena_t& arena) {
 	// TBD Don't want to ever free the committed range, presumably?
 	arena.allocationCount = 0;
-	arena.committedSize = 0;
 	arena.used = 0;
 }
