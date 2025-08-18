@@ -15,20 +15,20 @@ GLOBAL memory_arena_t MAIN_MEMORY = {
 	.name = "Preallocated (Main Memory)",
 	.lifetime = "Forever (Global Arena)",
 	.baseAddress = (void*)0xDEADBEEFull,
-	.reservedSize = 64u * 1024 * 42 * 1024,
-	.committedSize = 64u * 1024 * 42 * 512,
-	.used = 64 * 1024 * 42 * 256,
-	.allocationCount = 42
+	.reservedSize = 0,
+	.committedSize = 0,
+	.used = 0,
+	.allocationCount = 0
 };
 
 GLOBAL memory_arena_t TRANSIENT_MEMORY = {
 	.name = "Preallocated (Transient Memory)",
 	.lifetime = "Frame (Scoped Arena)",
 	.baseAddress = (void*)0xDEADBEEFull,
-	.reservedSize = 64u * 1024 * 42 * 1024,
-	.committedSize = 64u * 1024 * 42 * 512,
-	.used = 64 * 1024 * 42 * 256,
-	.allocationCount = 42
+	.reservedSize = 0,
+	.committedSize = 0,
+	.used = 0,
+	.allocationCount = 0
 };
 
 void SystemMemoryInitializeArenas() {
@@ -47,34 +47,23 @@ void SystemMemoryInitializeArenas() {
 	// TODO Assert page size matches allocation granularity
 	// TODO lock via flag so it actually crashes when exhausted
 	MAIN_MEMORY = {
-		.name = "Preallocated (Main Memory)",
-		// .name = "SMOLL",
+		.name = "Main Memory (Preallocated))",
 		.lifetime = "Forever (Global Arena)",
-		// .baseAddress = (void*)0xDEADBEEFull,
+		// TODO Commit separately, not ahead of time
 		.baseAddress = VirtualAlloc(mainMemoryBaseAddress, Gigabytes(1) + Megabytes(32), MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE),
 		.reservedSize = Gigabytes(1) + Megabytes(32),
-		// .reservedSize = 64u * 1024 * 42 * 1024,
 		.committedSize = 0,
-		// .committedSize = 64u * 1024 * 42 * 512,
 		.used = 0,
-		// .used = 64 * 1024 * 42 * 256,
 		.allocationCount = 0
-		// .allocationCount = 42
 	};
 
 	TRANSIENT_MEMORY = {
-		// .name = "HUGE",
-		.name = "Preallocated (Transient Memory)",
+		.name = "Transient Memory (Preallocated)",
 		.lifetime = "Frame (Scoped Arena)",
-		// .baseAddress = (void*)0xDEADBEEFull,
-		.baseAddress = (uint8*)MAIN_MEMORY.baseAddress + MAIN_MEMORY.reservedSize,
-		// .reservedSize = 64u * 1024 * 42 * 1024,
+		.baseAddress = (uint8*)MAIN_MEMORY.baseAddress + Gigabytes(1),
 		.reservedSize = Gigabytes(1),
-		// .committedSize = 64u * 1024 * 42 * 512,
 		.committedSize = 0,
-		// .used = 64 * 1024 * 42 * 256,
 		.used = 0,
-		// .allocationCount = 42
 		.allocationCount = 0
 
 	};
@@ -86,14 +75,9 @@ void* SystemMemoryAllocate(memory_arena_t& arena, size_t allocationSize) {
 	arena.committedSize += allocationSize;
 
 	void* memoryRegionStartPointer = (uint8*)arena.baseAddress + arena.used;
-	// TODO what if it overflows?
 	arena.used += allocationSize;
 
 	return memoryRegionStartPointer;
-	// 	.reservedSize = 64u * 1024 * 42 * 1024,
-	// .committedSize = 64u * 1024 * 42 * 512,
-	// .used = 64 * 1024 * 42 * 256,
-	// .allocationCount = 42
 }
 
 bool SystemMemoryCanAllocate(memory_arena_t& arena, size_t allocationSize) {
