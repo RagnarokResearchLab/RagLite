@@ -31,14 +31,12 @@ GLOBAL memory_arena_t TRANSIENT_MEMORY = {
 	.allocationCount = 0
 };
 
-void SystemMemoryInitializeArenas() {
+void SystemMemoryInitializeArenas(size_t mainMemorySize, size_t transientMemorySize) {
 // TODO Pin base address only in debug mode
 #if 0
-    	LPVOID mainMemoryBaseAddress = (LPVOID)Terabytes(2);
-    	LPVOID transientMemoryBaseAddress = (LPVOID)Terabytes(2) + (LPVOID)Terabytes(2);
+    	LPVOID baseAddress = (LPVOID)Terabytes(1);
 #else
-	LPVOID mainMemoryBaseAddress = 0;
-	LPVOID transientMemoryBaseAddress = (LPVOID)Terabytes(2);
+	LPVOID baseAddress = 0;
 #endif
 
 	// TODO assert aligned with page size (4k)
@@ -50,18 +48,20 @@ void SystemMemoryInitializeArenas() {
 		.name = "Main Memory (Preallocated))",
 		.lifetime = "Forever (Global Arena)",
 		// TODO Commit separately, not ahead of time
-		.baseAddress = VirtualAlloc(mainMemoryBaseAddress, Gigabytes(1) + Megabytes(32), MEM_RESERVE, PAGE_READWRITE),
-		.reservedSize = Gigabytes(1) + Megabytes(32),
+		.baseAddress = VirtualAlloc(baseAddress, mainMemorySize + transientMemorySize, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE),
+		.reservedSize = mainMemorySize,
 		.committedSize = 0,
 		.used = 0,
 		.allocationCount = 0
 	};
 
+	// TODO assert base addr is not zero (VirtualAlloc failed)
+
 	TRANSIENT_MEMORY = {
 		.name = "Transient Memory (Preallocated)",
 		.lifetime = "Frame (Scoped Arena)",
-		.baseAddress = (uint8*)MAIN_MEMORY.baseAddress + Gigabytes(1),
-		.reservedSize = Gigabytes(1),
+		.baseAddress = (uint8*)MAIN_MEMORY.baseAddress + mainMemorySize,
+		.reservedSize = transientMemorySize,
 		.committedSize = 0,
 		.used = 0,
 		.allocationCount = 0
@@ -73,8 +73,9 @@ void* SystemMemoryAllocate(memory_arena_t& arena, size_t allocationSize) {
 	// TODO assert arena.reservedSize - arena.used > size else fail loudly?
 	arena.allocationCount++;
 	arena.committedSize += allocationSize;
+	// TODO allocate in 64KB blocks as needed?
 
-	void* startAddress = VirtualAlloc((uint8*)arena.baseAddress + arena.used, allocationSize, MEM_COMMIT, PAGE_READWRITE);
+	// void* startAddress = VirtualAlloc((uint8*)arena.baseAddress + arena.used, allocationSize, MEM_COMMIT, PAGE_READWRITE);
 	// TODO assert it didn't fail?
 	// TBD What to do with this start address?
 	void* memoryRegionStartPointer = (uint8*)arena.baseAddress + arena.used;
@@ -90,6 +91,7 @@ bool SystemMemoryCanAllocate(memory_arena_t& arena, size_t allocationSize) {
 
 void SystemMemoryReset(memory_arena_t& arena) {
 	// TBD Don't want to ever free the committed range, presumably?
-	arena.used = 0;
 	arena.allocationCount = 0;
+	arena.committedSize = 0;
+	arena.used = 0;
 }
