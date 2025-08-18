@@ -96,130 +96,117 @@ INTERNAL void DrawProgressBar(HDC displayDeviceContext, progress_bar_t& bar) {
 GLOBAL int MEMORY_OVERLAY_WIDTH = 1024 + 128 + 16;
 GLOBAL int PERFORMANCE_OVERLAY_WIDTH = PROGRESS_BAR_WIDTH + 8 + 8;
 
-int DebugDrawArena(HDC dc, const memory_arena_t& arena, int startX, int startY, int overlayWidth) {
-    constexpr int LINE_HEIGHT = 16;
-    constexpr int BAR_WIDTH   = 300;
-    constexpr int BAR_HEIGHT  = 12;
-    constexpr int MAX_BLOCKS  = 1200; // cap block rendering
-    constexpr int BLOCK_W     = 2;
-    constexpr int BLOCK_H     = 4;
-
-    char buffer[256];
-    int y = startY;
-
-    // ---- Text ----
-    StringCbPrintfA(buffer, sizeof(buffer), "[Arena] %s (%s)", arena.name, arena.lifetime);
-    TextOutA(dc, startX, y, buffer, lstrlenA(buffer));
-    y += LINE_HEIGHT;
-
-    StringCbPrintfA(buffer, sizeof(buffer),
-        "Base: 0x%p | Reserved: %zu MB | Committed: %zu MB | Used: %zu MB | Allocs: %zu",
-        arena.baseAddress,
-        arena.reservedSize / Megabytes(1),
-        arena.committedSize / Megabytes(1),
-        arena.used / Megabytes(1),
-        arena.allocationCount);
-    TextOutA(dc, startX, y, buffer, lstrlenA(buffer));
-    y += LINE_HEIGHT;
-
-    // ---- Progress bar ----
-    RECT barRect = { startX, y, startX + BAR_WIDTH, y + BAR_HEIGHT };
-    HBRUSH reservedBrush = CreateSolidBrush(RGB(60, 60, 60));
-    FillRect(dc, &barRect, reservedBrush);
-    DeleteObject(reservedBrush);
-
-    float commitPct = (float)arena.committedSize / (float)arena.reservedSize;
-    RECT commitRect = { startX, y, startX + (int)(BAR_WIDTH * commitPct), y + BAR_HEIGHT };
-    HBRUSH commitBrush = CreateSolidBrush(RGB(0, 100, 200));
-    FillRect(dc, &commitRect, commitBrush);
-    DeleteObject(commitBrush);
-
-    float usedPct = (float)arena.used / (float)arena.reservedSize;
-    RECT usedRect = { startX, y, startX + (int)(BAR_WIDTH * usedPct), y + BAR_HEIGHT };
-    HBRUSH usedBrush = CreateSolidBrush(RGB(0, 200, 0));
-    FillRect(dc, &usedRect, usedBrush);
-    DeleteObject(usedBrush);
-
-    if (arena.used >= arena.reservedSize) {
-        SetTextColor(dc, RGB(255, 0, 0));
-        TextOutA(dc, startX + BAR_WIDTH + 8, y, "EXHAUSTED!", 10);
-    }
-    y += BAR_HEIGHT + LINE_HEIGHT;
-
-    // ---- Block grid ----
-    int blocksPerRow = overlayWidth / (BLOCK_W + 1);
-    if (blocksPerRow < 1) blocksPerRow = 1;
-
-    size_t blockSize = arena.reservedSize / MAX_BLOCKS;
-    if (blockSize < Kilobytes(64)) blockSize = Kilobytes(64);
-
-    int totalBlocks     = (int)(arena.reservedSize / blockSize);
-    int usedBlocks      = (int)(arena.used / blockSize);
-    int committedBlocks = (int)(arena.committedSize / blockSize);
-
-    for (int blockID = 0; blockID < totalBlocks; ++blockID) {
-        COLORREF color;
-        if (blockID < usedBlocks) {
-            color = RGB(0, 200, 0);
-        } else if (blockID < committedBlocks) {
-            color = RGB(0, 100, 200);
-        } else {
-            color = RGB(60, 60, 60);
-        }
-
-        HBRUSH brush = CreateSolidBrush(color);
-        RECT block = {
-            startX + (blockID % blocksPerRow) * (BLOCK_W + 1),
-            y + (blockID / blocksPerRow) * (BLOCK_H + 1),
-            startX + (blockID % blocksPerRow) * (BLOCK_W + 1) + BLOCK_W,
-            y + (blockID / blocksPerRow) * (BLOCK_H + 1) + BLOCK_H
-        };
-        FillRect(dc, &block, brush);
-        DeleteObject(brush);
-    }
-
-    int rows = (totalBlocks + blocksPerRow - 1) / blocksPerRow;
-    y += rows * (BLOCK_H + 1);
-
-    // Return consumed height
-    return y - startY + LINE_HEIGHT;
-}
-
 INTERNAL void DebugDrawMemoryUsageOverlay(gdi_surface_t& surface) {
-    HDC dc = surface.offscreenDeviceContext;
-    if (!dc) return;
+	HDC offscreenDeviceContext = surface.offscreenDeviceContext;
+	if(!offscreenDeviceContext)
+		return;
 
-    SetBkMode(dc, TRANSPARENT);
-    HFONT font = (HFONT)GetStockObject(ANSI_VAR_FONT);
-    HFONT oldFont = (HFONT)SelectObject(dc, font);
+	SetBkMode(offscreenDeviceContext, TRANSPARENT);
+	HFONT font = (HFONT)GetStockObject(ANSI_VAR_FONT);
+	HFONT oldFont = (HFONT)SelectObject(offscreenDeviceContext, font);
 
-    int startX = 0;
-    int startY = 300;
-    int overlayWidth = MEMORY_OVERLAY_WIDTH;
+	int x = 0;
+	int y = 0;
+	// TODO Compute dynamically based on the actual arena size
+	constexpr int LINE_COUNT = 40;
 
-    // Measure total height first
-    int totalHeight = 0;
-    totalHeight += DebugDrawArena(dc, MAIN_MEMORY, startX, startY, overlayWidth);
-    totalHeight += DebugDrawArena(dc, TRANSIENT_MEMORY, startX, startY + totalHeight, overlayWidth);
-    // Add more arenas here if you want...
+	int startX = 0;
+	int startY = 300;
+	RECT backgroundPanelRect = {
+		startX,
+		startY,
+		startX + MEMORY_OVERLAY_WIDTH,
+		startY + (DEBUG_OVERLAY_LINE_HEIGHT * LINE_COUNT) + DEBUG_OVERLAY_LINE_HEIGHT
+	};
+	HBRUSH panelBrush = CreateSolidBrush(UI_PANEL_COLOR);
+	FillRect(offscreenDeviceContext, &backgroundPanelRect, panelBrush);
+	DeleteObject(panelBrush);
 
-    // Background panel
-    RECT panelRect = {
-        startX,
-        startY,
-        startX + overlayWidth,
-        startY + totalHeight + DEBUG_OVERLAY_PADDING_SIZE
-    };
-    HBRUSH panelBrush = CreateSolidBrush(UI_PANEL_COLOR);
-    FillRect(dc, &panelRect, panelBrush);
-    DeleteObject(panelBrush);
+	SetTextColor(offscreenDeviceContext, UI_TEXT_COLOR);
 
-    // Draw again on top of panel
-    int lineY = startY + DEBUG_OVERLAY_PADDING_SIZE;
-    lineY += DebugDrawArena(dc, MAIN_MEMORY, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, overlayWidth - 2*DEBUG_OVERLAY_PADDING_SIZE);
-    lineY += DebugDrawArena(dc, TRANSIENT_MEMORY, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, overlayWidth - 2*DEBUG_OVERLAY_PADDING_SIZE);
+	constexpr size_t FORMAT_BUFFER_SIZE = 256;
+	char formatBuffer[FORMAT_BUFFER_SIZE];
+	int lineY = startY + DEBUG_OVERLAY_PADDING_SIZE;
 
-    SelectObject(dc, oldFont);
+	//-------------------------------------------------
+	// Arena stats
+	//-------------------------------------------------
+	TextOutA(offscreenDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY,
+		"=== MEMORY ARENAS ===", lstrlenA("=== MEMORY ARENAS ==="));
+	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
+
+	StringCbPrintfA(formatBuffer, FORMAT_BUFFER_SIZE, "Name: %s", MAIN_MEMORY.name);
+	TextOutA(offscreenDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, formatBuffer, lstrlenA(formatBuffer));
+	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
+
+	StringCbPrintfA(formatBuffer, FORMAT_BUFFER_SIZE, "Lifetime: %s", MAIN_MEMORY.lifetime);
+	TextOutA(offscreenDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, formatBuffer, lstrlenA(formatBuffer));
+	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
+
+	StringCbPrintfA(formatBuffer, FORMAT_BUFFER_SIZE, "Base: 0x%p", MAIN_MEMORY.baseAddress);
+	TextOutA(offscreenDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, formatBuffer, lstrlenA(formatBuffer));
+	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
+
+	StringCbPrintfA(formatBuffer, FORMAT_BUFFER_SIZE, "Reserved: %d MB", MAIN_MEMORY.reservedSize / Megabytes(1));
+	TextOutA(offscreenDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, formatBuffer, lstrlenA(formatBuffer));
+	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
+
+	StringCbPrintfA(formatBuffer, FORMAT_BUFFER_SIZE, "Committed: %d MB", MAIN_MEMORY.committedSize / Megabytes(1));
+	TextOutA(offscreenDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, formatBuffer, lstrlenA(formatBuffer));
+	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
+
+	StringCbPrintfA(formatBuffer, FORMAT_BUFFER_SIZE, "Used: %d MB", MAIN_MEMORY.used / Megabytes(1));
+	TextOutA(offscreenDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, formatBuffer, lstrlenA(formatBuffer));
+	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
+
+	StringCbPrintfA(formatBuffer, FORMAT_BUFFER_SIZE, "Free: %d MB", (MAIN_MEMORY.reservedSize - MAIN_MEMORY.used) / Megabytes(1));
+	TextOutA(offscreenDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, formatBuffer, lstrlenA(formatBuffer));
+	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
+
+	StringCbPrintfA(formatBuffer, FORMAT_BUFFER_SIZE, "Allocations: %d", MAIN_MEMORY.allocationCount);
+	TextOutA(offscreenDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, formatBuffer, lstrlenA(formatBuffer));
+	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
+
+	const int blockSize = Kilobytes(64);
+	int totalBlocks = MAIN_MEMORY.reservedSize / blockSize;
+	int usedBlocks = MAIN_MEMORY.used / blockSize;
+	int committedBlocks = MAIN_MEMORY.committedSize / blockSize;
+
+	int ARENA_BLOCK_WIDTH = 2;
+	int ARENA_BLOCK_HEIGHT = 4;
+	int blocksPerRow = 256 + 128; // Wrap to multiple rows if the arena is too large
+	int arenaStartX = startX + DEBUG_OVERLAY_PADDING_SIZE;
+	int arenaStartY = lineY;
+
+	// TODO color red once max reached? (or orange/yellow... maybe add a progress bar, too?)
+
+	//-------------------------------------------------
+	// Blocks
+	//-------------------------------------------------
+	for(int blockID = 0; blockID < totalBlocks; ++blockID) {
+		COLORREF color;
+		if(blockID < usedBlocks) {
+			color = USED_MEMORY_BLOCK_COLOR;
+		} else if(blockID < committedBlocks) {
+			color = COMMITTED_MEMORY_BLOCK_COLOR;
+		} else {
+			color = RESERVED_MEMORY_BLOCK_COLOR;
+		}
+
+		HBRUSH brush = CreateSolidBrush(color);
+		RECT block = {
+			arenaStartX + (blockID % blocksPerRow) * (ARENA_BLOCK_WIDTH + 1),
+			arenaStartY + (blockID / blocksPerRow) * (ARENA_BLOCK_HEIGHT + 1),
+			arenaStartX + (blockID % blocksPerRow) * (ARENA_BLOCK_WIDTH + 1) + ARENA_BLOCK_WIDTH,
+			arenaStartY + (blockID / blocksPerRow) * (ARENA_BLOCK_HEIGHT + 1) + ARENA_BLOCK_HEIGHT
+		};
+		FillRect(offscreenDeviceContext, &block, brush);
+		DeleteObject(brush);
+	}
+
+	lineY = arenaStartY + ((totalBlocks / blocksPerRow) + 1) * (ARENA_BLOCK_HEIGHT + 1);
+
+	SelectObject(offscreenDeviceContext, oldFont);
 }
 
 INTERNAL void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
