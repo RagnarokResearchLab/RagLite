@@ -81,18 +81,29 @@ void SystemMemoryInitializeArenas() {
 	};
 }
 
-void* SystemMemoryAllocate(memory_arena_t& arena, size_t size) {
+void* SystemMemoryAllocate(memory_arena_t& arena, size_t allocationSize) {
 	// TODO assert arena.reservedSize - arena.used > size else fail loudly?
 	arena.allocationCount++;
-	arena.committedSize += size;
+	arena.committedSize += allocationSize;
 
 	void* memoryRegionStartPointer = (uint8*)arena.baseAddress + arena.used;
 	// TODO what if it overflows?
-	arena.used += size;
+	arena.used += allocationSize;
 
 	return memoryRegionStartPointer;
 	// 	.reservedSize = 64u * 1024 * 42 * 1024,
 	// .committedSize = 64u * 1024 * 42 * 512,
 	// .used = 64 * 1024 * 42 * 256,
 	// .allocationCount = 42
+}
+
+bool SystemMemoryCanAllocate(memory_arena_t& arena, size_t allocationSize) {
+	if(arena.used + allocationSize > arena.reservedSize) return false;
+	return true;
+}
+
+void SystemMemoryReset(memory_arena_t& arena) {
+	// TBD Don't want to ever free the committed range, presumably?
+	arena.used = 0;
+	arena.allocationCount = 0;
 }
