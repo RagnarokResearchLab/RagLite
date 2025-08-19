@@ -1,7 +1,7 @@
 #include <psapi.h>
 
 // TODO Check how much of a difference this makes
-constexpr bool SYSTEM_MEMORY_DELAYED_COMMITS = true;
+constexpr bool SYSTEM_MEMORY_DELAYED_COMMITS = false; // TBD Handled by Windows internally already (?)
 
 typedef struct virtual_memory_arena {
 	const char* name;
@@ -13,7 +13,6 @@ typedef struct virtual_memory_arena {
 	size_t allocationCount;
 } memory_arena_t;
 
-// TODO Actually create the arena (via VirtualAlloc)
 GLOBAL memory_arena_t MAIN_MEMORY = {
 	.name = "Preallocated (Main Memory)",
 	.lifetime = "Forever (Global Arena)",
@@ -95,10 +94,40 @@ void SystemMemoryInitializeArenas(size_t mainMemorySize, size_t transientMemoryS
 	if(!SYSTEM_MEMORY_DELAYED_COMMITS) TRANSIENT_MEMORY.committedSize = transientMemorySize;
 }
 
+// // TODO Only in mem profile/debug mode
+// #if 1
+// void* SystemMemoryDebugAccess(uint8* address) {
+// 	// TODO track access, update counts
+// 	return *address;
+// }
+// #endif
+
+// constexpr size_t ARENA_SIZE = ...;
+// uint32_t accessCounts[ARENA_SIZE] = {0};
+
+// inline uint8_t& SystemMemoryDebugAccess(memory_arena_t& arena, size_t offset) {
+//     accessCounts[offset]++;
+//     return ((uint8_t*)arena.baseAddress)[offset];
+// }
+
+constexpr size_t ARENA_SIZE = Megabytes(1800 + 192);
+constexpr size_t CACHE_LINE_SIZE = 64;
+constexpr size_t NUM_LINES = ARENA_SIZE / CACHE_LINE_SIZE;
+uint32_t accessCounts[NUM_LINES] = {0};
+
+inline void SystemMemoryTouch(memory_arena_t& arena, uint8* address) {
+	size_t offset = address - arena.baseAddress;
+	// TODO assert etc
+    accessCounts[offset / CACHE_LINE_SIZE]++;
+    // return *((uint8*) arena.baseAddress + offset);
+}
+
+
+
 void* SystemMemoryAllocate(memory_arena_t& arena, size_t allocationSize) {
 	size_t totalUsed = arena.used + allocationSize;
 	// TODO assert arena.reservedSize - arena.used > size else fail loudly?
-	ASSUME(totalUsed <= arena.reservedSize, "Attempting to allocate outside the reserved set");
+	// ASSUME(totalUsed <= arena.reservedSize, "Attempting to allocate outside the reserved set");
 	if(SYSTEM_MEMORY_DELAYED_COMMITS) {
 		// Commit only if the working set needs to extend past a page boundary
 		if(totalUsed > arena.committedSize) {

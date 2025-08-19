@@ -249,7 +249,7 @@ INTERNAL void DebugDrawMemoryUsageOverlay(gdi_surface_t& surface) {
 	TextOutA(offscreenDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, formatBuffer, lstrlenA(formatBuffer));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
-	const int blockSize = Kilobytes(64);
+	const int blockSize = Kilobytes(64); // TODO use alloc granulary from perf metrics
 	int totalBlocks = MAIN_MEMORY.reservedSize / blockSize;
 	int usedBlocks = MAIN_MEMORY.used / blockSize;
 	int committedBlocks = MAIN_MEMORY.committedSize / blockSize;

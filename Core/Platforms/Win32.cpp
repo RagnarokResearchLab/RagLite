@@ -4,7 +4,16 @@
 #include <strsafe.h>
 #include <timeapi.h>
 
+// BEGIN_NAMESPACE(Win32)
+
 #define TODO(msg) OutputDebugStringA(msg);
+
+// TODO add define for mem profile/release
+// #if 0
+// #define MEMORY_ACCESS(address) *address++;
+// #else
+// #define MEMORY_ACCESS(address) *SystemMemoryDebugAccess(address)++;
+// #endif
 
 GLOBAL FPS TARGET_FRAME_RATE = 120;
 
@@ -292,12 +301,15 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE unused, LPSTR commandLine,
 			if(SystemMemoryCanAllocate(TRANSIENT_MEMORY, Megabytes(8))) {
 				uint8* memory = (uint8*)SystemMemoryAllocate(TRANSIENT_MEMORY, Megabytes(8));
 				for(int i = 0; i < Megabytes(8); ++i) {
+					// MEMORY_ACCESS(memory) = 42
+					SystemMemoryTouch(TRANSIENT_MEMORY, memory);
 					*memory++ = 42;
 				}
 			} else SystemMemoryReset(TRANSIENT_MEMORY);
 		} else {
 			uint8* memory = (uint8*)SystemMemoryAllocate(MAIN_MEMORY, Megabytes(36));
 			for(int i = 0; i < Megabytes(36); ++i) {
+				// SystemMemoryDebugAccess(MAIN_MEMORY, memory) = 42;
 				*memory++ = 42;
 			}
 		}
@@ -307,4 +319,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE unused, LPSTR commandLine,
 	timeEndPeriod(requestedSchedulerGranularityInMilliseconds);
 
 	return 0;
+// }
 }
+
+// END_NAMESPACE()
