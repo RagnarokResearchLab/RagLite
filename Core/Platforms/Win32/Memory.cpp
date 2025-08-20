@@ -56,9 +56,9 @@ void SystemMemoryInitializeArenas(size_t mainMemorySize, size_t transientMemoryS
 	// transientMemorySize = SystemMemoryAlignToGranularity(transientMemorySize);
 
 	DWORD allocationTypeFlags = MEM_RESERVE;
-	DWORD memoryProtectionFlags = PAGE_NOACCESS;
+	DWORD memoryProtectionFlags = PAGE_READWRITE;
 	if(!SYSTEM_MEMORY_DELAYED_COMMITS) allocationTypeFlags |= MEM_COMMIT;
-	if(!SYSTEM_MEMORY_DELAYED_COMMITS) allocationTypeFlags = PAGE_READWRITE;
+	// if(!SYSTEM_MEMORY_DELAYED_COMMITS) memoryProtectionFlags = PAGE_NOACCESS;
 
 	// TODO assert aligned with page size (4k)
 
@@ -113,16 +113,14 @@ void SystemMemoryInitializeArenas(size_t mainMemorySize, size_t transientMemoryS
 constexpr size_t ARENA_SIZE = Megabytes(1800 + 192);
 constexpr size_t CACHE_LINE_SIZE = 64;
 constexpr size_t NUM_LINES = ARENA_SIZE / CACHE_LINE_SIZE;
-uint32_t accessCounts[NUM_LINES] = {0};
+GLOBAL uint32 SYSTEM_MEMORY_ACCESS_COUNTS[NUM_LINES] = {};
 
 inline void SystemMemoryTouch(memory_arena_t& arena, uint8* address) {
 	size_t offset = address - arena.baseAddress;
 	// TODO assert etc
-    accessCounts[offset / CACHE_LINE_SIZE]++;
-    // return *((uint8*) arena.baseAddress + offset);
+	SYSTEM_MEMORY_ACCESS_COUNTS[offset / CACHE_LINE_SIZE]++; // offset/cacheLineSize = blockID (?) - c.f. DebugDraw code
+	// return *((uint8*) arena.baseAddress + offset);
 }
-
-
 
 void* SystemMemoryAllocate(memory_arena_t& arena, size_t allocationSize) {
 	size_t totalUsed = arena.used + allocationSize;
