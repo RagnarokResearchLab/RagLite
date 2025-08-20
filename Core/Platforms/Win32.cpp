@@ -319,7 +319,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE unused, LPSTR commandLine,
 	timeEndPeriod(requestedSchedulerGranularityInMilliseconds);
 
 	return 0;
-// }
+	// }
 }
 
 // END_NAMESPACE()
