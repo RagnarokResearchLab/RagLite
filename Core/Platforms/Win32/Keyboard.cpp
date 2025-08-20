@@ -263,8 +263,8 @@ INTERNAL constexpr virtual_key_info_t vkTable[256] = {
 	{ "UNDEF_FF", 0xFF, "Undefined" }
 };
 
-const char* KeyCodeToDebugName(short virtualKeyCode) {
-	static char buf[8];
+const char* KeyCodeToDebugName(int virtualKeyCode) {
+	static char buf[8]; // TODO local ??
 	if(virtualKeyCode >= 'A' && virtualKeyCode <= 'Z') {
 		buf[0] = (char)virtualKeyCode;
 		buf[1] = 0;

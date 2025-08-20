@@ -16,7 +16,7 @@ typedef uint64_t uint64;
 #define Terabytes(bytes) (Gigabytes(bytes) * 1024LL)
 
 typedef float percentage;
-constexpr float EPSILON = 0.001;
+constexpr float EPSILON = 0.001f;
 
 inline int Percent(percentage percent) {
 	if(percent - 1.0 > EPSILON) return 100;

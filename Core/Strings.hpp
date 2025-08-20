@@ -26,7 +26,7 @@ INTERNAL int FloatToString(char* buffer, float numberToFormat, int precisionInDe
 		for(int d = 0; d < precisionInDecimals; d++) {
 			fractionalPart *= 10.0;
 			int digit = (int)fractionalPart;
-			*buffer++ = '0' + digit;
+			*buffer++ = '0' + (char)digit;
 			fractionalPart -= digit;
 		}
 	}

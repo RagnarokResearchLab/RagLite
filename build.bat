@@ -33,6 +33,8 @@ set SHARED_COMPILE_FLAGS=%SHARED_COMPILE_FLAGS% /MP
 set SHARED_COMPILE_FLAGS=%SHARED_COMPILE_FLAGS% /nologo
 :: /options:strict		Error when passing unrecognized compiler flags
 set SHARED_COMPILE_FLAGS=%SHARED_COMPILE_FLAGS% /options:strict
+:: /W4					TODO
+set SHARED_COMPILE_FLAGS=%SHARED_COMPILE_FLAGS% /W4
 :: /WX					Treat all warnings as errors
 set SHARED_COMPILE_FLAGS=%SHARED_COMPILE_FLAGS% /WX
 :: /Zc:strictStrings	Require const qualifier for pointers initialized via string literals

@@ -24,7 +24,7 @@ typedef struct system_performance_metrics {
 
 GLOBAL performance_metrics_t CPU_PERFORMANCE_METRICS = {};
 
-double GetProcessorUsageAllCores() {
+percentage GetProcessorUsageAllCores() {
 	FILETIME sysIdle, sysKernel, sysUser;
 	FILETIME procCreation, procExit, procKernel, procUser;
 
@@ -60,7 +60,7 @@ double GetProcessorUsageAllCores() {
 	if(sysTotal == 0)
 		return 0.0;
 
-	return (double)procTotal / (double)sysTotal;
+	return (percentage)procTotal / (percentage)sysTotal;
 }
 
 void PerformanceMetricsUpdateNow() {
