@@ -275,6 +275,14 @@ INTERNAL void DebugDrawMemoryUsageOverlay(gdi_surface_t& surface) {
 			color = RESERVED_MEMORY_BLOCK_COLOR;
 		}
 
+		BYTE brightnessAdjustment = 10 * SYSTEM_MEMORY_ACCESS_COUNTS[blockID] / 0xFF;
+		DWORD red = ((DWORD)GetRValue(color) + (DWORD)brightnessAdjustment) > 255 ? 255 : (DWORD)GetRValue(color) + (DWORD)brightnessAdjustment;
+		BYTE green = ((DWORD)GetGValue(color) + (DWORD)brightnessAdjustment) > 255 ? 255 : (DWORD)GetGValue(color) + (DWORD)brightnessAdjustment;
+		BYTE blue = ((DWORD)GetBValue(color) + (DWORD)brightnessAdjustment) > 255 ? 255 : (DWORD)GetBValue(color) + (DWORD)brightnessAdjustment;
+		// BYTE green = color.g;
+		// BYTE blue = color.b;
+		color = RGB(red, green, blue);
+
 		HBRUSH brush = CreateSolidBrush(color);
 		RECT block = {
 			arenaStartX + (blockID % blocksPerRow) * (ARENA_BLOCK_WIDTH + 1),
