@@ -28,3 +28,9 @@ inline int Percent(percentage percent) {
 typedef double milliseconds;
 typedef double FPS;
 constexpr milliseconds MILLISECONDS_PER_SECOND = 1000.0;
+
+// TODO rename to Numerics (?)
+
+// TODO buggy
+#define MAX(a, b) ((a) > (b) ? (a) : (b))
+#define MIN(a, b) ((a) < (b) ? (a) : (b))
