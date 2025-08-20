@@ -16,7 +16,6 @@
 #include "Platforms/Win32.cpp"
 #endif
 
-
 // search static, should be 0
 // local macro
 // hmh src how does it use the allocator
