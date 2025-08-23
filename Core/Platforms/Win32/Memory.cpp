@@ -113,10 +113,10 @@ void SystemMemoryInitializeArenas(size_t mainMemorySize, size_t transientMemoryS
 constexpr size_t ARENA_SIZE = Megabytes(1800 + 192);
 constexpr size_t CACHE_LINE_SIZE = 64;
 constexpr size_t NUM_LINES = ARENA_SIZE / CACHE_LINE_SIZE;
-GLOBAL uint32 SYSTEM_MEMORY_ACCESS_COUNTS[NUM_LINES] = {};
+GLOBAL uint8 SYSTEM_MEMORY_ACCESS_COUNTS[NUM_LINES] = {};
 
 inline void SystemMemoryTouch(memory_arena_t& arena, uint8* address) {
-	size_t offset = address - arena.baseAddress;
+	size_t offset = address - (uint8*)arena.baseAddress;
 	// TODO assert etc
 	SYSTEM_MEMORY_ACCESS_COUNTS[offset / CACHE_LINE_SIZE]++; // offset/cacheLineSize = blockID (?) - c.f. DebugDraw code
 	// return *((uint8*) arena.baseAddress + offset);
@@ -132,7 +132,8 @@ void* SystemMemoryAllocate(memory_arena_t& arena, size_t allocationSize) {
 			size_t alignedPageEnd = SystemMemoryAlignToGranularity(totalUsed);
 			size_t alignedCommitSize = alignedPageEnd - arena.committedSize;
 
-			void* commitResult = VirtualAlloc(
+			// void* commitResult =
+			VirtualAlloc(
 				(uint8*)arena.baseAddress + arena.committedSize,
 				alignedCommitSize,
 				MEM_COMMIT,
