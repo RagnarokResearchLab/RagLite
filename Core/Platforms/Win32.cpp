@@ -156,7 +156,7 @@ LRESULT CALLBACK WindowProcessMessage(HWND window, UINT message, WPARAM wParam,
 			scanCode = MAKEWORD(scanCode, 0xE0);
 
 		BOOL wasKeyDown = (keyFlags & KF_REPEAT) == KF_REPEAT;
-		WORD repeatCount = LOWORD(lParam);
+		// WORD repeatCount = LOWORD(lParam);
 
 		BOOL isKeyReleased = (keyFlags & KF_UP) == KF_UP;
 		BOOL isKeyDown = !isKeyReleased;
@@ -225,14 +225,17 @@ LRESULT CALLBACK WindowProcessMessage(HWND window, UINT message, WPARAM wParam,
 }
 
 constexpr int EXIT_FAILURE = -1;
-int WINAPI WinMain(HINSTANCE instance, HINSTANCE unused, LPSTR commandLine,
-	int showFlag) {
+int WINAPI WinMain(HINSTANCE instance, HINSTANCE, LPSTR,
+	int) {
 	IntrinsicsReadCPUID();
 	ReadKernelVersionInfo();
 
 	UINT requestedSchedulerGranularityInMilliseconds = 1;
-	bool didAdjustGranularity = (timeBeginPeriod(requestedSchedulerGranularityInMilliseconds) == TIMERR_NOERROR);
-	DWORD sleepTimeInMilliseconds = MILLISECONDS_PER_SECOND / TARGET_FRAME_RATE;
+	// bool didAdjustGranularity =
+	timeBeginPeriod(requestedSchedulerGranularityInMilliseconds)
+	;
+	// == TIMERR_NOERROR;
+	milliseconds sleepTimeInMilliseconds = MILLISECONDS_PER_SECOND / TARGET_FRAME_RATE;
 
 	// TODO Override via CLI arguments or something? (Can also compute based on available RAM)
 	constexpr size_t MAIN_MEMORY_SIZE = Megabytes(192);
@@ -299,21 +302,22 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE unused, LPSTR commandLine,
 		if(!SystemMemoryCanAllocate(MAIN_MEMORY, Megabytes(8))) {
 			// SystemMemoryReset(MAIN_MEMORY);
 			if(SystemMemoryCanAllocate(TRANSIENT_MEMORY, Megabytes(8))) {
-				uint8* memory = (uint8*)SystemMemoryAllocate(TRANSIENT_MEMORY, Megabytes(8));
-				for(int i = 0; i < Megabytes(8); ++i) {
+				uint8* memory = (uint8*)SystemMemoryAllocate(TRANSIENT_MEMORY, Megabytes(72));
+				for(int i = 0; i < Megabytes(72); ++i) {
 					// MEMORY_ACCESS(memory) = 42
 					SystemMemoryTouch(TRANSIENT_MEMORY, memory);
 					*memory++ = 42;
 				}
 			} else SystemMemoryReset(TRANSIENT_MEMORY);
 		} else {
-			uint8* memory = (uint8*)SystemMemoryAllocate(MAIN_MEMORY, Megabytes(36));
-			for(int i = 0; i < Megabytes(36); ++i) {
+			uint8* memory = (uint8*)SystemMemoryAllocate(MAIN_MEMORY, Megabytes(72));
+			for(int i = 0; i < Megabytes(72); ++i) {
 				// SystemMemoryDebugAccess(MAIN_MEMORY, memory) = 42;
+				SystemMemoryTouch(TRANSIENT_MEMORY, memory);
 				*memory++ = 42;
 			}
 		}
-		Sleep(sleepTimeInMilliseconds);
+		Sleep((DWORD)sleepTimeInMilliseconds);
 	}
 
 	timeEndPeriod(requestedSchedulerGranularityInMilliseconds);
