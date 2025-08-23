@@ -136,31 +136,60 @@ INTERNAL int DebugDrawMemoryArena(gdi_surface_t& surface, memory_arena_t& arena,
 	TextOutA(offscreenDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, formatBuffer, lstrlenA(formatBuffer));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
-	const int blockSize = Kilobytes(64); // TODO compute
-	int totalBlocks = arena.reservedSize / blockSize;
-	int usedBlocks = arena.used / blockSize;
-	int committedBlocks = arena.committedSize / blockSize;
+	LONG blockSize = Kilobytes(64); // TODO compute
+	LONG totalBlocks = (LONG)(arena.reservedSize / blockSize);
+	LONG usedBlocks = (LONG)(arena.used / blockSize);
+	LONG committedBlocks = (LONG)(arena.committedSize / blockSize);
 
-	int ARENA_BLOCK_WIDTH = 2; // TODO Extract
-	int ARENA_BLOCK_HEIGHT = 4;
-	int blocksPerRow = 256 + 128; // Wrap to multiple rows if the arena is too large
-	int arenaStartX = startX + DEBUG_OVERLAY_PADDING_SIZE;
-	int arenaStartY = lineY;
+	LONG ARENA_BLOCK_WIDTH = 2; // TODO Extract
+	LONG ARENA_BLOCK_HEIGHT = 4;
+	LONG blocksPerRow = 256 + 128; // Wrap to multiple rows if the arena is too large
+	LONG arenaStartX = startX + DEBUG_OVERLAY_PADDING_SIZE;
+	LONG arenaStartY = lineY;
 
 	// TODO color red once max reached? (or orange/yellow... maybe add a progress bar, too?)
 
 	//-------------------------------------------------
 	// Blocks
 	//-------------------------------------------------
-	for(int blockID = 0; blockID < totalBlocks; ++blockID) {
+	for(LONG blockID = 0; blockID < totalBlocks; ++blockID) {
 		COLORREF color;
 		if(blockID < usedBlocks) {
-			color = USED_MEMORY_BLOCK_COLOR;
+			color = COMMITTED_MEMORY_BLOCK_COLOR;
 		} else if(blockID < committedBlocks) {
 			color = COMMITTED_MEMORY_BLOCK_COLOR;
 		} else {
-			color = RESERVED_MEMORY_BLOCK_COLOR;
+			color = COMMITTED_MEMORY_BLOCK_COLOR;
 		}
+
+		// TODO clamp
+		BYTE brightnessAdjustment = 0xFF & SYSTEM_MEMORY_ACCESS_COUNTS[blockID];
+		// TODO use granularity?
+
+		BYTE red = GetRValue(color);
+		// if((red - brightnessAdjustment) > 0xFF) red = 0xFF;
+		red += brightnessAdjustment;
+		// if(red == 0) red = 0xFF;
+
+		BYTE green = GetGValue(color);
+		// if((green - brightnessAdjustment) > 0xFF) green = 0xFF;
+		// if(green - brightnessAdjustment > 0xFF) green = 0xFF;
+		green += brightnessAdjustment;
+		// if(green == 0) green = 0xFF;
+
+		BYTE blue = GetBValue(color);
+		// if((blue - brightnessAdjustment) > 0xFF) blue = 0xFF;
+		// if(blue - brightnessAdjustment > 0xFF) blue = 0xFF;
+		blue += brightnessAdjustment;
+		// if(blue == 0) blue = 0xFF;
+
+		// ((DWORD)GetRValue(color) + (DWORD)brightnessAdjustment) > 255 ? 255 : (DWORD)GetRValue(color) + (DWORD)brightnessAdjustment;
+		// DWORD green = ((DWORD)GetGValue(color) + (DWORD)brightnessAdjustment) > 255 ? 255 : (DWORD)GetGValue(color) + (DWORD)brightnessAdjustment;
+		// DWORD blue = ((DWORD)GetBValue(color) + (DWORD)brightnessAdjustment) > 255 ? 255 : (DWORD)GetBValue(color) + (DWORD)brightnessAdjustment;
+		// BYTE green = color.g;
+		// BYTE blue = color.b;
+		color = RGB(red & 0x00FF, green & 0x00FF, blue & 0x00FF);
+
 
 		HBRUSH brush = CreateSolidBrush(color);
 		RECT block = {
@@ -186,8 +215,8 @@ INTERNAL void DebugDrawMemoryUsageOverlay(gdi_surface_t& surface) {
 	HFONT font = (HFONT)GetStockObject(ANSI_VAR_FONT);
 	HFONT oldFont = (HFONT)SelectObject(offscreenDeviceContext, font);
 
-	int x = 0;
-	int y = 0;
+	// int x = 0;
+	// int y = 0;
 	// TODO Compute dynamically based on the actual arena size
 	constexpr int LINE_COUNT = 40;
 
@@ -205,7 +234,7 @@ INTERNAL void DebugDrawMemoryUsageOverlay(gdi_surface_t& surface) {
 
 	SetTextColor(offscreenDeviceContext, UI_TEXT_COLOR);
 
-	constexpr size_t FORMAT_BUFFER_SIZE = 256;
+	constexpr LONG FORMAT_BUFFER_SIZE = 256;
 	char formatBuffer[FORMAT_BUFFER_SIZE];
 
 	int lineY = startY + DEBUG_OVERLAY_PADDING_SIZE;
@@ -249,16 +278,16 @@ INTERNAL void DebugDrawMemoryUsageOverlay(gdi_surface_t& surface) {
 	TextOutA(offscreenDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, formatBuffer, lstrlenA(formatBuffer));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
-	const int blockSize = Kilobytes(64); // TODO use alloc granulary from perf metrics
-	int totalBlocks = MAIN_MEMORY.reservedSize / blockSize;
-	int usedBlocks = MAIN_MEMORY.used / blockSize;
-	int committedBlocks = MAIN_MEMORY.committedSize / blockSize;
+	LONG blockSize = (LONG)(Kilobytes(64)); // TODO use alloc granulary from perf metrics
+	LONG totalBlocks = (LONG)(MAIN_MEMORY.reservedSize / blockSize);
+	LONG usedBlocks = (LONG)(MAIN_MEMORY.used / blockSize);
+	LONG committedBlocks = (LONG)(MAIN_MEMORY.committedSize / blockSize);
 
-	int ARENA_BLOCK_WIDTH = 2;
-	int ARENA_BLOCK_HEIGHT = 4;
-	int blocksPerRow = 256 + 128; // Wrap to multiple rows if the arena is too large
-	int arenaStartX = startX + DEBUG_OVERLAY_PADDING_SIZE;
-	int arenaStartY = lineY;
+	LONG ARENA_BLOCK_WIDTH = 2;
+	LONG ARENA_BLOCK_HEIGHT = 4;
+	LONG blocksPerRow = 256 + 128; // Wrap to multiple rows if the arena is too large
+	LONG arenaStartX = startX + DEBUG_OVERLAY_PADDING_SIZE;
+	LONG arenaStartY = lineY;
 
 	// TODO color red once max reached? (or orange/yellow... maybe add a progress bar, too?)
 
@@ -275,13 +304,6 @@ INTERNAL void DebugDrawMemoryUsageOverlay(gdi_surface_t& surface) {
 			color = RESERVED_MEMORY_BLOCK_COLOR;
 		}
 
-		BYTE brightnessAdjustment = 10 * SYSTEM_MEMORY_ACCESS_COUNTS[blockID] / 0xFF;
-		DWORD red = ((DWORD)GetRValue(color) + (DWORD)brightnessAdjustment) > 255 ? 255 : (DWORD)GetRValue(color) + (DWORD)brightnessAdjustment;
-		BYTE green = ((DWORD)GetGValue(color) + (DWORD)brightnessAdjustment) > 255 ? 255 : (DWORD)GetGValue(color) + (DWORD)brightnessAdjustment;
-		BYTE blue = ((DWORD)GetBValue(color) + (DWORD)brightnessAdjustment) > 255 ? 255 : (DWORD)GetBValue(color) + (DWORD)brightnessAdjustment;
-		// BYTE green = color.g;
-		// BYTE blue = color.b;
-		color = RGB(red, green, blue);
 
 		HBRUSH brush = CreateSolidBrush(color);
 		RECT block = {
@@ -361,33 +383,33 @@ INTERNAL void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
 	// Frame timings
 	//-------------------------------------------------
 	char timeBuffer[32];
-	FloatToString(timeBuffer, CPU_PERFORMANCE_METRICS.deltaTime, 2);
+	FloatToString(timeBuffer, (float)CPU_PERFORMANCE_METRICS.deltaTime, 2); // TODO float != milliseconds
 	lstrcpyA(formatBuffer, "Delta Time: "); // Clear formatBuffer first
 	StringCchCatA(formatBuffer, FORMAT_BUFFER_SIZE, timeBuffer); // Append
 	StringCchCatA(formatBuffer, FORMAT_BUFFER_SIZE, " ms");
 
 	StringCchCatA(formatBuffer, FORMAT_BUFFER_SIZE, " (Smoothed: ");
-	FloatToString(timeBuffer, CPU_PERFORMANCE_METRICS.smoothedDeltaTime, 2);
+	FloatToString(timeBuffer, (float)CPU_PERFORMANCE_METRICS.smoothedDeltaTime, 2);
 	StringCchCatA(formatBuffer, FORMAT_BUFFER_SIZE, timeBuffer);
 	StringCchCatA(formatBuffer, FORMAT_BUFFER_SIZE, " ms)");
 	TextOutA(displayDeviceContext, startX + 8, lineY, formatBuffer, lstrlenA(formatBuffer));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
 	lstrcpyA(formatBuffer, "Frame Rate: ");
-	FloatToString(timeBuffer, CPU_PERFORMANCE_METRICS.frameRate, 1);
+	FloatToString(timeBuffer, (float)CPU_PERFORMANCE_METRICS.frameRate, 1);
 	StringCchCatA(formatBuffer, FORMAT_BUFFER_SIZE, timeBuffer);
 	StringCchCatA(formatBuffer, FORMAT_BUFFER_SIZE, " FPS (Smoothed: ");
-	FloatToString(timeBuffer, CPU_PERFORMANCE_METRICS.smoothedFrameRate, 1);
+	FloatToString(timeBuffer, (float)CPU_PERFORMANCE_METRICS.smoothedFrameRate, 1);
 	StringCchCatA(formatBuffer, FORMAT_BUFFER_SIZE, timeBuffer);
 	StringCchCatA(formatBuffer, FORMAT_BUFFER_SIZE, " FPS )");
 	TextOutA(displayDeviceContext, startX + 8, lineY, formatBuffer, lstrlenA(formatBuffer));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
 	lstrcpyA(formatBuffer, "Desired Sleep Time: ");
-	FloatToString(timeBuffer, CPU_PERFORMANCE_METRICS.desiredSleepTime, 2);
+	FloatToString(timeBuffer, (float)CPU_PERFORMANCE_METRICS.desiredSleepTime, 2);
 	StringCchCatA(formatBuffer, FORMAT_BUFFER_SIZE, timeBuffer);
 	StringCchCatA(formatBuffer, FORMAT_BUFFER_SIZE, "ms (Observed: ");
-	FloatToString(timeBuffer, CPU_PERFORMANCE_METRICS.observedSleepTime, 2);
+	FloatToString(timeBuffer, (float)CPU_PERFORMANCE_METRICS.observedSleepTime, 2);
 	StringCchCatA(formatBuffer, FORMAT_BUFFER_SIZE, timeBuffer);
 	StringCchCatA(formatBuffer, FORMAT_BUFFER_SIZE, " ms)");
 	TextOutA(displayDeviceContext, startX + 8, lineY, formatBuffer, lstrlenA(formatBuffer));
@@ -427,7 +449,7 @@ INTERNAL void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
 		lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
 		int sysUsage = memoryUsageInfo.dwMemoryLoad;
-		progress_bar_t progressBar = { .x = startX + DEBUG_OVERLAY_PADDING_SIZE, .y = lineY, .width = PROGRESS_BAR_WIDTH, .height = 16, .percent = sysUsage };
+		progressBar = { .x = startX + DEBUG_OVERLAY_PADDING_SIZE, .y = lineY, .width = PROGRESS_BAR_WIDTH, .height = 16, .percent = sysUsage };
 		DrawProgressBar(displayDeviceContext,
 			progressBar);
 		lineY += 24;
@@ -450,7 +472,7 @@ INTERNAL void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
 			lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
 			lineY += DEBUG_OVERLAY_LINE_HEIGHT;
-			progress_bar_t progressBar = { .x = startX + DEBUG_OVERLAY_PADDING_SIZE, .y = lineY, .width = PROGRESS_BAR_WIDTH, .height = 16, .percent = Percent((percentage)memoryUsageInfo.ullAvailPageFile / memoryUsageInfo.ullTotalPageFile) };
+			progressBar = { .x = startX + DEBUG_OVERLAY_PADDING_SIZE, .y = lineY, .width = PROGRESS_BAR_WIDTH, .height = 16, .percent = Percent((percentage)memoryUsageInfo.ullAvailPageFile / memoryUsageInfo.ullTotalPageFile) };
 			StringCbPrintfA(formatBuffer, FORMAT_BUFFER_SIZE, "Virtual Memory Load: %d%%", progressBar.percent);
 			progressBar.y += DEBUG_OVERLAY_LINE_HEIGHT;
 			TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, formatBuffer, lstrlenA(formatBuffer));
@@ -564,8 +586,8 @@ INTERNAL void DebugDrawKeyboardOverlay(gdi_surface_t& surface) {
 
 		SHORT keyFlags = GetKeyState(virtualKeyCode);
 		BOOL wasKeyDown = (keyFlags & KF_REPEAT) == KF_REPEAT;
-		WORD repeatCount = LOWORD(keyFlags);
-		BOOL isKeyReleased = (keyFlags & KF_UP) == KF_UP;
+		// WORD repeatCount = LOWORD(keyFlags);
+		// BOOL isKeyReleased = (keyFlags & KF_UP) == KF_UP;
 
 		COLORREF backgroundColor = UI_PANEL_COLOR;
 		if(wasKeyDown)
@@ -614,8 +636,7 @@ INTERNAL void DebugDrawUseMarchingGradientPattern(gdi_bitmap_t& bitmap,
 	}
 }
 
-INTERNAL void DebugDrawUseRipplingSpiralPattern(gdi_bitmap_t& bitmap, int time,
-	int unused) {
+INTERNAL void DebugDrawUseRipplingSpiralPattern(gdi_bitmap_t& bitmap, int time, int /* int unused*/) {
 	if(!bitmap.pixelBuffer)
 		return;
 
@@ -643,7 +664,7 @@ INTERNAL void DebugDrawUseRipplingSpiralPattern(gdi_bitmap_t& bitmap, int time,
 }
 
 INTERNAL void DebugDrawUseCheckeredFloorPattern(gdi_bitmap_t& bitmap, int time,
-	int unused) {
+	int) {
 	if(!bitmap.pixelBuffer)
 		return;
 
@@ -677,8 +698,8 @@ INTERNAL void DebugDrawUseCheckeredFloorPattern(gdi_bitmap_t& bitmap, int time,
 	}
 }
 
-INTERNAL void DebugDrawUseColorGradientPattern(gdi_bitmap_t& bitmap, int time,
-	int unused) {
+INTERNAL void DebugDrawUseColorGradientPattern(gdi_bitmap_t& bitmap, int,
+	int) {
 	if(!bitmap.pixelBuffer)
 		return;
 
@@ -705,7 +726,7 @@ INTERNAL void DebugDrawUseColorGradientPattern(gdi_bitmap_t& bitmap, int time,
 }
 
 INTERNAL void DebugDrawUseMovingScanlinePattern(gdi_bitmap_t& bitmap, int time,
-	int unused) {
+	int) {
 	if(!bitmap.pixelBuffer)
 		return;
 
@@ -813,24 +834,25 @@ INTERNAL void ResizeBackBuffer(gdi_bitmap_t& bitmap, int width, int height,
 		pixelArray[i] = UNINITIALIZED_WINDOW_COLOR;
 }
 
-INTERNAL void SurfaceDisplayBitmap(gdi_surface_t& windowSurface,
-	gdi_bitmap_t& bitmap) {
-	int destX = 0;
-	int destY = 0;
-	int srcX = 0;
-	int srcY = 0;
+// TBD why is it unused?
+// INTERNAL void SurfaceDisplayBitmap(gdi_surface_t& windowSurface,
+// 	gdi_bitmap_t& bitmap) {
+// 	int destX = 0;
+// 	int destY = 0;
+// 	int srcX = 0;
+// 	int srcY = 0;
 
-	int srcW = bitmap.width;
-	int srcH = bitmap.height;
-	int destW = windowSurface.width;
-	int destH = windowSurface.height;
+// 	int srcW = bitmap.width;
+// 	int srcH = bitmap.height;
+// 	int destW = windowSurface.width;
+// 	int destH = windowSurface.height;
 
-	if(!StretchDIBits(windowSurface.displayDeviceContext, destX, destY, destW,
-		   destH, srcX, srcY, srcW, srcH, bitmap.pixelBuffer,
-		   &bitmap.info, DIB_RGB_COLORS, SRCCOPY)) {
-		TODO("StretchDIBits failed in WM_PAINT\n");
-	}
-}
+// 	if(!StretchDIBits(windowSurface.displayDeviceContext, destX, destY, destW,
+// 		   destH, srcX, srcY, srcW, srcH, bitmap.pixelBuffer,
+// 		   &bitmap.info, DIB_RGB_COLORS, SRCCOPY)) {
+// 		TODO("StretchDIBits failed in WM_PAINT\n");
+// 	}
+// }
 
 INTERNAL void SurfaceGetWindowDimensions(gdi_surface_t& surface, HWND window) {
 	RECT clientRect;
