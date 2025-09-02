@@ -29,6 +29,12 @@
 #error "Unsupported Compiler: Toolchain-specific code paths have yet to be ported"
 #endif
 
+#ifdef NDEBUG
+// TODO: Add feature flags for release builds here
+#else
+#define RAGLITE_DEBUG_ASSERTIONS
+#endif
+
 static_assert(sizeof(void*) == 8, "Only 64-bit platforms are currently supported");
 
 #if defined(__BYTE_ORDER__) && __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__

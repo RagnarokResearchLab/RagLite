@@ -16,7 +16,7 @@ typedef uint64_t uint64;
 #define Terabytes(bytes) (Gigabytes(bytes) * 1024LL)
 
 typedef float percentage;
-constexpr float EPSILON = 0.001;
+constexpr float EPSILON = 0.001f;
 
 inline int Percent(percentage percent) {
 	if(percent - 1.0 > EPSILON) return 100;
@@ -25,6 +25,10 @@ inline int Percent(percentage percent) {
 	return (int)percent;
 }
 
-typedef double milliseconds;
-typedef double FPS;
-constexpr milliseconds MILLISECONDS_PER_SECOND = 1000.0;
+typedef float milliseconds;
+typedef float FPS;
+constexpr milliseconds MILLISECONDS_PER_SECOND = 1000.0f;
+
+inline uint32 FloatToU32(float number) {
+	return (uint32)number;
+}

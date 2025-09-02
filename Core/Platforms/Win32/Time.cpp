@@ -24,7 +24,7 @@ typedef struct system_performance_metrics {
 
 GLOBAL performance_metrics_t CPU_PERFORMANCE_METRICS = {};
 
-double GetProcessorUsageAllCores() {
+percentage GetProcessorUsageAllCores() {
 	FILETIME sysIdle, sysKernel, sysUser;
 	FILETIME procCreation, procExit, procKernel, procUser;
 
@@ -60,7 +60,7 @@ double GetProcessorUsageAllCores() {
 	if(sysTotal == 0)
 		return 0.0;
 
-	return (double)procTotal / (double)sysTotal;
+	return (percentage)procTotal / (percentage)sysTotal;
 }
 
 void PerformanceMetricsUpdateNow() {
@@ -77,14 +77,14 @@ void PerformanceMetricsUpdateNow() {
 	// Frame times
 	LONGLONG counterDiff = tickTimeNow.QuadPart - CPU_PERFORMANCE_METRICS.prevCounter.QuadPart;
 	CPU_PERFORMANCE_METRICS.prevCounter = tickTimeNow;
-	milliseconds deltaTime = (MILLISECONDS_PER_SECOND * (double)counterDiff) / (double)ticksPerSecond.QuadPart;
+	milliseconds deltaTime = (MILLISECONDS_PER_SECOND * counterDiff) / ticksPerSecond.QuadPart;
 	CPU_PERFORMANCE_METRICS.deltaTime = deltaTime;
 
 	// Smooth out jitter with a basic exponential moving average
-	CPU_PERFORMANCE_METRICS.smoothedDeltaTime = CPU_PERFORMANCE_METRICS.smoothedDeltaTime * 0.9 + deltaTime * 0.1;
+	CPU_PERFORMANCE_METRICS.smoothedDeltaTime = CPU_PERFORMANCE_METRICS.smoothedDeltaTime * 0.9f + deltaTime * 0.1f;
 
-	CPU_PERFORMANCE_METRICS.frameRate = (deltaTime > 0.0) ? (MILLISECONDS_PER_SECOND / deltaTime) : 0.0;
-	CPU_PERFORMANCE_METRICS.smoothedFrameRate = CPU_PERFORMANCE_METRICS.smoothedFrameRate * 0.9 + CPU_PERFORMANCE_METRICS.frameRate * 0.1;
+	CPU_PERFORMANCE_METRICS.frameRate = (deltaTime > 0.0f) ? (MILLISECONDS_PER_SECOND / deltaTime) : 0.0f;
+	CPU_PERFORMANCE_METRICS.smoothedFrameRate = CPU_PERFORMANCE_METRICS.smoothedFrameRate * 0.9f + CPU_PERFORMANCE_METRICS.frameRate * 0.1f;
 
 	// CPU usage
 	CPU_PERFORMANCE_METRICS.processorUsageAllCores = GetProcessorUsageAllCores();
@@ -93,12 +93,12 @@ void PerformanceMetricsUpdateNow() {
 	CPU_PERFORMANCE_METRICS.processorUsageSingleCore = CPU_PERFORMANCE_METRICS.processorUsageAllCores * sysInfo.dwNumberOfProcessors;
 
 	// Sleep timings
-	double desiredSleepTime = MILLISECONDS_PER_SECOND / TARGET_FRAME_RATE;
+	milliseconds desiredSleepTime = MILLISECONDS_PER_SECOND / TARGET_FRAME_RATE;
 	LARGE_INTEGER beforeSleep, afterSleep;
 	QueryPerformanceCounter(&beforeSleep);
 	Sleep((DWORD)desiredSleepTime);
 	QueryPerformanceCounter(&afterSleep);
-	double observedSleepTime = (MILLISECONDS_PER_SECOND * (afterSleep.QuadPart - beforeSleep.QuadPart)) / (double)ticksPerSecond.QuadPart;
+	milliseconds observedSleepTime = (MILLISECONDS_PER_SECOND * (afterSleep.QuadPart - beforeSleep.QuadPart)) / ticksPerSecond.QuadPart;
 
 	CPU_PERFORMANCE_METRICS.desiredSleepTime = desiredSleepTime;
 	CPU_PERFORMANCE_METRICS.observedSleepTime = observedSleepTime;

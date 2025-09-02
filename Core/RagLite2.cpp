@@ -2,7 +2,9 @@
 
 #define GLOBAL static
 #define INTERNAL static
+#define LOCAL static
 
+#include "Assertions.hpp"
 #include "Intrinsics.hpp"
 #include "Numbers.hpp"
 #include "Strings.hpp"

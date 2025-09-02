@@ -105,8 +105,6 @@ INTERNAL void DebugDrawMemoryUsageOverlay(gdi_surface_t& surface) {
 	HFONT font = (HFONT)GetStockObject(ANSI_VAR_FONT);
 	HFONT oldFont = (HFONT)SelectObject(offscreenDeviceContext, font);
 
-	int x = 0;
-	int y = 0;
 	// TODO Compute dynamically based on the actual arena size
 	constexpr int LINE_COUNT = 40;
 
@@ -126,7 +124,7 @@ INTERNAL void DebugDrawMemoryUsageOverlay(gdi_surface_t& surface) {
 
 	constexpr size_t FORMAT_BUFFER_SIZE = 256;
 	char formatBuffer[FORMAT_BUFFER_SIZE];
-	int lineY = startY + DEBUG_OVERLAY_PADDING_SIZE;
+	LONG lineY = startY + DEBUG_OVERLAY_PADDING_SIZE;
 
 	//-------------------------------------------------
 	// Arena stats
@@ -167,21 +165,21 @@ INTERNAL void DebugDrawMemoryUsageOverlay(gdi_surface_t& surface) {
 	TextOutA(offscreenDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, formatBuffer, lstrlenA(formatBuffer));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
-	const int blockSize = Kilobytes(64);
-	int totalBlocks = MAIN_MEMORY.reservedSize / blockSize;
-	int usedBlocks = MAIN_MEMORY.used / blockSize;
-	int committedBlocks = MAIN_MEMORY.committedSize / blockSize;
+	const size_t blockSize = Kilobytes(64);
+	size_t totalBlocks = MAIN_MEMORY.reservedSize / blockSize;
+	size_t usedBlocks = MAIN_MEMORY.used / blockSize;
+	size_t committedBlocks = MAIN_MEMORY.committedSize / blockSize;
 
-	int ARENA_BLOCK_WIDTH = 2;
-	int ARENA_BLOCK_HEIGHT = 4;
-	int blocksPerRow = 256 + 128; // Wrap to multiple rows if the arena is too large
-	int arenaStartX = startX + DEBUG_OVERLAY_PADDING_SIZE;
-	int arenaStartY = lineY;
+	LONG ARENA_BLOCK_WIDTH = 2;
+	LONG ARENA_BLOCK_HEIGHT = 4;
+	LONG blocksPerRow = 256 + 128; // Wrap to multiple rows if the arena is too large
+	LONG arenaStartX = startX + DEBUG_OVERLAY_PADDING_SIZE;
+	LONG arenaStartY = lineY;
 
 	//-------------------------------------------------
 	// Blocks
 	//-------------------------------------------------
-	for(int blockID = 0; blockID < totalBlocks; ++blockID) {
+	for(LONG blockID = 0; blockID < totalBlocks; ++blockID) {
 		COLORREF color;
 		if(blockID < usedBlocks) {
 			color = USED_MEMORY_BLOCK_COLOR;
@@ -193,7 +191,7 @@ INTERNAL void DebugDrawMemoryUsageOverlay(gdi_surface_t& surface) {
 
 		HBRUSH brush = CreateSolidBrush(color);
 		RECT block = {
-			arenaStartX + (blockID % blocksPerRow) * (ARENA_BLOCK_WIDTH + 1),
+			arenaStartX + (blockID % blocksPerRow) * (ARENA_BLOCK_WIDTH + 1), // TBD NARROW +
 			arenaStartY + (blockID / blocksPerRow) * (ARENA_BLOCK_HEIGHT + 1),
 			arenaStartX + (blockID % blocksPerRow) * (ARENA_BLOCK_WIDTH + 1) + ARENA_BLOCK_WIDTH,
 			arenaStartY + (blockID / blocksPerRow) * (ARENA_BLOCK_HEIGHT + 1) + ARENA_BLOCK_HEIGHT
@@ -201,8 +199,6 @@ INTERNAL void DebugDrawMemoryUsageOverlay(gdi_surface_t& surface) {
 		FillRect(offscreenDeviceContext, &block, brush);
 		DeleteObject(brush);
 	}
-
-	lineY = arenaStartY + ((totalBlocks / blocksPerRow) + 1) * (ARENA_BLOCK_HEIGHT + 1);
 
 	SelectObject(offscreenDeviceContext, oldFont);
 }
@@ -333,7 +329,7 @@ INTERNAL void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
 		lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
 		int sysUsage = memoryUsageInfo.dwMemoryLoad;
-		progress_bar_t progressBar = { .x = startX + DEBUG_OVERLAY_PADDING_SIZE, .y = lineY, .width = PROGRESS_BAR_WIDTH, .height = 16, .percent = sysUsage };
+		progressBar = { .x = startX + DEBUG_OVERLAY_PADDING_SIZE, .y = lineY, .width = PROGRESS_BAR_WIDTH, .height = 16, .percent = sysUsage };
 		DrawProgressBar(displayDeviceContext,
 			progressBar);
 		lineY += 24;
@@ -356,7 +352,7 @@ INTERNAL void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
 			lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
 			lineY += DEBUG_OVERLAY_LINE_HEIGHT;
-			progress_bar_t progressBar = { .x = startX + DEBUG_OVERLAY_PADDING_SIZE, .y = lineY, .width = PROGRESS_BAR_WIDTH, .height = 16, .percent = Percent((percentage)memoryUsageInfo.ullAvailPageFile / memoryUsageInfo.ullTotalPageFile) };
+			progressBar = { .x = startX + DEBUG_OVERLAY_PADDING_SIZE, .y = lineY, .width = PROGRESS_BAR_WIDTH, .height = 16, .percent = Percent((percentage)memoryUsageInfo.ullAvailPageFile / memoryUsageInfo.ullTotalPageFile) };
 			StringCbPrintfA(formatBuffer, FORMAT_BUFFER_SIZE, "Virtual Memory Load: %d%%", progressBar.percent);
 			progressBar.y += DEBUG_OVERLAY_LINE_HEIGHT;
 			TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, formatBuffer, lstrlenA(formatBuffer));
@@ -470,8 +466,6 @@ INTERNAL void DebugDrawKeyboardOverlay(gdi_surface_t& surface) {
 
 		SHORT keyFlags = GetKeyState(virtualKeyCode);
 		BOOL wasKeyDown = (keyFlags & KF_REPEAT) == KF_REPEAT;
-		WORD repeatCount = LOWORD(keyFlags);
-		BOOL isKeyReleased = (keyFlags & KF_UP) == KF_UP;
 
 		COLORREF backgroundColor = UI_PANEL_COLOR;
 		if(wasKeyDown)
@@ -521,7 +515,7 @@ INTERNAL void DebugDrawUseMarchingGradientPattern(gdi_bitmap_t& bitmap,
 }
 
 INTERNAL void DebugDrawUseRipplingSpiralPattern(gdi_bitmap_t& bitmap, int time,
-	int unused) {
+	int) {
 	if(!bitmap.pixelBuffer)
 		return;
 
@@ -549,7 +543,7 @@ INTERNAL void DebugDrawUseRipplingSpiralPattern(gdi_bitmap_t& bitmap, int time,
 }
 
 INTERNAL void DebugDrawUseCheckeredFloorPattern(gdi_bitmap_t& bitmap, int time,
-	int unused) {
+	int) {
 	if(!bitmap.pixelBuffer)
 		return;
 
@@ -583,8 +577,8 @@ INTERNAL void DebugDrawUseCheckeredFloorPattern(gdi_bitmap_t& bitmap, int time,
 	}
 }
 
-INTERNAL void DebugDrawUseColorGradientPattern(gdi_bitmap_t& bitmap, int time,
-	int unused) {
+INTERNAL void DebugDrawUseColorGradientPattern(gdi_bitmap_t& bitmap, int,
+	int) {
 	if(!bitmap.pixelBuffer)
 		return;
 
@@ -611,7 +605,7 @@ INTERNAL void DebugDrawUseColorGradientPattern(gdi_bitmap_t& bitmap, int time,
 }
 
 INTERNAL void DebugDrawUseMovingScanlinePattern(gdi_bitmap_t& bitmap, int time,
-	int unused) {
+	int) {
 	if(!bitmap.pixelBuffer)
 		return;
 
@@ -717,25 +711,6 @@ INTERNAL void ResizeBackBuffer(gdi_bitmap_t& bitmap, int width, int height,
 	size_t count = (size_t)width * (size_t)height;
 	for(size_t i = 0; i < count; ++i)
 		pixelArray[i] = UNINITIALIZED_WINDOW_COLOR;
-}
-
-INTERNAL void SurfaceDisplayBitmap(gdi_surface_t& windowSurface,
-	gdi_bitmap_t& bitmap) {
-	int destX = 0;
-	int destY = 0;
-	int srcX = 0;
-	int srcY = 0;
-
-	int srcW = bitmap.width;
-	int srcH = bitmap.height;
-	int destW = windowSurface.width;
-	int destH = windowSurface.height;
-
-	if(!StretchDIBits(windowSurface.displayDeviceContext, destX, destY, destW,
-		   destH, srcX, srcY, srcW, srcH, bitmap.pixelBuffer,
-		   &bitmap.info, DIB_RGB_COLORS, SRCCOPY)) {
-		TODO("StretchDIBits failed in WM_PAINT\n");
-	}
 }
 
 INTERNAL void SurfaceGetWindowDimensions(gdi_surface_t& surface, HWND window) {

@@ -17,6 +17,6 @@ void GamePadPollControllers(int& offsetX, int& offsetY) {
 		int16 stickX = gamePad->sThumbLX;
 		int16 stickY = gamePad->sThumbLY;
 		offsetX += stickX >> 12;
-		offsetX += stickY >> 12;
+		offsetY += stickY >> 12;
 	}
 }
