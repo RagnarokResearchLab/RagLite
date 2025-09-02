@@ -1,8 +1,4 @@
-#define VC_EXTRALEAN
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-#include <strsafe.h>
-#include <timeapi.h>
+#include "Win32.hpp"
 
 #define TODO(msg) OutputDebugStringA(msg);
 
@@ -147,8 +143,6 @@ LRESULT CALLBACK WindowProcessMessage(HWND window, UINT message, WPARAM wParam,
 			scanCode = MAKEWORD(scanCode, 0xE0);
 
 		BOOL wasKeyDown = (keyFlags & KF_REPEAT) == KF_REPEAT;
-		WORD repeatCount = LOWORD(lParam);
-
 		BOOL isKeyReleased = (keyFlags & KF_UP) == KF_UP;
 		BOOL isKeyDown = !isKeyReleased;
 
@@ -216,14 +210,15 @@ LRESULT CALLBACK WindowProcessMessage(HWND window, UINT message, WPARAM wParam,
 }
 
 constexpr int EXIT_FAILURE = -1;
-int WINAPI WinMain(HINSTANCE instance, HINSTANCE unused, LPSTR commandLine,
-	int showFlag) {
+int WINAPI WinMain(HINSTANCE instance, HINSTANCE, LPSTR,
+	int) {
 	IntrinsicsReadCPUID();
 	ReadKernelVersionInfo();
 
 	UINT requestedSchedulerGranularityInMilliseconds = 1;
 	bool didAdjustGranularity = (timeBeginPeriod(requestedSchedulerGranularityInMilliseconds) == TIMERR_NOERROR);
-	DWORD sleepTimeInMilliseconds = MILLISECONDS_PER_SECOND / TARGET_FRAME_RATE;
+	ASSUME(didAdjustGranularity, "Failed to adjust the process scheduler's time period");
+	milliseconds sleepTime = MILLISECONDS_PER_SECOND / TARGET_FRAME_RATE;
 
 	WNDCLASSEX windowClass = {};
 	// TODO Is this really a good idea? Beware the CS_OWNDC footguns...
@@ -282,7 +277,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE unused, LPSTR commandLine,
 		++offsetX;
 		offsetY += 2;
 
-		Sleep(sleepTimeInMilliseconds);
+		Sleep(FloatToU32(sleepTime));
 	}
 
 	timeEndPeriod(requestedSchedulerGranularityInMilliseconds);
