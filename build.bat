@@ -1,8 +1,12 @@
 @echo off
 
+:: TODO /SUBSYSTEM:WINDOWS
+
 set CPP_MAIN=Core\RagLite2.cpp
+set TEST_MAIN=Tests\RagLiteTestApp.cpp
 set DEBUG_EXE=RagLite2Dbg.exe
 set RELEASE_EXE=RagLite2.exe
+set TEST_EXE=RagLiteTestApp.exe
 set RUNTIME_LIBS=gdi32.lib user32.lib xinput.lib winmm.lib
 
 set DEFAULT_BUILD_DIR=BuildArtifacts
@@ -124,8 +128,16 @@ echo ---------------------------------------------------------------------------
 cl %RELEASE_COMPILE_FLAGS% %CPP_MAIN% %RUNTIME_LIBS% /link %RELEASE_LINK_FLAGS% %ICON_RES% /out:%RELEASE_EXE% || exit /b
 echo --------------------------------------------------------------------------------------------------------
 
+echo The Ancient One speaketh:
+echo 	Let us now turn %TEST_MAIN% into %TEST_EXE%!
+echo 	Harken, mortal, as I prepare thy unholy incantation...
+echo 	cl%DEBUG_COMPILE_FLAGS% %TEST_MAIN% %RUNTIME_LIBS% /link %RELEASE_LINK_FLAGS% %ICON_RES% /out:%TEST_EXE%
+echo --------------------------------------------------------------------------------------------------------
+cl %DEBUG_COMPILE_FLAGS% %TEST_MAIN% %RUNTIME_LIBS% /link %RELEASE_LINK_FLAGS% %ICON_RES% /out:%TEST_EXE%
+echo --------------------------------------------------------------------------------------------------------
+
 :: Cleanup
-move RagLite2*.exe %DEFAULT_BUILD_DIR% 2> NUL
+move RagLite*.exe %DEFAULT_BUILD_DIR% 2> NUL
 move *.idb %DEFAULT_BUILD_DIR% 2> NUL
 move *.obj %DEFAULT_BUILD_DIR% 2> NUL
 move *.pdb %DEFAULT_BUILD_DIR% 2> NUL

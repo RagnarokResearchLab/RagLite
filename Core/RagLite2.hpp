@@ -2,6 +2,7 @@
 
 #ifdef _WIN32
 #define RAGLITE_PLATFORM_WINDOWS
+#define RAGLITE_GRAPHICAL_INTERFACE
 #elifdef __APPLE__
 #define RAGLITE_PLATFORM_MACOS
 #elifdef __linux__
@@ -33,6 +34,7 @@
 // TODO: Add feature flags for release builds here
 #else
 #define RAGLITE_DEBUG_ASSERTIONS
+#define RAGLITE_DEBUG_CONSOLE
 #endif
 
 static_assert(sizeof(void*) == 8, "Only 64-bit platforms are currently supported");

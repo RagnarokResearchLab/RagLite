@@ -209,11 +209,16 @@ LRESULT CALLBACK WindowProcessMessage(HWND window, UINT message, WPARAM wParam,
 	return result;
 }
 
-constexpr int EXIT_FAILURE = -1;
-int WINAPI WinMain(HINSTANCE instance, HINSTANCE, LPSTR,
-	int) {
+int WINAPI WinMain(HINSTANCE instance, HINSTANCE, LPSTR, int) {
 	IntrinsicsReadCPUID();
 	ReadKernelVersionInfo();
+#ifdef RAGLITE_DEBUG_CONSOLE
+	PlatformAttachDevice(PLATFORM_DEVICE_STDOUT, PLATFORM_ACTION_CREATE);
+	PlatformAttachDevice(PLATFORM_DEVICE_STDERR, PLATFORM_ACTION_CREATE);
+#else
+	PlatformAttachDevice(PLATFORM_DEVICE_STDOUT, PLATFORM_ACTION_REUSE);
+	PlatformAttachDevice(PLATFORM_DEVICE_STDERR, PLATFORM_ACTION_REUSE);
+#endif
 
 	UINT requestedSchedulerGranularityInMilliseconds = 1;
 	bool didAdjustGranularity = (timeBeginPeriod(requestedSchedulerGranularityInMilliseconds) == TIMERR_NOERROR);
@@ -244,8 +249,8 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE, LPSTR,
 
 	TCHAR windowTitle[MAX_PATH];
 	GetModuleFileNameA(NULL, windowTitle, MAX_PATH);
-	PathStringToBaseNameInPlace(windowTitle);
-	PathStringStripFileExtensionInPlace(windowTitle);
+	// PathStringToBaseNameInPlace(windowTitle);
+	// PathStringStripFileExtensionInPlace(windowTitle);
 	HWND mainWindow = CreateWindowExA(
 		0, windowClass.lpszClassName, windowTitle,
 		WS_OVERLAPPEDWINDOW | WS_VISIBLE | WS_MAXIMIZE, CW_USEDEFAULT,
