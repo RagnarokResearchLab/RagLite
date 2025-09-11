@@ -35,7 +35,11 @@
 #define RAGLITE_DEBUG_ASSERTIONS
 #endif
 
-static_assert(sizeof(void*) == 8, "Only 64-bit platforms are currently supported");
+constexpr size_t BITS_PER_BYTE = 8ULL;
+#define Bits(bits) ((bits) / BITS_PER_BYTE)
+
+constexpr size_t PLATFORM_POINTER_SIZE = sizeof(void*);
+static_assert(PLATFORM_POINTER_SIZE == Bits(64), "Only 64-bit platforms are currently supported");
 
 #if defined(__BYTE_ORDER__) && __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
 #error "Only Little-Endian platforms are currently supported"
