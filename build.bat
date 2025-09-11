@@ -12,7 +12,7 @@ set ICON_RC=Assets/RagLite2.rc
 set ICON_RES=%DEFAULT_BUILD_DIR%\RagLite2.res
 
 :: Generate app icon
-rc /nologo /fo %ICON_RES% %ICON_RC%
+rc /nologo /fo %ICON_RES% %ICON_RC% || exit /b
 
 set SHARED_COMPILE_FLAGS=
 set SHARED_LINK_FLAGS=
@@ -82,7 +82,7 @@ echo 	Let us now turn %CPP_MAIN% into %DEBUG_EXE%!
 echo 	Harken, mortal, as I prepare thy unholy incantation...
 echo 	cl%DEBUG_COMPILE_FLAGS% %CPP_MAIN% %RUNTIME_LIBS% /link %DEBUG_LINK_FLAGS% %ICON_RES% /out:%DEBUG_EXE%
 echo --------------------------------------------------------------------------------------------------------
-cl %DEBUG_COMPILE_FLAGS% %CPP_MAIN% %RUNTIME_LIBS% /link %DEBUG_LINK_FLAGS% %ICON_RES% /out:%DEBUG_EXE%
+cl %DEBUG_COMPILE_FLAGS% %CPP_MAIN% %RUNTIME_LIBS% /link %DEBUG_LINK_FLAGS% %ICON_RES% /out:%DEBUG_EXE% || exit /b
 echo --------------------------------------------------------------------------------------------------------
 
 :::::: Build release binary
@@ -121,7 +121,7 @@ echo 	Let us now turn %CPP_MAIN% into %RELEASE_EXE%!
 echo 	Harken, mortal, as I prepare thy unholy incantation...
 echo 	cl%RELEASE_COMPILE_FLAGS% %CPP_MAIN% %RUNTIME_LIBS% /link %RELEASE_LINK_FLAGS% %ICON_RES% /out:%RELEASE_EXE%
 echo --------------------------------------------------------------------------------------------------------
-cl %RELEASE_COMPILE_FLAGS% %CPP_MAIN% %RUNTIME_LIBS% /link %RELEASE_LINK_FLAGS% %ICON_RES% /out:%RELEASE_EXE%
+cl %RELEASE_COMPILE_FLAGS% %CPP_MAIN% %RUNTIME_LIBS% /link %RELEASE_LINK_FLAGS% %ICON_RES% /out:%RELEASE_EXE% || exit /b
 echo --------------------------------------------------------------------------------------------------------
 
 :: Cleanup
