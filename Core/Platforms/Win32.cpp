@@ -242,8 +242,12 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE, LPSTR,
 		return EXIT_FAILURE;
 	}
 
+	TCHAR windowTitle[MAX_PATH];
+	GetModuleFileNameA(NULL, windowTitle, MAX_PATH);
+	PathStringToBaseNameInPlace(windowTitle);
+	PathStringStripFileExtensionInPlace(windowTitle);
 	HWND mainWindow = CreateWindowExA(
-		0, windowClass.lpszClassName, WINDOW_TITLE,
+		0, windowClass.lpszClassName, windowTitle,
 		WS_OVERLAPPEDWINDOW | WS_VISIBLE | WS_MAXIMIZE, CW_USEDEFAULT,
 		CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, 0, 0, instance, 0);
 	if(!mainWindow) {
