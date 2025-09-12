@@ -2,15 +2,24 @@
 
 :: TODO /SUBSYSTEM:WINDOWS
 
-set CPP_MAIN=Core\RagLite2.cpp
-set TEST_MAIN=Tests\RagLiteTestApp.cpp
-set DEBUG_EXE=RagLite2Dbg.exe
-set RELEASE_EXE=RagLite2.exe
-set TEST_EXE=RagLiteTestApp.exe
-set RUNTIME_LIBS=gdi32.lib user32.lib xinput.lib winmm.lib
-
 set DEFAULT_BUILD_DIR=BuildArtifacts
 if not exist %DEFAULT_BUILD_DIR% mkdir %DEFAULT_BUILD_DIR%
+
+:: RagLite2 apps
+set CPP_MAIN=Core\RagLite2.cpp
+set TEST_MAIN=Tests\RagLiteTestApp.cpp
+set DEBUG_EXE=%DEFAULT_BUILD_DIR%\RagLite2Dbg.exe
+set RELEASE_EXE=%DEFAULT_BUILD_DIR%\RagLite2.exe
+set TEST_EXE=%DEFAULT_BUILD_DIR%\RagLiteTestApp.exe
+
+:: Platform dependencies
+set RUNTIME_LIBS=gdi32.lib user32.lib xinput.lib winmm.lib
+
+:: External dependencies (third-party code)
+:: NOTE: A more portable solution would be welcome - maybe one day it'll happen
+set CTIME_MAIN=Externals\ctime.c
+set CTIME_EXE=%DEFAULT_BUILD_DIR%\ctime.exe
+cl %DEBUG_COMPILE_FLAGS% %CTIME_MAIN% %RUNTIME_LIBS% /link %DEBUG_LINK_FLAGS% /out:%CTIME_EXE% || exit /b
 
 set ICON_RC=Assets/RagLite2.rc
 set ICON_RES=%DEFAULT_BUILD_DIR%\RagLite2.res
@@ -81,13 +90,13 @@ set DEBUG_LINK_FLAGS=%DEBUG_LINK_FLAGS% /DEBUG
 set DEBUG_COMPILE_FLAGS=%DEBUG_COMPILE_FLAGS% %SHARED_COMPILE_FLAGS%
 set DEBUG_LINK_FLAGS=%DEBUG_LINK_FLAGS% %SHARED_LINK_FLAGS%
 
-echo The Ancient One speaketh:
-echo 	Let us now turn %CPP_MAIN% into %DEBUG_EXE%!
-echo 	Harken, mortal, as I prepare thy unholy incantation...
-echo 	cl%DEBUG_COMPILE_FLAGS% %CPP_MAIN% %RUNTIME_LIBS% /link %DEBUG_LINK_FLAGS% %ICON_RES% /out:%DEBUG_EXE%
-echo --------------------------------------------------------------------------------------------------------
+:: NOTE: A portable solution for this would be welcome - maybe one day it'll happen
+
+call %CTIME_EXE% -begin %DEFAULT_BUILD_DIR%\RagLite2.ctm || exit /b
+
+call %CTIME_EXE% -begin %DEBUG_EXE%.ctm || exit /b
 cl %DEBUG_COMPILE_FLAGS% %CPP_MAIN% %RUNTIME_LIBS% /link %DEBUG_LINK_FLAGS% %ICON_RES% /out:%DEBUG_EXE% || exit /b
-echo --------------------------------------------------------------------------------------------------------
+call %CTIME_EXE%  -end %DEBUG_EXE%.ctm || exit /b
 
 :::::: Build release binary
 set RELEASE_COMPILE_FLAGS=
@@ -108,8 +117,8 @@ set RELEASE_COMPILE_FLAGS=%RELEASE_COMPILE_FLAGS% /Oi
 :: /O2					Creates fast code
 set RELEASE_COMPILE_FLAGS=%RELEASE_COMPILE_FLAGS% /O2
 
-:: /LTCG:STATUS			Enables link-time code generation (display progress also)
-set RELEASE_LINK_FLAGS=%RELEASE_LINK_FLAGS% /LTCG:STATUS
+:: /LTCG			Enables link-time code generation
+set RELEASE_LINK_FLAGS=%RELEASE_LINK_FLAGS% /LTCG
 :: /NXCOMPAT			Indicates compatibility with Windows Data Execution Prevention feature
 set RELEASE_LINK_FLAGS=%RELEASE_LINK_FLAGS% /NXCOMPAT
 :: /OPT:REF				Eliminates functions and data that are never referenced
@@ -120,24 +129,13 @@ set RELEASE_LINK_FLAGS=%RELEASE_LINK_FLAGS% /OPT:ICF
 set RELEASE_COMPILE_FLAGS=%RELEASE_COMPILE_FLAGS% %SHARED_COMPILE_FLAGS%
 set RELEASE_LINK_FLAGS=%RELEASE_LINK_FLAGS% %SHARED_LINK_FLAGS%
 
-echo The Ancient One speaketh:
-echo 	Let us now turn %CPP_MAIN% into %RELEASE_EXE%!
-echo 	Harken, mortal, as I prepare thy unholy incantation...
-echo 	cl%RELEASE_COMPILE_FLAGS% %CPP_MAIN% %RUNTIME_LIBS% /link %RELEASE_LINK_FLAGS% %ICON_RES% /out:%RELEASE_EXE%
-echo --------------------------------------------------------------------------------------------------------
+call %CTIME_EXE%  -begin %RELEASE_EXE%.ctm || exit /b
 cl %RELEASE_COMPILE_FLAGS% %CPP_MAIN% %RUNTIME_LIBS% /link %RELEASE_LINK_FLAGS% %ICON_RES% /out:%RELEASE_EXE% || exit /b
-echo --------------------------------------------------------------------------------------------------------
+call %CTIME_EXE%  -end %RELEASE_EXE%.ctm || exit /b
 
-echo The Ancient One speaketh:
-echo 	Let us now turn %TEST_MAIN% into %TEST_EXE%!
-echo 	Harken, mortal, as I prepare thy unholy incantation...
-echo 	cl%DEBUG_COMPILE_FLAGS% %TEST_MAIN% %RUNTIME_LIBS% /link %RELEASE_LINK_FLAGS% %ICON_RES% /out:%TEST_EXE%
-echo --------------------------------------------------------------------------------------------------------
+call %CTIME_EXE%  -begin %TEST_EXE%.ctm || exit /b
 cl %DEBUG_COMPILE_FLAGS% %TEST_MAIN% %RUNTIME_LIBS% /link %RELEASE_LINK_FLAGS% %ICON_RES% /out:%TEST_EXE%
-echo --------------------------------------------------------------------------------------------------------
+call %CTIME_EXE%  -end %TEST_EXE%.ctm || exit /b
 
-:: Cleanup
-move RagLite*.exe %DEFAULT_BUILD_DIR% 2> NUL
-move *.idb %DEFAULT_BUILD_DIR% 2> NUL
-move *.obj %DEFAULT_BUILD_DIR% 2> NUL
-move *.pdb %DEFAULT_BUILD_DIR% 2> NUL
+call %CTIME_EXE%  -end %DEFAULT_BUILD_DIR%\RagLite2.ctm || exit /b
+call %CTIME_EXE% -stats %DEFAULT_BUILD_DIR%\RagLite2.ctm || exit /b
