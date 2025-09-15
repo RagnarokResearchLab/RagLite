@@ -2,7 +2,6 @@
 
 #define ASSERT(condition, failureMessage) \
 	if(!(condition)) {                    \
-		DebugMessage(failureMessage);     \
 		DebugTrap();                      \
 	}
 #define ASSUME(condition, failureMessage) ASSERT(condition, failureMessage)
