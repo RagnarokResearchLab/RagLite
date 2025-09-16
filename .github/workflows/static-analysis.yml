@@ -20,6 +20,12 @@ jobs:
       - name: Check out Git repository
         uses: actions/checkout@v4
 
+      - name: Scan for missing executable flags # They can get lost while rebasing on Windows
+        run: |
+          git ls-files --stage | grep '\.sh' || true
+          git ls-files --stage | grep '\.sh' | grep '100644' || true
+          git ls-files --stage | grep '\.sh' | grep -v '100644'
+
       - name: Download luacheck
         run: curl --silent --location --output luacheck https://github.com/lunarmodules/luacheck/releases/download/v1.1.0/luacheck
 
