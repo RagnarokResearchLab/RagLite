@@ -278,14 +278,16 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE, LPSTR,
 
 		if(!APPLICATION_SHOULD_PAUSE) {
 			PerformanceMetricsUpdateNow();
+
+			// NOTE: Application/game state updates should go here (later)
+			++offsetX;
+			offsetY += 2;
+
 			GamePadPollControllers(offsetX, offsetY);
 			DebugDrawUpdateBackgroundPattern();
 			DebugDrawUpdateFrameBuffer(GDI_BACKBUFFER, offsetX, offsetY);
 			InvalidateRect(mainWindow, NULL, FALSE);
 		}
-
-		++offsetX;
-		offsetY += 2;
 
 		Sleep(FloatToU32(sleepTime));
 	}
