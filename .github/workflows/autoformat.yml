@@ -14,30 +14,62 @@ on:
 jobs:
   check-format:
     name: Enforce consistent formatting
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-24.04, macos-15, windows-2025]
+        include:
+          - os: ubuntu-24.04
+            stylua: stylua-linux-x86_64.zip
+            exe: ""
+          - os: macos-15
+            stylua: stylua-macos-x86_64.zip
+            exe: ""
+          - os: windows-2025
+            stylua: stylua-windows-x86_64.zip
+            exe: ".exe"
+    defaults:
+      run:
+        shell: bash
 
     steps:
       - name: Check out Git repository
         uses: actions/checkout@v4
 
-      - name: Install clang-format
+      - name: Set up environment
         run: |
-          wget https://apt.llvm.org/llvm.sh
-          chmod +x llvm.sh
-          sudo ./llvm.sh 20
-          which clang-format
-          clang-format --version
-          export CLANG_FORMAT=$(which clang-format)
+          set -a
+          source .github/autoformat.env
+          cat .github/autoformat.env >> $GITHUB_ENV
+          echo $(pwd) >> $GITHUB_PATH
 
-      - name: Set up StyLua
-        uses: JohnnyMorganz/stylua-action@v4.1.0
+      - name: Cache clang-format binary
+        id: cache-clang-format
+        uses: actions/cache@v4
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          args: --check . --verbose
-          version: v2.1.0
+          path: clang-format${{ matrix.exe }}
+          key: clang-format-${{ runner.os }}-${{ env.RAGLITE_CLANGFORMAT_VERSION }}
+          restore-keys: |
+            clang-format-${{ runner.os }}-${{ env.RAGLITE_CLANGFORMAT_VERSION }}
+
+      - name: Install clang-format
+        if: steps.cache-clang-format.outputs.cache-hit != 'true'
+        run: .github/get-clang-format.sh
+
+      - name: Verify clang-format version
+        run: which clang-format && clang-format --version
+
+      - name: Install stylua
+        run: |
+          curl --location --output ${{ matrix.stylua }} https://github.com/JohnnyMorganz/StyLua/releases/download/${{ env.RAGLITE_STYLUA_VERSION }}/${{ matrix.stylua }}
+          unzip ${{ matrix.stylua }}
+          chmod +x stylua
+
+      - name: Verify stylua version
+        run: which stylua && stylua --version
 
       - name: Run autoformat
         run: ./autoformat.sh
 
       - name: Check for inconsistent formatting
-        run: git --no-pager diff --exit-code -b . # The -b is for inconsistent newlines, which we ignore (for now)
+        run: git --no-pager diff --exit-code -b .
