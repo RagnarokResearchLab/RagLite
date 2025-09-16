@@ -83,6 +83,29 @@ const char* ArchitectureToDebugName(WORD wProcessorArchitecture) {
 
 #include "Win32/DebugDraw.cpp"
 
+void DrawDebugOverlay(HWND& window) {
+	HDC deviceContext = GetDC(window);
+	ASSUME(deviceContext, "Failed to get GDI device drawing context");
+	GDI_SURFACE.displayDeviceContext = deviceContext;
+
+	if(!GDI_SURFACE.offscreenDeviceContext || !GDI_BACKBUFFER.activeHandle) {
+		return;
+	}
+
+	DebugDrawMemoryUsageOverlay(GDI_SURFACE);
+	DebugDrawProcessorUsageOverlay(GDI_SURFACE);
+	DebugDrawKeyboardOverlay(GDI_SURFACE);
+
+	int srcW = GDI_BACKBUFFER.width;
+	int srcH = GDI_BACKBUFFER.height;
+	int destW = GDI_SURFACE.width;
+	int destH = GDI_SURFACE.height;
+	if(!StretchBlt(deviceContext, 0, 0, destW, destH, GDI_SURFACE.offscreenDeviceContext,
+		   0, 0, srcW, srcH, SRCCOPY)) {
+		TODO("StretchBlt failed\n");
+	}
+}
+
 LRESULT CALLBACK WindowProcessMessage(HWND window, UINT message, WPARAM wParam,
 	LPARAM lParam) {
 	LRESULT result = 0;
@@ -101,30 +124,9 @@ LRESULT CALLBACK WindowProcessMessage(HWND window, UINT message, WPARAM wParam,
 
 	case WM_PAINT: {
 		PAINTSTRUCT paintInfo;
-		HDC hdc = BeginPaint(window, &paintInfo);
-		GDI_SURFACE.displayDeviceContext = hdc;
-
-		if(!GDI_SURFACE.offscreenDeviceContext || !GDI_BACKBUFFER.activeHandle) {
-			EndPaint(window, &paintInfo);
-			return 0;
-		}
-
-		DebugDrawMemoryUsageOverlay(GDI_SURFACE);
-		DebugDrawProcessorUsageOverlay(GDI_SURFACE);
-		DebugDrawKeyboardOverlay(GDI_SURFACE);
-
-		int srcW = GDI_BACKBUFFER.width;
-		int srcH = GDI_BACKBUFFER.height;
-		int destW = GDI_SURFACE.width;
-		int destH = GDI_SURFACE.height;
-		if(!StretchBlt(hdc, 0, 0, destW, destH, GDI_SURFACE.offscreenDeviceContext,
-			   0, 0, srcW, srcH, SRCCOPY)) {
-			TODO("StretchBlt failed in WM_PAINT\n");
-		}
-
+		BeginPaint(window, &paintInfo);
 		EndPaint(window, &paintInfo);
 		return 0;
-
 	} break;
 
 	case WM_SYSKEYDOWN:
@@ -272,16 +274,20 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE, LPSTR,
 				APPLICATION_SHOULD_EXIT = true;
 		}
 
+		PerformanceMetricsUpdateNow();
 		if(!APPLICATION_SHOULD_PAUSE) {
-			PerformanceMetricsUpdateNow();
+
+			// NOTE: Application/game state updates should go here (later)
+			++offsetX;
+			offsetY += 2;
+
 			GamePadPollControllers(offsetX, offsetY);
 			DebugDrawUpdateBackgroundPattern();
 			DebugDrawUpdateFrameBuffer(GDI_BACKBUFFER, offsetX, offsetY);
 			InvalidateRect(mainWindow, NULL, FALSE);
 		}
 
-		++offsetX;
-		offsetY += 2;
+		DrawDebugOverlay(mainWindow);
 
 		Sleep(FloatToU32(sleepTime));
 	}
