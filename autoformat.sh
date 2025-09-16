@@ -3,6 +3,15 @@ set -aeo pipefail
 
 STYLUA="stylua"
 CLANG_FORMAT="clang-format"
+
+if [[ -x "./stylua" ]]; then
+  STYLUA="./stylua"
+fi
+
+if [[ -x "./clang-format" ]]; then
+  CLANG_FORMAT="./clang-format"
+fi
+
 echo "Installed formatters:"
 echo
 
