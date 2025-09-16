@@ -34,9 +34,21 @@ jobs:
       - name: Run luacheck
         run: chmod +x luacheck && ./luacheck .
 
+      - name: Cache naga binary
+        id: cache-naga
+        uses: actions/cache@v4
+        with:
+          path: naga
+          key: naga-v${{ env.RAGLITE_NAGA_VERSION }}
+          restore-keys: |
+            naga-v${{ env.RAGLITE_NAGA_VERSION }}
+
       - name: Install naga-cli
+        if: steps.cache-naga.outputs.cache-hit != 'true'
         run: |
           cargo install naga-cli@${{ env.RAGLITE_NAGA_VERSION }}
+          cp -v $(which naga) .
+          echo $(pwd) >> $GITHUB_PATH
           naga --version
 
       - name: Validate WGSL shaders
