@@ -88,9 +88,7 @@ void PerformanceMetricsUpdateNow() {
 
 	// CPU usage
 	CPU_PERFORMANCE_METRICS.processorUsageAllCores = GetProcessorUsageAllCores();
-	SYSTEM_INFO sysInfo;
-	GetSystemInfo(&sysInfo);
-	CPU_PERFORMANCE_METRICS.processorUsageSingleCore = CPU_PERFORMANCE_METRICS.processorUsageAllCores * sysInfo.dwNumberOfProcessors;
+	CPU_PERFORMANCE_METRICS.processorUsageSingleCore = CPU_PERFORMANCE_METRICS.processorUsageAllCores * CPU_PERFORMANCE_METRICS.hardwareSystemInfo.dwNumberOfProcessors;
 
 	// Sleep timings
 	milliseconds desiredSleepTime = MILLISECONDS_PER_SECOND / TARGET_FRAME_RATE;
@@ -102,6 +100,4 @@ void PerformanceMetricsUpdateNow() {
 
 	CPU_PERFORMANCE_METRICS.desiredSleepTime = desiredSleepTime;
 	CPU_PERFORMANCE_METRICS.observedSleepTime = observedSleepTime;
-
-	CPU_PERFORMANCE_METRICS.hardwareSystemInfo = sysInfo;
 }
