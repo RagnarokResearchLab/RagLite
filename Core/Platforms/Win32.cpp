@@ -220,6 +220,10 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE, LPSTR,
 	ASSUME(didAdjustGranularity, "Failed to adjust the process scheduler's time period");
 	milliseconds sleepTime = MILLISECONDS_PER_SECOND / TARGET_FRAME_RATE;
 
+	SYSTEM_INFO sysInfo;
+	GetSystemInfo(&sysInfo);
+	CPU_PERFORMANCE_METRICS.hardwareSystemInfo = sysInfo;
+
 	WNDCLASSEX windowClass = {};
 	// TODO Is this really a good idea? Beware the CS_OWNDC footguns...
 	// TODO https://devblogs.microsoft.com/oldnewthing/20060601-06/?p=31003
