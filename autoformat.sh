@@ -33,7 +33,7 @@ fi
 
 echo "Discovering C/C++ sources ..."
 
-RELEVANT_C_FILES_TO_FORMAT=$(find . -type f -name "*.c" -print -o -name "*.h" -print -o -path "*/deps" -prune -o -path "*/ninjabuild-*" -prune)
+RELEVANT_C_FILES_TO_FORMAT=$(find . -type f -name "*.c" -print -o -name "*.h" -print)
 
 if [ -n "$RELEVANT_C_FILES_TO_FORMAT" ]; then
 	echo "Discovered C sources:"
@@ -45,7 +45,7 @@ else
 	echo "NO relevant C sources found"
 fi
 
-RELEVANT_CPP_FILES_TO_FORMAT=$(find . -type f -name "*.cpp" -print -o -name "*.hpp" -print -o -path "*/deps" -prune -o -path "*/ninjabuild-*" -prune)
+RELEVANT_CPP_FILES_TO_FORMAT=$(find . -type f -name "*.cpp" -print -o -name "*.hpp" -print)
 echo "Discovered C++ sources:"
 echo $RELEVANT_CPP_FILES_TO_FORMAT
 
