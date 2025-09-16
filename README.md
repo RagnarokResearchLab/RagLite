@@ -4,6 +4,18 @@ RagLite is a collection of various tools intended to help others understand and 
 
 Please note that RagLite is explicitly **NOT** a full game client or server implementation. If you want one, there are [many other projects](https://ragnarokresearchlab.github.io/community-projects/) aiming to accomplish this lofty goal. My focus is on research, and the tool reflects that. Even though this necessitates that some of the core concepts and gameplay mechanics need to be implemented, the program is not intended as a replacement for the original game client and/or server, per se.
 
+## Installation
+
+You can download (very early) "nightly" builds of the `RagLite2` executables from GitHub Actions:
+
+<img width="1550" height="347" alt="image" src="https://github.com/user-attachments/assets/24752443-c7f5-4e2f-b623-73e75dfbdff8" />
+
+You'll find both release and debug binaries for the supported Desktop platforms here:
+
+* [Windows build workflow](https://github.com/RagnarokResearchLab/RagLite/actions/workflows/ci-windows.yml) (for the latest committed changes, filter the list to only show [main](https://github.com/RagnarokResearchLab/RagLite/actions/workflows/ci-windows.yml?query=branch%3Amain))
+
+Select any workflow run or commit you're interested in testing, but do note that these artifacts will expire.
+
 ## Status
 
 RagLite2 is the second (published) version of my RO-specific toolkit. This repository also contains the source code of the first *RagLite* toolkit. Both versions will coexist until the second reaches feature parity, or the first one breaks in a way that's too painful for me to fix. You can still use the "old" RagLite tools and read all of the source code. Indeed, they might see further development as they're better suited to prototyping.
