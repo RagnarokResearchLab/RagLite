@@ -26,7 +26,7 @@ echo "Formatting Lua sources ..."
 if [ "$1" = "--quick" ]; then
 	# Some of the database files are huge, so formatting takes a lot of time and hogs memory
 	# Since they're rarely changed, can skip them for local development (but never in CI runs)
-    $STYLUA . --verbose --syntax luajit --glob '*.lua' --glob '!DB/*'
+    $STYLUA . --syntax luajit --glob '*.lua' --glob '!DB/*'
 else
     $STYLUA . --verbose --syntax luajit
 fi
