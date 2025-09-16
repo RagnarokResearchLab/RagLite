@@ -131,9 +131,6 @@ LRESULT CALLBACK WindowProcessMessage(HWND window, UINT message, WPARAM wParam,
 	case WM_SYSKEYUP:
 	case WM_KEYDOWN:
 	case WM_KEYUP: {
-		DebugDrawKeyboardOverlay(GDI_SURFACE);
-		DebugDrawMemoryUsageOverlay(GDI_SURFACE);
-
 		WORD virtualKeyCode = LOWORD(wParam);
 		WORD keyFlags = HIWORD(lParam);
 		WORD scanCode = LOBYTE(keyFlags);
