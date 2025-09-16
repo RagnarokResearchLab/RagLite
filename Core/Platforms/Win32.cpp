@@ -124,9 +124,7 @@ LRESULT CALLBACK WindowProcessMessage(HWND window, UINT message, WPARAM wParam,
 
 	case WM_PAINT: {
 		PAINTSTRUCT paintInfo;
-		HDC hdc = BeginPaint(window, &paintInfo);
-		GDI_SURFACE.displayDeviceContext = hdc;
-		DrawDebugOverlay(window);
+		BeginPaint(window, &paintInfo);
 		EndPaint(window, &paintInfo);
 		return 0;
 	} break;
@@ -276,8 +274,8 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE, LPSTR,
 				APPLICATION_SHOULD_EXIT = true;
 		}
 
+		PerformanceMetricsUpdateNow();
 		if(!APPLICATION_SHOULD_PAUSE) {
-			PerformanceMetricsUpdateNow();
 
 			// NOTE: Application/game state updates should go here (later)
 			++offsetX;
@@ -288,6 +286,8 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE, LPSTR,
 			DebugDrawUpdateFrameBuffer(GDI_BACKBUFFER, offsetX, offsetY);
 			InvalidateRect(mainWindow, NULL, FALSE);
 		}
+
+		DrawDebugOverlay(mainWindow);
 
 		Sleep(FloatToU32(sleepTime));
 	}
