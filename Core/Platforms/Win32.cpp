@@ -300,8 +300,8 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE, LPSTR,
 
 			GamePadPollControllers(PLACEHOLDER_DEMO_APP.offsetX, PLACEHOLDER_DEMO_APP.offsetY);
 			DebugDrawUpdateBackgroundPattern();
-			DebugDrawUpdateFrameBuffer(GDI_BACKBUFFER, PLACEHOLDER_DEMO_APP.offsetX, PLACEHOLDER_DEMO_APP.offsetY);
 			InvalidateRect(mainWindow, NULL, FALSE);
+			DebugDrawIntoFrameBuffer(GDI_BACKBUFFER, PLACEHOLDER_DEMO_APP.offsetX, PLACEHOLDER_DEMO_APP.offsetY);
 		}
 
 		DrawDebugOverlay(GDI_SURFACE);

@@ -631,7 +631,7 @@ INTERNAL void DebugDrawUseMovingScanlinePattern(gdi_bitmap_t& bitmap, int time,
 	}
 }
 
-INTERNAL void DebugDrawUpdateFrameBuffer(gdi_bitmap_t& bitmap, int paramA,
+INTERNAL void DebugDrawIntoFrameBuffer(gdi_bitmap_t& bitmap, int paramA,
 	int paramB) {
 	switch(GDI_DEBUG_PATTERN) {
 	case PATTERN_SHIFTING_GRADIENT:
