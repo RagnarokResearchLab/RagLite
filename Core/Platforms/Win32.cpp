@@ -118,6 +118,12 @@ void DrawDebugOverlay(gdi_surface_t doubleBufferedSurface) {
 	DebugDrawKeyboardOverlay(doubleBufferedSurface);
 }
 
+void RedrawEverythingIntoWindow(HWND& window) {
+	DebugDrawIntoFrameBuffer(GDI_BACKBUFFER, PLACEHOLDER_DEMO_APP.offsetX, PLACEHOLDER_DEMO_APP.offsetY);
+	DrawDebugOverlay(GDI_SURFACE);
+	BlitBackBufferToWindow(window);
+}
+
 LRESULT CALLBACK WindowProcessMessage(HWND window, UINT message, WPARAM wParam,
 	LPARAM lParam) {
 	LRESULT result = 0;
@@ -303,9 +309,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE, LPSTR,
 			InvalidateRect(mainWindow, NULL, FALSE);
 		}
 
-		DebugDrawIntoFrameBuffer(GDI_BACKBUFFER, PLACEHOLDER_DEMO_APP.offsetX, PLACEHOLDER_DEMO_APP.offsetY);
-		DrawDebugOverlay(GDI_SURFACE);
-		BlitBackBufferToWindow(mainWindow);
+		RedrawEverythingIntoWindow(mainWindow);
 
 		Sleep(FloatToU32(sleepTime));
 	}
