@@ -36,7 +36,7 @@ set SHARED_COMPILE_FLAGS=%SHARED_COMPILE_FLAGS% /options:strict
 :: /W4					Enable informational warnings (levels 0 through 4)
 set SHARED_COMPILE_FLAGS=%SHARED_COMPILE_FLAGS% /W4
 :: 						...except useless ones
-set SHARED_COMPILE_FLAGS=%SHARED_COMPILE_FLAGS% /wd4189
+set SHARED_COMPILE_FLAGS=%SHARED_COMPILE_FLAGS% /wd4189 /wd4100
 :: /WX					Treat all warnings as errors
 set SHARED_COMPILE_FLAGS=%SHARED_COMPILE_FLAGS% /WX
 :: /Zc:strictStrings	Require const qualifier for pointers initialized via string literals
