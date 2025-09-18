@@ -136,6 +136,7 @@ LRESULT CALLBACK WindowProcessMessage(HWND window, UINT message, WPARAM wParam,
 		// TODO Initialize child windows here?
 	} break;
 
+	case WM_DISPLAYCHANGE:
 	case WM_SIZING:
 	case WM_SIZE: {
 		SurfaceGetWindowDimensions(GDI_SURFACE, window);
