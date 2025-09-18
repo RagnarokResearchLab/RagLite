@@ -307,7 +307,6 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE, LPSTR,
 
 			GamePadPollControllers(PLACEHOLDER_DEMO_APP.offsetX, PLACEHOLDER_DEMO_APP.offsetY);
 			DebugDrawUpdateBackgroundPattern();
-			InvalidateRect(mainWindow, NULL, FALSE);
 		}
 
 		RedrawEverythingIntoWindow(mainWindow);
