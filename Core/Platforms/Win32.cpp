@@ -4,6 +4,16 @@
 
 GLOBAL FPS TARGET_FRAME_RATE = 120;
 
+// TODO: Replace these with the actual game/application state later
+typedef struct volatile_game_state {
+	int32 offsetX;
+	int32 offsetY;
+} game_state_t;
+GLOBAL game_state_t PLACEHOLDER_DEMO_APP = {
+	.offsetX = 0,
+	.offsetY = 0,
+};
+
 constexpr size_t MAX_ERROR_MSG_SIZE = 512;
 GLOBAL TCHAR SYSTEM_ERROR_MESSAGE[MAX_ERROR_MSG_SIZE];
 
@@ -264,8 +274,6 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE, LPSTR,
 		max(1, GDI_SURFACE.height), mainWindow);
 
 	MSG message;
-	int offsetX = 0;
-	int offsetY = 0;
 	while(!APPLICATION_SHOULD_EXIT) {
 		while(PeekMessage(&message, 0, 0, 0, PM_REMOVE)) {
 			TranslateMessage(&message);
@@ -278,12 +286,13 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE, LPSTR,
 		if(!APPLICATION_SHOULD_PAUSE) {
 
 			// NOTE: Application/game state updates should go here (later)
-			++offsetX;
-			offsetY += 2;
+			PLACEHOLDER_DEMO_APP.offsetX++;
+			PLACEHOLDER_DEMO_APP.offsetY++;
+			PLACEHOLDER_DEMO_APP.offsetY++;
 
-			GamePadPollControllers(offsetX, offsetY);
+			GamePadPollControllers(PLACEHOLDER_DEMO_APP.offsetX, PLACEHOLDER_DEMO_APP.offsetY);
 			DebugDrawUpdateBackgroundPattern();
-			DebugDrawUpdateFrameBuffer(GDI_BACKBUFFER, offsetX, offsetY);
+			DebugDrawUpdateFrameBuffer(GDI_BACKBUFFER, PLACEHOLDER_DEMO_APP.offsetX, PLACEHOLDER_DEMO_APP.offsetY);
 			InvalidateRect(mainWindow, NULL, FALSE);
 		}
 
