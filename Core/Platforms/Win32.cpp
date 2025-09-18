@@ -134,10 +134,14 @@ LRESULT CALLBACK WindowProcessMessage(HWND window, UINT message, WPARAM wParam,
 		// TODO Initialize child windows here?
 	} break;
 
+	case WM_SIZING:
 	case WM_SIZE: {
 		SurfaceGetWindowDimensions(GDI_SURFACE, window);
 		ResizeBackBuffer(GDI_BACKBUFFER, GDI_SURFACE.width, GDI_SURFACE.height,
 			window);
+		// NOTE: Updating again allows the simulation to appear more fluid (evaluate UX later)
+		DebugDrawUpdateBackgroundPattern();
+		RedrawEverythingIntoWindow(window);
 	} break;
 
 	case WM_PAINT: {
