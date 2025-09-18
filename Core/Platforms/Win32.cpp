@@ -93,27 +93,29 @@ const char* ArchitectureToDebugName(WORD wProcessorArchitecture) {
 
 #include "Win32/DebugDraw.cpp"
 
-void DrawDebugOverlay(HWND& window) {
+void BlitBackBufferToWindow(HWND& window) {
 	HDC deviceContext = GetDC(window);
 	ASSUME(deviceContext, "Failed to get GDI device drawing context");
 	GDI_SURFACE.displayDeviceContext = deviceContext;
 
-	if(!GDI_SURFACE.offscreenDeviceContext || !GDI_BACKBUFFER.activeHandle) {
-		return;
-	}
-
-	DebugDrawMemoryUsageOverlay(GDI_SURFACE);
-	DebugDrawProcessorUsageOverlay(GDI_SURFACE);
-	DebugDrawKeyboardOverlay(GDI_SURFACE);
+	ASSUME(GDI_SURFACE.displayDeviceContext, "Failed to get GDI display device drawing context");
+	ASSUME(GDI_SURFACE.offscreenDeviceContext, "Failed to get GDI offscreen device drawing context");
+	ASSUME(GDI_BACKBUFFER.activeHandle, "No active GDI back buffer is available for drawing");
 
 	int srcW = GDI_BACKBUFFER.width;
 	int srcH = GDI_BACKBUFFER.height;
 	int destW = GDI_SURFACE.width;
 	int destH = GDI_SURFACE.height;
-	if(!StretchBlt(deviceContext, 0, 0, destW, destH, GDI_SURFACE.offscreenDeviceContext,
+	if(!StretchBlt(GDI_SURFACE.displayDeviceContext, 0, 0, destW, destH, GDI_SURFACE.offscreenDeviceContext,
 		   0, 0, srcW, srcH, SRCCOPY)) {
 		TODO("StretchBlt failed\n");
 	}
+}
+
+void DrawDebugOverlay(gdi_surface_t doubleBufferedSurface) {
+	DebugDrawMemoryUsageOverlay(doubleBufferedSurface);
+	DebugDrawProcessorUsageOverlay(doubleBufferedSurface);
+	DebugDrawKeyboardOverlay(doubleBufferedSurface);
 }
 
 LRESULT CALLBACK WindowProcessMessage(HWND window, UINT message, WPARAM wParam,
@@ -302,7 +304,8 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE, LPSTR,
 			InvalidateRect(mainWindow, NULL, FALSE);
 		}
 
-		DrawDebugOverlay(mainWindow);
+		DrawDebugOverlay(GDI_SURFACE);
+		BlitBackBufferToWindow(mainWindow);
 
 		Sleep(FloatToU32(sleepTime));
 	}
