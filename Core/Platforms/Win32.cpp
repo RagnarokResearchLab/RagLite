@@ -99,8 +99,10 @@ void BlitBackBufferToWindow(HWND& window) {
 	GDI_SURFACE.displayDeviceContext = deviceContext;
 
 	ASSUME(GDI_SURFACE.displayDeviceContext, "Failed to get GDI display device drawing context");
-	ASSUME(GDI_SURFACE.offscreenDeviceContext, "Failed to get GDI offscreen device drawing context");
-	ASSUME(GDI_BACKBUFFER.activeHandle, "No active GDI back buffer is available for drawing");
+	if(!GDI_BACKBUFFER.activeHandle || !GDI_SURFACE.offscreenDeviceContext) {
+		// Minimized (redraw once restored)
+		return;
+	}
 
 	int srcW = GDI_BACKBUFFER.width;
 	int srcH = GDI_BACKBUFFER.height;
