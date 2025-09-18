@@ -205,6 +205,12 @@ LRESULT CALLBACK WindowProcessMessage(HWND window, UINT message, WPARAM wParam,
 		TODO("Received WM_ACTIVATEAPP\n");
 	} break;
 
+	case WM_ERASEBKGND: {
+		// NOTE: No need for the OS to clear since the entire window is always fully painted
+		constexpr bool didEraseBackground = true;
+		return didEraseBackground;
+	} break;
+
 	case WM_DESTROY: {
 		PostQuitMessage(0);
 		return 0;
