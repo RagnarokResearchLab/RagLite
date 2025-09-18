@@ -143,6 +143,7 @@ LRESULT CALLBACK WindowProcessMessage(HWND window, UINT message, WPARAM wParam,
 	case WM_PAINT: {
 		PAINTSTRUCT paintInfo;
 		BeginPaint(window, &paintInfo);
+		RedrawEverythingIntoWindow(window);
 		EndPaint(window, &paintInfo);
 		return 0;
 	} break;
