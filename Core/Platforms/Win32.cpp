@@ -242,7 +242,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE, LPSTR,
 	WNDCLASSEX windowClass = {};
 	// TODO Is this really a good idea? Beware the CS_OWNDC footguns...
 	// TODO https://devblogs.microsoft.com/oldnewthing/20060601-06/?p=31003
-	windowClass.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
+	windowClass.style = CS_OWNDC;
 
 	windowClass.cbSize = sizeof(windowClass);
 	windowClass.lpfnWndProc = WindowProcessMessage;
