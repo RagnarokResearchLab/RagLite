@@ -4,6 +4,16 @@
 
 GLOBAL FPS TARGET_FRAME_RATE = 120;
 
+// TODO: Replace these with the actual game/application state later
+typedef struct volatile_game_state {
+	int32 offsetX;
+	int32 offsetY;
+} game_state_t;
+GLOBAL game_state_t PLACEHOLDER_DEMO_APP = {
+	.offsetX = 0,
+	.offsetY = 0,
+};
+
 constexpr size_t MAX_ERROR_MSG_SIZE = 512;
 GLOBAL TCHAR SYSTEM_ERROR_MESSAGE[MAX_ERROR_MSG_SIZE];
 
@@ -83,27 +93,35 @@ const char* ArchitectureToDebugName(WORD wProcessorArchitecture) {
 
 #include "Win32/DebugDraw.cpp"
 
-void DrawDebugOverlay(HWND& window) {
+void BlitBackBufferToWindow(HWND& window) {
 	HDC deviceContext = GetDC(window);
 	ASSUME(deviceContext, "Failed to get GDI device drawing context");
 	GDI_SURFACE.displayDeviceContext = deviceContext;
 
-	if(!GDI_SURFACE.offscreenDeviceContext || !GDI_BACKBUFFER.activeHandle) {
-		return;
-	}
-
-	DebugDrawMemoryUsageOverlay(GDI_SURFACE);
-	DebugDrawProcessorUsageOverlay(GDI_SURFACE);
-	DebugDrawKeyboardOverlay(GDI_SURFACE);
+	ASSUME(GDI_SURFACE.displayDeviceContext, "Failed to get GDI display device drawing context");
+	ASSUME(GDI_SURFACE.offscreenDeviceContext, "Failed to get GDI offscreen device drawing context");
+	ASSUME(GDI_BACKBUFFER.activeHandle, "No active GDI back buffer is available for drawing");
 
 	int srcW = GDI_BACKBUFFER.width;
 	int srcH = GDI_BACKBUFFER.height;
 	int destW = GDI_SURFACE.width;
 	int destH = GDI_SURFACE.height;
-	if(!StretchBlt(deviceContext, 0, 0, destW, destH, GDI_SURFACE.offscreenDeviceContext,
+	if(!StretchBlt(GDI_SURFACE.displayDeviceContext, 0, 0, destW, destH, GDI_SURFACE.offscreenDeviceContext,
 		   0, 0, srcW, srcH, SRCCOPY)) {
 		TODO("StretchBlt failed\n");
 	}
+}
+
+void DrawDebugOverlay(gdi_surface_t doubleBufferedSurface) {
+	DebugDrawMemoryUsageOverlay(doubleBufferedSurface);
+	DebugDrawProcessorUsageOverlay(doubleBufferedSurface);
+	DebugDrawKeyboardOverlay(doubleBufferedSurface);
+}
+
+void RedrawEverythingIntoWindow(HWND& window) {
+	DebugDrawIntoFrameBuffer(GDI_BACKBUFFER, PLACEHOLDER_DEMO_APP.offsetX, PLACEHOLDER_DEMO_APP.offsetY);
+	DrawDebugOverlay(GDI_SURFACE);
+	BlitBackBufferToWindow(window);
 }
 
 LRESULT CALLBACK WindowProcessMessage(HWND window, UINT message, WPARAM wParam,
@@ -116,15 +134,20 @@ LRESULT CALLBACK WindowProcessMessage(HWND window, UINT message, WPARAM wParam,
 		// TODO Initialize child windows here?
 	} break;
 
+	case WM_SIZING:
 	case WM_SIZE: {
 		SurfaceGetWindowDimensions(GDI_SURFACE, window);
 		ResizeBackBuffer(GDI_BACKBUFFER, GDI_SURFACE.width, GDI_SURFACE.height,
 			window);
+		// NOTE: Updating again allows the simulation to appear more fluid (evaluate UX later)
+		DebugDrawUpdateBackgroundPattern();
+		RedrawEverythingIntoWindow(window);
 	} break;
 
 	case WM_PAINT: {
 		PAINTSTRUCT paintInfo;
 		BeginPaint(window, &paintInfo);
+		RedrawEverythingIntoWindow(window);
 		EndPaint(window, &paintInfo);
 		return 0;
 	} break;
@@ -195,6 +218,12 @@ LRESULT CALLBACK WindowProcessMessage(HWND window, UINT message, WPARAM wParam,
 		TODO("Received WM_ACTIVATEAPP\n");
 	} break;
 
+	case WM_ERASEBKGND: {
+		// NOTE: No need for the OS to clear since the entire window is always fully painted
+		constexpr bool didEraseBackground = true;
+		return didEraseBackground;
+	} break;
+
 	case WM_DESTROY: {
 		PostQuitMessage(0);
 		return 0;
@@ -226,12 +255,12 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE, LPSTR,
 	WNDCLASSEX windowClass = {};
 	// TODO Is this really a good idea? Beware the CS_OWNDC footguns...
 	// TODO https://devblogs.microsoft.com/oldnewthing/20060601-06/?p=31003
-	windowClass.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
+	windowClass.style = CS_OWNDC;
 
 	windowClass.cbSize = sizeof(windowClass);
 	windowClass.lpfnWndProc = WindowProcessMessage;
 	windowClass.hInstance = instance;
-	windowClass.hbrBackground = (HBRUSH)COLOR_BACKGROUND;
+	windowClass.hbrBackground = CreateSolidBrush(RGB_COLOR_BRIGHTEST);
 	windowClass.lpszClassName = "RagLiteWindowClass";
 	windowClass.hIcon = (HICON)LoadImage(instance, TEXT("DEFAULT_APP_ICON"), IMAGE_ICON,
 		GetSystemMetrics(SM_CXICON), GetSystemMetrics(SM_CYICON),
@@ -264,8 +293,6 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE, LPSTR,
 		max(1, GDI_SURFACE.height), mainWindow);
 
 	MSG message;
-	int offsetX = 0;
-	int offsetY = 0;
 	while(!APPLICATION_SHOULD_EXIT) {
 		while(PeekMessage(&message, 0, 0, 0, PM_REMOVE)) {
 			TranslateMessage(&message);
@@ -278,16 +305,15 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE, LPSTR,
 		if(!APPLICATION_SHOULD_PAUSE) {
 
 			// NOTE: Application/game state updates should go here (later)
-			++offsetX;
-			offsetY += 2;
+			PLACEHOLDER_DEMO_APP.offsetX++;
+			PLACEHOLDER_DEMO_APP.offsetY++;
+			PLACEHOLDER_DEMO_APP.offsetY++;
 
-			GamePadPollControllers(offsetX, offsetY);
+			GamePadPollControllers(PLACEHOLDER_DEMO_APP.offsetX, PLACEHOLDER_DEMO_APP.offsetY);
 			DebugDrawUpdateBackgroundPattern();
-			DebugDrawUpdateFrameBuffer(GDI_BACKBUFFER, offsetX, offsetY);
-			InvalidateRect(mainWindow, NULL, FALSE);
 		}
 
-		DrawDebugOverlay(mainWindow);
+		RedrawEverythingIntoWindow(mainWindow);
 
 		Sleep(FloatToU32(sleepTime));
 	}
