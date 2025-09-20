@@ -342,15 +342,15 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE, LPSTR,
 
 		RedrawEverythingIntoWindow(mainWindow);
 
-		milliseconds frameTime = PerformanceMetricsGetTimeSince(lastUpdateTime);
-		CPU_PERFORMANCE_METRICS.frameTime = frameTime;
-
 		milliseconds maxResponsiveSleepTime = MAX_FRAME_TIME;
 		milliseconds sleepTime = maxResponsiveSleepTime - CPU_PERFORMANCE_METRICS.frameTime;
 		hardware_tick_t beforeSleep = PerformanceMetricsNow();
 		if(sleepTime > 0) Sleep((DWORD)sleepTime);
 		CPU_PERFORMANCE_METRICS.sleepTime = sleepTime;
 		CPU_PERFORMANCE_METRICS.suspendedTime = PerformanceMetricsGetTimeSince(beforeSleep);
+
+		milliseconds frameTime = PerformanceMetricsGetTimeSince(lastUpdateTime);
+		CPU_PERFORMANCE_METRICS.frameTime = frameTime;
 
 		PerformanceMetricsRecordSample(CPU_PERFORMANCE_METRICS, PERFORMANCE_METRICS_HISTORY);
 	}
