@@ -121,6 +121,13 @@ void DrawDebugOverlay(gdi_surface_t doubleBufferedSurface) {
 }
 
 void RedrawEverythingIntoWindow(HWND& window) {
+	if(IsIconic(window)) {
+		// Minimized - no point in drawing this frame
+		CPU_PERFORMANCE_METRICS.worldRenderTime = 0;
+		CPU_PERFORMANCE_METRICS.userInterfaceRenderTime = 0;
+		return;
+	}
+
 	hardware_tick_t before = PerformanceMetricsNow();
 	DebugDrawIntoFrameBuffer(GDI_BACKBUFFER, PLACEHOLDER_DEMO_APP.offsetX, PLACEHOLDER_DEMO_APP.offsetY);
 	CPU_PERFORMANCE_METRICS.worldRenderTime = PerformanceMetricsGetTimeSince(before);
@@ -342,15 +349,15 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE, LPSTR,
 
 		RedrawEverythingIntoWindow(mainWindow);
 
-		milliseconds frameTime = PerformanceMetricsGetTimeSince(lastUpdateTime);
-		CPU_PERFORMANCE_METRICS.frameTime = frameTime;
-
 		milliseconds maxResponsiveSleepTime = MAX_FRAME_TIME;
 		milliseconds sleepTime = maxResponsiveSleepTime - CPU_PERFORMANCE_METRICS.frameTime;
 		hardware_tick_t beforeSleep = PerformanceMetricsNow();
 		if(sleepTime > 0) Sleep((DWORD)sleepTime);
 		CPU_PERFORMANCE_METRICS.sleepTime = sleepTime;
 		CPU_PERFORMANCE_METRICS.suspendedTime = PerformanceMetricsGetTimeSince(beforeSleep);
+
+		milliseconds frameTime = PerformanceMetricsGetTimeSince(lastUpdateTime);
+		CPU_PERFORMANCE_METRICS.frameTime = frameTime;
 
 		PerformanceMetricsRecordSample(CPU_PERFORMANCE_METRICS, PERFORMANCE_METRICS_HISTORY);
 	}
