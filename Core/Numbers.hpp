@@ -34,6 +34,9 @@ typedef float milliseconds;
 typedef float FPS;
 constexpr milliseconds MILLISECONDS_PER_SECOND = 1000.0f;
 
+constexpr FPS TARGET_FRAME_RATE = 15; // "He who expects nothing shall never be disappointed"
+constexpr milliseconds MAX_FRAME_TIME = MILLISECONDS_PER_SECOND / TARGET_FRAME_RATE;
+
 INTERNAL inline float DoubleToFloat(double number) {
 	float narrowed = (float)number;
 	ASSUME(number - narrowed <= EPSILON, "Detected narrowing conversion that drops too much precision");

@@ -1,49 +1,7 @@
+#include "DebugDraw.hpp"
 
 // TODO Eliminate this
 #include <math.h>
-
-typedef struct gdi_bitmap {
-	HBITMAP activeHandle;
-	HBITMAP inactiveHandle;
-	BITMAPINFO info;
-	int width;
-	int height;
-	int bytesPerPixel;
-	int stride;
-	void* pixelBuffer;
-} gdi_bitmap_t;
-
-typedef struct gdi_surface {
-	HDC displayDeviceContext;
-	HDC offscreenDeviceContext;
-	int width;
-	int height;
-} gdi_surface_t;
-
-typedef enum : uint8 {
-	PATTERN_SHIFTING_GRADIENT,
-	PATTERN_CIRCULAR_RIPPLE,
-	PATTERN_CHECKERBOARD,
-	PATTERN_AXIS_GRADIENTS,
-	PATTERN_GRID_SCANLINE,
-	PATTERN_COUNT
-} gdi_debug_pattern_t;
-
-GLOBAL gdi_bitmap_t GDI_BACKBUFFER = {};
-GLOBAL gdi_surface_t GDI_SURFACE = {};
-GLOBAL gdi_debug_pattern_t GDI_DEBUG_PATTERN = PATTERN_SHIFTING_GRADIENT;
-
-typedef union gdi_rgba_color {
-	struct {
-		uint8 red;
-		uint8 green;
-		uint8 blue;
-		uint8 alpha;
-	};
-	uint32 bytes;
-} gdi_color_t;
-
-constexpr gdi_color_t UNINITIALIZED_WINDOW_COLOR = { .bytes = 0xFF202020 };
 
 constexpr int DISPLAY_SCREEN_WIDTH = 1920;
 GLOBAL int DEBUG_OVERLAY_LINE_HEIGHT = 18;
@@ -94,13 +52,8 @@ constexpr COLORREF RESERVED_MEMORY_BLOCK_COLOR = RGB_COLOR_DARK;
 
 constexpr int32 GRAPH_BORDER_WIDTH = 1;
 
-typedef enum {
-	XY_LINES_PLOTTED,
-	AREA_PERCENT_STACKED,
-} history_graph_style_t;
-
 constexpr int32 DEFAULT_LINE_WIDTH = 1;
-INTERNAL inline void DebugDrawColoredLine(HDC displayDeviceContext, int startX, int startY, int endX, int endY, COLORREF color) {
+INTERNAL inline void DebugDrawColoredLine(HDC& displayDeviceContext, int startX, int startY, int endX, int endY, COLORREF color) {
 	HPEN graphPen = CreatePen(PS_SOLID, DEFAULT_LINE_WIDTH, color);
 	HGDIOBJ oldPen = SelectObject(displayDeviceContext, graphPen);
 
@@ -111,7 +64,7 @@ INTERNAL inline void DebugDrawColoredLine(HDC displayDeviceContext, int startX, 
 	DeleteObject(graphPen);
 }
 
-INTERNAL void DebugDrawHistoryGraph(HDC displayDeviceContext, int topLeftX, int topLeftY, int panelWidth, int panelHeight, history_graph_style_t chartType) {
+INTERNAL void DebugDrawHistoryGraph(HDC& displayDeviceContext, int topLeftX, int topLeftY, int panelWidth, int panelHeight, history_graph_style_t chartType) {
 	HBRUSH backgroundBrush = CreateSolidBrush(UI_BACKGROUND_COLOR);
 	int left = topLeftX + GRAPH_BORDER_WIDTH;
 	int top = topLeftY + GRAPH_BORDER_WIDTH;
@@ -211,14 +164,6 @@ INTERNAL void DebugDrawHistoryGraph(HDC displayDeviceContext, int topLeftX, int 
 	DeleteObject(borderPen);
 }
 
-typedef struct gdi_progress_bar {
-	int x;
-	int y;
-	int width;
-	int height;
-	int percent;
-} progress_bar_t;
-
 inline COLORREF ProgressBarGetDeficitColor(int percent) {
 	if(percent < 50) return RGB_COLOR_GREEN;
 	if(percent < 75) return RGB_COLOR_YELLOW;
@@ -233,14 +178,14 @@ inline COLORREF ProgressBarGetCompletionColor(int percent) {
 	return RGB_COLOR_RED;
 }
 
-INTERNAL inline void DrawSolidColorRectangle(HDC displayDeviceContext, RECT rectangle, COLORREF color) {
+INTERNAL inline void DrawSolidColorRectangle(HDC& displayDeviceContext, RECT rectangle, COLORREF color) {
 	HBRUSH brush = CreateSolidBrush(color);
 	FillRect(displayDeviceContext, &rectangle, brush);
 	DeleteObject(brush);
 	FrameRect(displayDeviceContext, &rectangle, (HBRUSH)GetStockObject(WHITE_BRUSH));
 }
 
-INTERNAL void DrawProgressBarWithColors(HDC displayDeviceContext, progress_bar_t& bar, COLORREF foregroundColor) {
+INTERNAL void DrawProgressBarWithColors(HDC& displayDeviceContext, progress_bar_t& bar, COLORREF foregroundColor) {
 	HBRUSH backgroundBrush = CreateSolidBrush(UI_BACKGROUND_COLOR);
 	RECT rect = { bar.x, bar.y, bar.x + bar.width, bar.y + bar.height };
 	FillRect(displayDeviceContext, &rect, backgroundBrush);
@@ -255,19 +200,15 @@ INTERNAL void DrawProgressBarWithColors(HDC displayDeviceContext, progress_bar_t
 	FrameRect(displayDeviceContext, &rect, (HBRUSH)GetStockObject(WHITE_BRUSH));
 }
 
-INTERNAL inline void DrawProgressBar(HDC displayDeviceContext, progress_bar_t& bar) {
+INTERNAL inline void DrawProgressBar(HDC& displayDeviceContext, progress_bar_t& bar) {
 	COLORREF foregroundColor = ProgressBarGetDeficitColor(bar.percent);
 	DrawProgressBarWithColors(displayDeviceContext, bar, foregroundColor);
 }
 
-INTERNAL void DebugDrawMemoryUsageOverlay(gdi_surface_t& surface) {
-	HDC offscreenDeviceContext = surface.offscreenDeviceContext;
-	if(!offscreenDeviceContext)
-		return;
-
-	SetBkMode(offscreenDeviceContext, TRANSPARENT);
+INTERNAL void DebugDrawMemoryUsageOverlay(HDC& displayDeviceContext) {
+	SetBkMode(displayDeviceContext, TRANSPARENT);
 	HFONT font = (HFONT)GetStockObject(ANSI_VAR_FONT);
-	HFONT oldFont = (HFONT)SelectObject(offscreenDeviceContext, font);
+	HFONT oldFont = (HFONT)SelectObject(displayDeviceContext, font);
 
 	int startX = 0 + DEBUG_OVERLAY_MARGIN_SIZE;
 	int startY = 300;
@@ -278,10 +219,10 @@ INTERNAL void DebugDrawMemoryUsageOverlay(gdi_surface_t& surface) {
 		startY + MEMORY_OVERLAY_HEIGHT
 	};
 	HBRUSH panelBrush = CreateSolidBrush(UI_PANEL_COLOR);
-	FillRect(offscreenDeviceContext, &backgroundPanelRect, panelBrush);
+	FillRect(displayDeviceContext, &backgroundPanelRect, panelBrush);
 	DeleteObject(panelBrush);
 
-	SetTextColor(offscreenDeviceContext, UI_TEXT_COLOR);
+	SetTextColor(displayDeviceContext, UI_TEXT_COLOR);
 
 	constexpr size_t FORMAT_BUFFER_SIZE = 256;
 	char formatBuffer[FORMAT_BUFFER_SIZE];
@@ -290,40 +231,40 @@ INTERNAL void DebugDrawMemoryUsageOverlay(gdi_surface_t& surface) {
 	//-------------------------------------------------
 	// Arena stats
 	//-------------------------------------------------
-	TextOutA(offscreenDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY,
+	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY,
 		"=== MEMORY ARENAS ===", lstrlenA("=== MEMORY ARENAS ==="));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
 	StringCbPrintfA(formatBuffer, FORMAT_BUFFER_SIZE, "Name: %s", MAIN_MEMORY.name);
-	TextOutA(offscreenDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, formatBuffer, lstrlenA(formatBuffer));
+	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, formatBuffer, lstrlenA(formatBuffer));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
 	StringCbPrintfA(formatBuffer, FORMAT_BUFFER_SIZE, "Lifetime: %s", MAIN_MEMORY.lifetime);
-	TextOutA(offscreenDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, formatBuffer, lstrlenA(formatBuffer));
+	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, formatBuffer, lstrlenA(formatBuffer));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
 	StringCbPrintfA(formatBuffer, FORMAT_BUFFER_SIZE, "Base: 0x%p", MAIN_MEMORY.baseAddress);
-	TextOutA(offscreenDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, formatBuffer, lstrlenA(formatBuffer));
+	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, formatBuffer, lstrlenA(formatBuffer));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
 	StringCbPrintfA(formatBuffer, FORMAT_BUFFER_SIZE, "Reserved: %d KB", MAIN_MEMORY.reservedSize / Kilobytes(1));
-	TextOutA(offscreenDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, formatBuffer, lstrlenA(formatBuffer));
+	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, formatBuffer, lstrlenA(formatBuffer));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
 	StringCbPrintfA(formatBuffer, FORMAT_BUFFER_SIZE, "Committed: %d KB", MAIN_MEMORY.committedSize / Kilobytes(1));
-	TextOutA(offscreenDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, formatBuffer, lstrlenA(formatBuffer));
+	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, formatBuffer, lstrlenA(formatBuffer));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
 	StringCbPrintfA(formatBuffer, FORMAT_BUFFER_SIZE, "Used: %d KB", MAIN_MEMORY.used / Kilobytes(1));
-	TextOutA(offscreenDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, formatBuffer, lstrlenA(formatBuffer));
+	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, formatBuffer, lstrlenA(formatBuffer));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
 	StringCbPrintfA(formatBuffer, FORMAT_BUFFER_SIZE, "Free: %d KB", (MAIN_MEMORY.committedSize - MAIN_MEMORY.used) / Kilobytes(1));
-	TextOutA(offscreenDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, formatBuffer, lstrlenA(formatBuffer));
+	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, formatBuffer, lstrlenA(formatBuffer));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
 	StringCbPrintfA(formatBuffer, FORMAT_BUFFER_SIZE, "Allocations: %d", MAIN_MEMORY.allocationCount);
-	TextOutA(offscreenDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, formatBuffer, lstrlenA(formatBuffer));
+	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, formatBuffer, lstrlenA(formatBuffer));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
 	const size_t blockSize = Kilobytes(64);
@@ -357,17 +298,14 @@ INTERNAL void DebugDrawMemoryUsageOverlay(gdi_surface_t& surface) {
 			arenaStartX + (blockID % blocksPerRow) * (ARENA_BLOCK_WIDTH + 1) + ARENA_BLOCK_WIDTH,
 			arenaStartY + (blockID / blocksPerRow) * (ARENA_BLOCK_HEIGHT + 1) + ARENA_BLOCK_HEIGHT
 		};
-		FillRect(offscreenDeviceContext, &block, brush);
+		FillRect(displayDeviceContext, &block, brush);
 		DeleteObject(brush);
 	}
 
-	SelectObject(offscreenDeviceContext, oldFont);
+	SelectObject(displayDeviceContext, oldFont);
 }
 
-INTERNAL void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
-	HDC displayDeviceContext = surface.offscreenDeviceContext;
-	if(!displayDeviceContext) return;
-
+INTERNAL void DebugDrawProcessorUsageOverlay(HDC& displayDeviceContext) {
 	SetBkMode(displayDeviceContext, TRANSPARENT);
 	HFONT font = (HFONT)GetStockObject(ANSI_VAR_FONT);
 	HFONT oldFont = (HFONT)SelectObject(displayDeviceContext, font);
@@ -698,14 +636,10 @@ INTERNAL void DebugDrawProcessorUsageOverlay(gdi_surface_t& surface) {
 constexpr int KEYBOARD_DEBUG_OVERLAY_CELL_WIDTH = 100;
 constexpr int KEYBOARD_DEBUG_OVERLAY_CELL_HEIGHT = 18;
 
-INTERNAL void DebugDrawKeyboardOverlay(gdi_surface_t& surface) {
-	HDC offscreenDeviceContext = surface.offscreenDeviceContext;
-	if(!offscreenDeviceContext)
-		return;
-
-	SetBkMode(offscreenDeviceContext, TRANSPARENT);
+INTERNAL void DebugDrawKeyboardOverlay(HDC& displayDeviceContext) {
+	SetBkMode(displayDeviceContext, TRANSPARENT);
 	HFONT font = (HFONT)GetStockObject(ANSI_VAR_FONT);
-	HFONT oldFont = (HFONT)SelectObject(offscreenDeviceContext, font);
+	HFONT oldFont = (HFONT)SelectObject(displayDeviceContext, font);
 
 	for(int virtualKeyCode = 0; virtualKeyCode < 256; ++virtualKeyCode) {
 		int column = virtualKeyCode % 16;
@@ -723,16 +657,16 @@ INTERNAL void DebugDrawKeyboardOverlay(gdi_surface_t& surface) {
 			backgroundColor = UI_HIGHLIGHT_COLOR;
 
 		HBRUSH brush = CreateSolidBrush(backgroundColor);
-		FillRect(offscreenDeviceContext, &textArea, brush);
+		FillRect(displayDeviceContext, &textArea, brush);
 		DeleteObject(brush);
 
-		SetTextColor(offscreenDeviceContext, UI_TEXT_COLOR);
+		SetTextColor(displayDeviceContext, UI_TEXT_COLOR);
 		const char* label = KeyCodeToDebugName(virtualKeyCode);
-		DrawTextA(offscreenDeviceContext, label, -1, &textArea,
+		DrawTextA(displayDeviceContext, label, -1, &textArea,
 			DT_CENTER | DT_VCENTER | DT_SINGLELINE);
 	}
 
-	SelectObject(offscreenDeviceContext, oldFont);
+	SelectObject(displayDeviceContext, oldFont);
 }
 
 INTERNAL void DebugDrawUpdateBackgroundPattern() {
@@ -744,7 +678,7 @@ INTERNAL void DebugDrawUpdateBackgroundPattern() {
 	GDI_DEBUG_PATTERN = (gdi_debug_pattern_t)(newPattern % PATTERN_COUNT);
 }
 
-INTERNAL void DebugDrawUseMarchingGradientPattern(gdi_bitmap_t& bitmap,
+INTERNAL void DebugDrawUseMarchingGradientPattern(gdi_offscreen_buffer_t& bitmap,
 	int offsetBlue,
 	int offsetGreen) {
 	if(!bitmap.pixelBuffer)
@@ -764,7 +698,7 @@ INTERNAL void DebugDrawUseMarchingGradientPattern(gdi_bitmap_t& bitmap,
 	}
 }
 
-INTERNAL void DebugDrawUseRipplingSpiralPattern(gdi_bitmap_t& bitmap, int time,
+INTERNAL void DebugDrawUseRipplingSpiralPattern(gdi_offscreen_buffer_t& bitmap, int time,
 	int) {
 	if(!bitmap.pixelBuffer)
 		return;
@@ -792,7 +726,7 @@ INTERNAL void DebugDrawUseRipplingSpiralPattern(gdi_bitmap_t& bitmap, int time,
 	}
 }
 
-INTERNAL void DebugDrawUseCheckeredFloorPattern(gdi_bitmap_t& bitmap, int time,
+INTERNAL void DebugDrawUseCheckeredFloorPattern(gdi_offscreen_buffer_t& bitmap, int time,
 	int) {
 	if(!bitmap.pixelBuffer)
 		return;
@@ -827,7 +761,7 @@ INTERNAL void DebugDrawUseCheckeredFloorPattern(gdi_bitmap_t& bitmap, int time,
 	}
 }
 
-INTERNAL void DebugDrawUseColorGradientPattern(gdi_bitmap_t& bitmap, int,
+INTERNAL void DebugDrawUseColorGradientPattern(gdi_offscreen_buffer_t& bitmap, int,
 	int) {
 	if(!bitmap.pixelBuffer)
 		return;
@@ -854,7 +788,7 @@ INTERNAL void DebugDrawUseColorGradientPattern(gdi_bitmap_t& bitmap, int,
 	}
 }
 
-INTERNAL void DebugDrawUseMovingScanlinePattern(gdi_bitmap_t& bitmap, int time,
+INTERNAL void DebugDrawUseMovingScanlinePattern(gdi_offscreen_buffer_t& bitmap, int time,
 	int) {
 	if(!bitmap.pixelBuffer)
 		return;
@@ -881,7 +815,7 @@ INTERNAL void DebugDrawUseMovingScanlinePattern(gdi_bitmap_t& bitmap, int time,
 	}
 }
 
-INTERNAL void DebugDrawIntoFrameBuffer(gdi_bitmap_t& bitmap, int paramA,
+INTERNAL void DebugDrawIntoFrameBuffer(gdi_offscreen_buffer_t& bitmap, int paramA,
 	int paramB) {
 	switch(GDI_DEBUG_PATTERN) {
 	case PATTERN_SHIFTING_GRADIENT:
@@ -900,74 +834,4 @@ INTERNAL void DebugDrawIntoFrameBuffer(gdi_bitmap_t& bitmap, int paramA,
 		DebugDrawUseMovingScanlinePattern(bitmap, paramA, paramB);
 		break;
 	}
-}
-
-INTERNAL void ResizeBackBuffer(gdi_bitmap_t& bitmap, int width, int height,
-	HWND window) {
-	if(GDI_SURFACE.offscreenDeviceContext) {
-		if(bitmap.inactiveHandle) {
-			SelectObject(GDI_SURFACE.offscreenDeviceContext, bitmap.inactiveHandle);
-			bitmap.inactiveHandle = NULL;
-		}
-		DeleteDC(GDI_SURFACE.offscreenDeviceContext);
-		GDI_SURFACE.offscreenDeviceContext = NULL;
-	}
-
-	if(bitmap.activeHandle) {
-		DeleteObject(bitmap.activeHandle);
-		bitmap.activeHandle = NULL;
-	}
-
-	if(bitmap.pixelBuffer) {
-		bitmap.pixelBuffer = NULL;
-	}
-
-	bitmap.width = width;
-	bitmap.height = height;
-	bitmap.bytesPerPixel = 4;
-	bitmap.stride = width * bitmap.bytesPerPixel;
-
-	ZeroMemory(&bitmap.info, sizeof(bitmap.info));
-	bitmap.info.bmiHeader.biSize = sizeof(bitmap.info.bmiHeader);
-	bitmap.info.bmiHeader.biWidth = width;
-	bitmap.info.bmiHeader.biHeight = -height; // Inverted Y
-	bitmap.info.bmiHeader.biPlanes = 1;
-	bitmap.info.bmiHeader.biBitCount = 32;
-	bitmap.info.bmiHeader.biCompression = BI_RGB;
-
-	HDC displayDeviceContext = GetDC(window);
-	GDI_SURFACE.offscreenDeviceContext = CreateCompatibleDC(displayDeviceContext);
-	ReleaseDC(window, displayDeviceContext);
-	if(!GDI_SURFACE.offscreenDeviceContext) {
-		TODO("CreateCompatibleDC failed\n");
-		return;
-	}
-
-	void* pixels = NULL;
-	bitmap.activeHandle = CreateDIBSection(GDI_SURFACE.offscreenDeviceContext, &bitmap.info,
-		DIB_RGB_COLORS, &pixels, NULL, 0);
-	if(!bitmap.activeHandle || !pixels) {
-		TODO("CreateDIBSection failed\n");
-		DeleteDC(GDI_SURFACE.offscreenDeviceContext);
-		GDI_SURFACE.offscreenDeviceContext = NULL;
-		return;
-	}
-	bitmap.pixelBuffer = pixels;
-
-	bitmap.inactiveHandle = (HBITMAP)SelectObject(
-		GDI_SURFACE.offscreenDeviceContext, bitmap.activeHandle);
-
-	uint32* pixelArray = (uint32*)bitmap.pixelBuffer;
-	size_t count = (size_t)width * (size_t)height;
-	for(size_t i = 0; i < count; ++i)
-		pixelArray[i] = UNINITIALIZED_WINDOW_COLOR.bytes;
-}
-
-INTERNAL void SurfaceGetWindowDimensions(gdi_surface_t& surface, HWND window) {
-	RECT clientRect;
-	GetClientRect(window, &clientRect);
-	int windowWidth = clientRect.right - clientRect.left;
-	int windowHeight = clientRect.bottom - clientRect.top;
-	surface.width = windowWidth;
-	surface.height = windowHeight;
 }

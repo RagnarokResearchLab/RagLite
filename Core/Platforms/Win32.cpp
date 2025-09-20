@@ -1,8 +1,6 @@
 #include "Win32.hpp"
 
 #define TODO(msg) OutputDebugStringA(msg);
-constexpr FPS TARGET_FRAME_RATE = 15; // "He who expects nothing shall never be disappointed"
-constexpr milliseconds MAX_FRAME_TIME = MILLISECONDS_PER_SECOND / TARGET_FRAME_RATE;
 
 // TODO: Replace these with the actual game/application state later
 typedef struct volatile_game_state {
@@ -93,34 +91,32 @@ INTERNAL const char* ArchitectureToDebugName(WORD wProcessorArchitecture) {
 
 #include "Win32/DebugDraw.cpp"
 
-void BlitBackBufferToWindow(HWND& window) {
-	HDC deviceContext = GetDC(window);
-	ASSUME(deviceContext, "Failed to get GDI device drawing context");
-	GDI_SURFACE.displayDeviceContext = deviceContext;
-
-	ASSUME(GDI_SURFACE.displayDeviceContext, "Failed to get GDI display device drawing context");
-	if(!GDI_BACKBUFFER.activeHandle || !GDI_SURFACE.offscreenDeviceContext) {
-		// Minimized (redraw once restored)
+INTERNAL void SurfacePresentFrameBuffer(gdi_surface_t& surface, gdi_offscreen_buffer_t& backBuffer) {
+	if(!surface.displayDeviceContext || !surface.offscreenDeviceContext || !backBuffer.handle) {
+		// Minimized or not yet initialized
 		return;
 	}
 
-	int srcW = GDI_BACKBUFFER.width;
-	int srcH = GDI_BACKBUFFER.height;
-	int destW = GDI_SURFACE.width;
-	int destH = GDI_SURFACE.height;
-	if(!StretchBlt(GDI_SURFACE.displayDeviceContext, 0, 0, destW, destH, GDI_SURFACE.offscreenDeviceContext,
+	int srcW = backBuffer.width;
+	int srcH = backBuffer.height;
+	int destW = surface.width;
+	int destH = surface.height;
+	if(!StretchBlt(surface.displayDeviceContext, 0, 0, destW, destH, surface.offscreenDeviceContext,
 		   0, 0, srcW, srcH, SRCCOPY)) {
 		TODO("StretchBlt failed\n");
 	}
 }
 
-void DrawDebugOverlay(gdi_surface_t doubleBufferedSurface) {
-	DebugDrawMemoryUsageOverlay(doubleBufferedSurface);
-	DebugDrawProcessorUsageOverlay(doubleBufferedSurface);
-	DebugDrawKeyboardOverlay(doubleBufferedSurface);
+INTERNAL void SurfaceDrawDebugUI(gdi_surface_t& doubleBufferedWindowSurface) {
+	HDC offscreenDeviceContext = doubleBufferedWindowSurface.offscreenDeviceContext;
+	if(!offscreenDeviceContext) return;
+
+	DebugDrawMemoryUsageOverlay(offscreenDeviceContext);
+	DebugDrawProcessorUsageOverlay(offscreenDeviceContext);
+	DebugDrawKeyboardOverlay(offscreenDeviceContext);
 }
 
-void RedrawEverythingIntoWindow(HWND& window) {
+INTERNAL void MainWindowRedrawEverything(HWND& window) {
 	if(IsIconic(window)) {
 		// Minimized - no point in drawing this frame
 		CPU_PERFORMANCE_METRICS.worldRenderTime = 0;
@@ -133,13 +129,61 @@ void RedrawEverythingIntoWindow(HWND& window) {
 	CPU_PERFORMANCE_METRICS.worldRenderTime = PerformanceMetricsGetTimeSince(before);
 
 	before = PerformanceMetricsNow();
-	DrawDebugOverlay(GDI_SURFACE);
+	SurfaceDrawDebugUI(GDI_SURFACE);
 	CPU_PERFORMANCE_METRICS.userInterfaceRenderTime = PerformanceMetricsGetTimeSince(before);
 
-	BlitBackBufferToWindow(window);
+	SurfacePresentFrameBuffer(GDI_SURFACE, GDI_BACKBUFFER);
 }
 
-LRESULT CALLBACK WindowProcessMessage(HWND window, UINT message, WPARAM wParam,
+INTERNAL void SurfaceResizeBackBuffer(gdi_surface_t& surface, gdi_offscreen_buffer_t& bitmap) {
+
+	DeleteObject(bitmap.handle);
+	bitmap.handle = NULL;
+	bitmap.pixelBuffer = NULL;
+
+	bitmap.width = surface.width;
+	bitmap.height = surface.height;
+	bitmap.bytesPerPixel = 4;
+	bitmap.stride = surface.width * bitmap.bytesPerPixel;
+
+	ZeroMemory(&bitmap.info, sizeof(bitmap.info));
+	bitmap.info.bmiHeader.biSize = sizeof(bitmap.info.bmiHeader);
+	bitmap.info.bmiHeader.biWidth = surface.width;
+	bitmap.info.bmiHeader.biHeight = -surface.height; // Inverted Y
+	bitmap.info.bmiHeader.biPlanes = 1;
+	bitmap.info.bmiHeader.biBitCount = 32;
+	bitmap.info.bmiHeader.biCompression = BI_RGB;
+
+	DeleteObject(surface.offscreenDeviceContext);
+	surface.offscreenDeviceContext = CreateCompatibleDC(surface.displayDeviceContext);
+	ASSUME(surface.offscreenDeviceContext, "Failed to create compatible memory DC");
+
+	bitmap.handle = CreateDIBSection(surface.offscreenDeviceContext, &bitmap.info,
+		DIB_RGB_COLORS, &bitmap.pixelBuffer, NULL, 0);
+	ASSUME(bitmap.handle, "Failed to create DIB handle");
+	ASSUME(bitmap.pixelBuffer, "Failed to create DIB buffer");
+
+	SelectObject(surface.offscreenDeviceContext, bitmap.handle);
+
+	uint32* pixelArray = (uint32*)bitmap.pixelBuffer;
+	size_t count = (size_t)surface.width * (size_t)surface.height;
+	for(size_t i = 0; i < count; ++i)
+		pixelArray[i] = UNINITIALIZED_WINDOW_COLOR.bytes;
+}
+
+INTERNAL void MainWindowCreateFrameBuffers(HWND& window, gdi_surface_t& surface, gdi_offscreen_buffer_t& backBuffer) {
+	RECT clientRect;
+	GetClientRect(window, &clientRect);
+	surface.width = Max(1, clientRect.right - clientRect.left);
+	surface.height = Max(1, clientRect.bottom - clientRect.top);
+
+	surface.displayDeviceContext = GetDC(window);
+	ASSUME(surface.displayDeviceContext, "Failed to get GDI device drawing context");
+
+	SurfaceResizeBackBuffer(surface, backBuffer);
+}
+
+LRESULT CALLBACK MainWindowProcessIncomingMessage(HWND window, UINT message, WPARAM wParam,
 	LPARAM lParam) {
 	LRESULT result = 0;
 
@@ -154,18 +198,16 @@ LRESULT CALLBACK WindowProcessMessage(HWND window, UINT message, WPARAM wParam,
 	case WM_MOVING:
 	case WM_SIZING:
 	case WM_SIZE: {
-		SurfaceGetWindowDimensions(GDI_SURFACE, window);
-		ResizeBackBuffer(GDI_BACKBUFFER, GDI_SURFACE.width, GDI_SURFACE.height,
-			window);
+		MainWindowCreateFrameBuffers(window, GDI_SURFACE, GDI_BACKBUFFER);
 		// NOTE: Updating again allows the simulation to appear more fluid (evaluate UX later)
 		DebugDrawUpdateBackgroundPattern();
-		RedrawEverythingIntoWindow(window);
+		MainWindowRedrawEverything(window);
 	} break;
 
 	case WM_PAINT: {
 		PAINTSTRUCT paintInfo;
 		BeginPaint(window, &paintInfo);
-		RedrawEverythingIntoWindow(window);
+		MainWindowRedrawEverything(window);
 		EndPaint(window, &paintInfo);
 		return 0;
 	} break;
@@ -284,7 +326,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE, LPSTR,
 	windowClass.style = CS_OWNDC;
 
 	windowClass.cbSize = sizeof(windowClass);
-	windowClass.lpfnWndProc = WindowProcessMessage;
+	windowClass.lpfnWndProc = MainWindowProcessIncomingMessage;
 	windowClass.hInstance = instance;
 	windowClass.hbrBackground = CreateSolidBrush(RGB_COLOR_BRIGHTEST);
 	windowClass.lpszClassName = "RagLiteWindowClass";
@@ -313,10 +355,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE, LPSTR,
 		TODO("Failed to CreateWindowExA - Exiting...");
 		return EXIT_FAILURE;
 	}
-
-	SurfaceGetWindowDimensions(GDI_SURFACE, mainWindow);
-	ResizeBackBuffer(GDI_BACKBUFFER, max(1, GDI_SURFACE.width),
-		max(1, GDI_SURFACE.height), mainWindow);
+	MainWindowCreateFrameBuffers(mainWindow, GDI_SURFACE, GDI_BACKBUFFER);
 
 	CPU_PERFORMANCE_INFO.applicationLaunchTime = PerformanceMetricsGetTimeSince(applicationStartTime);
 
@@ -347,7 +386,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE, LPSTR,
 		}
 		CPU_PERFORMANCE_METRICS.worldUpdateTime = PerformanceMetricsGetTimeSince(before);
 
-		RedrawEverythingIntoWindow(mainWindow);
+		MainWindowRedrawEverything(mainWindow);
 
 		milliseconds maxResponsiveSleepTime = MAX_FRAME_TIME;
 		milliseconds sleepTime = maxResponsiveSleepTime - CPU_PERFORMANCE_METRICS.frameTime;
