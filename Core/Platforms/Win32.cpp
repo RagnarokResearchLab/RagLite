@@ -121,6 +121,13 @@ void DrawDebugOverlay(gdi_surface_t doubleBufferedSurface) {
 }
 
 void RedrawEverythingIntoWindow(HWND& window) {
+	if(IsIconic(window)) {
+		// Minimized - no point in drawing this frame
+		CPU_PERFORMANCE_METRICS.worldRenderTime = 0;
+		CPU_PERFORMANCE_METRICS.userInterfaceRenderTime = 0;
+		return;
+	}
+
 	hardware_tick_t before = PerformanceMetricsNow();
 	DebugDrawIntoFrameBuffer(GDI_BACKBUFFER, PLACEHOLDER_DEMO_APP.offsetX, PLACEHOLDER_DEMO_APP.offsetY);
 	CPU_PERFORMANCE_METRICS.worldRenderTime = PerformanceMetricsGetTimeSince(before);
