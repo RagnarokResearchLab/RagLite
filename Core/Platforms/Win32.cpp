@@ -112,10 +112,13 @@ void BlitBackBufferToWindow(HWND& window) {
 	}
 }
 
-void DrawDebugOverlay(gdi_surface_t doubleBufferedSurface) {
-	DebugDrawMemoryUsageOverlay(doubleBufferedSurface);
-	DebugDrawProcessorUsageOverlay(doubleBufferedSurface);
-	DebugDrawKeyboardOverlay(doubleBufferedSurface);
+void DrawDebugOverlay(gdi_surface_t& doubleBufferedWindowSurface) {
+	HDC offscreenDeviceContext = doubleBufferedWindowSurface.offscreenDeviceContext;
+	if(!offscreenDeviceContext) return;
+
+	DebugDrawMemoryUsageOverlay(offscreenDeviceContext);
+	DebugDrawProcessorUsageOverlay(offscreenDeviceContext);
+	DebugDrawKeyboardOverlay(offscreenDeviceContext);
 }
 
 void RedrawEverythingIntoWindow(HWND& window) {
