@@ -1,15 +1,14 @@
 #pragma once
 
 typedef struct gdi_bitmap {
-	HBITMAP activeHandle;
-	HBITMAP inactiveHandle;
+	HBITMAP handle;
 	BITMAPINFO info;
 	int width;
 	int height;
 	int bytesPerPixel;
 	int stride;
 	void* pixelBuffer;
-} gdi_bitmap_t;
+} gdi_offscreen_buffer_t;
 
 typedef struct gdi_surface {
 	HDC displayDeviceContext;
@@ -27,7 +26,7 @@ typedef enum : uint8 {
 	PATTERN_COUNT
 } gdi_debug_pattern_t;
 
-GLOBAL gdi_bitmap_t GDI_BACKBUFFER = {};
+GLOBAL gdi_offscreen_buffer_t GDI_BACKBUFFER = {};
 GLOBAL gdi_surface_t GDI_SURFACE = {};
 GLOBAL gdi_debug_pattern_t GDI_DEBUG_PATTERN = PATTERN_SHIFTING_GRADIENT;
 

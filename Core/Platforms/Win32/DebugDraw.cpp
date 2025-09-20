@@ -678,7 +678,7 @@ INTERNAL void DebugDrawUpdateBackgroundPattern() {
 	GDI_DEBUG_PATTERN = (gdi_debug_pattern_t)(newPattern % PATTERN_COUNT);
 }
 
-INTERNAL void DebugDrawUseMarchingGradientPattern(gdi_bitmap_t& bitmap,
+INTERNAL void DebugDrawUseMarchingGradientPattern(gdi_offscreen_buffer_t& bitmap,
 	int offsetBlue,
 	int offsetGreen) {
 	if(!bitmap.pixelBuffer)
@@ -698,7 +698,7 @@ INTERNAL void DebugDrawUseMarchingGradientPattern(gdi_bitmap_t& bitmap,
 	}
 }
 
-INTERNAL void DebugDrawUseRipplingSpiralPattern(gdi_bitmap_t& bitmap, int time,
+INTERNAL void DebugDrawUseRipplingSpiralPattern(gdi_offscreen_buffer_t& bitmap, int time,
 	int) {
 	if(!bitmap.pixelBuffer)
 		return;
@@ -726,7 +726,7 @@ INTERNAL void DebugDrawUseRipplingSpiralPattern(gdi_bitmap_t& bitmap, int time,
 	}
 }
 
-INTERNAL void DebugDrawUseCheckeredFloorPattern(gdi_bitmap_t& bitmap, int time,
+INTERNAL void DebugDrawUseCheckeredFloorPattern(gdi_offscreen_buffer_t& bitmap, int time,
 	int) {
 	if(!bitmap.pixelBuffer)
 		return;
@@ -761,7 +761,7 @@ INTERNAL void DebugDrawUseCheckeredFloorPattern(gdi_bitmap_t& bitmap, int time,
 	}
 }
 
-INTERNAL void DebugDrawUseColorGradientPattern(gdi_bitmap_t& bitmap, int,
+INTERNAL void DebugDrawUseColorGradientPattern(gdi_offscreen_buffer_t& bitmap, int,
 	int) {
 	if(!bitmap.pixelBuffer)
 		return;
@@ -788,7 +788,7 @@ INTERNAL void DebugDrawUseColorGradientPattern(gdi_bitmap_t& bitmap, int,
 	}
 }
 
-INTERNAL void DebugDrawUseMovingScanlinePattern(gdi_bitmap_t& bitmap, int time,
+INTERNAL void DebugDrawUseMovingScanlinePattern(gdi_offscreen_buffer_t& bitmap, int time,
 	int) {
 	if(!bitmap.pixelBuffer)
 		return;
@@ -815,7 +815,7 @@ INTERNAL void DebugDrawUseMovingScanlinePattern(gdi_bitmap_t& bitmap, int time,
 	}
 }
 
-INTERNAL void DebugDrawIntoFrameBuffer(gdi_bitmap_t& bitmap, int paramA,
+INTERNAL void DebugDrawIntoFrameBuffer(gdi_offscreen_buffer_t& bitmap, int paramA,
 	int paramB) {
 	switch(GDI_DEBUG_PATTERN) {
 	case PATTERN_SHIFTING_GRADIENT:
@@ -834,74 +834,4 @@ INTERNAL void DebugDrawIntoFrameBuffer(gdi_bitmap_t& bitmap, int paramA,
 		DebugDrawUseMovingScanlinePattern(bitmap, paramA, paramB);
 		break;
 	}
-}
-
-INTERNAL void ResizeBackBuffer(gdi_bitmap_t& bitmap, int width, int height,
-	HWND window) {
-	if(GDI_SURFACE.displayDeviceContext) {
-		if(bitmap.inactiveHandle) {
-			SelectObject(GDI_SURFACE.displayDeviceContext, bitmap.inactiveHandle);
-			bitmap.inactiveHandle = NULL;
-		}
-		DeleteDC(GDI_SURFACE.displayDeviceContext);
-		GDI_SURFACE.displayDeviceContext = NULL;
-	}
-
-	if(bitmap.activeHandle) {
-		DeleteObject(bitmap.activeHandle);
-		bitmap.activeHandle = NULL;
-	}
-
-	if(bitmap.pixelBuffer) {
-		bitmap.pixelBuffer = NULL;
-	}
-
-	bitmap.width = width;
-	bitmap.height = height;
-	bitmap.bytesPerPixel = 4;
-	bitmap.stride = width * bitmap.bytesPerPixel;
-
-	ZeroMemory(&bitmap.info, sizeof(bitmap.info));
-	bitmap.info.bmiHeader.biSize = sizeof(bitmap.info.bmiHeader);
-	bitmap.info.bmiHeader.biWidth = width;
-	bitmap.info.bmiHeader.biHeight = -height; // Inverted Y
-	bitmap.info.bmiHeader.biPlanes = 1;
-	bitmap.info.bmiHeader.biBitCount = 32;
-	bitmap.info.bmiHeader.biCompression = BI_RGB;
-
-	HDC displayDeviceContext = GetDC(window);
-	GDI_SURFACE.offscreenDeviceContext = CreateCompatibleDC(displayDeviceContext);
-	ReleaseDC(window, displayDeviceContext);
-	if(!GDI_SURFACE.offscreenDeviceContext) {
-		TODO("CreateCompatibleDC failed\n");
-		return;
-	}
-
-	void* pixels = NULL;
-	bitmap.activeHandle = CreateDIBSection(GDI_SURFACE.offscreenDeviceContext, &bitmap.info,
-		DIB_RGB_COLORS, &pixels, NULL, 0);
-	if(!bitmap.activeHandle || !pixels) {
-		TODO("CreateDIBSection failed\n");
-		DeleteDC(GDI_SURFACE.offscreenDeviceContext);
-		GDI_SURFACE.offscreenDeviceContext = NULL;
-		return;
-	}
-	bitmap.pixelBuffer = pixels;
-
-	bitmap.inactiveHandle = (HBITMAP)SelectObject(
-		GDI_SURFACE.offscreenDeviceContext, bitmap.activeHandle);
-
-	uint32* pixelArray = (uint32*)bitmap.pixelBuffer;
-	size_t count = (size_t)width * (size_t)height;
-	for(size_t i = 0; i < count; ++i)
-		pixelArray[i] = UNINITIALIZED_WINDOW_COLOR.bytes;
-}
-
-INTERNAL void SurfaceGetWindowDimensions(gdi_surface_t& surface, HWND window) {
-	RECT clientRect;
-	GetClientRect(window, &clientRect);
-	int windowWidth = clientRect.right - clientRect.left;
-	int windowHeight = clientRect.bottom - clientRect.top;
-	surface.width = windowWidth;
-	surface.height = windowHeight;
 }
