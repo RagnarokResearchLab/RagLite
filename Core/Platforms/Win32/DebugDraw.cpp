@@ -1,49 +1,7 @@
+#include "DebugDraw.hpp"
 
 // TODO Eliminate this
 #include <math.h>
-
-typedef struct gdi_bitmap {
-	HBITMAP activeHandle;
-	HBITMAP inactiveHandle;
-	BITMAPINFO info;
-	int width;
-	int height;
-	int bytesPerPixel;
-	int stride;
-	void* pixelBuffer;
-} gdi_bitmap_t;
-
-typedef struct gdi_surface {
-	HDC displayDeviceContext;
-	HDC offscreenDeviceContext;
-	int width;
-	int height;
-} gdi_surface_t;
-
-typedef enum : uint8 {
-	PATTERN_SHIFTING_GRADIENT,
-	PATTERN_CIRCULAR_RIPPLE,
-	PATTERN_CHECKERBOARD,
-	PATTERN_AXIS_GRADIENTS,
-	PATTERN_GRID_SCANLINE,
-	PATTERN_COUNT
-} gdi_debug_pattern_t;
-
-GLOBAL gdi_bitmap_t GDI_BACKBUFFER = {};
-GLOBAL gdi_surface_t GDI_SURFACE = {};
-GLOBAL gdi_debug_pattern_t GDI_DEBUG_PATTERN = PATTERN_SHIFTING_GRADIENT;
-
-typedef union gdi_rgba_color {
-	struct {
-		uint8 red;
-		uint8 green;
-		uint8 blue;
-		uint8 alpha;
-	};
-	uint32 bytes;
-} gdi_color_t;
-
-constexpr gdi_color_t UNINITIALIZED_WINDOW_COLOR = { .bytes = 0xFF202020 };
 
 constexpr int DISPLAY_SCREEN_WIDTH = 1920;
 GLOBAL int DEBUG_OVERLAY_LINE_HEIGHT = 18;
@@ -93,11 +51,6 @@ constexpr COLORREF COMMITTED_MEMORY_BLOCK_COLOR = RGB_COLOR_GRAY;
 constexpr COLORREF RESERVED_MEMORY_BLOCK_COLOR = RGB_COLOR_DARK;
 
 constexpr int32 GRAPH_BORDER_WIDTH = 1;
-
-typedef enum {
-	XY_LINES_PLOTTED,
-	AREA_PERCENT_STACKED,
-} history_graph_style_t;
 
 constexpr int32 DEFAULT_LINE_WIDTH = 1;
 INTERNAL inline void DebugDrawColoredLine(HDC displayDeviceContext, int startX, int startY, int endX, int endY, COLORREF color) {
@@ -210,14 +163,6 @@ INTERNAL void DebugDrawHistoryGraph(HDC displayDeviceContext, int topLeftX, int 
 	SelectObject(displayDeviceContext, oldBrush);
 	DeleteObject(borderPen);
 }
-
-typedef struct gdi_progress_bar {
-	int x;
-	int y;
-	int width;
-	int height;
-	int percent;
-} progress_bar_t;
 
 inline COLORREF ProgressBarGetDeficitColor(int percent) {
 	if(percent < 50) return RGB_COLOR_GREEN;
