@@ -1,4 +1,12 @@
-INTERNAL int FloatToString(char* buffer, float numberToFormat, int precisionInDecimals) {
+typedef uint8 format_precision_t;
+constexpr format_precision_t ZERO_DIGITS = 0;
+constexpr format_precision_t ONE_DIGIT = 1;
+constexpr format_precision_t TWO_DIGITS = 2;
+constexpr format_precision_t THREE_DIGITS = 3;
+constexpr format_precision_t FOUR_DIGITS = 4;
+constexpr format_precision_t DEFAULT_PRECISION = TWO_DIGITS;
+
+INTERNAL int DoubleToString(char* buffer, double numberToFormat, format_precision_t precisionInDecimals) {
 	if(numberToFormat < 0) {
 		*buffer++ = '-';
 		numberToFormat = -numberToFormat;
@@ -6,7 +14,7 @@ INTERNAL int FloatToString(char* buffer, float numberToFormat, int precisionInDe
 
 	uint32 integralPart
 		= (uint32)numberToFormat;
-	float fractionalPart = numberToFormat - (float)integralPart;
+	double fractionalPart = numberToFormat - (double)integralPart;
 
 	char scratch[32];
 	int length = 0;

@@ -1,8 +1,8 @@
 #include "Win32.hpp"
 
 #define TODO(msg) OutputDebugStringA(msg);
-
-GLOBAL FPS TARGET_FRAME_RATE = 120;
+constexpr FPS TARGET_FRAME_RATE = 15; // "He who expects nothing shall never be disappointed"
+constexpr milliseconds MAX_FRAME_TIME = MILLISECONDS_PER_SECOND / TARGET_FRAME_RATE;
 
 // TODO: Replace these with the actual game/application state later
 typedef struct volatile_game_state {
@@ -62,7 +62,7 @@ void ReadKernelVersionInfo() {
 #endif
 }
 
-const char* ArchitectureToDebugName(WORD wProcessorArchitecture) {
+INTERNAL const char* ArchitectureToDebugName(WORD wProcessorArchitecture) {
 
 	const char* arch = "Unknown";
 	switch(wProcessorArchitecture) {
@@ -121,8 +121,14 @@ void DrawDebugOverlay(gdi_surface_t doubleBufferedSurface) {
 }
 
 void RedrawEverythingIntoWindow(HWND& window) {
+	hardware_tick_t before = PerformanceMetricsNow();
 	DebugDrawIntoFrameBuffer(GDI_BACKBUFFER, PLACEHOLDER_DEMO_APP.offsetX, PLACEHOLDER_DEMO_APP.offsetY);
+	CPU_PERFORMANCE_METRICS.worldRenderTime = PerformanceMetricsGetTimeSince(before);
+
+	before = PerformanceMetricsNow();
 	DrawDebugOverlay(GDI_SURFACE);
+	CPU_PERFORMANCE_METRICS.userInterfaceRenderTime = PerformanceMetricsGetTimeSince(before);
+
 	BlitBackBufferToWindow(window);
 }
 
@@ -242,20 +248,28 @@ LRESULT CALLBACK WindowProcessMessage(HWND window, UINT message, WPARAM wParam,
 	return result;
 }
 
-constexpr int EXIT_FAILURE = -1;
 int WINAPI WinMain(HINSTANCE instance, HINSTANCE, LPSTR,
 	int) {
+	hardware_tick_t applicationStartTime = PerformanceMetricsNow();
+
 	IntrinsicsReadCPUID();
 	ReadKernelVersionInfo();
 
 	UINT requestedSchedulerGranularityInMilliseconds = 1;
 	bool didAdjustGranularity = (timeBeginPeriod(requestedSchedulerGranularityInMilliseconds) == TIMERR_NOERROR);
-	ASSUME(didAdjustGranularity, "Failed to adjust the process scheduler's time period");
-	milliseconds sleepTime = MILLISECONDS_PER_SECOND / TARGET_FRAME_RATE;
+	ASSUME(didAdjustGranularity, "Failed to adjust the process scheduler's time period (HW issue or legacy OS?)");
 
 	SYSTEM_INFO sysInfo;
 	GetSystemInfo(&sysInfo);
-	CPU_PERFORMANCE_METRICS.hardwareSystemInfo = sysInfo;
+	CPU_PERFORMANCE_INFO.numberOfProcessors = sysInfo.dwNumberOfProcessors;
+	CPU_PERFORMANCE_INFO.processorArchitecture = sysInfo.wProcessorArchitecture;
+	CPU_PERFORMANCE_INFO.pageSize = sysInfo.dwPageSize;
+	CPU_PERFORMANCE_INFO.allocationGranularity = sysInfo.dwAllocationGranularity;
+
+	LARGE_INTEGER ticksPerSecond;
+	QueryPerformanceFrequency(&ticksPerSecond);
+	MONOTONIC_CLOCK_SPEED = ticksPerSecond.QuadPart;
+	hardware_tick_t lastUpdateTime = PerformanceMetricsNow();
 
 	WNDCLASSEX windowClass = {};
 	// TODO Is this really a good idea? Beware the CS_OWNDC footguns...
@@ -297,16 +311,23 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE, LPSTR,
 	ResizeBackBuffer(GDI_BACKBUFFER, max(1, GDI_SURFACE.width),
 		max(1, GDI_SURFACE.height), mainWindow);
 
+	CPU_PERFORMANCE_INFO.applicationLaunchTime = PerformanceMetricsGetTimeSince(applicationStartTime);
+
 	MSG message;
 	while(!APPLICATION_SHOULD_EXIT) {
+		lastUpdateTime = PerformanceMetricsNow();
+		CPU_PERFORMANCE_METRICS.applicationUptime = PerformanceMetricsGetTimeSince(applicationStartTime);
+
 		while(PeekMessage(&message, 0, 0, 0, PM_REMOVE)) {
+
 			TranslateMessage(&message);
 			DispatchMessageA(&message);
 			if(message.message == WM_QUIT)
 				APPLICATION_SHOULD_EXIT = true;
 		}
+		CPU_PERFORMANCE_METRICS.messageProcessingTime = PerformanceMetricsGetTimeSince(lastUpdateTime);
 
-		PerformanceMetricsUpdateNow();
+		hardware_tick_t before = PerformanceMetricsNow();
 		if(!APPLICATION_SHOULD_PAUSE) {
 
 			// NOTE: Application/game state updates should go here (later)
@@ -317,10 +338,21 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE, LPSTR,
 			GamePadPollControllers(PLACEHOLDER_DEMO_APP.offsetX, PLACEHOLDER_DEMO_APP.offsetY);
 			DebugDrawUpdateBackgroundPattern();
 		}
+		CPU_PERFORMANCE_METRICS.worldUpdateTime = PerformanceMetricsGetTimeSince(before);
 
 		RedrawEverythingIntoWindow(mainWindow);
 
-		Sleep(FloatToU32(sleepTime));
+		milliseconds frameTime = PerformanceMetricsGetTimeSince(lastUpdateTime);
+		CPU_PERFORMANCE_METRICS.frameTime = frameTime;
+
+		milliseconds maxResponsiveSleepTime = MAX_FRAME_TIME;
+		milliseconds sleepTime = maxResponsiveSleepTime - CPU_PERFORMANCE_METRICS.frameTime;
+		hardware_tick_t beforeSleep = PerformanceMetricsNow();
+		if(sleepTime > 0) Sleep((DWORD)sleepTime);
+		CPU_PERFORMANCE_METRICS.sleepTime = sleepTime;
+		CPU_PERFORMANCE_METRICS.suspendedTime = PerformanceMetricsGetTimeSince(beforeSleep);
+
+		PerformanceMetricsRecordSample(CPU_PERFORMANCE_METRICS, PERFORMANCE_METRICS_HISTORY);
 	}
 
 	timeEndPeriod(requestedSchedulerGranularityInMilliseconds);

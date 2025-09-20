@@ -1,30 +1,52 @@
-typedef struct system_performance_metrics {
-	bool isInitialized;
+typedef uint64 hardware_tick_t;
 
+typedef struct system_performance_metrics {
 	FILETIME prevSysKernel;
 	FILETIME prevSysUser;
 	FILETIME prevProcKernel;
 	FILETIME prevProcUser;
-	percentage processorUsageAllCores;
-	percentage processorUsageSingleCore;
 
-	LARGE_INTEGER prevCounter;
-	milliseconds deltaTime;
-	milliseconds smoothedDeltaTime;
-	FPS frameRate;
-	FPS smoothedFrameRate;
-
-	milliseconds desiredSleepTime;
-	milliseconds observedSleepTime;
-
-	// Even though this info won't change, store it here for cache locality
-	SYSTEM_INFO hardwareSystemInfo;
-
+	milliseconds applicationUptime;
+	milliseconds frameTime;
+	milliseconds messageProcessingTime;
+	milliseconds sleepTime;
+	milliseconds suspendedTime;
+	milliseconds userInterfaceRenderTime;
+	milliseconds worldUpdateTime;
+	milliseconds worldRenderTime;
 } performance_metrics_t;
 
-GLOBAL performance_metrics_t CPU_PERFORMANCE_METRICS = {};
+typedef struct system_performance_info {
+	milliseconds applicationLaunchTime;
+	DWORD pageSize;
+	DWORD allocationGranularity;
+	DWORD numberOfProcessors;
+	WORD processorArchitecture;
+} performance_info_t;
 
-percentage GetProcessorUsageAllCores() {
+constexpr uint32 PERFORMANCE_HISTORY_SECONDS = 30;
+constexpr uint32 PERFORMANCE_HISTORY_SIZE = 256 * ((uint32)(TARGET_FRAME_RATE * PERFORMANCE_HISTORY_SECONDS) / 256);
+typedef struct performance_history_cache {
+	performance_metrics_t recordedSamples[PERFORMANCE_HISTORY_SIZE];
+	milliseconds highestObservedFrameTime;
+	uint32 oldestRecordedSampleIndex;
+} performance_history_t;
+
+GLOBAL hardware_tick_t MONOTONIC_CLOCK_SPEED = {};
+GLOBAL performance_metrics_t CPU_PERFORMANCE_METRICS = {};
+GLOBAL performance_info_t CPU_PERFORMANCE_INFO = {};
+GLOBAL performance_history_t PERFORMANCE_METRICS_HISTORY = {};
+
+INTERNAL inline uint64 FileTimeToUnsigned64(FILETIME& fileTime) {
+	ULARGE_INTEGER converted;
+
+	converted.LowPart = fileTime.dwLowDateTime;
+	converted.HighPart = fileTime.dwHighDateTime;
+
+	return converted.QuadPart;
+}
+
+INTERNAL percentage GetProcessorUsageAllCores() {
 	FILETIME sysIdle, sysKernel, sysUser;
 	FILETIME procCreation, procExit, procKernel, procUser;
 
@@ -34,28 +56,18 @@ percentage GetProcessorUsageAllCores() {
 	if(!GetProcessTimes(GetCurrentProcess(), &procCreation, &procExit, &procKernel, &procUser))
 		return 0.0;
 
-	if(!CPU_PERFORMANCE_METRICS.isInitialized) {
-		CPU_PERFORMANCE_METRICS.prevSysKernel = sysKernel;
-		CPU_PERFORMANCE_METRICS.prevSysUser = sysUser;
-		CPU_PERFORMANCE_METRICS.prevProcKernel = procKernel;
-		CPU_PERFORMANCE_METRICS.prevProcUser = procUser;
-		CPU_PERFORMANCE_METRICS.isInitialized = true;
-		return 0.0; // Need at least two samples to measure
-	}
-
-	ULONGLONG sysKernelDiff = (((ULONGLONG)sysKernel.dwHighDateTime << 32) | sysKernel.dwLowDateTime) - (((ULONGLONG)CPU_PERFORMANCE_METRICS.prevSysKernel.dwHighDateTime << 32) | CPU_PERFORMANCE_METRICS.prevSysKernel.dwLowDateTime);
-	ULONGLONG sysUserDiff = (((ULONGLONG)sysUser.dwHighDateTime << 32) | sysUser.dwLowDateTime) - (((ULONGLONG)CPU_PERFORMANCE_METRICS.prevSysUser.dwHighDateTime << 32) | CPU_PERFORMANCE_METRICS.prevSysUser.dwLowDateTime);
-
-	ULONGLONG procKernelDiff = (((ULONGLONG)procKernel.dwHighDateTime << 32) | procKernel.dwLowDateTime) - (((ULONGLONG)CPU_PERFORMANCE_METRICS.prevProcKernel.dwHighDateTime << 32) | CPU_PERFORMANCE_METRICS.prevProcKernel.dwLowDateTime);
-	ULONGLONG procUserDiff = (((ULONGLONG)procUser.dwHighDateTime << 32) | procUser.dwLowDateTime) - (((ULONGLONG)CPU_PERFORMANCE_METRICS.prevProcUser.dwHighDateTime << 32) | CPU_PERFORMANCE_METRICS.prevProcUser.dwLowDateTime);
+	int64 sysKernelDiff = FileTimeToUnsigned64(sysKernel) - FileTimeToUnsigned64(CPU_PERFORMANCE_METRICS.prevSysKernel);
+	int64 sysUserDiff = FileTimeToUnsigned64(sysUser) - FileTimeToUnsigned64(CPU_PERFORMANCE_METRICS.prevSysUser);
+	int64 procKernelDiff = FileTimeToUnsigned64(procKernel) - FileTimeToUnsigned64(CPU_PERFORMANCE_METRICS.prevProcKernel);
+	int64 procUserDiff = FileTimeToUnsigned64(procUser) - FileTimeToUnsigned64(CPU_PERFORMANCE_METRICS.prevProcUser);
 
 	CPU_PERFORMANCE_METRICS.prevSysKernel = sysKernel;
 	CPU_PERFORMANCE_METRICS.prevSysUser = sysUser;
 	CPU_PERFORMANCE_METRICS.prevProcKernel = procKernel;
 	CPU_PERFORMANCE_METRICS.prevProcUser = procUser;
 
-	ULONGLONG sysTotal = sysKernelDiff + sysUserDiff;
-	ULONGLONG procTotal = procKernelDiff + procUserDiff;
+	int64 sysTotal = sysKernelDiff + sysUserDiff;
+	int64 procTotal = procKernelDiff + procUserDiff;
 
 	if(sysTotal == 0)
 		return 0.0;
@@ -63,41 +75,27 @@ percentage GetProcessorUsageAllCores() {
 	return (percentage)procTotal / (percentage)sysTotal;
 }
 
-void PerformanceMetricsUpdateNow() {
-	LARGE_INTEGER ticksPerSecond, tickTimeNow;
-	QueryPerformanceFrequency(&ticksPerSecond);
-	QueryPerformanceCounter(&tickTimeNow);
+INTERNAL inline hardware_tick_t PerformanceMetricsNow() {
+	LARGE_INTEGER highResolutionTimestamp;
+	QueryPerformanceCounter(&highResolutionTimestamp);
+	return (hardware_tick_t)highResolutionTimestamp.QuadPart;
+}
 
-	if(!CPU_PERFORMANCE_METRICS.isInitialized) {
-		CPU_PERFORMANCE_METRICS.prevCounter = tickTimeNow;
-		CPU_PERFORMANCE_METRICS.isInitialized = true;
-		return;
-	}
+INTERNAL inline seconds PerformanceMetricsElapsedSeconds(hardware_tick_t before) {
+	hardware_tick_t after = PerformanceMetricsNow();
+	seconds elapsed = (seconds)(after - before);
+	return elapsed / (seconds)MONOTONIC_CLOCK_SPEED;
+}
 
-	// Frame times
-	LONGLONG counterDiff = tickTimeNow.QuadPart - CPU_PERFORMANCE_METRICS.prevCounter.QuadPart;
-	CPU_PERFORMANCE_METRICS.prevCounter = tickTimeNow;
-	milliseconds deltaTime = (MILLISECONDS_PER_SECOND * counterDiff) / ticksPerSecond.QuadPart;
-	CPU_PERFORMANCE_METRICS.deltaTime = deltaTime;
+INTERNAL inline milliseconds PerformanceMetricsGetTimeSince(hardware_tick_t before) {
+	return PerformanceMetricsElapsedSeconds(before) * MILLISECONDS_PER_SECOND;
+}
 
-	// Smooth out jitter with a basic exponential moving average
-	CPU_PERFORMANCE_METRICS.smoothedDeltaTime = CPU_PERFORMANCE_METRICS.smoothedDeltaTime * 0.9f + deltaTime * 0.1f;
+INTERNAL inline void PerformanceMetricsRecordSample(performance_metrics_t metrics, performance_history_t& history) {
+	history.recordedSamples[history.oldestRecordedSampleIndex] = metrics;
 
-	CPU_PERFORMANCE_METRICS.frameRate = (deltaTime > 0.0f) ? (MILLISECONDS_PER_SECOND / deltaTime) : 0.0f;
-	CPU_PERFORMANCE_METRICS.smoothedFrameRate = CPU_PERFORMANCE_METRICS.smoothedFrameRate * 0.9f + CPU_PERFORMANCE_METRICS.frameRate * 0.1f;
+	if(history.oldestRecordedSampleIndex == 0) history.highestObservedFrameTime = 0;
+	history.highestObservedFrameTime = Max(history.highestObservedFrameTime, metrics.frameTime);
 
-	// CPU usage
-	CPU_PERFORMANCE_METRICS.processorUsageAllCores = GetProcessorUsageAllCores();
-	CPU_PERFORMANCE_METRICS.processorUsageSingleCore = CPU_PERFORMANCE_METRICS.processorUsageAllCores * CPU_PERFORMANCE_METRICS.hardwareSystemInfo.dwNumberOfProcessors;
-
-	// Sleep timings
-	milliseconds desiredSleepTime = MILLISECONDS_PER_SECOND / TARGET_FRAME_RATE;
-	LARGE_INTEGER beforeSleep, afterSleep;
-	QueryPerformanceCounter(&beforeSleep);
-	Sleep((DWORD)desiredSleepTime);
-	QueryPerformanceCounter(&afterSleep);
-	milliseconds observedSleepTime = (MILLISECONDS_PER_SECOND * (afterSleep.QuadPart - beforeSleep.QuadPart)) / ticksPerSecond.QuadPart;
-
-	CPU_PERFORMANCE_METRICS.desiredSleepTime = desiredSleepTime;
-	CPU_PERFORMANCE_METRICS.observedSleepTime = observedSleepTime;
+	history.oldestRecordedSampleIndex = (history.oldestRecordedSampleIndex + 1) % PERFORMANCE_HISTORY_SIZE;
 }
