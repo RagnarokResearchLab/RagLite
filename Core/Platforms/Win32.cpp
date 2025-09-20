@@ -1,8 +1,6 @@
 #include "Win32.hpp"
 
 #define TODO(msg) OutputDebugStringA(msg);
-constexpr FPS TARGET_FRAME_RATE = 15; // "He who expects nothing shall never be disappointed"
-constexpr milliseconds MAX_FRAME_TIME = MILLISECONDS_PER_SECOND / TARGET_FRAME_RATE;
 
 // TODO: Replace these with the actual game/application state later
 typedef struct volatile_game_state {
