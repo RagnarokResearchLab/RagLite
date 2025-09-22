@@ -5,6 +5,8 @@ set DEBUG_EXE=RagLite2Dbg.exe
 set RELEASE_EXE=RagLite2.exe
 set RUNTIME_LIBS=gdi32.lib shlwapi.lib user32.lib xinput.lib winmm.lib
 
+for /f "delims=" %%i in ('call git describe --always --dirty') do set GIT_COMMIT_HASH=\"%%i\"
+
 set DEFAULT_BUILD_DIR=BuildArtifacts
 if not exist %DEFAULT_BUILD_DIR% mkdir %DEFAULT_BUILD_DIR%
 
@@ -44,6 +46,7 @@ set SHARED_COMPILE_FLAGS=%SHARED_COMPILE_FLAGS% /Zc:strictStrings
 :: /Zf					Faster PDB generation in parallel builds (minimize RPC calls to mspdbsrv.exe)
 set SHARED_COMPILE_FLAGS=%SHARED_COMPILE_FLAGS% /Zf
 set SHARED_COMPILE_FLAGS=%SHARED_COMPILE_FLAGS% %CPP_STANDARD%
+set SHARED_COMPILE_FLAGS=%SHARED_COMPILE_FLAGS% /DRAGLITE_COMMIT_HASH=%GIT_COMMIT_HASH%
 
 :: /INCREMENTAL:NO		Disable incremental linkage
 set SHARED_LINK_FLAGS=%SHARED_LINK_FLAGS% /INCREMENTAL:NO
