@@ -19,36 +19,48 @@ GLOBAL int MEMORY_OVERLAY_HEIGHT = (DEBUG_OVERLAY_LINE_HEIGHT * LINE_COUNT) + 2 
 constexpr int PERFORMANCE_OVERLAY_WIDTH = PROGRESS_BAR_WIDTH + 2 * DEBUG_OVERLAY_PADDING_SIZE;
 GLOBAL int PERFORMANCE_OVERLAY_HEIGHT = (DEBUG_OVERLAY_LINE_HEIGHT * LINE_COUNT) + 2 * DEBUG_OVERLAY_PADDING_SIZE;
 
-constexpr COLORREF RGB_COLOR_CYAN = RGB(120, 192, 255);
-constexpr COLORREF RGB_COLOR_DARKEST = RGB(0, 0, 00);
-constexpr COLORREF RGB_COLOR_DARKER = RGB(30, 30, 30);
-constexpr COLORREF RGB_COLOR_DARK = RGB(50, 50, 50);
-constexpr COLORREF RGB_COLOR_BLUE = RGB(0, 0, 255);
-constexpr COLORREF RGB_COLOR_DARKGREEN = RGB(0, 100, 0);
-constexpr COLORREF RGB_COLOR_GRAY = RGB(80, 80, 80);
-constexpr COLORREF RGB_COLOR_LIGHTGRAY = RGB(192, 192, 192);
-constexpr COLORREF RGB_COLOR_GREEN = RGB(0, 200, 0);
-constexpr COLORREF RGB_COLOR_ORANGE = RGB(255, 128, 0);
-constexpr COLORREF RGB_COLOR_PURPLE = RGB(64, 0, 255);
-constexpr COLORREF RGB_COLOR_RED = RGB(200, 0, 0);
-constexpr COLORREF RGB_COLOR_TURQUOISE = RGB(0, 100, 100);
-constexpr COLORREF RGB_COLOR_YELLOW = RGB(200, 200, 0);
-constexpr COLORREF RGB_COLOR_WHITE = RGB(200, 200, 200);
-constexpr COLORREF RGB_COLOR_BRIGHTEST = RGB(255, 255, 255);
-constexpr COLORREF RGB_COLOR_VIOLET = RGB(210, 168, 255);
-constexpr COLORREF RGB_COLOR_VIOLET2 = RGB(128, 128, 255);
-constexpr COLORREF RGB_COLOR_FADING = RGB(196, 186, 218);
-constexpr COLORREF RGB_COLOR_GOLD = RGB(236, 206, 71);
-constexpr COLORREF RGB_COLOR_DARKGOLD = RGB(170, 150, 15);
+#define COLOR(red, green, blue) { blue, green, red, 255 }
+constexpr gdi_color_t RGB_COLOR_CYAN = COLOR(120, 192, 255);
+constexpr COLORREF RGB_COLORREF_CYAN = RGB(120, 192, 255);
+constexpr gdi_color_t RGB_COLOR_DARKEST = COLOR(0, 0, 00);
+constexpr gdi_color_t RGB_COLOR_DARKER = COLOR(30, 30, 30);
+constexpr gdi_color_t RGB_COLOR_DARK = COLOR(50, 50, 50);
+constexpr gdi_color_t RGB_COLOR_BLUE = COLOR(0, 0, 255);
+constexpr gdi_color_t RGB_COLOR_DARKGREEN = COLOR(0, 100, 0);
+constexpr COLORREF RGB_COLORREF_DARKGREEN = RGB(0, 100, 0);
+constexpr gdi_color_t RGB_COLOR_GRAY = COLOR(80, 80, 80);
+constexpr COLORREF RGB_COLORREF_GRAY = RGB(80, 80, 80);
+constexpr gdi_color_t RGB_COLOR_LIGHTGRAY = COLOR(192, 192, 192);
+constexpr COLORREF RGB_COLORREF_LIGHTGRAY = RGB(192, 192, 192);
+constexpr gdi_color_t RGB_COLOR_GREEN = COLOR(0, 200, 0);
+constexpr gdi_color_t RGB_COLOR_ORANGE = COLOR(255, 128, 0);
+constexpr COLORREF RGB_COLORREF_ORANGE = RGB(255, 128, 0);
+constexpr gdi_color_t RGB_COLOR_PURPLE = COLOR(64, 0, 255);
+constexpr gdi_color_t RGB_COLOR_RED = COLOR(200, 0, 0);
+constexpr gdi_color_t RGB_COLOR_TURQUOISE = COLOR(0, 100, 100);
+constexpr COLORREF RGB_COLORREF_TURQUOISE = RGB(0, 100, 100);
+constexpr gdi_color_t RGB_COLOR_YELLOW = COLOR(200, 200, 0);
+constexpr gdi_color_t RGB_COLOR_WHITE = COLOR(200, 200, 200);
+constexpr COLORREF RGB_COLORREF_WHITE = RGB(200, 200, 200);
+constexpr gdi_color_t RGB_COLOR_BRIGHTEST = COLOR(255, 255, 255);
+constexpr COLORREF RGB_COLORREF_BRIGHTEST = RGB(255, 255, 255);
+constexpr gdi_color_t RGB_COLOR_VIOLET = COLOR(210, 168, 255);
+constexpr COLORREF RGB_COLORREF_VIOLET = RGB(210, 168, 255);
+constexpr gdi_color_t RGB_COLOR_VIOLET2 = COLOR(128, 128, 255);
+constexpr gdi_color_t RGB_COLOR_FADING = COLOR(196, 186, 218);
+constexpr COLORREF RGB_COLORREF_GOLD = RGB(236, 206, 71);
+constexpr gdi_color_t RGB_COLOR_GOLD = COLOR(236, 206, 71);
+constexpr gdi_color_t RGB_COLOR_DARKGOLD = COLOR(170, 150, 15);
 
-constexpr COLORREF UI_PANEL_COLOR = RGB_COLOR_DARKER;
-constexpr COLORREF UI_BACKGROUND_COLOR = RGB_COLOR_DARK;
-constexpr COLORREF UI_TEXT_COLOR = RGB_COLOR_WHITE;
-constexpr COLORREF UI_HIGHLIGHT_COLOR = RGB_COLOR_RED;
+constexpr gdi_color_t UI_PANEL_COLOR = RGB_COLOR_DARKER;
+constexpr gdi_color_t UI_BACKGROUND_COLOR = RGB_COLOR_DARK;
+constexpr gdi_color_t UI_TEXT_COLOR = RGB_COLOR_WHITE;
+constexpr COLORREF UI_TEXT_COLORREF = RGB_COLORREF_WHITE;
+constexpr gdi_color_t UI_HIGHLIGHT_COLOR = RGB_COLOR_RED;
 
-constexpr COLORREF USED_MEMORY_BLOCK_COLOR = RGB_COLOR_GREEN;
-constexpr COLORREF COMMITTED_MEMORY_BLOCK_COLOR = RGB_COLOR_GRAY;
-constexpr COLORREF RESERVED_MEMORY_BLOCK_COLOR = RGB_COLOR_DARK;
+constexpr gdi_color_t USED_MEMORY_BLOCK_COLOR = RGB_COLOR_GREEN;
+constexpr gdi_color_t COMMITTED_MEMORY_BLOCK_COLOR = RGB_COLOR_GRAY;
+constexpr gdi_color_t RESERVED_MEMORY_BLOCK_COLOR = RGB_COLOR_DARK;
 
 constexpr int32 GRAPH_BORDER_WIDTH = 1;
 
@@ -64,15 +76,59 @@ INTERNAL inline void DebugDrawColoredLine(HDC& displayDeviceContext, int startX,
 	DeleteObject(graphPen);
 }
 
+INTERNAL inline void DebugDrawVerticalLine(HDC& displayDeviceContext, int startX, int startY, int endX, int endY, gdi_color_t color) {
+	uint32* pixelArray = (uint32*)GDI_BACKBUFFER.pixelBuffer;
+	size_t count = (size_t)GDI_BACKBUFFER.width * (size_t)GDI_BACKBUFFER.height;
+
+	endX = startY;
+	startY = Min(startY, endY);
+	endY = Max(endX, endY);
+
+	for(size_t y = startY; y < endY; ++y) {
+		pixelArray[startX + y * GDI_BACKBUFFER.width] = color.bytes;
+	}
+}
+
+INTERNAL inline void DebugDrawSolidColorRectangle(HDC& displayDeviceContext, RECT& rectangle, gdi_color_t color) {
+	uint32* pixelArray = (uint32*)GDI_BACKBUFFER.pixelBuffer;
+	size_t count = (size_t)GDI_BACKBUFFER.width * (size_t)GDI_BACKBUFFER.height;
+	size_t height = rectangle.bottom - rectangle.top;
+	size_t width = rectangle.right - rectangle.left;
+	for(size_t y = rectangle.top; y < Min(rectangle.bottom, GDI_BACKBUFFER.height); ++y) {
+		for(size_t x = rectangle.left; x < Min(rectangle.right, GDI_BACKBUFFER.width); ++x) {
+			size_t pixelStartOffset = x + y * GDI_BACKBUFFER.width;
+			pixelArray[pixelStartOffset] = color.bytes;
+		}
+	}
+}
+
+INTERNAL inline void DebugDrawFramedColorRectangle(HDC& displayDeviceContext, RECT& rectangle, gdi_color_t rgbColor) {
+	uint32* pixelArray = (uint32*)GDI_BACKBUFFER.pixelBuffer;
+	size_t count = (size_t)GDI_BACKBUFFER.width * (size_t)GDI_BACKBUFFER.height;
+
+	size_t height = rectangle.bottom - rectangle.top;
+	size_t width = rectangle.right - rectangle.left;
+	for(size_t x = rectangle.left; x < Min(rectangle.right, GDI_BACKBUFFER.width); ++x) {
+		pixelArray[x + rectangle.top * GDI_BACKBUFFER.width] = rgbColor.bytes;
+	}
+
+	for(size_t x = rectangle.left; x < Min(rectangle.right, GDI_BACKBUFFER.width); ++x) {
+		pixelArray[x + rectangle.bottom * GDI_BACKBUFFER.width] = rgbColor.bytes;
+	}
+
+	for(size_t y = rectangle.top; y < Min(rectangle.bottom, GDI_BACKBUFFER.height); ++y) {
+		pixelArray[rectangle.left + y * GDI_BACKBUFFER.width] = rgbColor.bytes;
+		pixelArray[rectangle.right + y * GDI_BACKBUFFER.width] = rgbColor.bytes;
+	}
+}
+
 INTERNAL void DebugDrawHistoryGraph(HDC& displayDeviceContext, int topLeftX, int topLeftY, int panelWidth, int panelHeight, history_graph_style_t chartType) {
-	HBRUSH backgroundBrush = CreateSolidBrush(UI_BACKGROUND_COLOR);
 	int left = topLeftX + GRAPH_BORDER_WIDTH;
 	int top = topLeftY + GRAPH_BORDER_WIDTH;
 	int right = left + panelWidth - GRAPH_BORDER_WIDTH;
 	int bottom = top + panelHeight - GRAPH_BORDER_WIDTH;
 	RECT panelRect = { left, top, right, bottom };
-	FillRect(displayDeviceContext, &panelRect, backgroundBrush);
-	DeleteObject(backgroundBrush);
+	DebugDrawSolidColorRectangle(displayDeviceContext, panelRect, UI_BACKGROUND_COLOR);
 
 	milliseconds maxFrameTime = Max(PERFORMANCE_METRICS_HISTORY.highestObservedFrameTime, MAX_FRAME_TIME);
 	percentage graphScale = (percentage)(panelHeight / maxFrameTime);
@@ -82,7 +138,7 @@ INTERNAL void DebugDrawHistoryGraph(HDC& displayDeviceContext, int topLeftX, int
 
 	case XY_LINES_PLOTTED: {
 		int fpsTargetLineOffsetY = panelRect.bottom - (int)(MAX_FRAME_TIME * graphScale);
-		DebugDrawColoredLine(displayDeviceContext, panelRect.left, fpsTargetLineOffsetY, panelRect.right, fpsTargetLineOffsetY, RGB_COLOR_LIGHTGRAY);
+		DebugDrawColoredLine(displayDeviceContext, panelRect.left, fpsTargetLineOffsetY, panelRect.right, fpsTargetLineOffsetY, RGB_COLORREF_LIGHTGRAY);
 
 		int lineStartX = panelRect.left;
 		int lineStartY = panelRect.bottom;
@@ -102,7 +158,7 @@ INTERNAL void DebugDrawHistoryGraph(HDC& displayDeviceContext, int topLeftX, int
 			lineStartY = ClampToInterval(lineStartY, panelRect.top + GRAPH_BORDER_WIDTH, panelRect.bottom - GRAPH_BORDER_WIDTH);
 			lineEndY = ClampToInterval(lineEndY, panelRect.top + GRAPH_BORDER_WIDTH, panelRect.bottom - GRAPH_BORDER_WIDTH);
 
-			if(recorded.frameTime >= EPSILON) DebugDrawColoredLine(displayDeviceContext, lineStartX, lineStartY, lineEndX, lineEndY, RGB_COLOR_CYAN);
+			if(recorded.frameTime >= EPSILON) DebugDrawColoredLine(displayDeviceContext, lineStartX, lineStartY, lineEndX, lineEndY, RGB_COLORREF_CYAN);
 
 			lineStartX = lineEndX;
 			lineStartY = lineEndY;
@@ -125,36 +181,36 @@ INTERNAL void DebugDrawHistoryGraph(HDC& displayDeviceContext, int topLeftX, int
 
 			percentage filled = (percentage)(recorded.userInterfaceRenderTime / recorded.frameTime);
 			int lineEndY = lineStartY - (int)(filled * barHeight) + 1;
-			DebugDrawColoredLine(displayDeviceContext, lineStartX, lineStartY, lineStartX, lineEndY, RGB_COLOR_GOLD);
+			DebugDrawVerticalLine(displayDeviceContext, lineStartX, lineStartY, lineStartX, lineEndY, RGB_COLOR_GOLD);
 			lineStartY = ClampToInterval(lineEndY, panelRect.top + GRAPH_BORDER_WIDTH, panelRect.bottom - GRAPH_BORDER_WIDTH);
 
 			filled = (percentage)(recorded.worldUpdateTime / recorded.frameTime);
 			lineEndY = lineStartY - (int)(filled * barHeight) + 1;
-			DebugDrawColoredLine(displayDeviceContext, lineStartX, lineStartY, lineStartX, lineEndY, RGB_COLOR_VIOLET);
+			DebugDrawVerticalLine(displayDeviceContext, lineStartX, lineStartY, lineStartX, lineEndY, RGB_COLOR_VIOLET);
 			lineStartY = ClampToInterval(lineEndY, panelRect.top + GRAPH_BORDER_WIDTH, panelRect.bottom - GRAPH_BORDER_WIDTH);
 
 			filled = (percentage)(recorded.worldRenderTime / recorded.frameTime);
 			lineEndY = lineStartY - (int)(filled * barHeight) + 1;
-			DebugDrawColoredLine(displayDeviceContext, lineStartX, lineStartY, lineStartX, lineEndY, RGB_COLOR_TURQUOISE);
+			DebugDrawVerticalLine(displayDeviceContext, lineStartX, lineStartY, lineStartX, lineEndY, RGB_COLOR_TURQUOISE);
 			lineStartY = ClampToInterval(lineEndY, panelRect.top + GRAPH_BORDER_WIDTH, panelRect.bottom - GRAPH_BORDER_WIDTH);
 
 			filled = (percentage)(recorded.suspendedTime / recorded.frameTime);
 			lineEndY = lineStartY - (int)(filled * barHeight) + 1;
-			DebugDrawColoredLine(displayDeviceContext, lineStartX, lineStartY, lineStartX, lineEndY, RGB_COLOR_DARKGREEN);
+			DebugDrawVerticalLine(displayDeviceContext, lineStartX, lineStartY, lineStartX, lineEndY, RGB_COLOR_DARKGREEN);
 			lineStartY = ClampToInterval(lineEndY, panelRect.top + GRAPH_BORDER_WIDTH, panelRect.bottom - GRAPH_BORDER_WIDTH);
 
 			filled = (percentage)(recorded.messageProcessingTime / recorded.frameTime);
 			lineEndY = lineStartY - (int)(filled * barHeight) + 1;
-			DebugDrawColoredLine(displayDeviceContext, lineStartX, lineStartY, lineStartX, lineEndY, RGB_COLOR_ORANGE);
+			DebugDrawVerticalLine(displayDeviceContext, lineStartX, lineStartY, lineStartX, lineEndY, RGB_COLOR_ORANGE);
 			lineStartY = ClampToInterval(lineEndY, panelRect.top + GRAPH_BORDER_WIDTH, panelRect.bottom - GRAPH_BORDER_WIDTH);
 
 			lineEndY = panelRect.top;
-			DebugDrawColoredLine(displayDeviceContext, lineStartX, lineStartY, lineStartX, lineEndY, RGB_COLOR_GRAY);
+			DebugDrawVerticalLine(displayDeviceContext, lineStartX, lineStartY, lineStartX, lineEndY, RGB_COLOR_GRAY);
 		}
 	} break;
 	}
 
-	HPEN borderPen = CreatePen(PS_SOLID, GRAPH_BORDER_WIDTH, RGB_COLOR_WHITE);
+	HPEN borderPen = CreatePen(PS_SOLID, GRAPH_BORDER_WIDTH, RGB_COLORREF_WHITE);
 	HGDIOBJ oldPen = SelectObject(displayDeviceContext, borderPen);
 	HGDIOBJ oldBrush = SelectObject(displayDeviceContext, GetStockObject(HOLLOW_BRUSH));
 	Rectangle(displayDeviceContext, panelRect.left, panelRect.top, panelRect.right, panelRect.bottom);
@@ -164,44 +220,33 @@ INTERNAL void DebugDrawHistoryGraph(HDC& displayDeviceContext, int topLeftX, int
 	DeleteObject(borderPen);
 }
 
-inline COLORREF ProgressBarGetDeficitColor(int percent) {
+inline gdi_color_t ProgressBarGetDeficitColor(int percent) {
 	if(percent < 50) return RGB_COLOR_GREEN;
 	if(percent < 75) return RGB_COLOR_YELLOW;
 	if(percent < 90) return RGB_COLOR_ORANGE;
 	return RGB_COLOR_RED;
 }
 
-inline COLORREF ProgressBarGetCompletionColor(int percent) {
+inline gdi_color_t ProgressBarGetCompletionColor(int percent) {
 	if(percent >= 90) return RGB_COLOR_GREEN;
 	if(percent >= 75) return RGB_COLOR_YELLOW;
 	if(percent >= 50) return RGB_COLOR_ORANGE;
 	return RGB_COLOR_RED;
 }
 
-INTERNAL inline void DrawSolidColorRectangle(HDC& displayDeviceContext, RECT rectangle, COLORREF color) {
-	HBRUSH brush = CreateSolidBrush(color);
-	FillRect(displayDeviceContext, &rectangle, brush);
-	DeleteObject(brush);
-	FrameRect(displayDeviceContext, &rectangle, (HBRUSH)GetStockObject(WHITE_BRUSH));
-}
-
-INTERNAL void DrawProgressBarWithColors(HDC& displayDeviceContext, progress_bar_t& bar, COLORREF foregroundColor) {
-	HBRUSH backgroundBrush = CreateSolidBrush(UI_BACKGROUND_COLOR);
+INTERNAL void DrawProgressBarWithColors(HDC& displayDeviceContext, progress_bar_t& bar, gdi_color_t foregroundColor) {
 	RECT rect = { bar.x, bar.y, bar.x + bar.width, bar.y + bar.height };
-	FillRect(displayDeviceContext, &rect, backgroundBrush);
-	DeleteObject(backgroundBrush);
+	DebugDrawSolidColorRectangle(displayDeviceContext, rect, UI_BACKGROUND_COLOR);
 
 	int filledWidth = (bar.width * bar.percent) / 100;
-	HBRUSH foregroundBrush = CreateSolidBrush(foregroundColor);
 	RECT fillRect = { bar.x, bar.y, bar.x + filledWidth, bar.y + bar.height };
-	FillRect(displayDeviceContext, &fillRect, foregroundBrush);
-	DeleteObject(foregroundBrush);
+	DebugDrawSolidColorRectangle(displayDeviceContext, fillRect, foregroundColor);
 
-	FrameRect(displayDeviceContext, &rect, (HBRUSH)GetStockObject(WHITE_BRUSH));
+	DebugDrawFramedColorRectangle(displayDeviceContext, rect, RGB_COLOR_WHITE);
 }
 
 INTERNAL inline void DrawProgressBar(HDC& displayDeviceContext, progress_bar_t& bar) {
-	COLORREF foregroundColor = ProgressBarGetDeficitColor(bar.percent);
+	gdi_color_t foregroundColor = ProgressBarGetDeficitColor(bar.percent);
 	DrawProgressBarWithColors(displayDeviceContext, bar, foregroundColor);
 }
 
@@ -218,11 +263,9 @@ INTERNAL void DebugDrawMemoryUsageOverlay(HDC& displayDeviceContext) {
 		startX + MEMORY_OVERLAY_WIDTH,
 		startY + MEMORY_OVERLAY_HEIGHT
 	};
-	HBRUSH panelBrush = CreateSolidBrush(UI_PANEL_COLOR);
-	FillRect(displayDeviceContext, &backgroundPanelRect, panelBrush);
-	DeleteObject(panelBrush);
+	DebugDrawSolidColorRectangle(displayDeviceContext, backgroundPanelRect, UI_PANEL_COLOR);
 
-	SetTextColor(displayDeviceContext, UI_TEXT_COLOR);
+	SetTextColor(displayDeviceContext, UI_TEXT_COLORREF);
 
 	constexpr size_t FORMAT_BUFFER_SIZE = 256;
 	char formatBuffer[FORMAT_BUFFER_SIZE];
@@ -282,7 +325,7 @@ INTERNAL void DebugDrawMemoryUsageOverlay(HDC& displayDeviceContext) {
 	// Blocks
 	//-------------------------------------------------
 	for(LONG blockID = 0; blockID < totalBlocks; ++blockID) {
-		COLORREF color;
+		gdi_color_t color;
 		if(blockID < usedBlocks) {
 			color = USED_MEMORY_BLOCK_COLOR;
 		} else if(blockID < committedBlocks) {
@@ -291,15 +334,13 @@ INTERNAL void DebugDrawMemoryUsageOverlay(HDC& displayDeviceContext) {
 			color = RESERVED_MEMORY_BLOCK_COLOR;
 		}
 
-		HBRUSH brush = CreateSolidBrush(color);
 		RECT block = {
 			arenaStartX + (blockID % blocksPerRow) * (ARENA_BLOCK_WIDTH + 1), // TBD NARROW +
 			arenaStartY + (blockID / blocksPerRow) * (ARENA_BLOCK_HEIGHT + 1),
 			arenaStartX + (blockID % blocksPerRow) * (ARENA_BLOCK_WIDTH + 1) + ARENA_BLOCK_WIDTH,
 			arenaStartY + (blockID / blocksPerRow) * (ARENA_BLOCK_HEIGHT + 1) + ARENA_BLOCK_HEIGHT
 		};
-		FillRect(displayDeviceContext, &block, brush);
-		DeleteObject(brush);
+		DebugDrawSolidColorRectangle(displayDeviceContext, block, color);
 	}
 
 	SelectObject(displayDeviceContext, oldFont);
@@ -318,11 +359,9 @@ INTERNAL void DebugDrawProcessorUsageOverlay(HDC& displayDeviceContext) {
 		startX + PERFORMANCE_OVERLAY_WIDTH,
 		startY + PERFORMANCE_OVERLAY_HEIGHT
 	};
-	HBRUSH panelBrush = CreateSolidBrush(UI_PANEL_COLOR);
-	FillRect(displayDeviceContext, &panelRect, panelBrush);
-	DeleteObject(panelBrush);
+	DebugDrawSolidColorRectangle(displayDeviceContext, panelRect, UI_PANEL_COLOR);
 
-	SetTextColor(displayDeviceContext, UI_TEXT_COLOR);
+	SetTextColor(displayDeviceContext, UI_TEXT_COLORREF);
 
 	constexpr size_t FORMAT_BUFFER_SIZE = 256;
 	char formatBuffer[FORMAT_BUFFER_SIZE];
@@ -397,7 +436,7 @@ INTERNAL void DebugDrawProcessorUsageOverlay(HDC& displayDeviceContext) {
 		PROGRESS_BAR_WIDTH, historyGraphHeight, XY_LINES_PLOTTED);
 	lineY += historyGraphHeight + DEBUG_OVERLAY_MARGIN_SIZE;
 
-	FPS frameRate = MILLISECONDS_PER_SECOND / CPU_PERFORMANCE_METRICS.frameTime; // TODO lastFrameTime
+	FPS frameRate = MILLISECONDS_PER_SECOND / CPU_PERFORMANCE_METRICS.frameTime;
 	StringCbPrintfA(formatBuffer, FORMAT_BUFFER_SIZE, "Uncapped Frame Rate: %.0f FPS (Target: %.0f FPS)", frameRate, TARGET_FRAME_RATE);
 	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, formatBuffer, lstrlenA(formatBuffer));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
@@ -652,15 +691,13 @@ INTERNAL void DebugDrawKeyboardOverlay(HDC& displayDeviceContext) {
 		SHORT keyFlags = GetKeyState(virtualKeyCode);
 		BOOL wasKeyDown = (keyFlags & KF_REPEAT) == KF_REPEAT;
 
-		COLORREF backgroundColor = UI_PANEL_COLOR;
+		gdi_color_t backgroundColor = UI_PANEL_COLOR;
 		if(wasKeyDown)
 			backgroundColor = UI_HIGHLIGHT_COLOR;
 
-		HBRUSH brush = CreateSolidBrush(backgroundColor);
-		FillRect(displayDeviceContext, &textArea, brush);
-		DeleteObject(brush);
+		DebugDrawSolidColorRectangle(displayDeviceContext, textArea, backgroundColor);
 
-		SetTextColor(displayDeviceContext, UI_TEXT_COLOR);
+		SetTextColor(displayDeviceContext, UI_TEXT_COLORREF);
 		const char* label = KeyCodeToDebugName(virtualKeyCode);
 		DrawTextA(displayDeviceContext, label, -1, &textArea,
 			DT_CENTER | DT_VCENTER | DT_SINGLELINE);
