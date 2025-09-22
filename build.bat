@@ -3,7 +3,7 @@
 set CPP_MAIN=Core\RagLite2.cpp
 set DEBUG_EXE=RagLite2Dbg.exe
 set RELEASE_EXE=RagLite2.exe
-set RUNTIME_LIBS=gdi32.lib shlwapi.lib user32.lib xinput.lib winmm.lib
+set RUNTIME_LIBS=gdi32.lib msimg32.lib shlwapi.lib user32.lib xinput.lib winmm.lib
 
 set DEFAULT_BUILD_DIR=BuildArtifacts
 if not exist %DEFAULT_BUILD_DIR% mkdir %DEFAULT_BUILD_DIR%
@@ -36,7 +36,7 @@ set SHARED_COMPILE_FLAGS=%SHARED_COMPILE_FLAGS% /options:strict
 :: /W4					Enable informational warnings (levels 0 through 4)
 set SHARED_COMPILE_FLAGS=%SHARED_COMPILE_FLAGS% /W4
 :: 						...except useless ones
-set SHARED_COMPILE_FLAGS=%SHARED_COMPILE_FLAGS% /wd4189 /wd4100
+set SHARED_COMPILE_FLAGS=%SHARED_COMPILE_FLAGS% /wd4189 /wd4100 /wd4505
 :: /WX					Treat all warnings as errors
 set SHARED_COMPILE_FLAGS=%SHARED_COMPILE_FLAGS% /WX
 :: /Zc:strictStrings	Require const qualifier for pointers initialized via string literals

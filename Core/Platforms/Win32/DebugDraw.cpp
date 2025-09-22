@@ -19,36 +19,44 @@ GLOBAL int MEMORY_OVERLAY_HEIGHT = (DEBUG_OVERLAY_LINE_HEIGHT * LINE_COUNT) + 2 
 constexpr int PERFORMANCE_OVERLAY_WIDTH = PROGRESS_BAR_WIDTH + 2 * DEBUG_OVERLAY_PADDING_SIZE;
 GLOBAL int PERFORMANCE_OVERLAY_HEIGHT = (DEBUG_OVERLAY_LINE_HEIGHT * LINE_COUNT) + 2 * DEBUG_OVERLAY_PADDING_SIZE;
 
-constexpr COLORREF RGB_COLOR_CYAN = RGB(120, 192, 255);
-constexpr COLORREF RGB_COLOR_DARKEST = RGB(0, 0, 00);
-constexpr COLORREF RGB_COLOR_DARKER = RGB(30, 30, 30);
-constexpr COLORREF RGB_COLOR_DARK = RGB(50, 50, 50);
-constexpr COLORREF RGB_COLOR_BLUE = RGB(0, 0, 255);
-constexpr COLORREF RGB_COLOR_DARKGREEN = RGB(0, 100, 0);
-constexpr COLORREF RGB_COLOR_GRAY = RGB(80, 80, 80);
-constexpr COLORREF RGB_COLOR_LIGHTGRAY = RGB(192, 192, 192);
-constexpr COLORREF RGB_COLOR_GREEN = RGB(0, 200, 0);
-constexpr COLORREF RGB_COLOR_ORANGE = RGB(255, 128, 0);
-constexpr COLORREF RGB_COLOR_PURPLE = RGB(64, 0, 255);
-constexpr COLORREF RGB_COLOR_RED = RGB(200, 0, 0);
-constexpr COLORREF RGB_COLOR_TURQUOISE = RGB(0, 100, 100);
-constexpr COLORREF RGB_COLOR_YELLOW = RGB(200, 200, 0);
-constexpr COLORREF RGB_COLOR_WHITE = RGB(200, 200, 200);
-constexpr COLORREF RGB_COLOR_BRIGHTEST = RGB(255, 255, 255);
-constexpr COLORREF RGB_COLOR_VIOLET = RGB(210, 168, 255);
-constexpr COLORREF RGB_COLOR_VIOLET2 = RGB(128, 128, 255);
-constexpr COLORREF RGB_COLOR_FADING = RGB(196, 186, 218);
-constexpr COLORREF RGB_COLOR_GOLD = RGB(236, 206, 71);
-constexpr COLORREF RGB_COLOR_DARKGOLD = RGB(170, 150, 15);
+#define ColorRGB(red, green, blue) { .bytes = (uint32)(0xFF << 24 | red << 16 | green << 8 | blue) }
+constexpr gdi_color_t RGB_COLOR_CYAN = ColorRGB(120, 192, 255);
+constexpr gdi_color_t RGB_COLOR_DARKEST = ColorRGB(0, 0, 00);
+constexpr gdi_color_t RGB_COLOR_DARKER = ColorRGB(30, 30, 30);
+constexpr gdi_color_t RGB_COLOR_DARK = ColorRGB(50, 50, 50);
+constexpr gdi_color_t RGB_COLOR_BLUE = ColorRGB(0, 0, 255);
+constexpr gdi_color_t RGB_COLOR_DARKGREEN = ColorRGB(0, 100, 0);
+constexpr gdi_color_t RGB_COLOR_GRAY = ColorRGB(80, 80, 80);
+constexpr gdi_color_t RGB_COLOR_LIGHTGRAY = ColorRGB(192, 192, 192);
+constexpr gdi_color_t RGB_COLOR_GREEN = ColorRGB(0, 200, 0);
+constexpr gdi_color_t RGB_COLOR_ORANGE = ColorRGB(255, 128, 0);
+constexpr gdi_color_t RGB_COLOR_PURPLE = ColorRGB(64, 0, 255);
+constexpr gdi_color_t RGB_COLOR_RED = ColorRGB(200, 0, 0);
+constexpr gdi_color_t RGB_COLOR_TURQUOISE = ColorRGB(0, 100, 100);
+constexpr gdi_color_t RGB_COLOR_YELLOW = ColorRGB(200, 200, 0);
+constexpr gdi_color_t RGB_COLOR_WHITE = ColorRGB(200, 200, 200);
+constexpr gdi_color_t RGB_COLOR_BRIGHTEST = ColorRGB(255, 255, 255);
+constexpr gdi_color_t RGB_COLOR_VIOLET = ColorRGB(210, 168, 255);
+constexpr gdi_color_t RGB_COLOR_VIOLET2 = ColorRGB(128, 128, 255);
+constexpr gdi_color_t RGB_COLOR_FADING = ColorRGB(196, 186, 218);
+constexpr gdi_color_t RGB_COLOR_GOLD = ColorRGB(236, 206, 71);
+constexpr gdi_color_t RGB_COLOR_DARKGOLD = ColorRGB(170, 150, 15);
 
-constexpr COLORREF UI_PANEL_COLOR = RGB_COLOR_DARKER;
-constexpr COLORREF UI_BACKGROUND_COLOR = RGB_COLOR_DARK;
-constexpr COLORREF UI_TEXT_COLOR = RGB_COLOR_WHITE;
-constexpr COLORREF UI_HIGHLIGHT_COLOR = RGB_COLOR_RED;
+// INTERNAL void inline agbr2rgba(gdi_color_t & agbr, gdi_color_t color) {
+// 	color.alpha = 255;
+// 	color.red = GetRValue(agbr) & 0xFF;
+// 	color.green = GetGValue(agbr) & 0xFF;
+// 	color.blue = GetBValue(agbr) & 0xFF;
+// }
 
-constexpr COLORREF USED_MEMORY_BLOCK_COLOR = RGB_COLOR_GREEN;
-constexpr COLORREF COMMITTED_MEMORY_BLOCK_COLOR = RGB_COLOR_GRAY;
-constexpr COLORREF RESERVED_MEMORY_BLOCK_COLOR = RGB_COLOR_DARK;
+constexpr gdi_color_t UI_PANEL_COLOR = RGB_COLOR_DARKER;
+constexpr gdi_color_t UI_BACKGROUND_COLOR = RGB_COLOR_DARK;
+constexpr gdi_color_t UI_TEXT_COLOR = RGB_COLOR_WHITE;
+constexpr gdi_color_t UI_HIGHLIGHT_COLOR = RGB_COLOR_RED;
+
+constexpr gdi_color_t USED_MEMORY_BLOCK_COLOR = RGB_COLOR_GREEN;
+constexpr gdi_color_t COMMITTED_MEMORY_BLOCK_COLOR = RGB_COLOR_GRAY;
+constexpr gdi_color_t RESERVED_MEMORY_BLOCK_COLOR = RGB_COLOR_DARK;
 
 constexpr int32 GRAPH_BORDER_WIDTH = 1;
 
@@ -678,6 +686,20 @@ INTERNAL void DebugDrawUpdateBackgroundPattern() {
 	GDI_DEBUG_PATTERN = (gdi_debug_pattern_t)(newPattern % PATTERN_COUNT);
 }
 
+constexpr int OFFSET_ALPHA = 0;
+constexpr int OFFSET_RED = 1;
+constexpr int OFFSET_GREEN = 2;
+constexpr int OFFSET_BLUE = 3;
+typedef union argb_pixel_t {
+	struct {
+		uint8 alpha;
+		uint8 red;
+		uint8 green;
+		uint8 blue;
+	};
+	uint32 bytes;
+} gdi_pixel_t;
+
 INTERNAL void DebugDrawUseMarchingGradientPattern(gdi_offscreen_buffer_t& bitmap,
 	int offsetBlue,
 	int offsetGreen) {
@@ -691,7 +713,13 @@ INTERNAL void DebugDrawUseMarchingGradientPattern(gdi_offscreen_buffer_t& bitmap
 			uint8 blue = (x + offsetBlue) & 0xFF;
 			uint8 green = (y + offsetGreen) & 0xFF;
 
-			*pixel++ = ((green << 8) | blue);
+			gdi_pixel_t px = { .bytes = *pixel };
+			px.alpha = 255;
+			px.red = 255;
+			px.green = green;
+			px.blue = blue;
+			// *pixel++ = ((green << 8) | blue);
+			pixel++;
 		}
 
 		row += bitmap.stride;

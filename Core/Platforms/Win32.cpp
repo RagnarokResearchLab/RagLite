@@ -91,7 +91,7 @@ INTERNAL const char* ArchitectureToDebugName(WORD wProcessorArchitecture) {
 
 #include "Win32/DebugDraw.cpp"
 
-INTERNAL void SurfacePresentFrameBuffer(gdi_surface_t& surface, gdi_offscreen_buffer_t& backBuffer) {
+INTERNAL void SurfacePresentOpaqueFrameBuffer(gdi_surface_t& surface, gdi_offscreen_buffer_t& backBuffer) {
 	if(!surface.displayDeviceContext || !surface.offscreenDeviceContext || !backBuffer.handle) {
 		// Minimized or not yet initialized
 		return;
@@ -104,6 +104,32 @@ INTERNAL void SurfacePresentFrameBuffer(gdi_surface_t& surface, gdi_offscreen_bu
 	if(!StretchBlt(surface.displayDeviceContext, 0, 0, destW, destH, surface.offscreenDeviceContext,
 		   0, 0, srcW, srcH, SRCCOPY)) {
 		TODO("StretchBlt failed\n");
+	}
+}
+
+INTERNAL void SurfacePresentFrameBuffer(gdi_surface_t& surface, gdi_offscreen_buffer_t& backBuffer) {
+	if(!surface.displayDeviceContext || !surface.offscreenDeviceContext || !backBuffer.handle) {
+		// Minimized or not yet initialized
+		return;
+	}
+
+	int srcW = backBuffer.width;
+	int srcH = backBuffer.height;
+	int destW = surface.width;
+	int destH = surface.height;
+
+	BLENDFUNCTION blend = {};
+	blend.BlendOp = AC_SRC_OVER; // standard alpha blending
+	blend.BlendFlags = 0;
+	blend.SourceConstantAlpha = 255; // 255 = use per-pixel alpha
+	blend.AlphaFormat = AC_SRC_ALPHA; // expect premultiplied alpha in source
+
+	if(!AlphaBlend(surface.displayDeviceContext,
+		   0, 0, destW, destH, // destination rectangle
+		   surface.offscreenDeviceContext,
+		   0, 0, srcW, srcH, // source rectangle
+		   blend)) {
+		TODO("AlphaBlend failed\n");
 	}
 }
 

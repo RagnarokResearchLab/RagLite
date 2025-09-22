@@ -32,15 +32,15 @@ GLOBAL gdi_debug_pattern_t GDI_DEBUG_PATTERN = PATTERN_SHIFTING_GRADIENT;
 
 typedef union gdi_rgba_color {
 	struct {
-		uint8 red;
-		uint8 green;
 		uint8 blue;
+		uint8 green;
+		uint8 red;
 		uint8 alpha;
 	};
 	uint32 bytes;
 } gdi_color_t;
 
-constexpr gdi_color_t UNINITIALIZED_WINDOW_COLOR = { .bytes = 0xFF202020 };
+constexpr gdi_color_t UNINITIALIZED_WINDOW_COLOR = { .bytes = 0xFFFF2020 };
 
 typedef struct gdi_progress_bar {
 	int x;
