@@ -1,5 +1,9 @@
 #pragma once
 
+#ifndef RAGLITE_COMMIT_HASH
+#define RAGLITE_COMMIT_HASH "N/A"
+#endif
+
 #ifdef _WIN32
 #define RAGLITE_PLATFORM_WINDOWS
 #elifdef __APPLE__

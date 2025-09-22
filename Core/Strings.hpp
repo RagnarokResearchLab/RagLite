@@ -121,3 +121,15 @@ INTERNAL void PathStringStripFileExtensionInPlace(String& fileSystemPath) {
 		}
 	}
 }
+
+INTERNAL void StringAppend(String& prefix, const char* suffix) {
+	size_t suffixLength = StringLength(suffix);
+	// TODO: Assumes there's enough space to safely append - revisit later
+	size_t lastIndex = prefix.length;
+	for(size_t appendedByteCount = 0; appendedByteCount < suffixLength; ++appendedByteCount) {
+		prefix.buffer[lastIndex + appendedByteCount] = suffix[appendedByteCount];
+		prefix.length++;
+	}
+
+	StringEnsureNullTermination(prefix);
+}
