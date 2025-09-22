@@ -347,6 +347,9 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE, LPSTR,
 	String windowTitle = CountedString(executableFileSystemPath);
 	PathStringToBaseNameInPlace(windowTitle);
 	PathStringStripFileExtensionInPlace(windowTitle);
+	StringAppend(windowTitle, " [");
+	StringAppend(windowTitle, RAGLITE_COMMIT_HASH);
+	StringAppend(windowTitle, "]");
 	HWND mainWindow = CreateWindowExA(
 		0, windowClass.lpszClassName, windowTitle.buffer,
 		WS_OVERLAPPEDWINDOW | WS_VISIBLE | WS_MAXIMIZE, CW_USEDEFAULT,
