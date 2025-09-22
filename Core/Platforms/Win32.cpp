@@ -328,7 +328,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE, LPSTR,
 	windowClass.cbSize = sizeof(windowClass);
 	windowClass.lpfnWndProc = MainWindowProcessIncomingMessage;
 	windowClass.hInstance = instance;
-	windowClass.hbrBackground = CreateSolidBrush(RGB_COLOR_BRIGHTEST);
+	windowClass.hbrBackground = CreateSolidBrush(RGB_COLORREF_BRIGHTEST);
 	windowClass.lpszClassName = "RagLiteWindowClass";
 	windowClass.hIcon = (HICON)LoadImage(instance, TEXT("DEFAULT_APP_ICON"), IMAGE_ICON,
 		GetSystemMetrics(SM_CXICON), GetSystemMetrics(SM_CYICON),
