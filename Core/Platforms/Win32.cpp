@@ -83,6 +83,8 @@ INTERNAL const char* ArchitectureToDebugName(WORD wProcessorArchitecture) {
 	return arch;
 }
 
+#include "Win32/DebugDraw.hpp"
+
 #include "Win32/GamePad.cpp"
 #include "Win32/Keyboard.cpp"
 #include "Win32/Memory.cpp"
@@ -328,7 +330,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE, LPSTR,
 	windowClass.cbSize = sizeof(windowClass);
 	windowClass.lpfnWndProc = MainWindowProcessIncomingMessage;
 	windowClass.hInstance = instance;
-	windowClass.hbrBackground = CreateSolidBrush(RGB_COLORREF_BRIGHTEST);
+	windowClass.hbrBackground = CreateSolidBrush(ColorRef(RGB_COLOR_BRIGHTEST));
 	windowClass.lpszClassName = "RagLiteWindowClass";
 	windowClass.hIcon = (HICON)LoadImage(instance, TEXT("DEFAULT_APP_ICON"), IMAGE_ICON,
 		GetSystemMetrics(SM_CXICON), GetSystemMetrics(SM_CYICON),

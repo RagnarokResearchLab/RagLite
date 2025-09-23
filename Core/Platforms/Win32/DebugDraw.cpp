@@ -1,5 +1,3 @@
-#include "DebugDraw.hpp"
-
 // TODO Eliminate this
 #include <math.h>
 
@@ -19,43 +17,34 @@ GLOBAL int MEMORY_OVERLAY_HEIGHT = (DEBUG_OVERLAY_LINE_HEIGHT * LINE_COUNT) + 2 
 constexpr int PERFORMANCE_OVERLAY_WIDTH = PROGRESS_BAR_WIDTH + 2 * DEBUG_OVERLAY_PADDING_SIZE;
 GLOBAL int PERFORMANCE_OVERLAY_HEIGHT = (DEBUG_OVERLAY_LINE_HEIGHT * LINE_COUNT) + 2 * DEBUG_OVERLAY_PADDING_SIZE;
 
-#define COLOR(red, green, blue) { blue, green, red, 255 }
-constexpr gdi_color_t RGB_COLOR_CYAN = COLOR(120, 192, 255);
-constexpr COLORREF RGB_COLORREF_CYAN = RGB(120, 192, 255);
-constexpr gdi_color_t RGB_COLOR_DARKEST = COLOR(0, 0, 00);
-constexpr gdi_color_t RGB_COLOR_DARKER = COLOR(30, 30, 30);
-constexpr gdi_color_t RGB_COLOR_DARK = COLOR(50, 50, 50);
-constexpr gdi_color_t RGB_COLOR_BLUE = COLOR(0, 0, 255);
-constexpr gdi_color_t RGB_COLOR_DARKGREEN = COLOR(0, 100, 0);
-constexpr COLORREF RGB_COLORREF_DARKGREEN = RGB(0, 100, 0);
-constexpr gdi_color_t RGB_COLOR_GRAY = COLOR(80, 80, 80);
-constexpr COLORREF RGB_COLORREF_GRAY = RGB(80, 80, 80);
-constexpr gdi_color_t RGB_COLOR_LIGHTGRAY = COLOR(192, 192, 192);
-constexpr COLORREF RGB_COLORREF_LIGHTGRAY = RGB(192, 192, 192);
-constexpr gdi_color_t RGB_COLOR_GREEN = COLOR(0, 200, 0);
-constexpr gdi_color_t RGB_COLOR_ORANGE = COLOR(255, 128, 0);
-constexpr COLORREF RGB_COLORREF_ORANGE = RGB(255, 128, 0);
-constexpr gdi_color_t RGB_COLOR_PURPLE = COLOR(64, 0, 255);
-constexpr gdi_color_t RGB_COLOR_RED = COLOR(200, 0, 0);
-constexpr gdi_color_t RGB_COLOR_TURQUOISE = COLOR(0, 100, 100);
-constexpr COLORREF RGB_COLORREF_TURQUOISE = RGB(0, 100, 100);
-constexpr gdi_color_t RGB_COLOR_YELLOW = COLOR(200, 200, 0);
-constexpr gdi_color_t RGB_COLOR_WHITE = COLOR(200, 200, 200);
-constexpr COLORREF RGB_COLORREF_WHITE = RGB(200, 200, 200);
-constexpr gdi_color_t RGB_COLOR_BRIGHTEST = COLOR(255, 255, 255);
-constexpr COLORREF RGB_COLORREF_BRIGHTEST = RGB(255, 255, 255);
-constexpr gdi_color_t RGB_COLOR_VIOLET = COLOR(210, 168, 255);
-constexpr COLORREF RGB_COLORREF_VIOLET = RGB(210, 168, 255);
-constexpr gdi_color_t RGB_COLOR_VIOLET2 = COLOR(128, 128, 255);
-constexpr gdi_color_t RGB_COLOR_FADING = COLOR(196, 186, 218);
-constexpr COLORREF RGB_COLORREF_GOLD = RGB(236, 206, 71);
-constexpr gdi_color_t RGB_COLOR_GOLD = COLOR(236, 206, 71);
-constexpr gdi_color_t RGB_COLOR_DARKGOLD = COLOR(170, 150, 15);
+#define ColorRef(color) RGB(color.red, color.green, color.blue)
+#define ColorFromRGB(r, g, b) { .blue = b, .green = g, .red = r, .alpha = 255 }
+#define ColorFromRGBA(r, g, b, a) { .blue = b, .green = g, .red = r, .alpha = a }
+constexpr gdi_color_t RGB_COLOR_CYAN = ColorFromRGB(120, 192, 255);
+constexpr gdi_color_t RGB_COLOR_DARKEST = ColorFromRGB(0, 0, 00);
+constexpr gdi_color_t RGB_COLOR_DARKER = ColorFromRGB(30, 30, 30);
+constexpr gdi_color_t RGB_COLOR_DARK = ColorFromRGB(50, 50, 50);
+constexpr gdi_color_t RGB_COLOR_BLUE = ColorFromRGB(0, 0, 255);
+constexpr gdi_color_t RGB_COLOR_DARKGREEN = ColorFromRGB(0, 100, 0);
+constexpr gdi_color_t RGB_COLOR_GRAY = ColorFromRGB(80, 80, 80);
+constexpr gdi_color_t RGB_COLOR_LIGHTGRAY = ColorFromRGB(192, 192, 192);
+constexpr gdi_color_t RGB_COLOR_GREEN = ColorFromRGB(0, 200, 0);
+constexpr gdi_color_t RGB_COLOR_ORANGE = ColorFromRGB(255, 128, 0);
+constexpr gdi_color_t RGB_COLOR_PURPLE = ColorFromRGB(64, 0, 255);
+constexpr gdi_color_t RGB_COLOR_RED = ColorFromRGB(200, 0, 0);
+constexpr gdi_color_t RGB_COLOR_TURQUOISE = ColorFromRGB(0, 100, 100);
+constexpr gdi_color_t RGB_COLOR_YELLOW = ColorFromRGB(200, 200, 0);
+constexpr gdi_color_t RGB_COLOR_WHITE = ColorFromRGB(200, 200, 200);
+constexpr gdi_color_t RGB_COLOR_BRIGHTEST = ColorFromRGB(255, 255, 255);
+constexpr gdi_color_t RGB_COLOR_VIOLET = ColorFromRGB(210, 168, 255);
+constexpr gdi_color_t RGB_COLOR_VIOLET2 = ColorFromRGB(128, 128, 255);
+constexpr gdi_color_t RGB_COLOR_FADING = ColorFromRGB(196, 186, 218);
+constexpr gdi_color_t RGB_COLOR_GOLD = ColorFromRGB(236, 206, 71);
+constexpr gdi_color_t RGB_COLOR_DARKGOLD = ColorFromRGB(170, 150, 15);
 
 constexpr gdi_color_t UI_PANEL_COLOR = RGB_COLOR_DARKER;
 constexpr gdi_color_t UI_BACKGROUND_COLOR = RGB_COLOR_DARK;
 constexpr gdi_color_t UI_TEXT_COLOR = RGB_COLOR_WHITE;
-constexpr COLORREF UI_TEXT_COLORREF = RGB_COLORREF_WHITE;
 constexpr gdi_color_t UI_HIGHLIGHT_COLOR = RGB_COLOR_RED;
 
 constexpr gdi_color_t USED_MEMORY_BLOCK_COLOR = RGB_COLOR_GREEN;
@@ -64,9 +53,193 @@ constexpr gdi_color_t RESERVED_MEMORY_BLOCK_COLOR = RGB_COLOR_DARK;
 
 constexpr int32 GRAPH_BORDER_WIDTH = 1;
 
+INTERNAL inline int DoubleGetIntegerPart(double number) {
+	return (int)floor(number);
+}
+
+INTERNAL inline double DoubleGetDecimalPart(double number) {
+	return number - floor(number);
+}
+
+INTERNAL inline double DoubleGetReverseDecimalPart(double number) {
+	return 1.0 - DoubleGetDecimalPart(number);
+}
+
+INTERNAL inline void DebugDrawBlendPixelRGBA(gdi_color_t& source, gdi_color_t& destination, gdi_color_t& blended) {
+	// TODO: Improve performance, accuracy/gamma, SSE etc. (don't try this at home, use the GPU instead)
+	if(source.alpha == 0) {
+		blended.red = destination.red;
+		blended.blue = destination.blue;
+		blended.green = destination.green;
+		blended.alpha = destination.alpha;
+		return;
+	}
+
+	if(source.alpha == 255) {
+		blended.red = source.red;
+		blended.blue = source.blue;
+		blended.green = source.green;
+		blended.alpha = 255;
+		return;
+	}
+
+	uint8 oneMinusAlpha = 255 - source.alpha;
+	int r = ((int)source.red * (int)source.alpha + (int)destination.red * oneMinusAlpha + 127) / 255;
+	int g = ((int)source.green * (int)source.alpha + (int)destination.green * oneMinusAlpha + 127) / 255;
+	int b = ((int)source.blue * (int)source.alpha + (int)destination.blue * oneMinusAlpha + 127) / 255;
+
+	int a = ((int)source.alpha * 255 + (int)destination.alpha * oneMinusAlpha + 127) / 255;
+
+	blended.red = ClampToInterval((uint8)r, 0, 255);
+	blended.green = ClampToInterval((uint8)g, 0, 255);
+	blended.blue = ClampToInterval((uint8)b, 0, 255);
+	blended.alpha = ClampToInterval((uint8)a, 0, 255);
+}
+
+INTERNAL inline void DebugDrawSetPixelColor(int x, int y, gdi_color_t source) {
+	if(x < 0 || y < 0 || x >= (int)GDI_BACKBUFFER.width || y >= (int)GDI_BACKBUFFER.height) {
+		return;
+	}
+
+	if(source.alpha == 0) {
+		return;
+	}
+
+	uint32* pixelArray = (uint32*)GDI_BACKBUFFER.pixelBuffer;
+	size_t pixelIndex = (size_t)x + (size_t)y * (size_t)GDI_BACKBUFFER.width;
+	gdi_color_t blended = source;
+	if(source.alpha == 255) {
+		blended = source;
+		blended.alpha = 255;
+		pixelArray[pixelIndex] = blended.bytes;
+		return;
+	}
+
+	gdi_color_t destination = { .bytes = pixelArray[pixelIndex] };
+	DebugDrawBlendPixelRGBA(source, destination, blended);
+	pixelArray[pixelIndex] = blended.bytes;
+}
+
+INTERNAL inline void DebugDrawPlotAntiAliased(int x, int y, double alpha, gdi_color_t color) {
+	if(alpha <= 0.0) return;
+	if(alpha > 1.0) alpha = 1.0;
+	color.alpha = (uint8)ClampToInterval((int)round(255.0 * alpha), 0, 255);
+	DebugDrawSetPixelColor(x, y, color);
+}
+
+// Xiaolin Wu's Anti-Aliased Line Drawing Algorithm
+INTERNAL void DebugDrawColoredLineWAA(double x0, double y0, double x1, double y1, gdi_color_t color) {
+	bool isSteepLine = fabs(y1 - y0) > fabs(x1 - x0);
+
+	if(isSteepLine) {
+		Swap(x0, y0, double);
+		Swap(x1, y1, double);
+	}
+
+	if(x0 > x1) {
+		Swap(x0, x1, double);
+		Swap(y0, y1, double);
+	}
+
+	double deltaX = x1 - x0;
+	double deltaY = y1 - y0;
+	double gradient = (deltaX == 0.0) ? 1.0 : deltaY / deltaX;
+
+	// First endpoint
+	double xEnd = round(x0);
+	double yEnd = y0 + gradient * (xEnd - x0);
+	double xGap = DoubleGetReverseDecimalPart(x0 + 0.5);
+	int xPixel1 = (int)xEnd;
+	int yPixel1 = DoubleGetIntegerPart(yEnd);
+
+	if(isSteepLine) {
+		DebugDrawPlotAntiAliased(yPixel1, xPixel1, DoubleGetReverseDecimalPart(yEnd) * xGap, color);
+		DebugDrawPlotAntiAliased(yPixel1 + 1, xPixel1, DoubleGetDecimalPart(yEnd) * xGap, color);
+	} else {
+		DebugDrawPlotAntiAliased(xPixel1, yPixel1, DoubleGetReverseDecimalPart(yEnd) * xGap, color);
+		DebugDrawPlotAntiAliased(xPixel1, yPixel1 + 1, DoubleGetDecimalPart(yEnd) * xGap, color);
+	}
+
+	double errY = yEnd + gradient;
+
+	// Second endpoint
+	xEnd = round(x1);
+	yEnd = y1 + gradient * (xEnd - x1);
+	xGap = DoubleGetDecimalPart(x1 + 0.5);
+	int xPixel2 = (int)xEnd;
+	int yPixel2 = DoubleGetIntegerPart(yEnd);
+
+	if(isSteepLine) {
+		DebugDrawPlotAntiAliased(yPixel2, xPixel2, DoubleGetReverseDecimalPart(yEnd) * xGap, color);
+		DebugDrawPlotAntiAliased(yPixel2 + 1, xPixel2, DoubleGetDecimalPart(yEnd) * xGap, color);
+	} else {
+		DebugDrawPlotAntiAliased(xPixel2, yPixel2, DoubleGetReverseDecimalPart(yEnd) * xGap, color);
+		DebugDrawPlotAntiAliased(xPixel2, yPixel2 + 1, DoubleGetDecimalPart(yEnd) * xGap, color);
+	}
+
+	// Main loop
+	if(isSteepLine) {
+		for(int x = xPixel1 + 1; x < xPixel2; x++) {
+			DebugDrawPlotAntiAliased(DoubleGetIntegerPart(errY), x, DoubleGetReverseDecimalPart(errY), color);
+			DebugDrawPlotAntiAliased(DoubleGetIntegerPart(errY) + 1, x, DoubleGetDecimalPart(errY), color);
+			errY += gradient;
+		}
+	} else {
+		for(int x = xPixel1 + 1; x < xPixel2; x++) {
+			DebugDrawPlotAntiAliased(x, DoubleGetIntegerPart(errY), DoubleGetReverseDecimalPart(errY), color);
+			DebugDrawPlotAntiAliased(x, DoubleGetIntegerPart(errY) + 1, DoubleGetDecimalPart(errY), color);
+			errY += gradient;
+		}
+	}
+}
+
+// Digital Differential Analyzer Line Drawing Algorithm
+INTERNAL void DebugDrawColoredLineDDA(double startX, double startY, double endX, double endY, gdi_color_t color) {
+	double deltaX = endX - startX;
+	double deltaY = endY - startY;
+	double absDeltaX = fabs(deltaX);
+	double absDeltaY = fabs(deltaY);
+
+	int steps = (absDeltaX > absDeltaY) ? (int)absDeltaX : (int)absDeltaY;
+	double xIncrement = deltaX / steps;
+	double yIncrement = deltaY / steps;
+
+	double x = startX;
+	double y = startY;
+	for(int i = 0; i <= steps; i++) {
+		DebugDrawSetPixelColor((int)round(x), (int)round(y), color);
+		x += xIncrement;
+		y += yIncrement;
+	}
+}
+
+// Bresenham's Integer Line Drawing Algorithm
+INTERNAL void DebugDrawColoredLineBHI(int x0, int y0, int x1, int y1, gdi_color_t color) {
+	int deltaX = abs(x1 - x0);
+	int stepX = (x0 < x1) ? 1 : -1;
+	int deltaY = -abs(y1 - y0);
+	int stepY = (y0 < y1) ? 1 : -1;
+	int accumulatedError = deltaX + deltaY;
+
+	while(true) {
+		DebugDrawSetPixelColor(x0, y0, color);
+		if(x0 == x1 && y0 == y1) break;
+		int errorThreshold = 2 * accumulatedError;
+		if(errorThreshold >= deltaY) {
+			accumulatedError += deltaY;
+			x0 += stepX;
+		}
+		if(errorThreshold <= deltaX) {
+			accumulatedError += deltaX;
+			y0 += stepY;
+		}
+	}
+}
+
 constexpr int32 DEFAULT_LINE_WIDTH = 1;
-INTERNAL inline void DebugDrawColoredLine(HDC& displayDeviceContext, int startX, int startY, int endX, int endY, COLORREF color) {
-	HPEN graphPen = CreatePen(PS_SOLID, DEFAULT_LINE_WIDTH, color);
+INTERNAL inline void DebugDrawColoredLineGDI(HDC& displayDeviceContext, int startX, int startY, int endX, int endY, gdi_color_t color) {
+	// TODO: Cache the pens, or select from an array of preallocated ones to begin with
+	HPEN graphPen = CreatePen(PS_SOLID, DEFAULT_LINE_WIDTH, RGB(color.red, color.green, color.blue));
 	HGDIOBJ oldPen = SelectObject(displayDeviceContext, graphPen);
 
 	MoveToEx(displayDeviceContext, startX, startY, NULL);
@@ -74,6 +247,25 @@ INTERNAL inline void DebugDrawColoredLine(HDC& displayDeviceContext, int startX,
 
 	SelectObject(displayDeviceContext, oldPen);
 	DeleteObject(graphPen);
+}
+
+INTERNAL inline void DebugDrawColoredLine(HDC& displayDeviceContext, int startX, int startY, int endX, int endY, gdi_color_t color) {
+	ASSUME(SELECTED_LINE_DRAWING_METHOD < LINE_STYLE_COUNT, "Invalid line drawing algorithm selected");
+
+	switch(SELECTED_LINE_DRAWING_METHOD) {
+	case DEFAULT_GDI_LINE: {
+		DebugDrawColoredLineGDI(displayDeviceContext, startX, startY, endX, endY, color);
+	} break;
+	case BRESENHAM_INTEGER_LINE: {
+		DebugDrawColoredLineBHI(startX, startY, endX, endY, color);
+	} break;
+	case DDA_FLOAT_LINE: {
+		DebugDrawColoredLineDDA(startX, startY, endX, endY, color);
+	} break;
+	case WU_FLOAT_LINE: {
+		DebugDrawColoredLineWAA(startX, startY, endX, endY, color);
+	} break;
+	}
 }
 
 INTERNAL inline void DebugDrawVerticalLine(HDC& displayDeviceContext, int startX, int startY, int endX, int endY, gdi_color_t color) {
@@ -138,7 +330,7 @@ INTERNAL void DebugDrawHistoryGraph(HDC& displayDeviceContext, int topLeftX, int
 
 	case XY_LINES_PLOTTED: {
 		int fpsTargetLineOffsetY = panelRect.bottom - (int)(MAX_FRAME_TIME * graphScale);
-		DebugDrawColoredLine(displayDeviceContext, panelRect.left, fpsTargetLineOffsetY, panelRect.right, fpsTargetLineOffsetY, RGB_COLORREF_LIGHTGRAY);
+		DebugDrawColoredLine(displayDeviceContext, panelRect.left, fpsTargetLineOffsetY, panelRect.right, fpsTargetLineOffsetY, RGB_COLOR_LIGHTGRAY);
 
 		int lineStartX = panelRect.left;
 		int lineStartY = panelRect.bottom;
@@ -158,11 +350,13 @@ INTERNAL void DebugDrawHistoryGraph(HDC& displayDeviceContext, int topLeftX, int
 			lineStartY = ClampToInterval(lineStartY, panelRect.top + GRAPH_BORDER_WIDTH, panelRect.bottom - GRAPH_BORDER_WIDTH);
 			lineEndY = ClampToInterval(lineEndY, panelRect.top + GRAPH_BORDER_WIDTH, panelRect.bottom - GRAPH_BORDER_WIDTH);
 
-			if(recorded.frameTime >= EPSILON) DebugDrawColoredLine(displayDeviceContext, lineStartX, lineStartY, lineEndX, lineEndY, RGB_COLORREF_CYAN);
+			if(recorded.frameTime >= EPSILON) DebugDrawColoredLine(displayDeviceContext, lineStartX, lineStartY, lineEndX, lineEndY, RGB_COLOR_CYAN);
 
 			lineStartX = lineEndX;
 			lineStartY = lineEndY;
 		}
+		int cutoffLineX = panelRect.left + PERFORMANCE_METRICS_HISTORY.oldestRecordedSampleIndex * panelWidth / PERFORMANCE_HISTORY_SIZE;
+		DebugDrawVerticalLine(displayDeviceContext, cutoffLineX, panelRect.bottom, cutoffLineX, panelRect.top, RGB_COLOR_DARKGREEN);
 	} break;
 
 	case AREA_PERCENT_STACKED: {
@@ -210,7 +404,7 @@ INTERNAL void DebugDrawHistoryGraph(HDC& displayDeviceContext, int topLeftX, int
 	} break;
 	}
 
-	HPEN borderPen = CreatePen(PS_SOLID, GRAPH_BORDER_WIDTH, RGB_COLORREF_WHITE);
+	HPEN borderPen = CreatePen(PS_SOLID, GRAPH_BORDER_WIDTH, ColorRef(RGB_COLOR_WHITE));
 	HGDIOBJ oldPen = SelectObject(displayDeviceContext, borderPen);
 	HGDIOBJ oldBrush = SelectObject(displayDeviceContext, GetStockObject(HOLLOW_BRUSH));
 	Rectangle(displayDeviceContext, panelRect.left, panelRect.top, panelRect.right, panelRect.bottom);
@@ -265,7 +459,7 @@ INTERNAL void DebugDrawMemoryUsageOverlay(HDC& displayDeviceContext) {
 	};
 	DebugDrawSolidColorRectangle(displayDeviceContext, backgroundPanelRect, UI_PANEL_COLOR);
 
-	SetTextColor(displayDeviceContext, UI_TEXT_COLORREF);
+	SetTextColor(displayDeviceContext, ColorRef(UI_TEXT_COLOR));
 
 	constexpr size_t FORMAT_BUFFER_SIZE = 256;
 	char formatBuffer[FORMAT_BUFFER_SIZE];
@@ -361,7 +555,7 @@ INTERNAL void DebugDrawProcessorUsageOverlay(HDC& displayDeviceContext) {
 	};
 	DebugDrawSolidColorRectangle(displayDeviceContext, panelRect, UI_PANEL_COLOR);
 
-	SetTextColor(displayDeviceContext, UI_TEXT_COLORREF);
+	SetTextColor(displayDeviceContext, ColorRef(UI_TEXT_COLOR));
 
 	constexpr size_t FORMAT_BUFFER_SIZE = 256;
 	char formatBuffer[FORMAT_BUFFER_SIZE];
@@ -697,7 +891,7 @@ INTERNAL void DebugDrawKeyboardOverlay(HDC& displayDeviceContext) {
 
 		DebugDrawSolidColorRectangle(displayDeviceContext, textArea, backgroundColor);
 
-		SetTextColor(displayDeviceContext, UI_TEXT_COLORREF);
+		SetTextColor(displayDeviceContext, ColorRef(UI_TEXT_COLOR));
 		const char* label = KeyCodeToDebugName(virtualKeyCode);
 		DrawTextA(displayDeviceContext, label, -1, &textArea,
 			DT_CENTER | DT_VCENTER | DT_SINGLELINE);

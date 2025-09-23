@@ -31,10 +31,11 @@ GLOBAL gdi_surface_t GDI_SURFACE = {};
 GLOBAL gdi_debug_pattern_t GDI_DEBUG_PATTERN = PATTERN_SHIFTING_GRADIENT;
 
 typedef union gdi_rgba_color {
+	// NOTE: For simplicity, ensure this matches the pixel format used by GDI bitmaps
 	struct {
-		uint8 red;
-		uint8 green;
 		uint8 blue;
+		uint8 green;
+		uint8 red;
 		uint8 alpha;
 	};
 	uint32 bytes;
@@ -54,3 +55,14 @@ typedef enum {
 	XY_LINES_PLOTTED,
 	AREA_PERCENT_STACKED,
 } history_graph_style_t;
+
+typedef enum {
+	DEFAULT_GDI_LINE,
+	BRESENHAM_INTEGER_LINE,
+	DDA_FLOAT_LINE,
+	WU_FLOAT_LINE,
+	LINE_STYLE_COUNT,
+
+} line_drawing_style_t;
+
+GLOBAL line_drawing_style_t SELECTED_LINE_DRAWING_METHOD = DEFAULT_GDI_LINE;

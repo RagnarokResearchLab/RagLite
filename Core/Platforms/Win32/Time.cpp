@@ -24,7 +24,7 @@ typedef struct system_performance_info {
 	WORD processorArchitecture;
 } performance_info_t;
 
-constexpr uint32 PERFORMANCE_HISTORY_SECONDS = 30;
+constexpr uint32 PERFORMANCE_HISTORY_SECONDS = 10;
 constexpr uint32 PERFORMANCE_HISTORY_SIZE = 256 * ((uint32)(TARGET_FRAME_RATE * PERFORMANCE_HISTORY_SECONDS) / 256);
 typedef struct performance_history_cache {
 	performance_metrics_t recordedSamples[PERFORMANCE_HISTORY_SIZE];
@@ -94,7 +94,11 @@ INTERNAL inline milliseconds PerformanceMetricsGetTimeSince(hardware_tick_t befo
 INTERNAL inline void PerformanceMetricsRecordSample(performance_metrics_t metrics, performance_history_t& history) {
 	history.recordedSamples[history.oldestRecordedSampleIndex] = metrics;
 
-	if(history.oldestRecordedSampleIndex == 0) history.highestObservedFrameTime = 0;
+	if(history.oldestRecordedSampleIndex == 0) {
+		history.highestObservedFrameTime = 0;
+		line_drawing_style_t newLineDrawingMethod = (line_drawing_style_t)(SELECTED_LINE_DRAWING_METHOD + 1);
+		SELECTED_LINE_DRAWING_METHOD = (line_drawing_style_t)(newLineDrawingMethod % LINE_STYLE_COUNT);
+	}
 	history.highestObservedFrameTime = Max(history.highestObservedFrameTime, metrics.frameTime);
 
 	history.oldestRecordedSampleIndex = (history.oldestRecordedSampleIndex + 1) % PERFORMANCE_HISTORY_SIZE;
