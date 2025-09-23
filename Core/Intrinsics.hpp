@@ -30,3 +30,11 @@ INTERNAL void IntrinsicsReadCPUID() {
 // TODO Support for the other toolchains
 #endif
 }
+
+// TODO: typeof(x) could simplify this - look into toolchain support/extensions?
+#define Swap(first, second, type) \
+	do {                          \
+		type temp = first;        \
+		first = second;           \
+		second = temp;            \
+	} while(0)
