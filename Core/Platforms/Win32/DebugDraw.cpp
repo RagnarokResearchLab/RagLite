@@ -51,7 +51,50 @@ constexpr gdi_color_t USED_MEMORY_BLOCK_COLOR = RGB_COLOR_GREEN;
 constexpr gdi_color_t COMMITTED_MEMORY_BLOCK_COLOR = RGB_COLOR_GRAY;
 constexpr gdi_color_t RESERVED_MEMORY_BLOCK_COLOR = RGB_COLOR_DARK;
 
-constexpr int32 GRAPH_BORDER_WIDTH = 1;
+INTERNAL inline void DebugDrawClipToScreen(gdi_offscreen_buffer_t& backBuffer, int& x, int& y) {
+	x = ClampToInterval(x, 0, backBuffer.width - 1);
+	y = ClampToInterval(y, 0, backBuffer.height - 1);
+}
+
+INTERNAL inline void DebugDrawClipPointToRectangle(int& x, int& y, RECT& rectangle) {
+	x = ClampToInterval(x, rectangle.left, rectangle.right - 1);
+	y = ClampToInterval(y, rectangle.top, rectangle.bottom - 1);
+}
+
+INTERNAL inline void DebugDrawClipPointToScreen(gdi_offscreen_buffer_t& backBuffer, int& x, int& y) {
+	x = ClampToInterval(x, 0, backBuffer.width - 1);
+	y = ClampToInterval(y, 0, backBuffer.height - 1);
+}
+
+INTERNAL inline void DebugDrawClipRectangleToScreen(gdi_offscreen_buffer_t& backBuffer, RECT& rectangle) {
+	rectangle.left = ClampToInterval(rectangle.left, 0, backBuffer.width - 1);
+	rectangle.right = ClampToInterval(rectangle.right, 0, backBuffer.width - 1);
+	rectangle.top = ClampToInterval(rectangle.top, 0, backBuffer.height - 1);
+	rectangle.bottom = ClampToInterval(rectangle.bottom, 0, backBuffer.height - 1);
+}
+
+INTERNAL inline bool DebugDrawIsPointOffscreen(int x, int y) {
+	if(x >= GDI_BACKBUFFER.width) return true;
+	if(x <= 0) return true;
+	if(y >= GDI_BACKBUFFER.height) return true;
+	if(y <= 0) return true;
+
+	return false;
+}
+
+INTERNAL inline bool DebugDrawIsRectangleOffscreen(RECT& rectangle) {
+	ASSUME(rectangle.left <= rectangle.right, "Unexpected horizontal orientation (don't do this, it's confusing)");
+	ASSUME(rectangle.bottom >= rectangle.top, "Unexpected vertical orientation (don't do this, it's confusing)");
+
+	if(rectangle.left >= GDI_BACKBUFFER.width) return true;
+	if(rectangle.right <= 0) return true;
+	if(rectangle.top >= GDI_BACKBUFFER.height) return true;
+	if(rectangle.bottom <= 0) return true;
+
+	return false;
+}
+
+constexpr int32 UI_BORDER_WIDTH = 1;
 
 INTERNAL inline int DoubleGetIntegerPart(double number) {
 	return (int)floor(number);
@@ -106,6 +149,7 @@ INTERNAL inline void DebugDrawSetPixelColor(int x, int y, gdi_color_t source) {
 	}
 
 	uint32* pixelArray = (uint32*)GDI_BACKBUFFER.pixelBuffer;
+	DebugDrawClipPointToScreen(GDI_BACKBUFFER, x, y);
 	size_t pixelIndex = (size_t)x + (size_t)y * (size_t)GDI_BACKBUFFER.width;
 	gdi_color_t blended = source;
 	if(source.alpha == 255) {
@@ -250,6 +294,8 @@ INTERNAL inline void DebugDrawColoredLineGDI(HDC& displayDeviceContext, int star
 }
 
 INTERNAL inline void DebugDrawColoredLine(HDC& displayDeviceContext, int startX, int startY, int endX, int endY, gdi_color_t color) {
+	if(DebugDrawIsPointOffscreen(startX, startY) && DebugDrawIsPointOffscreen(endX, endY)) return;
+
 	ASSUME(SELECTED_LINE_DRAWING_METHOD < LINE_STYLE_COUNT, "Invalid line drawing algorithm selected");
 
 	switch(SELECTED_LINE_DRAWING_METHOD) {
@@ -269,61 +315,67 @@ INTERNAL inline void DebugDrawColoredLine(HDC& displayDeviceContext, int startX,
 }
 
 INTERNAL inline void DebugDrawVerticalLine(HDC& displayDeviceContext, int startX, int startY, int endX, int endY, gdi_color_t color) {
+	if(DebugDrawIsPointOffscreen(startX, startY) && DebugDrawIsPointOffscreen(endX, endY)) return;
+
+	endX = startX;
+	int minY = Min(startY, endY);
+	int maxY = Max(startY, endY);
+
 	uint32* pixelArray = (uint32*)GDI_BACKBUFFER.pixelBuffer;
-	size_t count = (size_t)GDI_BACKBUFFER.width * (size_t)GDI_BACKBUFFER.height;
-
-	endX = startY;
-	startY = Min(startY, endY);
-	endY = Max(endX, endY);
-
-	for(size_t y = startY; y < endY; ++y) {
+	DebugDrawClipPointToScreen(GDI_BACKBUFFER, startX, minY);
+	DebugDrawClipPointToScreen(GDI_BACKBUFFER, endX, maxY);
+	for(size_t y = minY; y <= maxY; ++y) { // For now: End is inclusive (GDI convention)
 		pixelArray[startX + y * GDI_BACKBUFFER.width] = color.bytes;
 	}
 }
 
 INTERNAL inline void DebugDrawSolidColorRectangle(HDC& displayDeviceContext, RECT& rectangle, gdi_color_t color) {
+	if(DebugDrawIsRectangleOffscreen(rectangle)) return;
+
 	uint32* pixelArray = (uint32*)GDI_BACKBUFFER.pixelBuffer;
-	size_t count = (size_t)GDI_BACKBUFFER.width * (size_t)GDI_BACKBUFFER.height;
-	size_t height = rectangle.bottom - rectangle.top;
-	size_t width = rectangle.right - rectangle.left;
-	for(size_t y = rectangle.top; y < Min(rectangle.bottom, GDI_BACKBUFFER.height); ++y) {
-		for(size_t x = rectangle.left; x < Min(rectangle.right, GDI_BACKBUFFER.width); ++x) {
-			size_t pixelStartOffset = x + y * GDI_BACKBUFFER.width;
-			pixelArray[pixelStartOffset] = color.bytes;
+	DebugDrawClipRectangleToScreen(GDI_BACKBUFFER, rectangle);
+
+	for(size_t y = rectangle.top; y < rectangle.bottom; ++y) {
+		for(size_t x = rectangle.left; x < rectangle.right; ++x) {
+			pixelArray[x + y * GDI_BACKBUFFER.width] = color.bytes;
 		}
 	}
 }
 
 INTERNAL inline void DebugDrawFramedColorRectangle(HDC& displayDeviceContext, RECT& rectangle, gdi_color_t rgbColor) {
-	uint32* pixelArray = (uint32*)GDI_BACKBUFFER.pixelBuffer;
-	size_t count = (size_t)GDI_BACKBUFFER.width * (size_t)GDI_BACKBUFFER.height;
+	if(DebugDrawIsRectangleOffscreen(rectangle)) return;
 
-	size_t height = rectangle.bottom - rectangle.top;
-	size_t width = rectangle.right - rectangle.left;
-	for(size_t x = rectangle.left; x < Min(rectangle.right, GDI_BACKBUFFER.width); ++x) {
+	uint32* pixelArray = (uint32*)GDI_BACKBUFFER.pixelBuffer;
+	DebugDrawClipRectangleToScreen(GDI_BACKBUFFER, rectangle);
+
+	// Top edge
+	for(int x = rectangle.left; x < rectangle.right; ++x) {
 		pixelArray[x + rectangle.top * GDI_BACKBUFFER.width] = rgbColor.bytes;
 	}
 
-	for(size_t x = rectangle.left; x < Min(rectangle.right, GDI_BACKBUFFER.width); ++x) {
+	// Bottom edge
+	for(int x = rectangle.left; x < rectangle.right; ++x) {
 		pixelArray[x + rectangle.bottom * GDI_BACKBUFFER.width] = rgbColor.bytes;
 	}
 
-	for(size_t y = rectangle.top; y < Min(rectangle.bottom, GDI_BACKBUFFER.height); ++y) {
+	// Left and right edges
+	for(int y = rectangle.top; y < rectangle.bottom; ++y) {
 		pixelArray[rectangle.left + y * GDI_BACKBUFFER.width] = rgbColor.bytes;
 		pixelArray[rectangle.right + y * GDI_BACKBUFFER.width] = rgbColor.bytes;
 	}
 }
 
 INTERNAL void DebugDrawHistoryGraph(HDC& displayDeviceContext, int topLeftX, int topLeftY, int panelWidth, int panelHeight, history_graph_style_t chartType) {
-	int left = topLeftX + GRAPH_BORDER_WIDTH;
-	int top = topLeftY + GRAPH_BORDER_WIDTH;
-	int right = left + panelWidth - GRAPH_BORDER_WIDTH;
-	int bottom = top + panelHeight - GRAPH_BORDER_WIDTH;
-	RECT panelRect = { left, top, right, bottom };
+	RECT borderRect = { topLeftX, topLeftY, topLeftX + panelWidth, topLeftY + panelHeight };
+	DebugDrawSolidColorRectangle(displayDeviceContext, borderRect, RGB_COLOR_WHITE);
+
+	RECT panelRect = { borderRect.left + UI_BORDER_WIDTH, borderRect.top + UI_BORDER_WIDTH, borderRect.right - UI_BORDER_WIDTH, borderRect.bottom - UI_BORDER_WIDTH };
 	DebugDrawSolidColorRectangle(displayDeviceContext, panelRect, UI_BACKGROUND_COLOR);
 
 	milliseconds maxFrameTime = Max(PERFORMANCE_METRICS_HISTORY.highestObservedFrameTime, MAX_FRAME_TIME);
-	percentage graphScale = (percentage)(panelHeight / maxFrameTime);
+	int innerHeight = panelRect.bottom - panelRect.top;
+	int innerWidth = panelRect.right - panelRect.left;
+	percentage graphScale = (percentage)(innerHeight / maxFrameTime);
 	if(maxFrameTime < EPSILON) return;
 
 	switch(chartType) {
@@ -339,16 +391,14 @@ INTERNAL void DebugDrawHistoryGraph(HDC& displayDeviceContext, int topLeftX, int
 			performance_metrics_t recorded = PERFORMANCE_METRICS_HISTORY.recordedSamples[recordIndex];
 			if(recorded.frameTime < EPSILON) continue;
 
-			int lineEndX = panelRect.left + offset * panelWidth / PERFORMANCE_HISTORY_SIZE;
+			int lineEndX = panelRect.left + offset * innerWidth / PERFORMANCE_HISTORY_SIZE;
 			int barHeight = (int)(recorded.frameTime * graphScale);
 			int lineEndY = panelRect.bottom - barHeight;
 
 			if(recordIndex == 0) lineStartX = lineEndX; // There's no previous line to connect to
 
-			lineStartX = ClampToInterval(lineStartX, panelRect.left + GRAPH_BORDER_WIDTH, panelRect.right - GRAPH_BORDER_WIDTH);
-			lineEndX = ClampToInterval(lineEndX, panelRect.left + GRAPH_BORDER_WIDTH, panelRect.right - GRAPH_BORDER_WIDTH);
-			lineStartY = ClampToInterval(lineStartY, panelRect.top + GRAPH_BORDER_WIDTH, panelRect.bottom - GRAPH_BORDER_WIDTH);
-			lineEndY = ClampToInterval(lineEndY, panelRect.top + GRAPH_BORDER_WIDTH, panelRect.bottom - GRAPH_BORDER_WIDTH);
+			DebugDrawClipPointToRectangle(lineStartX, lineStartY, panelRect);
+			DebugDrawClipPointToRectangle(lineEndX, lineEndY, panelRect);
 
 			if(recorded.frameTime >= EPSILON) DebugDrawColoredLine(displayDeviceContext, lineStartX, lineStartY, lineEndX, lineEndY, RGB_COLOR_CYAN);
 
@@ -356,7 +406,9 @@ INTERNAL void DebugDrawHistoryGraph(HDC& displayDeviceContext, int topLeftX, int
 			lineStartY = lineEndY;
 		}
 		int cutoffLineX = panelRect.left + PERFORMANCE_METRICS_HISTORY.oldestRecordedSampleIndex * panelWidth / PERFORMANCE_HISTORY_SIZE;
-		DebugDrawVerticalLine(displayDeviceContext, cutoffLineX, panelRect.bottom, cutoffLineX, panelRect.top, RGB_COLOR_DARKGREEN);
+		int cutoffLineY = panelRect.bottom;
+		DebugDrawClipPointToRectangle(cutoffLineX, cutoffLineY, panelRect);
+		DebugDrawVerticalLine(displayDeviceContext, cutoffLineX, cutoffLineY, cutoffLineX, panelRect.top, RGB_COLOR_DARKGREEN);
 	} break;
 
 	case AREA_PERCENT_STACKED: {
@@ -366,52 +418,48 @@ INTERNAL void DebugDrawHistoryGraph(HDC& displayDeviceContext, int topLeftX, int
 			performance_metrics_t recorded = PERFORMANCE_METRICS_HISTORY.recordedSamples[recordIndex];
 			if(recorded.frameTime < EPSILON) continue;
 
-			int lineStartX = panelRect.left + offset * panelWidth / PERFORMANCE_HISTORY_SIZE;
-			lineStartX = ClampToInterval(lineStartX, panelRect.left + GRAPH_BORDER_WIDTH, panelRect.right - GRAPH_BORDER_WIDTH);
-			int lineEndX = lineStartX;
-			int lineStartY = panelRect.bottom - GRAPH_BORDER_WIDTH;
+			int lineStartX = panelRect.left + offset * innerWidth / PERFORMANCE_HISTORY_SIZE;
+			int lineStartY = panelRect.bottom - UI_BORDER_WIDTH;
+			DebugDrawClipPointToRectangle(lineStartX, lineStartY, panelRect);
 
-			int barHeight = panelHeight;
+			int barHeight = innerHeight;
+			int lineEndX = lineStartX;
 
 			percentage filled = (percentage)(recorded.userInterfaceRenderTime / recorded.frameTime);
 			int lineEndY = lineStartY - (int)(filled * barHeight) + 1;
+			DebugDrawClipPointToRectangle(lineEndX, lineEndY, panelRect);
 			DebugDrawVerticalLine(displayDeviceContext, lineStartX, lineStartY, lineStartX, lineEndY, RGB_COLOR_GOLD);
-			lineStartY = ClampToInterval(lineEndY, panelRect.top + GRAPH_BORDER_WIDTH, panelRect.bottom - GRAPH_BORDER_WIDTH);
+			lineStartY = lineEndY;
 
 			filled = (percentage)(recorded.worldUpdateTime / recorded.frameTime);
 			lineEndY = lineStartY - (int)(filled * barHeight) + 1;
+			DebugDrawClipPointToRectangle(lineEndX, lineEndY, panelRect);
 			DebugDrawVerticalLine(displayDeviceContext, lineStartX, lineStartY, lineStartX, lineEndY, RGB_COLOR_VIOLET);
-			lineStartY = ClampToInterval(lineEndY, panelRect.top + GRAPH_BORDER_WIDTH, panelRect.bottom - GRAPH_BORDER_WIDTH);
+			lineStartY = lineEndY;
 
 			filled = (percentage)(recorded.worldRenderTime / recorded.frameTime);
 			lineEndY = lineStartY - (int)(filled * barHeight) + 1;
+			DebugDrawClipPointToRectangle(lineEndX, lineEndY, panelRect);
 			DebugDrawVerticalLine(displayDeviceContext, lineStartX, lineStartY, lineStartX, lineEndY, RGB_COLOR_TURQUOISE);
-			lineStartY = ClampToInterval(lineEndY, panelRect.top + GRAPH_BORDER_WIDTH, panelRect.bottom - GRAPH_BORDER_WIDTH);
+			lineStartY = lineEndY;
 
 			filled = (percentage)(recorded.suspendedTime / recorded.frameTime);
 			lineEndY = lineStartY - (int)(filled * barHeight) + 1;
+			DebugDrawClipPointToRectangle(lineEndX, lineEndY, panelRect);
 			DebugDrawVerticalLine(displayDeviceContext, lineStartX, lineStartY, lineStartX, lineEndY, RGB_COLOR_DARKGREEN);
-			lineStartY = ClampToInterval(lineEndY, panelRect.top + GRAPH_BORDER_WIDTH, panelRect.bottom - GRAPH_BORDER_WIDTH);
+			lineStartY = lineEndY;
 
 			filled = (percentage)(recorded.messageProcessingTime / recorded.frameTime);
 			lineEndY = lineStartY - (int)(filled * barHeight) + 1;
+			DebugDrawClipPointToRectangle(lineEndX, lineEndY, panelRect);
 			DebugDrawVerticalLine(displayDeviceContext, lineStartX, lineStartY, lineStartX, lineEndY, RGB_COLOR_ORANGE);
-			lineStartY = ClampToInterval(lineEndY, panelRect.top + GRAPH_BORDER_WIDTH, panelRect.bottom - GRAPH_BORDER_WIDTH);
+			lineStartY = lineEndY;
 
 			lineEndY = panelRect.top;
 			DebugDrawVerticalLine(displayDeviceContext, lineStartX, lineStartY, lineStartX, lineEndY, RGB_COLOR_GRAY);
 		}
 	} break;
 	}
-
-	HPEN borderPen = CreatePen(PS_SOLID, GRAPH_BORDER_WIDTH, ColorRef(RGB_COLOR_WHITE));
-	HGDIOBJ oldPen = SelectObject(displayDeviceContext, borderPen);
-	HGDIOBJ oldBrush = SelectObject(displayDeviceContext, GetStockObject(HOLLOW_BRUSH));
-	Rectangle(displayDeviceContext, panelRect.left, panelRect.top, panelRect.right, panelRect.bottom);
-
-	SelectObject(displayDeviceContext, oldPen);
-	SelectObject(displayDeviceContext, oldBrush);
-	DeleteObject(borderPen);
 }
 
 inline gdi_color_t ProgressBarGetDeficitColor(int percent) {
@@ -429,14 +477,16 @@ inline gdi_color_t ProgressBarGetCompletionColor(int percent) {
 }
 
 INTERNAL void DrawProgressBarWithColors(HDC& displayDeviceContext, progress_bar_t& bar, gdi_color_t foregroundColor) {
-	RECT rect = { bar.x, bar.y, bar.x + bar.width, bar.y + bar.height };
-	DebugDrawSolidColorRectangle(displayDeviceContext, rect, UI_BACKGROUND_COLOR);
+	RECT borderRect = { bar.x, bar.y, bar.x + bar.width, bar.y + bar.height };
+	DebugDrawSolidColorRectangle(displayDeviceContext, borderRect, RGB_COLOR_WHITE);
 
-	int filledWidth = (bar.width * bar.percent) / 100;
-	RECT fillRect = { bar.x, bar.y, bar.x + filledWidth, bar.y + bar.height };
+	RECT barRect = { borderRect.left + UI_BORDER_WIDTH, borderRect.top + UI_BORDER_WIDTH, borderRect.right - UI_BORDER_WIDTH, borderRect.bottom - UI_BORDER_WIDTH };
+	DebugDrawSolidColorRectangle(displayDeviceContext, barRect, UI_BACKGROUND_COLOR);
+
+	int innerWidth = barRect.right - barRect.left;
+	int filledWidth = (innerWidth * bar.percent) / 100;
+	RECT fillRect = { barRect.left, barRect.top, barRect.left + filledWidth, barRect.bottom };
 	DebugDrawSolidColorRectangle(displayDeviceContext, fillRect, foregroundColor);
-
-	DebugDrawFramedColorRectangle(displayDeviceContext, rect, RGB_COLOR_WHITE);
 }
 
 INTERNAL inline void DrawProgressBar(HDC& displayDeviceContext, progress_bar_t& bar) {
