@@ -10,11 +10,14 @@ constexpr size_t LINE_COUNT = 57;
 
 constexpr int PROGRESS_BAR_HEIGHT = 16;
 constexpr int PROGRESS_BAR_WIDTH = 256;
+constexpr int UI_GRID_PANEL_WIDTH = PROGRESS_BAR_WIDTH + 2 * DEBUG_OVERLAY_PADDING_SIZE;
 
-constexpr int MEMORY_OVERLAY_WIDTH = 1024 + 128 + 2 * DEBUG_OVERLAY_PADDING_SIZE;
-GLOBAL int MEMORY_OVERLAY_HEIGHT = (DEBUG_OVERLAY_LINE_HEIGHT * LINE_COUNT) + 2 * DEBUG_OVERLAY_PADDING_SIZE;
+constexpr int MEMORY_OVERLAY_PANELS = 5;
+constexpr int MEMORY_OVERLAY_WIDTH = MEMORY_OVERLAY_PANELS * UI_GRID_PANEL_WIDTH + (MEMORY_OVERLAY_PANELS - 1) * DEBUG_OVERLAY_MARGIN_SIZE + 2 * DEBUG_OVERLAY_PADDING_SIZE;
+GLOBAL int MEMORY_OVERLAY_HEIGHT = (DEBUG_OVERLAY_LINE_HEIGHT * 40) + 3 * DEBUG_OVERLAY_PADDING_SIZE;
 
-constexpr int PERFORMANCE_OVERLAY_WIDTH = PROGRESS_BAR_WIDTH + 2 * DEBUG_OVERLAY_PADDING_SIZE;
+constexpr int PERFORMANCE_OVERLAY_PANELS = 1;
+constexpr int PERFORMANCE_OVERLAY_WIDTH = PERFORMANCE_OVERLAY_PANELS * UI_GRID_PANEL_WIDTH;
 GLOBAL int PERFORMANCE_OVERLAY_HEIGHT = (DEBUG_OVERLAY_LINE_HEIGHT * LINE_COUNT) + 2 * DEBUG_OVERLAY_PADDING_SIZE;
 
 #define ColorRef(color) RGB(color.red, color.green, color.blue)
@@ -494,75 +497,85 @@ INTERNAL inline void DrawProgressBar(HDC& displayDeviceContext, progress_bar_t& 
 	DrawProgressBarWithColors(displayDeviceContext, bar, foregroundColor);
 }
 
-INTERNAL void DebugDrawMemoryUsageOverlay(HDC& displayDeviceContext) {
-	SetBkMode(displayDeviceContext, TRANSPARENT);
-	HFONT font = (HFONT)GetStockObject(ANSI_VAR_FONT);
-	HFONT oldFont = (HFONT)SelectObject(displayDeviceContext, font);
+INTERNAL void DebugDrawMemoryArenaHeatmap(HDC& displayDeviceContext, memory_arena_t& arena, int startX, int startY, int width, int height) {
+	LONG lineY = startY + DEBUG_OVERLAY_PADDING_SIZE;
 
-	int startX = 0 + DEBUG_OVERLAY_MARGIN_SIZE;
-	int startY = 300;
-	RECT backgroundPanelRect = {
-		startX,
-		startY,
-		startX + MEMORY_OVERLAY_WIDTH,
-		startY + MEMORY_OVERLAY_HEIGHT
-	};
-	DebugDrawSolidColorRectangle(displayDeviceContext, backgroundPanelRect, UI_PANEL_COLOR);
+	RECT borderRect = { startX, startY, startX + width, startY + height };
+	DebugDrawSolidColorRectangle(displayDeviceContext, borderRect, RGB_COLOR_WHITE);
 
-	SetTextColor(displayDeviceContext, ColorRef(UI_TEXT_COLOR));
+	RECT panelRect = { borderRect.left + UI_BORDER_WIDTH, borderRect.top + UI_BORDER_WIDTH, borderRect.right - UI_BORDER_WIDTH, borderRect.bottom - UI_BORDER_WIDTH };
+	DebugDrawSolidColorRectangle(displayDeviceContext, panelRect, UI_PANEL_COLOR);
 
 	constexpr size_t FORMAT_BUFFER_SIZE = 256;
 	char formatBuffer[FORMAT_BUFFER_SIZE];
-	LONG lineY = startY + DEBUG_OVERLAY_PADDING_SIZE;
 
-	//-------------------------------------------------
-	// Arena stats
-	//-------------------------------------------------
-	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY,
-		"=== MEMORY ARENAS ===", lstrlenA("=== MEMORY ARENAS ==="));
-	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
-
-	StringCbPrintfA(formatBuffer, FORMAT_BUFFER_SIZE, "Name: %s", MAIN_MEMORY.name);
+	StringCbPrintfA(formatBuffer, FORMAT_BUFFER_SIZE, "Name: %s", arena.displayName.buffer);
 	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, formatBuffer, lstrlenA(formatBuffer));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
-	StringCbPrintfA(formatBuffer, FORMAT_BUFFER_SIZE, "Lifetime: %s", MAIN_MEMORY.lifetime);
+	String lifetime = SystemMemoryDebugLifetime(arena);
+	StringCbPrintfA(formatBuffer, FORMAT_BUFFER_SIZE, "Lifetime: %s", lifetime.buffer);
 	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, formatBuffer, lstrlenA(formatBuffer));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
-	StringCbPrintfA(formatBuffer, FORMAT_BUFFER_SIZE, "Base: 0x%p", MAIN_MEMORY.baseAddress);
+	String usage = SystemMemoryDebugUsage(arena);
+	StringCbPrintfA(formatBuffer, FORMAT_BUFFER_SIZE, "Usage: %s", usage.buffer);
 	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, formatBuffer, lstrlenA(formatBuffer));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
-	StringCbPrintfA(formatBuffer, FORMAT_BUFFER_SIZE, "Reserved: %d KB", MAIN_MEMORY.reservedSize / Kilobytes(1));
+	StringCbPrintfA(formatBuffer, FORMAT_BUFFER_SIZE, "Base: 0x%p", arena.baseAddress);
 	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, formatBuffer, lstrlenA(formatBuffer));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
-	StringCbPrintfA(formatBuffer, FORMAT_BUFFER_SIZE, "Committed: %d KB", MAIN_MEMORY.committedSize / Kilobytes(1));
+	lineY += DEBUG_OVERLAY_MARGIN_SIZE;
+	// TBD: This may be too inaccurate for large arenas? Better to select appropripate units automatically
+	double committed = (double)arena.committedSize / Megabytes(1);
+	double reserved = (double)arena.reservedSize / Megabytes(1);
+	percentage committedPercent = DoubleToFloat(committed / Max(reserved, EPSILON));
+	StringCbPrintfA(formatBuffer, FORMAT_BUFFER_SIZE, "Committed: %d MB / %d MB (%d%%)",
+		(int)(committed),
+		(int)(reserved), Percent(committedPercent));
 	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, formatBuffer, lstrlenA(formatBuffer));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
-	StringCbPrintfA(formatBuffer, FORMAT_BUFFER_SIZE, "Used: %d KB", MAIN_MEMORY.used / Kilobytes(1));
+	lineY += DEBUG_OVERLAY_MARGIN_SIZE;
+	percentage usedPercent = DoubleToFloat((double)(arena.used) / Max(arena.committedSize, EPSILON));
+	StringCbPrintfA(formatBuffer, FORMAT_BUFFER_SIZE, "Allocated: %d MB / %d MB (%d%%)",
+		(int)(arena.used / Megabytes(1)),
+		(int)(arena.committedSize / Megabytes(1)), Percent(usedPercent));
 	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, formatBuffer, lstrlenA(formatBuffer));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
-	StringCbPrintfA(formatBuffer, FORMAT_BUFFER_SIZE, "Free: %d KB", (MAIN_MEMORY.committedSize - MAIN_MEMORY.used) / Kilobytes(1));
+	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
+
+	const size_t blockSize = CPU_PERFORMANCE_INFO.allocationGranularity;
+	size_t totalBlocks = arena.reservedSize / blockSize;
+	size_t usedBlocks = arena.used / blockSize;
+	size_t committedBlocks = arena.committedSize / blockSize;
+
+	lineY += DEBUG_OVERLAY_MARGIN_SIZE;
+
+	// TODO: Compute this (only in debug mode)
+	int totalAllocationCount = 0;
+	int avgAllocationSize = 0;
+	int totalAllocationSize = 0;
+	int avgAllocationsPerSecond = 0;
+	StringCbPrintfA(formatBuffer, FORMAT_BUFFER_SIZE, "Allocations: %d - %d - %d - %d - %d", arena.allocationCount, totalAllocationCount, totalAllocationSize, avgAllocationSize, avgAllocationsPerSecond);
 	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, formatBuffer, lstrlenA(formatBuffer));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
-	StringCbPrintfA(formatBuffer, FORMAT_BUFFER_SIZE, "Allocations: %d", MAIN_MEMORY.allocationCount);
+	StringCbPrintfA(formatBuffer, FORMAT_BUFFER_SIZE, "Blocks: %d / %d / %d (%d KB each)", usedBlocks, committedBlocks, totalBlocks, blockSize / Kilobytes(1));
 	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, formatBuffer, lstrlenA(formatBuffer));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
-	const size_t blockSize = Kilobytes(64);
-	size_t totalBlocks = MAIN_MEMORY.reservedSize / blockSize;
-	size_t usedBlocks = MAIN_MEMORY.used / blockSize;
-	size_t committedBlocks = MAIN_MEMORY.committedSize / blockSize;
-
+	LONG ARENA_BLOCK_GAP = 1;
 	LONG ARENA_BLOCK_WIDTH = 2;
 	LONG ARENA_BLOCK_HEIGHT = 4;
-	LONG blocksPerRow = 256 + 128; // Wrap to multiple rows if the arena is too large
-	LONG arenaStartX = startX + DEBUG_OVERLAY_PADDING_SIZE;
+	// Wrap to multiple rows if the arena is too large
+	int availableContentWidth = (width - 2 * DEBUG_OVERLAY_PADDING_SIZE - ARENA_BLOCK_GAP);
+	int totalBlockWidth = (ARENA_BLOCK_WIDTH + ARENA_BLOCK_GAP);
+	LONG blocksPerRow = availableContentWidth / totalBlockWidth;
+	LONG arenaStartX = startX + DEBUG_OVERLAY_PADDING_SIZE + ARENA_BLOCK_GAP;
 	LONG arenaStartY = lineY;
 
 	//-------------------------------------------------
@@ -579,13 +592,62 @@ INTERNAL void DebugDrawMemoryUsageOverlay(HDC& displayDeviceContext) {
 		}
 
 		RECT block = {
-			arenaStartX + (blockID % blocksPerRow) * (ARENA_BLOCK_WIDTH + 1), // TBD NARROW +
-			arenaStartY + (blockID / blocksPerRow) * (ARENA_BLOCK_HEIGHT + 1),
-			arenaStartX + (blockID % blocksPerRow) * (ARENA_BLOCK_WIDTH + 1) + ARENA_BLOCK_WIDTH,
-			arenaStartY + (blockID / blocksPerRow) * (ARENA_BLOCK_HEIGHT + 1) + ARENA_BLOCK_HEIGHT
+			arenaStartX + (blockID % blocksPerRow) * (ARENA_BLOCK_WIDTH + ARENA_BLOCK_GAP),
+			arenaStartY + (blockID / blocksPerRow) * (ARENA_BLOCK_HEIGHT + ARENA_BLOCK_GAP),
+			arenaStartX + (blockID % blocksPerRow) * (ARENA_BLOCK_WIDTH + ARENA_BLOCK_GAP) + ARENA_BLOCK_WIDTH,
+			arenaStartY + (blockID / blocksPerRow) * (ARENA_BLOCK_HEIGHT + ARENA_BLOCK_GAP) + ARENA_BLOCK_HEIGHT
 		};
-		DebugDrawSolidColorRectangle(displayDeviceContext, block, color);
+		// For simplicity, just cut off any boxes that don't actually fit the container
+		bool boxWillFitEntirely = (block.bottom + DEBUG_OVERLAY_PADDING_SIZE < startY + height);
+		if(boxWillFitEntirely) DebugDrawSolidColorRectangle(displayDeviceContext, block, color);
 	}
+}
+
+INTERNAL void DebugDrawMemoryUsageOverlay(HDC& displayDeviceContext) {
+	SetBkMode(displayDeviceContext, TRANSPARENT);
+	HFONT font = (HFONT)GetStockObject(ANSI_VAR_FONT);
+	HFONT oldFont = (HFONT)SelectObject(displayDeviceContext, font);
+
+	int startX = 0 + DEBUG_OVERLAY_MARGIN_SIZE;
+	int startY = 300;
+	RECT backgroundPanelRect = {
+		startX,
+		startY,
+		startX + MEMORY_OVERLAY_WIDTH,
+		startY + MEMORY_OVERLAY_HEIGHT
+	};
+	DebugDrawSolidColorRectangle(displayDeviceContext, backgroundPanelRect, UI_PANEL_COLOR);
+
+	SetTextColor(displayDeviceContext, ColorRef(UI_TEXT_COLOR));
+	LONG lineY = startY + DEBUG_OVERLAY_PADDING_SIZE;
+
+	//-------------------------------------------------
+	// Arena stats
+	//-------------------------------------------------
+	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY,
+		"=== MEMORY ARENAS ===", lstrlenA("=== MEMORY ARENAS ==="));
+	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
+
+	int headerHeight = lineY - startY;
+	int availableHeight = MEMORY_OVERLAY_HEIGHT - headerHeight - DEBUG_OVERLAY_MARGIN_SIZE;
+	constexpr int MAIN_MEMORY_PANELS = 1;
+	constexpr int TRANSIENT_MEMORY_PANELS = 4;
+	constexpr int NUM_HORIZONTAL_GRID_CELLS = MAIN_MEMORY_PANELS + TRANSIENT_MEMORY_PANELS;
+	constexpr int NUM_VERTICAL_GRID_CELLS = 1;
+	int heatmapWidth = UI_GRID_PANEL_WIDTH;
+	int heatmapHeight = availableHeight / NUM_VERTICAL_GRID_CELLS;
+
+	startX += DEBUG_OVERLAY_PADDING_SIZE;
+
+	heatmapWidth = MAIN_MEMORY_PANELS * heatmapWidth + (MAIN_MEMORY_PANELS - 1) * DEBUG_OVERLAY_MARGIN_SIZE;
+	DebugDrawMemoryArenaHeatmap(displayDeviceContext, MAIN_MEMORY, startX, lineY, heatmapWidth, heatmapHeight);
+	startX += heatmapWidth;
+	startX += DEBUG_OVERLAY_MARGIN_SIZE;
+
+	heatmapWidth = TRANSIENT_MEMORY_PANELS * heatmapWidth + (TRANSIENT_MEMORY_PANELS - 1) * DEBUG_OVERLAY_MARGIN_SIZE;
+	DebugDrawMemoryArenaHeatmap(displayDeviceContext, TRANSIENT_MEMORY, startX, lineY, heatmapWidth, heatmapHeight);
+	startX += heatmapWidth;
+	startX += DEBUG_OVERLAY_PADDING_SIZE;
 
 	SelectObject(displayDeviceContext, oldFont);
 }
