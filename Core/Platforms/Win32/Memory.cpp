@@ -89,3 +89,30 @@ INTERNAL void SystemMemoryInitializeArenas(size_t mainMemorySize, size_t transie
 	MAIN_MEMORY.committedSize = mainMemorySize;
 	TRANSIENT_MEMORY.committedSize = transientMemorySize;
 }
+
+INTERNAL void* SystemMemoryAllocate(memory_arena_t& arena, size_t allocationSize) {
+	size_t totalUsed = arena.used + allocationSize;
+	ASSUME(totalUsed <= arena.reservedSize, "Attempting to allocate outside the reserved set");
+
+	void* memoryRegionStartPointer = (uint8*)arena.baseAddress + arena.used;
+	arena.used = totalUsed;
+	arena.allocationCount++;
+
+	return memoryRegionStartPointer;
+}
+
+INTERNAL bool SystemMemoryCanAllocate(memory_arena_t& arena, size_t allocationSize) {
+	if(arena.used + allocationSize > arena.reservedSize) return false;
+	return true;
+}
+
+void SystemMemoryReset(memory_arena_t& arena) {
+	arena.allocationCount = 0;
+	arena.used = 0;
+}
+
+INTERNAL inline void SystemMemoryDebugTouch(memory_arena_t& arena, uint8* address) {
+	ASSUME(address >= arena.baseAddress, "Attempted to access an invalid arena offset");
+	size_t offset = address - (uint8*)arena.baseAddress;
+	// TODO: Update last accessed time
+}
