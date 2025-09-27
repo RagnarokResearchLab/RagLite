@@ -848,9 +848,10 @@ INTERNAL void DebugDrawProcessorUsageOverlay(HDC& displayDeviceContext) {
 			lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
 			lineY += DEBUG_OVERLAY_MARGIN_SIZE;
-			percentage procPercent = DoubleToFloat((double)pmc.WorkingSetSize / memoryUsageInfo.ullTotalPhys);
+			size_t totalMemoryUsed = pmc.PrivateUsage + pmc.WorkingSetSize;
+			percentage procPercent = DoubleToFloat((double)(totalMemoryUsed) / memoryUsageInfo.ullTotalPhys);
 			StringCbPrintfA(formatBuffer, FORMAT_BUFFER_SIZE, "Memory Usage: %d MB / %d MB (%d%%)",
-				(int)(pmc.WorkingSetSize / Megabytes(1)),
+				(int)(totalMemoryUsed / Megabytes(1)),
 				(int)(memoryUsageInfo.ullTotalPhys / Megabytes(1)), Percent(procPercent));
 
 			TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE,
