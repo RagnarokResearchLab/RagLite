@@ -84,6 +84,7 @@ INTERNAL const char* ArchitectureToDebugName(WORD wProcessorArchitecture) {
 }
 
 #include "Win32/DebugDraw.hpp"
+#include "Win32/Memory.hpp"
 
 #include "Win32/GamePad.cpp"
 #include "Win32/Keyboard.cpp"
@@ -322,6 +323,11 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE, LPSTR,
 	MONOTONIC_CLOCK_SPEED = ticksPerSecond.QuadPart;
 	hardware_tick_t lastUpdateTime = PerformanceMetricsNow();
 
+	// TODO Override via CLI arguments or something? (Can also compute based on available RAM)
+	constexpr size_t MAIN_MEMORY_SIZE = Megabytes(85);
+	constexpr size_t TRANSIENT_MEMORY_SIZE = Megabytes(1596) + Kilobytes(896);
+	SystemMemoryInitializeArenas(MAIN_MEMORY_SIZE, TRANSIENT_MEMORY_SIZE);
+
 	WNDCLASSEX windowClass = {};
 	// TODO Is this really a good idea? Beware the CS_OWNDC footguns...
 	// TODO https://devblogs.microsoft.com/oldnewthing/20060601-06/?p=31003
@@ -385,6 +391,24 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE, LPSTR,
 			PLACEHOLDER_DEMO_APP.offsetX++;
 			PLACEHOLDER_DEMO_APP.offsetY++;
 			PLACEHOLDER_DEMO_APP.offsetY++;
+
+			size_t allocationSize = Megabytes(2);
+			if(!SystemMemoryCanAllocate(MAIN_MEMORY, allocationSize)) {
+				SystemMemoryReset(MAIN_MEMORY);
+			} else {
+				uint8* mainMemory = (uint8*)SystemMemoryAllocate(MAIN_MEMORY, allocationSize);
+				*mainMemory = 0xDE;
+				SystemMemoryDebugTouch(MAIN_MEMORY, mainMemory);
+			}
+
+			if(!SystemMemoryCanAllocate(TRANSIENT_MEMORY, 2 * allocationSize)) {
+				SystemMemoryReset(TRANSIENT_MEMORY);
+			} else {
+
+				uint8* transientMemory = (uint8*)SystemMemoryAllocate(TRANSIENT_MEMORY, 2 * allocationSize);
+				*transientMemory = 0xAB;
+				SystemMemoryDebugTouch(TRANSIENT_MEMORY, transientMemory);
+			}
 
 			GamePadPollControllers(PLACEHOLDER_DEMO_APP.offsetX, PLACEHOLDER_DEMO_APP.offsetY);
 			DebugDrawUpdateBackgroundPattern();

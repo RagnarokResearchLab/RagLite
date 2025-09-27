@@ -37,6 +37,7 @@
 // TODO: Add feature flags for release builds here
 #else
 #define RAGLITE_DEBUG_ASSERTIONS
+#define RAGLITE_PREDICTABLE_MEMORY
 #endif
 
 constexpr size_t BITS_PER_BYTE = 8ULL;
