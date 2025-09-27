@@ -538,6 +538,10 @@ INTERNAL void DebugDrawMemoryArenaHeatmap(HDC& displayDeviceContext, memory_aren
 	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, formatBuffer, lstrlenA(formatBuffer));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
+	progress_bar_t progressBar = { .x = startX + DEBUG_OVERLAY_PADDING_SIZE, .y = lineY, .width = PROGRESS_BAR_WIDTH, .height = PROGRESS_BAR_HEIGHT, .percent = Percent(committedPercent) };
+	DrawProgressBar(displayDeviceContext, progressBar);
+	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
+
 	lineY += DEBUG_OVERLAY_MARGIN_SIZE;
 	percentage usedPercent = DoubleToFloat((double)(arena.used) / Max(arena.committedSize, EPSILON));
 	StringCbPrintfA(formatBuffer, FORMAT_BUFFER_SIZE, "Allocated: %d MB / %d MB (%d%%)",
@@ -546,6 +550,8 @@ INTERNAL void DebugDrawMemoryArenaHeatmap(HDC& displayDeviceContext, memory_aren
 	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, formatBuffer, lstrlenA(formatBuffer));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
+	progressBar = { .x = startX + DEBUG_OVERLAY_PADDING_SIZE, .y = lineY, .width = PROGRESS_BAR_WIDTH, .height = PROGRESS_BAR_HEIGHT, .percent = Percent(usedPercent) };
+	DrawProgressBar(displayDeviceContext, progressBar);
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
 	const size_t blockSize = CPU_PERFORMANCE_INFO.allocationGranularity;
