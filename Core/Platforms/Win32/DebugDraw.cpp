@@ -302,18 +302,18 @@ INTERNAL inline void DebugDrawColoredLine(HDC& displayDeviceContext, int startX,
 	ASSUME(SELECTED_LINE_DRAWING_METHOD < LINE_STYLE_COUNT, "Invalid line drawing algorithm selected");
 
 	switch(SELECTED_LINE_DRAWING_METHOD) {
-	case DEFAULT_GDI_LINE: {
-		DebugDrawColoredLineGDI(displayDeviceContext, startX, startY, endX, endY, color);
-	} break;
-	case BRESENHAM_INTEGER_LINE: {
-		DebugDrawColoredLineBHI(startX, startY, endX, endY, color);
-	} break;
-	case DDA_FLOAT_LINE: {
-		DebugDrawColoredLineDDA(startX, startY, endX, endY, color);
-	} break;
-	case WU_FLOAT_LINE: {
-		DebugDrawColoredLineWAA(startX, startY, endX, endY, color);
-	} break;
+		case DEFAULT_GDI_LINE: {
+			DebugDrawColoredLineGDI(displayDeviceContext, startX, startY, endX, endY, color);
+		} break;
+		case BRESENHAM_INTEGER_LINE: {
+			DebugDrawColoredLineBHI(startX, startY, endX, endY, color);
+		} break;
+		case DDA_FLOAT_LINE: {
+			DebugDrawColoredLineDDA(startX, startY, endX, endY, color);
+		} break;
+		case WU_FLOAT_LINE: {
+			DebugDrawColoredLineWAA(startX, startY, endX, endY, color);
+		} break;
 	}
 }
 
@@ -383,85 +383,85 @@ INTERNAL void DebugDrawHistoryGraph(HDC& displayDeviceContext, int topLeftX, int
 
 	switch(chartType) {
 
-	case XY_LINES_PLOTTED: {
-		int fpsTargetLineOffsetY = panelRect.bottom - (int)(MAX_FRAME_TIME * graphScale);
-		DebugDrawColoredLine(displayDeviceContext, panelRect.left, fpsTargetLineOffsetY, panelRect.right, fpsTargetLineOffsetY, RGB_COLOR_LIGHTGRAY);
+		case XY_LINES_PLOTTED: {
+			int fpsTargetLineOffsetY = panelRect.bottom - (int)(MAX_FRAME_TIME * graphScale);
+			DebugDrawColoredLine(displayDeviceContext, panelRect.left, fpsTargetLineOffsetY, panelRect.right, fpsTargetLineOffsetY, RGB_COLOR_LIGHTGRAY);
 
-		int lineStartX = panelRect.left;
-		int lineStartY = panelRect.bottom;
-		for(int offset = 0; offset < PERFORMANCE_HISTORY_SIZE; offset++) {
-			int recordIndex = (PERFORMANCE_METRICS_HISTORY.oldestRecordedSampleIndex + offset) % PERFORMANCE_HISTORY_SIZE;
-			performance_metrics_t recorded = PERFORMANCE_METRICS_HISTORY.recordedSamples[recordIndex];
-			if(recorded.frameTime < EPSILON) continue;
+			int lineStartX = panelRect.left;
+			int lineStartY = panelRect.bottom;
+			for(int offset = 0; offset < PERFORMANCE_HISTORY_SIZE; offset++) {
+				int recordIndex = (PERFORMANCE_METRICS_HISTORY.oldestRecordedSampleIndex + offset) % PERFORMANCE_HISTORY_SIZE;
+				performance_metrics_t recorded = PERFORMANCE_METRICS_HISTORY.recordedSamples[recordIndex];
+				if(recorded.frameTime < EPSILON) continue;
 
-			int lineEndX = panelRect.left + offset * innerWidth / PERFORMANCE_HISTORY_SIZE;
-			int barHeight = (int)(recorded.frameTime * graphScale);
-			int lineEndY = panelRect.bottom - barHeight;
+				int lineEndX = panelRect.left + offset * innerWidth / PERFORMANCE_HISTORY_SIZE;
+				int barHeight = (int)(recorded.frameTime * graphScale);
+				int lineEndY = panelRect.bottom - barHeight;
 
-			if(recordIndex == 0) lineStartX = lineEndX; // There's no previous line to connect to
+				if(recordIndex == 0) lineStartX = lineEndX; // There's no previous line to connect to
 
-			DebugDrawClipPointToRectangle(lineStartX, lineStartY, panelRect);
-			DebugDrawClipPointToRectangle(lineEndX, lineEndY, panelRect);
+				DebugDrawClipPointToRectangle(lineStartX, lineStartY, panelRect);
+				DebugDrawClipPointToRectangle(lineEndX, lineEndY, panelRect);
 
-			if(recorded.frameTime >= EPSILON) DebugDrawColoredLine(displayDeviceContext, lineStartX, lineStartY, lineEndX, lineEndY, RGB_COLOR_CYAN);
+				if(recorded.frameTime >= EPSILON) DebugDrawColoredLine(displayDeviceContext, lineStartX, lineStartY, lineEndX, lineEndY, RGB_COLOR_CYAN);
 
-			lineStartX = lineEndX;
-			lineStartY = lineEndY;
-		}
-		int cutoffLineX = panelRect.left + PERFORMANCE_METRICS_HISTORY.oldestRecordedSampleIndex * panelWidth / PERFORMANCE_HISTORY_SIZE;
-		int cutoffLineY = panelRect.bottom;
-		DebugDrawClipPointToRectangle(cutoffLineX, cutoffLineY, panelRect);
-		DebugDrawVerticalLine(displayDeviceContext, cutoffLineX, cutoffLineY, cutoffLineX, panelRect.top, RGB_COLOR_DARKGREEN);
-	} break;
+				lineStartX = lineEndX;
+				lineStartY = lineEndY;
+			}
+			int cutoffLineX = panelRect.left + PERFORMANCE_METRICS_HISTORY.oldestRecordedSampleIndex * panelWidth / PERFORMANCE_HISTORY_SIZE;
+			int cutoffLineY = panelRect.bottom;
+			DebugDrawClipPointToRectangle(cutoffLineX, cutoffLineY, panelRect);
+			DebugDrawVerticalLine(displayDeviceContext, cutoffLineX, cutoffLineY, cutoffLineX, panelRect.top, RGB_COLOR_DARKGREEN);
+		} break;
 
-	case AREA_PERCENT_STACKED: {
+		case AREA_PERCENT_STACKED: {
 
-		for(int offset = 0; offset < PERFORMANCE_HISTORY_SIZE; offset++) {
-			int recordIndex = (PERFORMANCE_METRICS_HISTORY.oldestRecordedSampleIndex + offset) % PERFORMANCE_HISTORY_SIZE;
-			performance_metrics_t recorded = PERFORMANCE_METRICS_HISTORY.recordedSamples[recordIndex];
-			if(recorded.frameTime < EPSILON) continue;
+			for(int offset = 0; offset < PERFORMANCE_HISTORY_SIZE; offset++) {
+				int recordIndex = (PERFORMANCE_METRICS_HISTORY.oldestRecordedSampleIndex + offset) % PERFORMANCE_HISTORY_SIZE;
+				performance_metrics_t recorded = PERFORMANCE_METRICS_HISTORY.recordedSamples[recordIndex];
+				if(recorded.frameTime < EPSILON) continue;
 
-			int lineStartX = panelRect.left + offset * innerWidth / PERFORMANCE_HISTORY_SIZE;
-			int lineStartY = panelRect.bottom - UI_BORDER_WIDTH;
-			DebugDrawClipPointToRectangle(lineStartX, lineStartY, panelRect);
+				int lineStartX = panelRect.left + offset * innerWidth / PERFORMANCE_HISTORY_SIZE;
+				int lineStartY = panelRect.bottom - UI_BORDER_WIDTH;
+				DebugDrawClipPointToRectangle(lineStartX, lineStartY, panelRect);
 
-			int barHeight = innerHeight;
-			int lineEndX = lineStartX;
+				int barHeight = innerHeight;
+				int lineEndX = lineStartX;
 
-			percentage filled = (percentage)(recorded.userInterfaceRenderTime / recorded.frameTime);
-			int lineEndY = lineStartY - (int)(filled * barHeight) + 1;
-			DebugDrawClipPointToRectangle(lineEndX, lineEndY, panelRect);
-			DebugDrawVerticalLine(displayDeviceContext, lineStartX, lineStartY, lineStartX, lineEndY, RGB_COLOR_GOLD);
-			lineStartY = lineEndY;
+				percentage filled = (percentage)(recorded.userInterfaceRenderTime / recorded.frameTime);
+				int lineEndY = lineStartY - (int)(filled * barHeight) + 1;
+				DebugDrawClipPointToRectangle(lineEndX, lineEndY, panelRect);
+				DebugDrawVerticalLine(displayDeviceContext, lineStartX, lineStartY, lineStartX, lineEndY, RGB_COLOR_GOLD);
+				lineStartY = lineEndY;
 
-			filled = (percentage)(recorded.worldUpdateTime / recorded.frameTime);
-			lineEndY = lineStartY - (int)(filled * barHeight) + 1;
-			DebugDrawClipPointToRectangle(lineEndX, lineEndY, panelRect);
-			DebugDrawVerticalLine(displayDeviceContext, lineStartX, lineStartY, lineStartX, lineEndY, RGB_COLOR_VIOLET);
-			lineStartY = lineEndY;
+				filled = (percentage)(recorded.worldUpdateTime / recorded.frameTime);
+				lineEndY = lineStartY - (int)(filled * barHeight) + 1;
+				DebugDrawClipPointToRectangle(lineEndX, lineEndY, panelRect);
+				DebugDrawVerticalLine(displayDeviceContext, lineStartX, lineStartY, lineStartX, lineEndY, RGB_COLOR_VIOLET);
+				lineStartY = lineEndY;
 
-			filled = (percentage)(recorded.worldRenderTime / recorded.frameTime);
-			lineEndY = lineStartY - (int)(filled * barHeight) + 1;
-			DebugDrawClipPointToRectangle(lineEndX, lineEndY, panelRect);
-			DebugDrawVerticalLine(displayDeviceContext, lineStartX, lineStartY, lineStartX, lineEndY, RGB_COLOR_TURQUOISE);
-			lineStartY = lineEndY;
+				filled = (percentage)(recorded.worldRenderTime / recorded.frameTime);
+				lineEndY = lineStartY - (int)(filled * barHeight) + 1;
+				DebugDrawClipPointToRectangle(lineEndX, lineEndY, panelRect);
+				DebugDrawVerticalLine(displayDeviceContext, lineStartX, lineStartY, lineStartX, lineEndY, RGB_COLOR_TURQUOISE);
+				lineStartY = lineEndY;
 
-			filled = (percentage)(recorded.suspendedTime / recorded.frameTime);
-			lineEndY = lineStartY - (int)(filled * barHeight) + 1;
-			DebugDrawClipPointToRectangle(lineEndX, lineEndY, panelRect);
-			DebugDrawVerticalLine(displayDeviceContext, lineStartX, lineStartY, lineStartX, lineEndY, RGB_COLOR_DARKGREEN);
-			lineStartY = lineEndY;
+				filled = (percentage)(recorded.suspendedTime / recorded.frameTime);
+				lineEndY = lineStartY - (int)(filled * barHeight) + 1;
+				DebugDrawClipPointToRectangle(lineEndX, lineEndY, panelRect);
+				DebugDrawVerticalLine(displayDeviceContext, lineStartX, lineStartY, lineStartX, lineEndY, RGB_COLOR_DARKGREEN);
+				lineStartY = lineEndY;
 
-			filled = (percentage)(recorded.messageProcessingTime / recorded.frameTime);
-			lineEndY = lineStartY - (int)(filled * barHeight) + 1;
-			DebugDrawClipPointToRectangle(lineEndX, lineEndY, panelRect);
-			DebugDrawVerticalLine(displayDeviceContext, lineStartX, lineStartY, lineStartX, lineEndY, RGB_COLOR_ORANGE);
-			lineStartY = lineEndY;
+				filled = (percentage)(recorded.messageProcessingTime / recorded.frameTime);
+				lineEndY = lineStartY - (int)(filled * barHeight) + 1;
+				DebugDrawClipPointToRectangle(lineEndX, lineEndY, panelRect);
+				DebugDrawVerticalLine(displayDeviceContext, lineStartX, lineStartY, lineStartX, lineEndY, RGB_COLOR_ORANGE);
+				lineStartY = lineEndY;
 
-			lineEndY = panelRect.top;
-			DebugDrawVerticalLine(displayDeviceContext, lineStartX, lineStartY, lineStartX, lineEndY, RGB_COLOR_GRAY);
-		}
-	} break;
+				lineEndY = panelRect.top;
+				DebugDrawVerticalLine(displayDeviceContext, lineStartX, lineStartY, lineStartX, lineEndY, RGB_COLOR_GRAY);
+			}
+		} break;
 	}
 }
 
@@ -1168,20 +1168,20 @@ INTERNAL void DebugDrawUseMovingScanlinePattern(gdi_offscreen_buffer_t& bitmap, 
 INTERNAL void DebugDrawIntoFrameBuffer(gdi_offscreen_buffer_t& bitmap, int paramA,
 	int paramB) {
 	switch(GDI_DEBUG_PATTERN) {
-	case PATTERN_SHIFTING_GRADIENT:
-		DebugDrawUseMarchingGradientPattern(bitmap, paramA, paramB);
-		break;
-	case PATTERN_CIRCULAR_RIPPLE:
-		DebugDrawUseRipplingSpiralPattern(bitmap, paramA, paramB);
-		break;
-	case PATTERN_CHECKERBOARD:
-		DebugDrawUseCheckeredFloorPattern(bitmap, paramA, paramB);
-		break;
-	case PATTERN_AXIS_GRADIENTS:
-		DebugDrawUseColorGradientPattern(bitmap, paramA, paramB);
-		break;
-	case PATTERN_GRID_SCANLINE:
-		DebugDrawUseMovingScanlinePattern(bitmap, paramA, paramB);
-		break;
+		case PATTERN_SHIFTING_GRADIENT:
+			DebugDrawUseMarchingGradientPattern(bitmap, paramA, paramB);
+			break;
+		case PATTERN_CIRCULAR_RIPPLE:
+			DebugDrawUseRipplingSpiralPattern(bitmap, paramA, paramB);
+			break;
+		case PATTERN_CHECKERBOARD:
+			DebugDrawUseCheckeredFloorPattern(bitmap, paramA, paramB);
+			break;
+		case PATTERN_AXIS_GRADIENTS:
+			DebugDrawUseColorGradientPattern(bitmap, paramA, paramB);
+			break;
+		case PATTERN_GRID_SCANLINE:
+			DebugDrawUseMovingScanlinePattern(bitmap, paramA, paramB);
+			break;
 	}
 }

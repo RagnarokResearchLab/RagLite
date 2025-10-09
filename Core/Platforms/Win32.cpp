@@ -64,21 +64,21 @@ INTERNAL const char* ArchitectureToDebugName(WORD wProcessorArchitecture) {
 
 	const char* arch = "Unknown";
 	switch(wProcessorArchitecture) {
-	case PROCESSOR_ARCHITECTURE_AMD64:
-		arch = "x64";
-		break;
-	case PROCESSOR_ARCHITECTURE_INTEL:
-		arch = "x86";
-		break;
-	case PROCESSOR_ARCHITECTURE_ARM:
-		arch = "ARM";
-		break;
-	case PROCESSOR_ARCHITECTURE_ARM64:
-		arch = "ARM64";
-		break;
-	case PROCESSOR_ARCHITECTURE_IA64:
-		arch = "Itanium";
-		break;
+		case PROCESSOR_ARCHITECTURE_AMD64:
+			arch = "x64";
+			break;
+		case PROCESSOR_ARCHITECTURE_INTEL:
+			arch = "x86";
+			break;
+		case PROCESSOR_ARCHITECTURE_ARM:
+			arch = "ARM";
+			break;
+		case PROCESSOR_ARCHITECTURE_ARM64:
+			arch = "ARM64";
+			break;
+		case PROCESSOR_ARCHITECTURE_IA64:
+			arch = "Itanium";
+			break;
 	}
 	return arch;
 }
@@ -191,110 +191,110 @@ LRESULT CALLBACK MainWindowProcessIncomingMessage(HWND window, UINT message, WPA
 	LRESULT result = 0;
 
 	switch(message) {
-	case WM_CREATE: {
-		TODO("Received WM_CREATE\n");
-		// TODO Initialize child windows here?
-	} break;
+		case WM_CREATE: {
+			TODO("Received WM_CREATE\n");
+			// TODO Initialize child windows here?
+		} break;
 
-	case WM_DISPLAYCHANGE:
-	case WM_MOVE:
-	case WM_MOVING:
-	case WM_SIZING:
-	case WM_SIZE: {
-		MainWindowCreateFrameBuffers(window, GDI_SURFACE, GDI_BACKBUFFER);
-		// NOTE: Updating again allows the simulation to appear more fluid (evaluate UX later)
-		DebugDrawUpdateBackgroundPattern();
-		MainWindowRedrawEverything(window);
-	} break;
+		case WM_DISPLAYCHANGE:
+		case WM_MOVE:
+		case WM_MOVING:
+		case WM_SIZING:
+		case WM_SIZE: {
+			MainWindowCreateFrameBuffers(window, GDI_SURFACE, GDI_BACKBUFFER);
+			// NOTE: Updating again allows the simulation to appear more fluid (evaluate UX later)
+			DebugDrawUpdateBackgroundPattern();
+			MainWindowRedrawEverything(window);
+		} break;
 
-	case WM_PAINT: {
-		PAINTSTRUCT paintInfo;
-		BeginPaint(window, &paintInfo);
-		MainWindowRedrawEverything(window);
-		EndPaint(window, &paintInfo);
-		return 0;
-	} break;
+		case WM_PAINT: {
+			PAINTSTRUCT paintInfo;
+			BeginPaint(window, &paintInfo);
+			MainWindowRedrawEverything(window);
+			EndPaint(window, &paintInfo);
+			return 0;
+		} break;
 
-	case WM_SYSKEYDOWN:
-	case WM_SYSKEYUP:
-	case WM_KEYDOWN:
-	case WM_KEYUP: {
-		WORD virtualKeyCode = LOWORD(wParam);
-		WORD keyFlags = HIWORD(lParam);
-		WORD scanCode = LOBYTE(keyFlags);
-		BOOL isExtendedKey = (keyFlags & KF_EXTENDED) == KF_EXTENDED;
+		case WM_SYSKEYDOWN:
+		case WM_SYSKEYUP:
+		case WM_KEYDOWN:
+		case WM_KEYUP: {
+			WORD virtualKeyCode = LOWORD(wParam);
+			WORD keyFlags = HIWORD(lParam);
+			WORD scanCode = LOBYTE(keyFlags);
+			BOOL isExtendedKey = (keyFlags & KF_EXTENDED) == KF_EXTENDED;
 
-		if(isExtendedKey)
-			scanCode = MAKEWORD(scanCode, 0xE0);
+			if(isExtendedKey)
+				scanCode = MAKEWORD(scanCode, 0xE0);
 
-		BOOL wasKeyDown = (keyFlags & KF_REPEAT) == KF_REPEAT;
-		BOOL isKeyReleased = (keyFlags & KF_UP) == KF_UP;
-		BOOL isKeyDown = !isKeyReleased;
+			BOOL wasKeyDown = (keyFlags & KF_REPEAT) == KF_REPEAT;
+			BOOL isKeyReleased = (keyFlags & KF_UP) == KF_UP;
+			BOOL isKeyDown = !isKeyReleased;
 
-		switch(virtualKeyCode) {
-		case VK_SHIFT:
-		case VK_CONTROL:
-		case VK_MENU:
-			// TODO Handle virtual key code mappings (maybe later)
-			virtualKeyCode = LOWORD(MapVirtualKeyW(scanCode, MAPVK_VSC_TO_VK_EX));
-			break;
-		}
+			switch(virtualKeyCode) {
+				case VK_SHIFT:
+				case VK_CONTROL:
+				case VK_MENU:
+					// TODO Handle virtual key code mappings (maybe later)
+					virtualKeyCode = LOWORD(MapVirtualKeyW(scanCode, MAPVK_VSC_TO_VK_EX));
+					break;
+			}
 
-		if(wasKeyDown != isKeyDown) {
-			// TODO Proper keyboard event handling (forward/queue?)
-			if(virtualKeyCode == 'W') {
-			} else if(virtualKeyCode == 'A') {
-			} else if(virtualKeyCode == 'S') {
-			} else if(virtualKeyCode == 'D') {
-			} else if(virtualKeyCode == 'G') {
-				if(wasKeyDown && !isKeyDown) {
-					APPLICATION_USES_GAMEPAD = !APPLICATION_USES_GAMEPAD;
-				}
-			} else if(virtualKeyCode == 'Q') {
-			} else if(virtualKeyCode == 'E') {
-			} else if(virtualKeyCode == VK_UP) {
-			} else if(virtualKeyCode == VK_LEFT) {
-			} else if(virtualKeyCode == VK_DOWN) {
-			} else if(virtualKeyCode == VK_RIGHT) {
-			} else if(virtualKeyCode == VK_ESCAPE) {
-				if(wasKeyDown && !isKeyDown) {
-					PostQuitMessage(0);
-				}
-			} else if(virtualKeyCode == VK_SPACE) {
-				if(wasKeyDown && !isKeyDown) {
-					WindowToggleFullscreen(window);
-				}
-			} else if(virtualKeyCode == VK_RETURN) {
-				if(wasKeyDown && !isKeyDown) {
-					APPLICATION_SHOULD_PAUSE = !APPLICATION_SHOULD_PAUSE;
+			if(wasKeyDown != isKeyDown) {
+				// TODO Proper keyboard event handling (forward/queue?)
+				if(virtualKeyCode == 'W') {
+				} else if(virtualKeyCode == 'A') {
+				} else if(virtualKeyCode == 'S') {
+				} else if(virtualKeyCode == 'D') {
+				} else if(virtualKeyCode == 'G') {
+					if(wasKeyDown && !isKeyDown) {
+						APPLICATION_USES_GAMEPAD = !APPLICATION_USES_GAMEPAD;
+					}
+				} else if(virtualKeyCode == 'Q') {
+				} else if(virtualKeyCode == 'E') {
+				} else if(virtualKeyCode == VK_UP) {
+				} else if(virtualKeyCode == VK_LEFT) {
+				} else if(virtualKeyCode == VK_DOWN) {
+				} else if(virtualKeyCode == VK_RIGHT) {
+				} else if(virtualKeyCode == VK_ESCAPE) {
+					if(wasKeyDown && !isKeyDown) {
+						PostQuitMessage(0);
+					}
+				} else if(virtualKeyCode == VK_SPACE) {
+					if(wasKeyDown && !isKeyDown) {
+						WindowToggleFullscreen(window);
+					}
+				} else if(virtualKeyCode == VK_RETURN) {
+					if(wasKeyDown && !isKeyDown) {
+						APPLICATION_SHOULD_PAUSE = !APPLICATION_SHOULD_PAUSE;
+					}
 				}
 			}
-		}
-	} break;
+		} break;
 
-	case WM_CLOSE: {
-		TODO("Received WM_CLOSE\n");
-		APPLICATION_SHOULD_EXIT = true;
-	} break;
+		case WM_CLOSE: {
+			TODO("Received WM_CLOSE\n");
+			APPLICATION_SHOULD_EXIT = true;
+		} break;
 
-	case WM_ACTIVATEAPP: {
-		TODO("Received WM_ACTIVATEAPP\n");
-	} break;
+		case WM_ACTIVATEAPP: {
+			TODO("Received WM_ACTIVATEAPP\n");
+		} break;
 
-	case WM_ERASEBKGND: {
-		// NOTE: No need for the OS to clear since the entire window is always fully painted
-		constexpr bool didEraseBackground = true;
-		return didEraseBackground;
-	} break;
+		case WM_ERASEBKGND: {
+			// NOTE: No need for the OS to clear since the entire window is always fully painted
+			constexpr bool didEraseBackground = true;
+			return didEraseBackground;
+		} break;
 
-	case WM_DESTROY: {
-		PostQuitMessage(0);
-		return 0;
-	} break;
+		case WM_DESTROY: {
+			PostQuitMessage(0);
+			return 0;
+		} break;
 
-	default: {
-		result = DefWindowProc(window, message, wParam, lParam);
-	} break;
+		default: {
+			result = DefWindowProc(window, message, wParam, lParam);
+		} break;
 	}
 
 	return result;
