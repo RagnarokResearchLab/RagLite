@@ -26,31 +26,31 @@ GLOBAL memory_arena_t TRANSIENT_MEMORY = {
 // TBD Guard with feature flag (check if compiler removes when unused - assumption: yes)
 INTERNAL String SystemMemoryDebugUsage(memory_arena_t& arena) {
 	switch(arena.lifetime) {
-	case UNUSED_PLACEHOLDER:
-		return StringLiteral("Unused (Placeholder)");
-	case PREALLOCATED_ON_LOAD:
-		return StringLiteral("Preallocated (Default)");
-	case DYNAMIC_RESIZE_FREELIST:
-		return StringLiteral("Dynamic (Resizeable)");
-	case CAN_HOT_RELOAD:
-		return StringLiteral("Reloadable (Pinned)");
-	default:
-		return StringLiteral("N/A");
+		case UNUSED_PLACEHOLDER:
+			return StringLiteral("Unused (Placeholder)");
+		case PREALLOCATED_ON_LOAD:
+			return StringLiteral("Preallocated (Default)");
+		case DYNAMIC_RESIZE_FREELIST:
+			return StringLiteral("Dynamic (Resizeable)");
+		case CAN_HOT_RELOAD:
+			return StringLiteral("Reloadable (Pinned)");
+		default:
+			return StringLiteral("N/A");
 	}
 }
 
 INTERNAL String SystemMemoryDebugLifetime(memory_arena_t& arena) {
 	switch(arena.lifetime) {
-	case KEEP_FOREVER_MANUAL_RESET:
-		return StringLiteral("Forever (Global Arena)");
-	case RESET_AFTER_EACH_FRAME:
-		return StringLiteral("Frame (Scoped Arena)");
-	case RESET_AFTER_TASK_COMPLETION:
-		return StringLiteral("Task Completion (Transfer Arena)");
-	case RESET_AUTOMATICALLY_TIMED_EXPIRY:
-		return StringLiteral("Auto-Expires (Caching Arena)");
-	default:
-		return StringLiteral("N/A");
+		case KEEP_FOREVER_MANUAL_RESET:
+			return StringLiteral("Forever (Global Arena)");
+		case RESET_AFTER_EACH_FRAME:
+			return StringLiteral("Frame (Scoped Arena)");
+		case RESET_AFTER_TASK_COMPLETION:
+			return StringLiteral("Task Completion (Transfer Arena)");
+		case RESET_AUTOMATICALLY_TIMED_EXPIRY:
+			return StringLiteral("Auto-Expires (Caching Arena)");
+		default:
+			return StringLiteral("N/A");
 	}
 }
 
