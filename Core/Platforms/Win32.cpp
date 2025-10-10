@@ -350,8 +350,11 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE, LPSTR,
 		return EXIT_FAILURE;
 	}
 
+	// TODO: On modern Windows systems, MAX_PATH is insufficient and Unicode paths should ideally be supported (later?)
 	TCHAR executableFileSystemPath[MAX_PATH];
-	GetModuleFileNameA(NULL, executableFileSystemPath, MAX_PATH);
+	DWORD copiedStringLength = GetModuleFileNameA(NULL, executableFileSystemPath, MAX_PATH);
+	ASSUME(copiedStringLength != 0, "Failed to get module file name (check last error code if this ever happens)");
+	ASSUME(copiedStringLength != MAX_PATH, "Module file name may have been truncated (ERROR_INSUFFICIENT_BUFFER?)");
 	String windowTitle = CountedString(executableFileSystemPath);
 	PathStringToBaseNameInPlace(windowTitle);
 	PathStringStripFileExtensionInPlace(windowTitle);
