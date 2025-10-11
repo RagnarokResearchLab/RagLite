@@ -323,10 +323,14 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE, LPSTR,
 	MONOTONIC_CLOCK_SPEED = ticksPerSecond.QuadPart;
 	hardware_tick_t lastUpdateTime = PerformanceMetricsNow();
 
-	// TODO Override via CLI arguments or something? (Can also compute based on available RAM)
-	constexpr size_t MAIN_MEMORY_SIZE = Megabytes(85);
-	constexpr size_t TRANSIENT_MEMORY_SIZE = Megabytes(1596) + Kilobytes(896);
-	SystemMemoryInitializeArenas(MAIN_MEMORY_SIZE, TRANSIENT_MEMORY_SIZE);
+	PLACEHOLDER_MEMORY_CONFIGURATION.persistentMemoryOptions = PlatformDefaultAllocationOptions();
+	PLACEHOLDER_MEMORY_CONFIGURATION.transientMemoryOptions = PlatformDefaultAllocationOptions();
+#ifdef RAGLITE_PREDICTABLE_MEMORY
+	PLACEHOLDER_MEMORY_CONFIGURATION.persistentMemoryOptions.startingAddress = (LPVOID)HIGHEST_VIRTUAL_ADDRESS;
+#endif
+	PLACEHOLDER_MEMORY_CONFIGURATION.persistentMemoryOptions.reservedSize = Megabytes(85);
+	PLACEHOLDER_MEMORY_CONFIGURATION.transientMemoryOptions.reservedSize = Megabytes(1596) + Kilobytes(896);
+	PlatformInitializeProgramMemory(PLACEHOLDER_PROGRAM_MEMORY, PLACEHOLDER_MEMORY_CONFIGURATION);
 
 	WNDCLASSEX windowClass = {};
 	// TODO Is this really a good idea? Beware the CS_OWNDC footguns...
@@ -396,21 +400,21 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE, LPSTR,
 			PLACEHOLDER_DEMO_APP.offsetY++;
 
 			size_t allocationSize = Megabytes(2);
-			if(!SystemMemoryCanAllocate(MAIN_MEMORY, allocationSize)) {
-				SystemMemoryReset(MAIN_MEMORY);
+			if(!SystemMemoryCanAllocate(PLACEHOLDER_PROGRAM_MEMORY.persistentMemory, allocationSize)) {
+				SystemMemoryReset(PLACEHOLDER_PROGRAM_MEMORY.persistentMemory);
 			} else {
-				uint8* mainMemory = (uint8*)SystemMemoryAllocate(MAIN_MEMORY, allocationSize);
+				uint8* mainMemory = (uint8*)SystemMemoryAllocate(PLACEHOLDER_PROGRAM_MEMORY.persistentMemory, allocationSize);
 				*mainMemory = 0xDE;
-				SystemMemoryDebugTouch(MAIN_MEMORY, mainMemory);
+				SystemMemoryDebugTouch(PLACEHOLDER_PROGRAM_MEMORY.persistentMemory, mainMemory);
 			}
 
-			if(!SystemMemoryCanAllocate(TRANSIENT_MEMORY, 2 * allocationSize)) {
-				SystemMemoryReset(TRANSIENT_MEMORY);
+			if(!SystemMemoryCanAllocate(PLACEHOLDER_PROGRAM_MEMORY.transientMemory, 2 * allocationSize)) {
+				SystemMemoryReset(PLACEHOLDER_PROGRAM_MEMORY.transientMemory);
 			} else {
 
-				uint8* transientMemory = (uint8*)SystemMemoryAllocate(TRANSIENT_MEMORY, 2 * allocationSize);
+				uint8* transientMemory = (uint8*)SystemMemoryAllocate(PLACEHOLDER_PROGRAM_MEMORY.transientMemory, 2 * allocationSize);
 				*transientMemory = 0xAB;
-				SystemMemoryDebugTouch(TRANSIENT_MEMORY, transientMemory);
+				SystemMemoryDebugTouch(PLACEHOLDER_PROGRAM_MEMORY.transientMemory, transientMemory);
 			}
 
 			GamePadPollControllers(PLACEHOLDER_DEMO_APP.offsetX, PLACEHOLDER_DEMO_APP.offsetY);

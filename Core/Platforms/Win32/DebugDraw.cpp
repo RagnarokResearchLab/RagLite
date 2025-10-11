@@ -509,20 +509,6 @@ INTERNAL void DebugDrawMemoryArenaHeatmap(HDC& displayDeviceContext, memory_aren
 	constexpr size_t FORMAT_BUFFER_SIZE = 256;
 	char formatBuffer[FORMAT_BUFFER_SIZE];
 
-	StringCbPrintfA(formatBuffer, FORMAT_BUFFER_SIZE, "Name: %s", arena.displayName.buffer);
-	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, formatBuffer, lstrlenA(formatBuffer));
-	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
-
-	String lifetime = SystemMemoryDebugLifetime(arena);
-	StringCbPrintfA(formatBuffer, FORMAT_BUFFER_SIZE, "Lifetime: %s", lifetime.buffer);
-	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, formatBuffer, lstrlenA(formatBuffer));
-	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
-
-	String usage = SystemMemoryDebugUsage(arena);
-	StringCbPrintfA(formatBuffer, FORMAT_BUFFER_SIZE, "Usage: %s", usage.buffer);
-	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, formatBuffer, lstrlenA(formatBuffer));
-	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
-
 	StringCbPrintfA(formatBuffer, FORMAT_BUFFER_SIZE, "Base: 0x%p", arena.baseAddress);
 	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, formatBuffer, lstrlenA(formatBuffer));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
@@ -646,12 +632,12 @@ INTERNAL void DebugDrawMemoryUsageOverlay(HDC& displayDeviceContext) {
 	startX += DEBUG_OVERLAY_PADDING_SIZE;
 
 	heatmapWidth = MAIN_MEMORY_PANELS * heatmapWidth + (MAIN_MEMORY_PANELS - 1) * DEBUG_OVERLAY_MARGIN_SIZE;
-	DebugDrawMemoryArenaHeatmap(displayDeviceContext, MAIN_MEMORY, startX, lineY, heatmapWidth, heatmapHeight);
+	DebugDrawMemoryArenaHeatmap(displayDeviceContext, PLACEHOLDER_PROGRAM_MEMORY.persistentMemory, startX, lineY, heatmapWidth, heatmapHeight);
 	startX += heatmapWidth;
 	startX += DEBUG_OVERLAY_MARGIN_SIZE;
 
 	heatmapWidth = TRANSIENT_MEMORY_PANELS * heatmapWidth + (TRANSIENT_MEMORY_PANELS - 1) * DEBUG_OVERLAY_MARGIN_SIZE;
-	DebugDrawMemoryArenaHeatmap(displayDeviceContext, TRANSIENT_MEMORY, startX, lineY, heatmapWidth, heatmapHeight);
+	DebugDrawMemoryArenaHeatmap(displayDeviceContext, PLACEHOLDER_PROGRAM_MEMORY.transientMemory, startX, lineY, heatmapWidth, heatmapHeight);
 	startX += heatmapWidth;
 	startX += DEBUG_OVERLAY_PADDING_SIZE;
 
