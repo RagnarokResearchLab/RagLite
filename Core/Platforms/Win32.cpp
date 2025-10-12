@@ -83,33 +83,6 @@ INTERNAL const char* ArchitectureToDebugName(WORD wProcessorArchitecture) {
 
 #include "Win32/DebugDraw.cpp"
 
-INTERNAL void PlatformUpdateWorldState(world_state_t& worldState) {
-	worldState.offsetX++;
-	worldState.offsetY++;
-	worldState.offsetY++;
-
-	size_t allocationSize = Megabytes(2);
-	if(!SystemMemoryCanAllocate(PLACEHOLDER_PROGRAM_MEMORY.persistentMemory, allocationSize)) {
-		SystemMemoryReset(PLACEHOLDER_PROGRAM_MEMORY.persistentMemory);
-	} else {
-		uint8* mainMemory = (uint8*)SystemMemoryAllocate(PLACEHOLDER_PROGRAM_MEMORY.persistentMemory, allocationSize);
-		*mainMemory = 0xDE;
-		SystemMemoryDebugTouch(PLACEHOLDER_PROGRAM_MEMORY.persistentMemory, mainMemory);
-	}
-
-	if(!SystemMemoryCanAllocate(PLACEHOLDER_PROGRAM_MEMORY.transientMemory, 2 * allocationSize)) {
-		SystemMemoryReset(PLACEHOLDER_PROGRAM_MEMORY.transientMemory);
-	} else {
-
-		uint8* transientMemory = (uint8*)SystemMemoryAllocate(PLACEHOLDER_PROGRAM_MEMORY.transientMemory, 2 * allocationSize);
-		*transientMemory = 0xAB;
-		SystemMemoryDebugTouch(PLACEHOLDER_PROGRAM_MEMORY.transientMemory, transientMemory);
-	}
-
-	GamePadPollControllers(worldState.offsetX, worldState.offsetY);
-	DebugDrawUpdateBackgroundPattern();
-}
-
 INTERNAL void SurfacePresentFrameBuffer(gdi_surface_t& surface, gdi_offscreen_buffer_t& backBuffer) {
 	if(!surface.displayDeviceContext || !surface.offscreenDeviceContext || !backBuffer.handle) {
 		// Minimized or not yet initialized
@@ -144,7 +117,8 @@ INTERNAL void MainWindowRedrawEverything(HWND& window) {
 	}
 
 	hardware_tick_t before = PerformanceMetricsNow();
-	DebugDrawIntoFrameBuffer(GDI_BACKBUFFER, PLACEHOLDER_WORLD_STATE.offsetX, PLACEHOLDER_WORLD_STATE.offsetY);
+	// TODO move to program code (cannot access buffer/clock directly, though)
+	// DebugDrawIntoFrameBuffer(GDI_BACKBUFFER, 0, 0);
 	CPU_PERFORMANCE_METRICS.worldRenderTime = PerformanceMetricsGetTimeSince(before);
 
 	before = PerformanceMetricsNow();
@@ -219,7 +193,7 @@ LRESULT CALLBACK MainWindowProcessIncomingMessage(HWND window, UINT message, WPA
 		case WM_SIZE: {
 			MainWindowCreateFrameBuffers(window, GDI_SURFACE, GDI_BACKBUFFER);
 			// NOTE: Updating again allows the simulation to appear more fluid (evaluate UX later)
-			DebugDrawUpdateBackgroundPattern();
+			// DebugDrawUpdateBackgroundPattern();
 			MainWindowRedrawEverything(window);
 		} break;
 
@@ -347,6 +321,8 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE, LPSTR,
 	PLACEHOLDER_MEMORY_CONFIGURATION.persistentMemoryOptions.reservedSize = RAGLITE_PERSISTENT_MEMORY;
 	PLACEHOLDER_MEMORY_CONFIGURATION.transientMemoryOptions.reservedSize = RAGLITE_TRANSIENT_MEMORY;
 	PlatformInitializeProgramMemory(PLACEHOLDER_PROGRAM_MEMORY, PLACEHOLDER_MEMORY_CONFIGURATION);
+	// PlatformLoadModule("RagLite2Dbg.dll");
+	GameCode game = LoadGameCode("RagLite2Dbg.dll", "RagLite2Dbg.pdb"); // TBD Dbg or release...
 
 	WNDCLASSEX windowClass = {};
 	// TODO Is this really a good idea? Beware the CS_OWNDC footguns...
@@ -409,7 +385,42 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE, LPSTR,
 
 		hardware_tick_t before = PerformanceMetricsNow();
 		if(!APPLICATION_SHOULD_PAUSE) {
-			PlatformUpdateWorldState(PLACEHOLDER_WORLD_STATE);
+			// GamePadPollControllers(worldState.offsetX, worldState.offsetY); // TODO pass to program
+
+			// TODO Add to debug UI (?)
+			FILETIME new_time = GetLastWriteTime("RagLite2Dbg.dll"); // TBD Dbg or release
+			if(CompareFileTime(&new_time, &game.last_write_time) != 0) {
+				// DLL changed
+				UnloadGameCode(&game);
+				game = LoadGameCode("RagLite2Dbg.dll", "RagLite2Dbg.pdb");
+			}
+
+			program_input_t inputs = {
+				.clock = PerformanceMetricsNow(),
+				.uptime = PerformanceMetricsGetTimeSince(applicationStartTime),
+			};
+			program_output_t outputs = {
+				.canvas = {
+					.width = GDI_BACKBUFFER.width,
+					.height = GDI_BACKBUFFER.height,
+					.bytesPerPixel = GDI_BACKBUFFER.bytesPerPixel,
+					.stride = GDI_BACKBUFFER.stride,
+					.pixelBuffer = GDI_BACKBUFFER.pixelBuffer,
+				}
+			};
+
+			ASSUME(game.SimulateNextFrame, "Failed to load program module (cannot advance the simulation)");
+			if(game.SimulateNextFrame) game.SimulateNextFrame(&PLACEHOLDER_PROGRAM_MEMORY, &inputs, &outputs);
+
+			size_t allocationSize = Megabytes(2);
+			if(!SystemMemoryCanAllocate(PLACEHOLDER_PROGRAM_MEMORY.transientMemory, 2 * allocationSize)) {
+				SystemMemoryReset(PLACEHOLDER_PROGRAM_MEMORY.transientMemory);
+			} else {
+
+				uint8* transientMemory = (uint8*)SystemMemoryAllocate(PLACEHOLDER_PROGRAM_MEMORY.transientMemory, 2 * allocationSize);
+				*transientMemory = 0xAB;
+				SystemMemoryDebugTouch(PLACEHOLDER_PROGRAM_MEMORY.transientMemory, transientMemory);
+			}
 		}
 		CPU_PERFORMANCE_METRICS.worldUpdateTime = PerformanceMetricsGetTimeSince(before);
 

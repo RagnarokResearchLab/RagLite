@@ -7,6 +7,9 @@ set CPP_MAIN=Core\RagLite2.cpp
 set DLL_MAIN=Core\RagLite2.cpp
 set DEBUG_DLL=RagLite2Dbg.dll
 set RELEASE_DLL=RagLite2.dll
+set DLL_FLAGS=/LD /DRAGLITE_HOT_RELOAD
+
+:: TODO: Skip .lib generation?
 
 set RUNTIME_LIBS=gdi32.lib shlwapi.lib user32.lib xinput.lib winmm.lib
 
@@ -43,7 +46,7 @@ set SHARED_COMPILE_FLAGS=%SHARED_COMPILE_FLAGS% /options:strict
 :: /W4					Enable informational warnings (levels 0 through 4)
 set SHARED_COMPILE_FLAGS=%SHARED_COMPILE_FLAGS% /W4
 :: 						...except useless ones
-set SHARED_COMPILE_FLAGS=%SHARED_COMPILE_FLAGS% /wd4189 /wd4100
+set SHARED_COMPILE_FLAGS=%SHARED_COMPILE_FLAGS% /wd4189 /wd4100 /wd4505
 :: /WX					Treat all warnings as errors
 set SHARED_COMPILE_FLAGS=%SHARED_COMPILE_FLAGS% /WX
 :: /Zc:strictStrings	Require const qualifier for pointers initialized via string literals
@@ -86,7 +89,7 @@ set DEBUG_COMPILE_FLAGS=%DEBUG_COMPILE_FLAGS% %SHARED_COMPILE_FLAGS%
 set DEBUG_LINK_FLAGS=%DEBUG_LINK_FLAGS% %SHARED_LINK_FLAGS%
 
 cl %DEBUG_COMPILE_FLAGS% %CPP_MAIN% %RUNTIME_LIBS% /link %DEBUG_LINK_FLAGS% %ICON_RES% /out:%DEBUG_EXE% || exit /b
-cl %DEBUG_COMPILE_FLAGS% %DLL_MAIN% %RUNTIME_LIBS% /DLL /link %DEBUG_LINK_FLAGS% %ICON_RES% /out:%DEBUG_DLL% || exit /b
+cl %DEBUG_COMPILE_FLAGS% %DLL_MAIN% %RUNTIME_LIBS% %DLL_FLAGS% /link %DEBUG_LINK_FLAGS% /out:%DEBUG_DLL% || exit /b
 
 :::::: Build release binary
 set RELEASE_COMPILE_FLAGS=
@@ -120,11 +123,12 @@ set RELEASE_COMPILE_FLAGS=%RELEASE_COMPILE_FLAGS% %SHARED_COMPILE_FLAGS%
 set RELEASE_LINK_FLAGS=%RELEASE_LINK_FLAGS% %SHARED_LINK_FLAGS%
 
 cl %RELEASE_COMPILE_FLAGS% %CPP_MAIN% %RUNTIME_LIBS% /link %RELEASE_LINK_FLAGS% %ICON_RES% /out:%RELEASE_EXE% || exit /b
-cl %RELEASE_COMPILE_FLAGS% %DLL_MAIN% %RUNTIME_LIBS% /DLL /link %RELEASE_LINK_FLAGS% %ICON_RES% /out:%RELEASE_DLL% || exit /b
+cl %RELEASE_COMPILE_FLAGS% %DLL_MAIN% %RUNTIME_LIBS% %DLL_FLAGS% /link %RELEASE_LINK_FLAGS% /out:%RELEASE_DLL% || exit /b
 
 :: Cleanup
 move RagLite*.exe %DEFAULT_BUILD_DIR% 2> NUL
 move RagLite*.dll %DEFAULT_BUILD_DIR% 2> NUL
 move *.idb %DEFAULT_BUILD_DIR% 2> NUL
+move *.lib %DEFAULT_BUILD_DIR% 2> NUL
 move *.obj %DEFAULT_BUILD_DIR% 2> NUL
 move *.pdb %DEFAULT_BUILD_DIR% 2> NUL

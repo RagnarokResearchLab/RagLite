@@ -25,6 +25,7 @@
 #ifdef _MSC_VER
 #undef RAGLITE_COMPILER_MSVC
 #define RAGLITE_COMPILER_MSVC 1
+#define EXPORT extern "C" __declspec(dllexport)
 #else
 #define RAGLITE_UNSUPPORTED_COMPILER
 #endif
