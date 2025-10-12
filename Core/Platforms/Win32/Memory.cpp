@@ -1,9 +1,6 @@
 constexpr size_t HIGHEST_VIRTUAL_ADDRESS = Terabytes(1);
 constexpr size_t UNSPECIFIED_VIRTUAL_ADDRESS = NULL; // NOTE: OS will determine where to allocate the region
 
-GLOBAL program_memory_t PLACEHOLDER_PROGRAM_MEMORY = {};
-GLOBAL memory_config_t PLACEHOLDER_MEMORY_CONFIGURATION = {};
-
 INTERNAL inline allocation_options_t PlatformDefaultAllocationOptions() {
 	memory_allocation_options options = {
 		.allocationType = MEM_RESERVE | MEM_COMMIT,

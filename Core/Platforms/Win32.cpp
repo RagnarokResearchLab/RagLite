@@ -2,16 +2,6 @@
 
 #define TODO(msg) OutputDebugStringA(msg);
 
-typedef struct volatile_world_state {
-	int32 offsetX;
-	int32 offsetY;
-} world_state_t;
-
-GLOBAL world_state_t PLACEHOLDER_WORLD_STATE = {
-	.offsetX = 0,
-	.offsetY = 0,
-};
-
 constexpr size_t MAX_ERROR_MSG_SIZE = 512;
 GLOBAL TCHAR SYSTEM_ERROR_MESSAGE[MAX_ERROR_MSG_SIZE];
 
@@ -84,7 +74,6 @@ INTERNAL const char* ArchitectureToDebugName(WORD wProcessorArchitecture) {
 }
 
 #include "Win32/DebugDraw.hpp"
-#include "Win32/Memory.hpp"
 
 #include "Win32/GamePad.cpp"
 #include "Win32/Keyboard.cpp"
