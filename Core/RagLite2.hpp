@@ -49,3 +49,11 @@ static_assert(PLATFORM_POINTER_SIZE == Bits(64), "Only 64-bit platforms are curr
 #if defined(__BYTE_ORDER__) && __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
 #error "Only Little-Endian platforms are currently supported"
 #endif
+
+#ifndef RAGLITE_PERSISTENT_MEMORY
+#define RAGLITE_PERSISTENT_MEMORY Megabytes(85)
+#endif
+
+#ifndef RAGLITE_TRANSIENT_MEMORY
+#define RAGLITE_TRANSIENT_MEMORY Megabytes(1596) + Kilobytes(896)
+#endif
