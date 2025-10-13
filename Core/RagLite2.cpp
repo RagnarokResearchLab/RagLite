@@ -217,6 +217,17 @@ EXPORT void SimulateNextFrame(program_memory_t* memory, program_input_t* inputs,
 	DebugDrawUpdateBackgroundPattern(worldState, inputs);
 	DebugDrawIntoFrameBuffer(worldState, inputs, outputs);
 
+	// NOTE: Access to the memory arena APIs should be platform-agnostic (no OS interaction required, just pointer math)
+	memory->persistentMemory.used += sizeof(worldState); // Avoid overwriting the actual program state (temporary hack)
+	size_t allocationSize = Megabytes(2);
+	if(!SystemMemoryCanAllocate(memory->persistentMemory, 2 * allocationSize)) {
+		SystemMemoryReset(memory->persistentMemory);
+	} else {
+		uint8* address = (uint8*)SystemMemoryAllocate(memory->persistentMemory, 2 * allocationSize);
+		*address = 0xAB;
+		SystemMemoryDebugTouch(memory->persistentMemory, address);
+	}
+
 	// NYI: Push draw commands to the platform's render queue
 }
 #else
