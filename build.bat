@@ -7,7 +7,7 @@ set CPP_MAIN=Core\RagLite2.cpp
 set DLL_MAIN=Core\RagLite2.cpp
 set DEBUG_DLL=RagLite2Dbg.dll
 set RELEASE_DLL=RagLite2.dll
-set DLL_FLAGS=/LD /DRAGLITE_HOT_RELOAD
+set DLL_FLAGS=/LD /DRAGLITE_PLATFORM_NONE
 
 :: TODO: Skip .lib generation?
 

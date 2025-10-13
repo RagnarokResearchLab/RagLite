@@ -16,7 +16,7 @@
 GLOBAL program_memory_t PLACEHOLDER_PROGRAM_MEMORY = {};
 GLOBAL memory_config_t PLACEHOLDER_MEMORY_CONFIGURATION = {};
 
-#ifdef RAGLITE_HOT_RELOAD
+#ifdef RAGLITE_PLATFORM_NONE
 
 // TODO Eliminate this
 #include <math.h>

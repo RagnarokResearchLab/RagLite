@@ -4,6 +4,9 @@
 #define RAGLITE_COMMIT_HASH "N/A"
 #endif
 
+#ifndef RAGLITE_PLATFORM_NONE
+// NOTE: Disabling all platform APIs for program DLLs for now to avoid accidental callbacks into the OS
+
 #ifdef _WIN32
 #define RAGLITE_PLATFORM_WINDOWS
 #elifdef __APPLE__
@@ -16,6 +19,8 @@
 
 #ifdef RAGLITE_UNSUPPORTED_PLATFORM
 #error "Unsupported Platform: OS-specific code paths have yet to be ported"
+#endif
+
 #endif
 
 #define RAGLITE_COMPILER_GCC 0
