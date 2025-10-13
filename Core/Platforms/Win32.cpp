@@ -2,16 +2,6 @@
 
 #define TODO(msg) OutputDebugStringA(msg);
 
-// TODO: Replace these with the actual game/application state later
-typedef struct volatile_game_state {
-	int32 offsetX;
-	int32 offsetY;
-} game_state_t;
-GLOBAL game_state_t PLACEHOLDER_DEMO_APP = {
-	.offsetX = 0,
-	.offsetY = 0,
-};
-
 constexpr size_t MAX_ERROR_MSG_SIZE = 512;
 GLOBAL TCHAR SYSTEM_ERROR_MESSAGE[MAX_ERROR_MSG_SIZE];
 
@@ -84,7 +74,6 @@ INTERNAL const char* ArchitectureToDebugName(WORD wProcessorArchitecture) {
 }
 
 #include "Win32/DebugDraw.hpp"
-#include "Win32/Memory.hpp"
 
 #include "Win32/GamePad.cpp"
 #include "Win32/Keyboard.cpp"
@@ -128,7 +117,8 @@ INTERNAL void MainWindowRedrawEverything(HWND& window) {
 	}
 
 	hardware_tick_t before = PerformanceMetricsNow();
-	DebugDrawIntoFrameBuffer(GDI_BACKBUFFER, PLACEHOLDER_DEMO_APP.offsetX, PLACEHOLDER_DEMO_APP.offsetY);
+	// TODO move to program code (cannot access buffer/clock directly, though)
+	// DebugDrawIntoFrameBuffer(GDI_BACKBUFFER, 0, 0);
 	CPU_PERFORMANCE_METRICS.worldRenderTime = PerformanceMetricsGetTimeSince(before);
 
 	before = PerformanceMetricsNow();
@@ -203,7 +193,7 @@ LRESULT CALLBACK MainWindowProcessIncomingMessage(HWND window, UINT message, WPA
 		case WM_SIZE: {
 			MainWindowCreateFrameBuffers(window, GDI_SURFACE, GDI_BACKBUFFER);
 			// NOTE: Updating again allows the simulation to appear more fluid (evaluate UX later)
-			DebugDrawUpdateBackgroundPattern();
+			// DebugDrawUpdateBackgroundPattern();
 			MainWindowRedrawEverything(window);
 		} break;
 
@@ -323,10 +313,16 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE, LPSTR,
 	MONOTONIC_CLOCK_SPEED = ticksPerSecond.QuadPart;
 	hardware_tick_t lastUpdateTime = PerformanceMetricsNow();
 
-	// TODO Override via CLI arguments or something? (Can also compute based on available RAM)
-	constexpr size_t MAIN_MEMORY_SIZE = Megabytes(85);
-	constexpr size_t TRANSIENT_MEMORY_SIZE = Megabytes(1596) + Kilobytes(896);
-	SystemMemoryInitializeArenas(MAIN_MEMORY_SIZE, TRANSIENT_MEMORY_SIZE);
+	PLACEHOLDER_MEMORY_CONFIGURATION.persistentMemoryOptions = PlatformDefaultAllocationOptions();
+	PLACEHOLDER_MEMORY_CONFIGURATION.transientMemoryOptions = PlatformDefaultAllocationOptions();
+#ifdef RAGLITE_PREDICTABLE_MEMORY
+	PLACEHOLDER_MEMORY_CONFIGURATION.persistentMemoryOptions.startingAddress = (LPVOID)HIGHEST_VIRTUAL_ADDRESS;
+#endif
+	PLACEHOLDER_MEMORY_CONFIGURATION.persistentMemoryOptions.reservedSize = RAGLITE_PERSISTENT_MEMORY;
+	PLACEHOLDER_MEMORY_CONFIGURATION.transientMemoryOptions.reservedSize = RAGLITE_TRANSIENT_MEMORY;
+	PlatformInitializeProgramMemory(PLACEHOLDER_PROGRAM_MEMORY, PLACEHOLDER_MEMORY_CONFIGURATION);
+	// PlatformLoadModule("RagLite2Dbg.dll");
+	GameCode game = LoadGameCode("RagLite2Dbg.dll", "RagLite2Dbg.pdb"); // TBD Dbg or release...
 
 	WNDCLASSEX windowClass = {};
 	// TODO Is this really a good idea? Beware the CS_OWNDC footguns...
@@ -389,32 +385,42 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE, LPSTR,
 
 		hardware_tick_t before = PerformanceMetricsNow();
 		if(!APPLICATION_SHOULD_PAUSE) {
+			// GamePadPollControllers(worldState.offsetX, worldState.offsetY); // TODO pass to program
 
-			// NOTE: Application/game state updates should go here (later)
-			PLACEHOLDER_DEMO_APP.offsetX++;
-			PLACEHOLDER_DEMO_APP.offsetY++;
-			PLACEHOLDER_DEMO_APP.offsetY++;
+			// TODO Add to debug UI (?)
+			FILETIME new_time = GetLastWriteTime("RagLite2Dbg.dll"); // TBD Dbg or release
+			if(CompareFileTime(&new_time, &game.last_write_time) != 0) {
+				// DLL changed
+				UnloadGameCode(&game);
+				game = LoadGameCode("RagLite2Dbg.dll", "RagLite2Dbg.pdb");
+			}
+
+			program_input_t inputs = {
+				.clock = PerformanceMetricsNow(),
+				.uptime = PerformanceMetricsGetTimeSince(applicationStartTime),
+			};
+			program_output_t outputs = {
+				.canvas = {
+					.width = GDI_BACKBUFFER.width,
+					.height = GDI_BACKBUFFER.height,
+					.bytesPerPixel = GDI_BACKBUFFER.bytesPerPixel,
+					.stride = GDI_BACKBUFFER.stride,
+					.pixelBuffer = GDI_BACKBUFFER.pixelBuffer,
+				}
+			};
+
+			ASSUME(game.SimulateNextFrame, "Failed to load program module (cannot advance the simulation)");
+			if(game.SimulateNextFrame) game.SimulateNextFrame(&PLACEHOLDER_PROGRAM_MEMORY, &inputs, &outputs);
 
 			size_t allocationSize = Megabytes(2);
-			if(!SystemMemoryCanAllocate(MAIN_MEMORY, allocationSize)) {
-				SystemMemoryReset(MAIN_MEMORY);
-			} else {
-				uint8* mainMemory = (uint8*)SystemMemoryAllocate(MAIN_MEMORY, allocationSize);
-				*mainMemory = 0xDE;
-				SystemMemoryDebugTouch(MAIN_MEMORY, mainMemory);
-			}
-
-			if(!SystemMemoryCanAllocate(TRANSIENT_MEMORY, 2 * allocationSize)) {
-				SystemMemoryReset(TRANSIENT_MEMORY);
+			if(!SystemMemoryCanAllocate(PLACEHOLDER_PROGRAM_MEMORY.transientMemory, 2 * allocationSize)) {
+				SystemMemoryReset(PLACEHOLDER_PROGRAM_MEMORY.transientMemory);
 			} else {
 
-				uint8* transientMemory = (uint8*)SystemMemoryAllocate(TRANSIENT_MEMORY, 2 * allocationSize);
+				uint8* transientMemory = (uint8*)SystemMemoryAllocate(PLACEHOLDER_PROGRAM_MEMORY.transientMemory, 2 * allocationSize);
 				*transientMemory = 0xAB;
-				SystemMemoryDebugTouch(TRANSIENT_MEMORY, transientMemory);
+				SystemMemoryDebugTouch(PLACEHOLDER_PROGRAM_MEMORY.transientMemory, transientMemory);
 			}
-
-			GamePadPollControllers(PLACEHOLDER_DEMO_APP.offsetX, PLACEHOLDER_DEMO_APP.offsetY);
-			DebugDrawUpdateBackgroundPattern();
 		}
 		CPU_PERFORMANCE_METRICS.worldUpdateTime = PerformanceMetricsGetTimeSince(before);
 

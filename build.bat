@@ -1,8 +1,16 @@
 @echo off
 
+set DEBUG_EXE=RagLiteWin32Dbg.exe
+set RELEASE_EXE=RagLiteWin32.exe
+
 set CPP_MAIN=Core\RagLite2.cpp
-set DEBUG_EXE=RagLite2Dbg.exe
-set RELEASE_EXE=RagLite2.exe
+set DLL_MAIN=Core\RagLite2.cpp
+set DEBUG_DLL=RagLite2Dbg.dll
+set RELEASE_DLL=RagLite2.dll
+set DLL_FLAGS=/LD /DRAGLITE_PLATFORM_NONE
+
+:: TODO: Skip .lib generation?
+
 set RUNTIME_LIBS=gdi32.lib shlwapi.lib user32.lib xinput.lib winmm.lib
 
 for /f "delims=" %%i in ('call git describe --always --dirty') do set GIT_COMMIT_HASH=\"%%i\"
@@ -38,7 +46,7 @@ set SHARED_COMPILE_FLAGS=%SHARED_COMPILE_FLAGS% /options:strict
 :: /W4					Enable informational warnings (levels 0 through 4)
 set SHARED_COMPILE_FLAGS=%SHARED_COMPILE_FLAGS% /W4
 :: 						...except useless ones
-set SHARED_COMPILE_FLAGS=%SHARED_COMPILE_FLAGS% /wd4189 /wd4100
+set SHARED_COMPILE_FLAGS=%SHARED_COMPILE_FLAGS% /wd4189 /wd4100 /wd4505
 :: /WX					Treat all warnings as errors
 set SHARED_COMPILE_FLAGS=%SHARED_COMPILE_FLAGS% /WX
 :: /Zc:strictStrings	Require const qualifier for pointers initialized via string literals
@@ -80,13 +88,8 @@ set DEBUG_LINK_FLAGS=%DEBUG_LINK_FLAGS% /DEBUG
 set DEBUG_COMPILE_FLAGS=%DEBUG_COMPILE_FLAGS% %SHARED_COMPILE_FLAGS%
 set DEBUG_LINK_FLAGS=%DEBUG_LINK_FLAGS% %SHARED_LINK_FLAGS%
 
-echo The Ancient One speaketh:
-echo 	Let us now turn %CPP_MAIN% into %DEBUG_EXE%!
-echo 	Harken, mortal, as I prepare thy unholy incantation...
-echo 	cl%DEBUG_COMPILE_FLAGS% %CPP_MAIN% %RUNTIME_LIBS% /link %DEBUG_LINK_FLAGS% %ICON_RES% /out:%DEBUG_EXE%
-echo --------------------------------------------------------------------------------------------------------
 cl %DEBUG_COMPILE_FLAGS% %CPP_MAIN% %RUNTIME_LIBS% /link %DEBUG_LINK_FLAGS% %ICON_RES% /out:%DEBUG_EXE% || exit /b
-echo --------------------------------------------------------------------------------------------------------
+cl %DEBUG_COMPILE_FLAGS% %DLL_MAIN% %RUNTIME_LIBS% %DLL_FLAGS% /link %DEBUG_LINK_FLAGS% /out:%DEBUG_DLL% || exit /b
 
 :::::: Build release binary
 set RELEASE_COMPILE_FLAGS=
@@ -119,16 +122,13 @@ set RELEASE_LINK_FLAGS=%RELEASE_LINK_FLAGS% /OPT:ICF
 set RELEASE_COMPILE_FLAGS=%RELEASE_COMPILE_FLAGS% %SHARED_COMPILE_FLAGS%
 set RELEASE_LINK_FLAGS=%RELEASE_LINK_FLAGS% %SHARED_LINK_FLAGS%
 
-echo The Ancient One speaketh:
-echo 	Let us now turn %CPP_MAIN% into %RELEASE_EXE%!
-echo 	Harken, mortal, as I prepare thy unholy incantation...
-echo 	cl%RELEASE_COMPILE_FLAGS% %CPP_MAIN% %RUNTIME_LIBS% /link %RELEASE_LINK_FLAGS% %ICON_RES% /out:%RELEASE_EXE%
-echo --------------------------------------------------------------------------------------------------------
 cl %RELEASE_COMPILE_FLAGS% %CPP_MAIN% %RUNTIME_LIBS% /link %RELEASE_LINK_FLAGS% %ICON_RES% /out:%RELEASE_EXE% || exit /b
-echo --------------------------------------------------------------------------------------------------------
+cl %RELEASE_COMPILE_FLAGS% %DLL_MAIN% %RUNTIME_LIBS% %DLL_FLAGS% /link %RELEASE_LINK_FLAGS% /out:%RELEASE_DLL% || exit /b
 
 :: Cleanup
-move RagLite2*.exe %DEFAULT_BUILD_DIR% 2> NUL
+move RagLite*.exe %DEFAULT_BUILD_DIR% 2> NUL
+move RagLite*.dll %DEFAULT_BUILD_DIR% 2> NUL
 move *.idb %DEFAULT_BUILD_DIR% 2> NUL
+move *.lib %DEFAULT_BUILD_DIR% 2> NUL
 move *.obj %DEFAULT_BUILD_DIR% 2> NUL
 move *.pdb %DEFAULT_BUILD_DIR% 2> NUL

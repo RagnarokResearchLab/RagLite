@@ -509,20 +509,6 @@ INTERNAL void DebugDrawMemoryArenaHeatmap(HDC& displayDeviceContext, memory_aren
 	constexpr size_t FORMAT_BUFFER_SIZE = 256;
 	char formatBuffer[FORMAT_BUFFER_SIZE];
 
-	StringCbPrintfA(formatBuffer, FORMAT_BUFFER_SIZE, "Name: %s", arena.displayName.buffer);
-	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, formatBuffer, lstrlenA(formatBuffer));
-	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
-
-	String lifetime = SystemMemoryDebugLifetime(arena);
-	StringCbPrintfA(formatBuffer, FORMAT_BUFFER_SIZE, "Lifetime: %s", lifetime.buffer);
-	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, formatBuffer, lstrlenA(formatBuffer));
-	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
-
-	String usage = SystemMemoryDebugUsage(arena);
-	StringCbPrintfA(formatBuffer, FORMAT_BUFFER_SIZE, "Usage: %s", usage.buffer);
-	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, formatBuffer, lstrlenA(formatBuffer));
-	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
-
 	StringCbPrintfA(formatBuffer, FORMAT_BUFFER_SIZE, "Base: 0x%p", arena.baseAddress);
 	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, formatBuffer, lstrlenA(formatBuffer));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
@@ -646,12 +632,12 @@ INTERNAL void DebugDrawMemoryUsageOverlay(HDC& displayDeviceContext) {
 	startX += DEBUG_OVERLAY_PADDING_SIZE;
 
 	heatmapWidth = MAIN_MEMORY_PANELS * heatmapWidth + (MAIN_MEMORY_PANELS - 1) * DEBUG_OVERLAY_MARGIN_SIZE;
-	DebugDrawMemoryArenaHeatmap(displayDeviceContext, MAIN_MEMORY, startX, lineY, heatmapWidth, heatmapHeight);
+	DebugDrawMemoryArenaHeatmap(displayDeviceContext, PLACEHOLDER_PROGRAM_MEMORY.persistentMemory, startX, lineY, heatmapWidth, heatmapHeight);
 	startX += heatmapWidth;
 	startX += DEBUG_OVERLAY_MARGIN_SIZE;
 
 	heatmapWidth = TRANSIENT_MEMORY_PANELS * heatmapWidth + (TRANSIENT_MEMORY_PANELS - 1) * DEBUG_OVERLAY_MARGIN_SIZE;
-	DebugDrawMemoryArenaHeatmap(displayDeviceContext, TRANSIENT_MEMORY, startX, lineY, heatmapWidth, heatmapHeight);
+	DebugDrawMemoryArenaHeatmap(displayDeviceContext, PLACEHOLDER_PROGRAM_MEMORY.transientMemory, startX, lineY, heatmapWidth, heatmapHeight);
 	startX += heatmapWidth;
 	startX += DEBUG_OVERLAY_PADDING_SIZE;
 
@@ -1017,171 +1003,4 @@ INTERNAL void DebugDrawKeyboardOverlay(HDC& displayDeviceContext) {
 	}
 
 	SelectObject(displayDeviceContext, oldFont);
-}
-
-INTERNAL void DebugDrawUpdateBackgroundPattern() {
-	DWORD ticks = GetTickCount();
-	seconds elapsed = (seconds)ticks / MILLISECONDS_PER_SECOND;
-	seconds updateInterval = 5.0f;
-
-	gdi_debug_pattern_t newPattern = (gdi_debug_pattern_t)(elapsed / updateInterval);
-	GDI_DEBUG_PATTERN = (gdi_debug_pattern_t)(newPattern % PATTERN_COUNT);
-}
-
-INTERNAL void DebugDrawUseMarchingGradientPattern(gdi_offscreen_buffer_t& bitmap,
-	int offsetBlue,
-	int offsetGreen) {
-	if(!bitmap.pixelBuffer)
-		return;
-
-	uint8* row = (uint8*)bitmap.pixelBuffer;
-	for(int y = 0; y < bitmap.height; ++y) {
-		uint32* pixel = (uint32*)row;
-		for(int x = 0; x < bitmap.width; ++x) {
-			uint8 blue = (x + offsetBlue) & 0xFF;
-			uint8 green = (y + offsetGreen) & 0xFF;
-
-			*pixel++ = ((green << 8) | blue);
-		}
-
-		row += bitmap.stride;
-	}
-}
-
-INTERNAL void DebugDrawUseRipplingSpiralPattern(gdi_offscreen_buffer_t& bitmap, int time,
-	int) {
-	if(!bitmap.pixelBuffer)
-		return;
-
-	uint8* row = (uint8*)bitmap.pixelBuffer;
-
-	for(int y = 0; y < bitmap.height; ++y) {
-		uint32* pixel = (uint32*)row;
-		for(int x = 0; x < bitmap.width; ++x) {
-
-			int centerX = bitmap.width / 2;
-			int centerY = bitmap.height / 2;
-			float dx = (float)(x - centerX);
-			float dy = (float)(y - centerY);
-			float dist = sqrtf(dx * dx + dy * dy);
-			float wave = 0.5f + 0.5f * sinf(dist / 5.0f - time * 0.1f);
-
-			uint8 blue = (uint8)(wave * 255);
-			uint8 green = (uint8)((1.0f - wave) * 255);
-			uint8 red = (uint8)((0.5f + 0.5f * sinf(time * 0.05f)) * 255);
-
-			*pixel++ = (red << 16) | (green << 8) | blue;
-		}
-		row += bitmap.stride;
-	}
-}
-
-INTERNAL void DebugDrawUseCheckeredFloorPattern(gdi_offscreen_buffer_t& bitmap, int time,
-	int) {
-	if(!bitmap.pixelBuffer)
-		return;
-
-	uint8* row = (uint8*)bitmap.pixelBuffer;
-
-	float angle = time * 0.02f;
-	float cosA = cosf(angle);
-	float sinA = sinf(angle);
-
-	int cx = bitmap.width / 2;
-	int cy = bitmap.height / 2;
-
-	int squareSize = 32;
-
-	for(int y = 0; y < bitmap.height; ++y) {
-		uint32* pixel = (uint32*)row;
-		for(int x = 0; x < bitmap.width; ++x) {
-			int rx = x - cx;
-			int ry = y - cy;
-
-			float rX = rx * cosA - ry * sinA;
-			float rY = rx * sinA + ry * cosA;
-
-			int checkerX = ((int)floorf(rX / squareSize)) & 1;
-			int checkerY = ((int)floorf(rY / squareSize)) & 1;
-
-			uint8 c = (checkerX ^ checkerY) ? (PROGRESS_BAR_WIDTH - 1) : 80;
-			*pixel++ = (c << 16) | (c << 8) | c;
-		}
-		row += bitmap.stride;
-	}
-}
-
-INTERNAL void DebugDrawUseColorGradientPattern(gdi_offscreen_buffer_t& bitmap, int,
-	int) {
-	if(!bitmap.pixelBuffer)
-		return;
-
-	uint8* row = (uint8*)bitmap.pixelBuffer;
-
-	int cx = bitmap.width / 2;
-	int cy = bitmap.height / 2;
-
-	for(int y = 0; y < bitmap.height; ++y) {
-		uint32* pixel = (uint32*)row;
-		for(int x = 0; x < bitmap.width; ++x) {
-			uint8 red = (uint8)((x * 255) / bitmap.width);
-			uint8 green = (uint8)((y * 255) / bitmap.height);
-			uint8 blue = 0;
-
-			if(x == cx || y == cy) {
-				red = green = blue = 255;
-			}
-
-			*pixel++ = (red << 16) | (green << 8) | blue;
-		}
-		row += bitmap.stride;
-	}
-}
-
-INTERNAL void DebugDrawUseMovingScanlinePattern(gdi_offscreen_buffer_t& bitmap, int time,
-	int) {
-	if(!bitmap.pixelBuffer)
-		return;
-
-	uint8* row = (uint8*)bitmap.pixelBuffer;
-
-	int gridSpacing = 32;
-	int scanY = (time / 2) % bitmap.height;
-
-	for(int y = 0; y < bitmap.height; ++y) {
-		uint32* pixel = (uint32*)row;
-		for(int x = 0; x < bitmap.width; ++x) {
-			uint8 c = 180;
-
-			if(x % gridSpacing == 0 || y % gridSpacing == 0)
-				c = 100;
-
-			if(y == scanY)
-				c = 255;
-
-			*pixel++ = (c << 16) | (c << 8) | c;
-		}
-		row += bitmap.stride;
-	}
-}
-
-INTERNAL void DebugDrawIntoFrameBuffer(gdi_offscreen_buffer_t& bitmap, int paramA,
-	int paramB) {
-	switch(GDI_DEBUG_PATTERN) {
-		case PATTERN_SHIFTING_GRADIENT:
-			DebugDrawUseMarchingGradientPattern(bitmap, paramA, paramB);
-			break;
-		case PATTERN_CIRCULAR_RIPPLE:
-			DebugDrawUseRipplingSpiralPattern(bitmap, paramA, paramB);
-			break;
-		case PATTERN_CHECKERBOARD:
-			DebugDrawUseCheckeredFloorPattern(bitmap, paramA, paramB);
-			break;
-		case PATTERN_AXIS_GRADIENTS:
-			DebugDrawUseColorGradientPattern(bitmap, paramA, paramB);
-			break;
-		case PATTERN_GRID_SCANLINE:
-			DebugDrawUseMovingScanlinePattern(bitmap, paramA, paramB);
-			break;
-	}
 }

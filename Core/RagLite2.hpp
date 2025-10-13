@@ -4,6 +4,9 @@
 #define RAGLITE_COMMIT_HASH "N/A"
 #endif
 
+#ifndef RAGLITE_PLATFORM_NONE
+// NOTE: Disabling all platform APIs for program DLLs for now to avoid accidental callbacks into the OS
+
 #ifdef _WIN32
 #define RAGLITE_PLATFORM_WINDOWS
 #elifdef __APPLE__
@@ -18,6 +21,8 @@
 #error "Unsupported Platform: OS-specific code paths have yet to be ported"
 #endif
 
+#endif
+
 #define RAGLITE_COMPILER_GCC 0
 #define RAGLITE_COMPILER_LLVM 0
 #define RAGLITE_COMPILER_MSVC 0
@@ -25,6 +30,7 @@
 #ifdef _MSC_VER
 #undef RAGLITE_COMPILER_MSVC
 #define RAGLITE_COMPILER_MSVC 1
+#define EXPORT extern "C" __declspec(dllexport)
 #else
 #define RAGLITE_UNSUPPORTED_COMPILER
 #endif
@@ -48,4 +54,12 @@ static_assert(PLATFORM_POINTER_SIZE == Bits(64), "Only 64-bit platforms are curr
 
 #if defined(__BYTE_ORDER__) && __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
 #error "Only Little-Endian platforms are currently supported"
+#endif
+
+#ifndef RAGLITE_PERSISTENT_MEMORY
+#define RAGLITE_PERSISTENT_MEMORY Megabytes(85)
+#endif
+
+#ifndef RAGLITE_TRANSIENT_MEMORY
+#define RAGLITE_TRANSIENT_MEMORY Megabytes(1596) + Kilobytes(896)
 #endif
