@@ -14,7 +14,7 @@ INTERNAL inline allocation_options_t PlatformDefaultAllocationOptions() {
 	return options;
 }
 
-INTERNAL void SystemMemoryInitializeArena(memory_arena_t& arena, allocation_options_t& options) {
+INTERNAL void PlatformInitializeMemoryArena(memory_arena_t& arena, allocation_options_t& options) {
 	ZeroMemory(&arena, sizeof(arena));
 	arena.baseAddress = VirtualAlloc(options.startingAddress, options.reservedSize, options.allocationType, options.protectionConstraints);
 
@@ -50,6 +50,6 @@ INTERNAL inline void SystemMemoryDebugTouch(memory_arena_t& arena, uint8* addres
 }
 
 INTERNAL inline void PlatformInitializeProgramMemory(program_memory_t& programMemory, memory_config_t& configOptions) {
-	SystemMemoryInitializeArena(programMemory.persistentMemory, configOptions.persistentMemoryOptions);
-	SystemMemoryInitializeArena(programMemory.transientMemory, configOptions.transientMemoryOptions);
+	PlatformInitializeMemoryArena(programMemory.persistentMemory, configOptions.persistentMemoryOptions);
+	PlatformInitializeMemoryArena(programMemory.transientMemory, configOptions.transientMemoryOptions);
 }
