@@ -38,11 +38,8 @@ typedef struct volatile_world_state {
 } world_state_t;
 
 INTERNAL void DebugDrawUpdateBackgroundPattern(world_state_t* worldState, program_input_t* inputs) {
-	// DWORD ticks = GetTickCount();
-	seconds elapsed = inputs->uptime / MILLISECONDS_PER_SECOND;
-	seconds updateInterval = 5.0f;
-
-	gdi_debug_pattern_t newPattern = (gdi_debug_pattern_t)(elapsed / updateInterval);
+	milliseconds updateInterval = 5.0f * MILLISECONDS_PER_SECOND;
+	gdi_debug_pattern_t newPattern = (gdi_debug_pattern_t)(inputs->uptime / updateInterval);
 	worldState->activeDebugDrawingPattern = (gdi_debug_pattern_t)(newPattern % PATTERN_COUNT);
 }
 
@@ -94,14 +91,14 @@ INTERNAL void DebugDrawUseRipplingSpiralPattern(offscreen_buffer_t& bitmap, int 
 	}
 }
 
-INTERNAL void DebugDrawUseCheckeredFloorPattern(offscreen_buffer_t& bitmap, int time,
-	int) {
+INTERNAL void DebugDrawUseCheckeredFloorPattern(offscreen_buffer_t& bitmap, program_input_t* inputs) {
 	if(!bitmap.pixelBuffer)
 		return;
 
 	uint8* row = (uint8*)bitmap.pixelBuffer;
 
-	float angle = time * 0.02f;
+	milliseconds rotationInterval = 5.0f * MILLISECONDS_PER_SECOND;
+	float angle = inputs->uptime / rotationInterval;
 	float cosA = cosf(angle);
 	float sinA = sinf(angle);
 
@@ -183,7 +180,8 @@ INTERNAL void DebugDrawUseMovingScanlinePattern(offscreen_buffer_t& bitmap, int 
 	}
 }
 
-INTERNAL void DebugDrawIntoFrameBuffer(world_state_t* worldState, offscreen_buffer_t& bitmap) {
+INTERNAL void DebugDrawIntoFrameBuffer(world_state_t* worldState, program_input_t* inputs, program_output_t* outputs) {
+	offscreen_buffer_t bitmap = outputs->canvas;
 	int paramA = worldState->offsetX;
 	int paramB = worldState->offsetY;
 	switch(worldState->activeDebugDrawingPattern) {
@@ -194,7 +192,7 @@ INTERNAL void DebugDrawIntoFrameBuffer(world_state_t* worldState, offscreen_buff
 			DebugDrawUseRipplingSpiralPattern(bitmap, paramA, paramB);
 			break;
 		case PATTERN_CHECKERBOARD:
-			DebugDrawUseCheckeredFloorPattern(bitmap, paramA, paramB);
+			DebugDrawUseCheckeredFloorPattern(bitmap, inputs);
 			break;
 		case PATTERN_AXIS_GRADIENTS:
 			DebugDrawUseColorGradientPattern(bitmap, paramA, paramB);
@@ -217,7 +215,7 @@ EXPORT void SimulateNextFrame(program_memory_t* memory, program_input_t* inputs,
 	worldState->offsetY++;
 	// TODO update/render time needs to be fixed in the profiler?
 	DebugDrawUpdateBackgroundPattern(worldState, inputs);
-	DebugDrawIntoFrameBuffer(worldState, outputs->canvas);
+	DebugDrawIntoFrameBuffer(worldState, inputs, outputs);
 
 	// NYI: Push draw commands to the platform's render queue
 }
