@@ -74,6 +74,7 @@ INTERNAL const char* ArchitectureToDebugName(WORD wProcessorArchitecture) {
 }
 
 #include "Win32/DebugDraw.hpp"
+#include "Win32/FileSystem.hpp"
 
 #include "Win32/GamePad.cpp"
 #include "Win32/Keyboard.cpp"
@@ -313,8 +314,10 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE, LPSTR,
 	PLACEHOLDER_MEMORY_CONFIGURATION.persistentMemoryOptions.reservedSize = RAGLITE_PERSISTENT_MEMORY;
 	PLACEHOLDER_MEMORY_CONFIGURATION.transientMemoryOptions.reservedSize = RAGLITE_TRANSIENT_MEMORY;
 	PlatformInitializeProgramMemory(PLACEHOLDER_PROGRAM_MEMORY, PLACEHOLDER_MEMORY_CONFIGURATION);
-	// PlatformLoadModule("RagLite2Dbg.dll");
-	GameCode game = LoadGameCode("RagLite2Dbg.dll", "RagLite2Dbg.pdb"); // TBD Dbg or release...
+
+	// program_code_t program = {};
+	// TODO: Select release/debug DLL automatically
+	// program.fileSystemPath = StringLiteral("RagLite2Dbg.dll");
 
 	WNDCLASSEX windowClass = {};
 	// TODO Is this really a good idea? Beware the CS_OWNDC footguns...
@@ -358,7 +361,6 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE, LPSTR,
 		return EXIT_FAILURE;
 	}
 	MainWindowCreateFrameBuffers(mainWindow, GDI_SURFACE, GDI_BACKBUFFER);
-
 	CPU_PERFORMANCE_INFO.applicationLaunchTime = PerformanceMetricsGetTimeSince(applicationStartTime);
 
 	MSG message;
@@ -380,12 +382,8 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE, LPSTR,
 			gamepad_state_t controllerInputs = {};
 			GamePadPollControllers(controllerInputs);
 
-			// TODO Add to debug UI (?)
-			FILETIME new_time = GetLastWriteTime("RagLite2Dbg.dll"); // TBD Dbg or release
-			if(CompareFileTime(&new_time, &game.last_write_time) != 0) {
-				UnloadGameCode(&game);
-				game = LoadGameCode("RagLite2Dbg.dll", "RagLite2Dbg.pdb");
-			}
+			// TBD: Add load status indicator/active program name to the debug UI (?)
+			// if(PlatformShouldReloadProgramCode(game)) PlatformReloadProgramCode(game);
 
 			program_input_t inputs = {
 				.clock = PerformanceMetricsNow(),
@@ -401,9 +399,9 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE, LPSTR,
 				}
 			};
 
-			ASSUME(game.SimulateNextFrame, "Failed to load program module (cannot advance the simulation)");
+			// ASSUME(program.SimulateNextFrame, "Failed to load program module (cannot advance the simulation)");
 			hardware_tick_t beforeSimulationStep = PerformanceMetricsNow();
-			if(game.SimulateNextFrame) game.SimulateNextFrame(&PLACEHOLDER_PROGRAM_MEMORY, &inputs, &outputs);
+			// if(program.SimulateNextFrame) game.SimulateNextFrame(&PLACEHOLDER_PROGRAM_MEMORY, &inputs, &outputs);
 			CPU_PERFORMANCE_METRICS.worldRenderTime = PerformanceMetricsGetTimeSince(beforeSimulationStep);
 
 			size_t allocationSize = Megabytes(2);
