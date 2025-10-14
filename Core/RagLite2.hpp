@@ -4,9 +4,6 @@
 #define RAGLITE_COMMIT_HASH "N/A"
 #endif
 
-#ifndef RAGLITE_PLATFORM_NONE
-// NOTE: Disabling all platform APIs for program DLLs for now to avoid accidental callbacks into the OS
-
 #ifdef _WIN32
 #define RAGLITE_PLATFORM_WINDOWS
 #elifdef __APPLE__
@@ -19,8 +16,6 @@
 
 #ifdef RAGLITE_UNSUPPORTED_PLATFORM
 #error "Unsupported Platform: OS-specific code paths have yet to be ported"
-#endif
-
 #endif
 
 #define RAGLITE_COMPILER_GCC 0
@@ -40,9 +35,10 @@
 #endif
 
 #ifdef NDEBUG
-// TODO: Add feature flags for release builds here
+#define RAGLITE_INCLUDE_PROGRAM "PatternTestGDI.cpp"
 #else
 #define RAGLITE_DEBUG_ASSERTIONS
+#define RAGLITE_HOT_RELOAD
 #define RAGLITE_PREDICTABLE_MEMORY
 #endif
 
@@ -63,3 +59,39 @@ static_assert(PLATFORM_POINTER_SIZE == Bits(64), "Only 64-bit platforms are curr
 #ifndef RAGLITE_TRANSIENT_MEMORY
 #define RAGLITE_TRANSIENT_MEMORY Megabytes(1596) + Kilobytes(896)
 #endif
+
+#define GLOBAL static
+#define INTERNAL static
+#define LOCAL static
+
+#include "Assertions.hpp"
+#include "Intrinsics.hpp"
+#include "Numbers.hpp"
+#include "Strings.hpp"
+
+#include "GamePad.hpp"
+#include "Memory.hpp"
+#include "Modules.hpp"
+
+// TODO move or remove
+GLOBAL program_memory_t PLACEHOLDER_PROGRAM_MEMORY = {};
+GLOBAL memory_config_t PLACEHOLDER_MEMORY_CONFIGURATION = {};
+
+// TODO Eliminate this
+#include <math.h>
+
+typedef enum : uint8 {
+	PATTERN_SHIFTING_GRADIENT,
+	PATTERN_CIRCULAR_RIPPLE,
+	PATTERN_CHECKERBOARD,
+	PATTERN_AXIS_GRADIENTS,
+	PATTERN_GRID_SCANLINE,
+	PATTERN_COUNT
+} gdi_debug_pattern_t;
+
+typedef struct volatile_world_state {
+	uint64 createdTimestamp;
+	int32 offsetX;
+	int32 offsetY;
+	gdi_debug_pattern_t activeDebugDrawingPattern;
+} world_state_t;

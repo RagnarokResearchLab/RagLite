@@ -1,43 +1,5 @@
 #include "RagLite2.hpp"
 
-#define GLOBAL static
-#define INTERNAL static
-#define LOCAL static
-
-#include "Assertions.hpp"
-#include "Intrinsics.hpp"
-#include "Numbers.hpp"
-#include "Strings.hpp"
-
-#include "GamePad.hpp"
-#include "Memory.hpp"
-#include "Modules.hpp"
-
-// TODO move or remove
-GLOBAL program_memory_t PLACEHOLDER_PROGRAM_MEMORY = {};
-GLOBAL memory_config_t PLACEHOLDER_MEMORY_CONFIGURATION = {};
-
-#ifdef RAGLITE_PLATFORM_NONE
-
-// TODO Eliminate this
-#include <math.h>
-
-typedef enum : uint8 {
-	PATTERN_SHIFTING_GRADIENT,
-	PATTERN_CIRCULAR_RIPPLE,
-	PATTERN_CHECKERBOARD,
-	PATTERN_AXIS_GRADIENTS,
-	PATTERN_GRID_SCANLINE,
-	PATTERN_COUNT
-} gdi_debug_pattern_t;
-
-typedef struct volatile_world_state {
-	uint64 createdTimestamp;
-	int32 offsetX;
-	int32 offsetY;
-	gdi_debug_pattern_t activeDebugDrawingPattern;
-} world_state_t;
-
 INTERNAL void DebugDrawUpdateBackgroundPattern(world_state_t* worldState, program_input_t* inputs) {
 	milliseconds updateInterval = 5.0f * MILLISECONDS_PER_SECOND;
 	gdi_debug_pattern_t newPattern = (gdi_debug_pattern_t)(inputs->uptime / updateInterval);
@@ -233,10 +195,3 @@ EXPORT void SimulateNextFrame(program_memory_t* memory, program_input_t* inputs,
 
 	// NYI: Push draw commands to the platform's render queue
 }
-#else
-
-#ifdef RAGLITE_PLATFORM_WINDOWS
-#include "Platforms/Win32.cpp"
-#endif
-
-#endif

@@ -75,8 +75,10 @@ INTERNAL const char* ArchitectureToDebugName(WORD wProcessorArchitecture) {
 
 #include "Win32/DebugDraw.hpp"
 #include "Win32/FileSystem.hpp"
+#include "Win32/HotReload.hpp"
 
 #include "Win32/GamePad.cpp"
+#include "Win32/HotReload.cpp"
 #include "Win32/Keyboard.cpp"
 #include "Win32/Memory.cpp"
 #include "Win32/Time.cpp"
@@ -315,9 +317,9 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE, LPSTR,
 	PLACEHOLDER_MEMORY_CONFIGURATION.transientMemoryOptions.reservedSize = RAGLITE_TRANSIENT_MEMORY;
 	PlatformInitializeProgramMemory(PLACEHOLDER_PROGRAM_MEMORY, PLACEHOLDER_MEMORY_CONFIGURATION);
 
-	// program_code_t program = {};
-	// TODO: Select release/debug DLL automatically
-	// program.fileSystemPath = StringLiteral("RagLite2Dbg.dll");
+#ifdef RAGLITE_HOT_RELOAD
+	program_code_t program = {};
+#endif
 
 	WNDCLASSEX windowClass = {};
 	// TODO Is this really a good idea? Beware the CS_OWNDC footguns...
@@ -382,8 +384,10 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE, LPSTR,
 			gamepad_state_t controllerInputs = {};
 			GamePadPollControllers(controllerInputs);
 
+#ifdef RAGLITE_HOT_RELOAD
 			// TBD: Add load status indicator/active program name to the debug UI (?)
-			// if(PlatformShouldReloadProgramCode(game)) PlatformReloadProgramCode(game);
+			if(PlatformShouldReloadProgramCode(program)) PlatformReloadProgramCode(program);
+#endif
 
 			program_input_t inputs = {
 				.clock = PerformanceMetricsNow(),
@@ -399,9 +403,12 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE, LPSTR,
 				}
 			};
 
-			// ASSUME(program.SimulateNextFrame, "Failed to load program module (cannot advance the simulation)");
 			hardware_tick_t beforeSimulationStep = PerformanceMetricsNow();
-			// if(program.SimulateNextFrame) game.SimulateNextFrame(&PLACEHOLDER_PROGRAM_MEMORY, &inputs, &outputs);
+#ifdef RAGLITE_HOT_RELOAD
+			if(program.SimulateNextFrame) program.SimulateNextFrame(&PLACEHOLDER_PROGRAM_MEMORY, &inputs, &outputs);
+#else
+			SimulateNextFrame(&PLACEHOLDER_PROGRAM_MEMORY, &inputs, &outputs);
+#endif
 			CPU_PERFORMANCE_METRICS.worldRenderTime = PerformanceMetricsGetTimeSince(beforeSimulationStep);
 
 			size_t allocationSize = Megabytes(2);

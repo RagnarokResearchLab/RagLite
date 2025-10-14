@@ -3,11 +3,11 @@
 set DEBUG_EXE=RagLiteWin32Dbg.exe
 set RELEASE_EXE=RagLiteWin32.exe
 
-set CPP_MAIN=Core\RagLite2.cpp
+set CPP_MAIN=Core\RagLiteWin32.cpp
 set DLL_MAIN=Core\RagLite2.cpp
 set DEBUG_DLL=RagLite2Dbg.dll
 set RELEASE_DLL=RagLite2.dll
-set DLL_FLAGS=/LD /DRAGLITE_PLATFORM_NONE
+set DLL_FLAGS=/LD
 
 :: TODO: Skip .lib generation?
 
