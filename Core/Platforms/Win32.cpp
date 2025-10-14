@@ -388,7 +388,6 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE, LPSTR,
 			// TODO Add to debug UI (?)
 			FILETIME new_time = GetLastWriteTime("RagLite2Dbg.dll"); // TBD Dbg or release
 			if(CompareFileTime(&new_time, &game.last_write_time) != 0) {
-				// DLL changed
 				UnloadGameCode(&game);
 				game = LoadGameCode("RagLite2Dbg.dll", "RagLite2Dbg.pdb");
 			}
