@@ -213,7 +213,6 @@ EXPORT void SimulateNextFrame(program_memory_t* memory, program_input_t* inputs,
 	worldState->offsetX++;
 	worldState->offsetX++;
 	worldState->offsetY++;
-	// TODO update/render time needs to be fixed in the profiler?
 	DebugDrawUpdateBackgroundPattern(worldState, inputs);
 	DebugDrawIntoFrameBuffer(worldState, inputs, outputs);
 

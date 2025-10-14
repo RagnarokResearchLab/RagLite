@@ -111,17 +111,11 @@ INTERNAL void SurfaceDrawDebugUI(gdi_surface_t& doubleBufferedWindowSurface) {
 INTERNAL void MainWindowRedrawEverything(HWND& window) {
 	if(IsIconic(window)) {
 		// Minimized - no point in drawing this frame
-		CPU_PERFORMANCE_METRICS.worldRenderTime = 0;
 		CPU_PERFORMANCE_METRICS.userInterfaceRenderTime = 0;
 		return;
 	}
 
 	hardware_tick_t before = PerformanceMetricsNow();
-	// TODO move to program code (cannot access buffer/clock directly, though)
-	// DebugDrawIntoFrameBuffer(GDI_BACKBUFFER, 0, 0);
-	CPU_PERFORMANCE_METRICS.worldRenderTime = PerformanceMetricsGetTimeSince(before);
-
-	before = PerformanceMetricsNow();
 	SurfaceDrawDebugUI(GDI_SURFACE);
 	CPU_PERFORMANCE_METRICS.userInterfaceRenderTime = PerformanceMetricsGetTimeSince(before);
 
@@ -381,7 +375,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE, LPSTR,
 		}
 		CPU_PERFORMANCE_METRICS.messageProcessingTime = PerformanceMetricsGetTimeSince(lastUpdateTime);
 
-		hardware_tick_t before = PerformanceMetricsNow();
+		hardware_tick_t beforeWorldUpdate = PerformanceMetricsNow();
 		if(!APPLICATION_SHOULD_PAUSE) {
 			// GamePadPollControllers(worldState.offsetX, worldState.offsetY); // TODO pass to program
 
@@ -407,7 +401,9 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE, LPSTR,
 			};
 
 			ASSUME(game.SimulateNextFrame, "Failed to load program module (cannot advance the simulation)");
+			hardware_tick_t beforeSimulationStep = PerformanceMetricsNow();
 			if(game.SimulateNextFrame) game.SimulateNextFrame(&PLACEHOLDER_PROGRAM_MEMORY, &inputs, &outputs);
+			CPU_PERFORMANCE_METRICS.worldRenderTime = PerformanceMetricsGetTimeSince(beforeSimulationStep);
 
 			size_t allocationSize = Megabytes(2);
 			if(!SystemMemoryCanAllocate(PLACEHOLDER_PROGRAM_MEMORY.transientMemory, 2 * allocationSize)) {
@@ -419,7 +415,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE, LPSTR,
 				SystemMemoryDebugTouch(PLACEHOLDER_PROGRAM_MEMORY.transientMemory, transientMemory);
 			}
 		}
-		CPU_PERFORMANCE_METRICS.worldUpdateTime = PerformanceMetricsGetTimeSince(before);
+		CPU_PERFORMANCE_METRICS.worldUpdateTime = PerformanceMetricsGetTimeSince(beforeWorldUpdate);
 
 		MainWindowRedrawEverything(mainWindow);
 
