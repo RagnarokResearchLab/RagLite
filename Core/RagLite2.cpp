@@ -9,6 +9,7 @@
 #include "Numbers.hpp"
 #include "Strings.hpp"
 
+#include "GamePad.hpp"
 #include "Memory.hpp"
 #include "Modules.hpp"
 
@@ -209,6 +210,9 @@ EXPORT void SimulateNextFrame(program_memory_t* memory, program_input_t* inputs,
 		worldState->createdTimestamp = inputs->clock;
 		worldState->activeDebugDrawingPattern = PATTERN_SHIFTING_GRADIENT;
 	}
+
+	worldState->offsetX += inputs->gamepad.stickX >> 12;
+	worldState->offsetY += inputs->gamepad.stickY >> 12;
 
 	worldState->offsetX++;
 	worldState->offsetX++;

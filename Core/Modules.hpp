@@ -3,7 +3,8 @@
 typedef struct simulation_frame_inputs {
 	uint64 clock;
 	milliseconds uptime;
-	// TODO: Controller/keyboard/mouse inputs
+	// TODO: Pass along keyboard/mouse inputs as well
+	gamepad_state_t gamepad;
 } program_input_t;
 
 // TODO sync with GDI struct (single source of truth)

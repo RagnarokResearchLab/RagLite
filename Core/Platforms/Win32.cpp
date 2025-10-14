@@ -377,7 +377,8 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE, LPSTR,
 
 		hardware_tick_t beforeWorldUpdate = PerformanceMetricsNow();
 		if(!APPLICATION_SHOULD_PAUSE) {
-			// GamePadPollControllers(worldState.offsetX, worldState.offsetY); // TODO pass to program
+			gamepad_state_t controllerInputs = {};
+			GamePadPollControllers(controllerInputs);
 
 			// TODO Add to debug UI (?)
 			FILETIME new_time = GetLastWriteTime("RagLite2Dbg.dll"); // TBD Dbg or release
