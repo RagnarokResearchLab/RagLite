@@ -192,8 +192,6 @@ LRESULT CALLBACK MainWindowProcessIncomingMessage(HWND window, UINT message, WPA
 		case WM_SIZING:
 		case WM_SIZE: {
 			MainWindowCreateFrameBuffers(window, GDI_SURFACE, GDI_BACKBUFFER);
-			// NOTE: Updating again allows the simulation to appear more fluid (evaluate UX later)
-			// DebugDrawUpdateBackgroundPattern();
 			MainWindowRedrawEverything(window);
 		} break;
 
