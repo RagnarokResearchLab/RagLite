@@ -1,14 +1,14 @@
 @echo off
 
+set DEFAULT_BUILD_DIR=BuildArtifacts
+if not exist %DEFAULT_BUILD_DIR% mkdir %DEFAULT_BUILD_DIR%
+
 set CPP_MAIN=Core\RagLite2.cpp
-set DEBUG_EXE=RagLite2Dbg.exe
-set RELEASE_EXE=RagLite2.exe
+set DEBUG_EXE=%DEFAULT_BUILD_DIR%/RagLite2Dbg.exe
+set RELEASE_EXE=%DEFAULT_BUILD_DIR%/RagLite2.exe
 set RUNTIME_LIBS=gdi32.lib shlwapi.lib user32.lib xinput.lib winmm.lib
 
 for /f "delims=" %%i in ('call git describe --always --dirty') do set GIT_COMMIT_HASH=\"%%i\"
-
-set DEFAULT_BUILD_DIR=BuildArtifacts
-if not exist %DEFAULT_BUILD_DIR% mkdir %DEFAULT_BUILD_DIR%
 
 set ICON_RC=Assets/RagLite2.rc
 set ICON_RES=%DEFAULT_BUILD_DIR%\RagLite2.res
@@ -47,6 +47,7 @@ set SHARED_COMPILE_FLAGS=%SHARED_COMPILE_FLAGS% /Zc:strictStrings
 set SHARED_COMPILE_FLAGS=%SHARED_COMPILE_FLAGS% /Zf
 set SHARED_COMPILE_FLAGS=%SHARED_COMPILE_FLAGS% %CPP_STANDARD%
 set SHARED_COMPILE_FLAGS=%SHARED_COMPILE_FLAGS% /DRAGLITE_COMMIT_HASH=%GIT_COMMIT_HASH%
+set SHARED_COMPILE_FLAGS=%SHARED_COMPILE_FLAGS% /Fo%DEFAULT_BUILD_DIR%\
 
 :: /INCREMENTAL:NO		Disable incremental linkage
 set SHARED_LINK_FLAGS=%SHARED_LINK_FLAGS% /INCREMENTAL:NO
@@ -126,9 +127,3 @@ echo 	cl%RELEASE_COMPILE_FLAGS% %CPP_MAIN% %RUNTIME_LIBS% /link %RELEASE_LINK_FL
 echo --------------------------------------------------------------------------------------------------------
 cl %RELEASE_COMPILE_FLAGS% %CPP_MAIN% %RUNTIME_LIBS% /link %RELEASE_LINK_FLAGS% %ICON_RES% /out:%RELEASE_EXE% || exit /b
 echo --------------------------------------------------------------------------------------------------------
-
-:: Cleanup
-move RagLite2*.exe %DEFAULT_BUILD_DIR% 2> NUL
-move *.idb %DEFAULT_BUILD_DIR% 2> NUL
-move *.obj %DEFAULT_BUILD_DIR% 2> NUL
-move *.pdb %DEFAULT_BUILD_DIR% 2> NUL
