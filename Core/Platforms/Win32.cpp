@@ -100,8 +100,8 @@ INTERNAL void SurfacePresentFrameBuffer(gdi_surface_t& surface, gdi_offscreen_bu
 		return;
 	}
 
-	int srcW = backBuffer.width;
-	int srcH = backBuffer.height;
+	int srcW = backBuffer.bitmap.width;
+	int srcH = backBuffer.bitmap.height;
 	int destW = surface.width;
 	int destH = surface.height;
 	if(!StretchBlt(surface.displayDeviceContext, 0, 0, destW, destH, surface.offscreenDeviceContext,
@@ -128,7 +128,7 @@ INTERNAL void MainWindowRedrawEverything(HWND& window) {
 	}
 
 	hardware_tick_t before = PerformanceMetricsNow();
-	DebugDrawIntoFrameBuffer(GDI_BACKBUFFER, PLACEHOLDER_DEMO_APP.offsetX, PLACEHOLDER_DEMO_APP.offsetY);
+	DebugDrawIntoFrameBuffer(GDI_BACKBUFFER.bitmap, PLACEHOLDER_DEMO_APP.offsetX, PLACEHOLDER_DEMO_APP.offsetY);
 	CPU_PERFORMANCE_METRICS.worldRenderTime = PerformanceMetricsGetTimeSince(before);
 
 	before = PerformanceMetricsNow();
@@ -138,37 +138,37 @@ INTERNAL void MainWindowRedrawEverything(HWND& window) {
 	SurfacePresentFrameBuffer(GDI_SURFACE, GDI_BACKBUFFER);
 }
 
-INTERNAL void SurfaceResizeBackBuffer(gdi_surface_t& surface, gdi_offscreen_buffer_t& bitmap) {
+INTERNAL void SurfaceResizeBackBuffer(gdi_surface_t& surface, gdi_offscreen_buffer_t& backBuffer) {
 
-	DeleteObject(bitmap.handle);
-	bitmap.handle = NULL;
-	bitmap.pixelBuffer = NULL;
+	DeleteObject(backBuffer.handle);
+	backBuffer.handle = NULL;
+	backBuffer.bitmap.pixelBuffer = NULL;
 
-	bitmap.width = surface.width;
-	bitmap.height = surface.height;
-	bitmap.bytesPerPixel = 4;
-	bitmap.stride = surface.width * bitmap.bytesPerPixel;
+	backBuffer.bitmap.width = surface.width;
+	backBuffer.bitmap.height = surface.height;
+	backBuffer.bitmap.bytesPerPixel = 4;
+	backBuffer.bitmap.stride = surface.width * backBuffer.bitmap.bytesPerPixel;
 
-	ZeroMemory(&bitmap.info, sizeof(bitmap.info));
-	bitmap.info.bmiHeader.biSize = sizeof(bitmap.info.bmiHeader);
-	bitmap.info.bmiHeader.biWidth = surface.width;
-	bitmap.info.bmiHeader.biHeight = -surface.height; // Inverted Y
-	bitmap.info.bmiHeader.biPlanes = 1;
-	bitmap.info.bmiHeader.biBitCount = 32;
-	bitmap.info.bmiHeader.biCompression = BI_RGB;
+	ZeroMemory(&backBuffer.info, sizeof(backBuffer.info));
+	backBuffer.info.bmiHeader.biSize = sizeof(backBuffer.info.bmiHeader);
+	backBuffer.info.bmiHeader.biWidth = surface.width;
+	backBuffer.info.bmiHeader.biHeight = -surface.height; // Inverted Y
+	backBuffer.info.bmiHeader.biPlanes = 1;
+	backBuffer.info.bmiHeader.biBitCount = 32;
+	backBuffer.info.bmiHeader.biCompression = BI_RGB;
 
 	DeleteObject(surface.offscreenDeviceContext);
 	surface.offscreenDeviceContext = CreateCompatibleDC(surface.displayDeviceContext);
 	ASSUME(surface.offscreenDeviceContext, "Failed to create compatible memory DC");
 
-	bitmap.handle = CreateDIBSection(surface.offscreenDeviceContext, &bitmap.info,
-		DIB_RGB_COLORS, &bitmap.pixelBuffer, NULL, 0);
-	ASSUME(bitmap.handle, "Failed to create DIB handle");
-	ASSUME(bitmap.pixelBuffer, "Failed to create DIB buffer");
+	backBuffer.handle = CreateDIBSection(surface.offscreenDeviceContext, &backBuffer.info,
+		DIB_RGB_COLORS, &backBuffer.bitmap.pixelBuffer, NULL, 0);
+	ASSUME(backBuffer.handle, "Failed to create DIB handle");
+	ASSUME(backBuffer.bitmap.pixelBuffer, "Failed to create DIB buffer");
 
-	SelectObject(surface.offscreenDeviceContext, bitmap.handle);
+	SelectObject(surface.offscreenDeviceContext, backBuffer.handle);
 
-	uint32* pixelArray = (uint32*)bitmap.pixelBuffer;
+	uint32* pixelArray = (uint32*)backBuffer.bitmap.pixelBuffer;
 	size_t count = (size_t)surface.width * (size_t)surface.height;
 	for(size_t i = 0; i < count; ++i)
 		pixelArray[i] = UNINITIALIZED_WINDOW_COLOR.bytes;
@@ -203,7 +203,7 @@ LRESULT CALLBACK MainWindowProcessIncomingMessage(HWND window, UINT message, WPA
 		case WM_SIZE: {
 			MainWindowCreateFrameBuffers(window, GDI_SURFACE, GDI_BACKBUFFER);
 			// NOTE: Updating again allows the simulation to appear more fluid (evaluate UX later)
-			DebugDrawUpdateBackgroundPattern();
+			DebugDrawUpdateBackgroundPattern(CPU_PERFORMANCE_METRICS.applicationUptime);
 			MainWindowRedrawEverything(window);
 		} break;
 
@@ -414,7 +414,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE, LPSTR,
 			}
 
 			GamePadPollControllers(PLACEHOLDER_DEMO_APP.offsetX, PLACEHOLDER_DEMO_APP.offsetY);
-			DebugDrawUpdateBackgroundPattern();
+			DebugDrawUpdateBackgroundPattern(CPU_PERFORMANCE_METRICS.applicationUptime);
 		}
 		CPU_PERFORMANCE_METRICS.worldUpdateTime = PerformanceMetricsGetTimeSince(before);
 

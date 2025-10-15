@@ -33,12 +33,17 @@
 #error "Unsupported Compiler: Toolchain-specific code paths have yet to be ported"
 #endif
 
+#define RAGLITE_DEFAULT_APP PatternTest
+
 #ifdef NDEBUG
 // TODO: Add feature flags for release builds here
 #else
 #define RAGLITE_DEBUG_ASSERTIONS
 #define RAGLITE_PREDICTABLE_MEMORY
 #endif
+
+#define EXPAND_AS_STRING(x) #x
+#define TOSTRING(x) EXPAND_AS_STRING(x)
 
 constexpr size_t BITS_PER_BYTE = 8ULL;
 #define Bits(bits) ((bits) / BITS_PER_BYTE)

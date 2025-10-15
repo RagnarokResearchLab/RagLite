@@ -1,13 +1,9 @@
 #pragma once
 
 typedef struct gdi_bitmap {
-	HBITMAP handle;
+	offscreen_buffer_t bitmap;
 	BITMAPINFO info;
-	int width;
-	int height;
-	int bytesPerPixel;
-	int stride;
-	void* pixelBuffer;
+	HBITMAP handle;
 } gdi_offscreen_buffer_t;
 
 typedef struct gdi_surface {
@@ -17,18 +13,8 @@ typedef struct gdi_surface {
 	int height;
 } gdi_surface_t;
 
-typedef enum : uint8 {
-	PATTERN_SHIFTING_GRADIENT,
-	PATTERN_CIRCULAR_RIPPLE,
-	PATTERN_CHECKERBOARD,
-	PATTERN_AXIS_GRADIENTS,
-	PATTERN_GRID_SCANLINE,
-	PATTERN_COUNT
-} gdi_debug_pattern_t;
-
 GLOBAL gdi_offscreen_buffer_t GDI_BACKBUFFER = {};
 GLOBAL gdi_surface_t GDI_SURFACE = {};
-GLOBAL gdi_debug_pattern_t GDI_DEBUG_PATTERN = PATTERN_SHIFTING_GRADIENT;
 
 typedef union gdi_rgba_color {
 	// NOTE: For simplicity, ensure this matches the pixel format used by GDI bitmaps
