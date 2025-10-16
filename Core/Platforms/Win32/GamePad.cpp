@@ -1,10 +1,5 @@
 #include <xinput.h>
 
-typedef struct gamepad_controller_state {
-	int16 stickX;
-	int16 stickY;
-} gamepad_state_t;
-
 GLOBAL bool APPLICATION_USES_GAMEPAD = false;
 
 INTERNAL void GamePadPollControllers(gamepad_state_t& controllerInputs) {

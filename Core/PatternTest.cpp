@@ -176,3 +176,13 @@ INTERNAL void DebugDrawIntoFrameBuffer(offscreen_buffer_t& bitmap, int paramA,
 			break;
 	}
 }
+
+INTERNAL void AdvanceSimulation(simulation_state_t& simulation, gamepad_state_t& controllerInputs) {
+	simulation.offsetX += controllerInputs.stickX >> 12;
+	simulation.offsetY += controllerInputs.stickY >> 12;
+
+	// NOTE: Application/game state updates should go here (later)
+	simulation.offsetX++;
+	simulation.offsetY++;
+	simulation.offsetY++;
+}

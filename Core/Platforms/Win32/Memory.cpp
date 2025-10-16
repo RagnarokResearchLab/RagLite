@@ -1,28 +1,6 @@
 constexpr size_t HIGHEST_VIRTUAL_ADDRESS = Terabytes(1);
 constexpr size_t INVALID_VIRTUAL_ADDRESS = 0xDEADBEEFULL;
 
-GLOBAL memory_arena_t MAIN_MEMORY = {
-	.displayName = StringLiteral("Main Memory"),
-	.lifetime = KEEP_FOREVER_MANUAL_RESET,
-	.usage = UNUSED_PLACEHOLDER,
-	.baseAddress = (void*)INVALID_VIRTUAL_ADDRESS,
-	.reservedSize = 0,
-	.committedSize = 0,
-	.used = 0,
-	.allocationCount = 0
-};
-
-GLOBAL memory_arena_t TRANSIENT_MEMORY = {
-	.displayName = StringLiteral("Transient Memory"),
-	.lifetime = RESET_AFTER_EACH_FRAME,
-	.usage = UNUSED_PLACEHOLDER,
-	.baseAddress = (void*)INVALID_VIRTUAL_ADDRESS,
-	.reservedSize = 0,
-	.committedSize = 0,
-	.used = 0,
-	.allocationCount = 0
-};
-
 // TBD Guard with feature flag (check if compiler removes when unused - assumption: yes)
 INTERNAL String SystemMemoryDebugUsage(memory_arena_t& arena) {
 	switch(arena.lifetime) {

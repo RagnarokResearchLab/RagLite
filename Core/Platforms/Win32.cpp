@@ -2,16 +2,6 @@
 
 #define TODO(msg) OutputDebugStringA(msg);
 
-// TODO: Replace these with the actual game/application state later
-typedef struct volatile_game_state {
-	int32 offsetX;
-	int32 offsetY;
-} game_state_t;
-GLOBAL game_state_t PLACEHOLDER_DEMO_APP = {
-	.offsetX = 0,
-	.offsetY = 0,
-};
-
 constexpr size_t MAX_ERROR_MSG_SIZE = 512;
 GLOBAL TCHAR SYSTEM_ERROR_MESSAGE[MAX_ERROR_MSG_SIZE];
 
@@ -84,7 +74,6 @@ INTERNAL const char* ArchitectureToDebugName(WORD wProcessorArchitecture) {
 }
 
 #include "Win32/DebugDraw.hpp"
-#include "Win32/Memory.hpp"
 
 #include "Win32/GamePad.cpp"
 #include "Win32/Keyboard.cpp"
@@ -93,6 +82,31 @@ INTERNAL const char* ArchitectureToDebugName(WORD wProcessorArchitecture) {
 #include "Win32/Windowing.cpp"
 
 #include "Win32/DebugDraw.cpp"
+
+INTERNAL void PlatformRunSimulationStep() {
+	gamepad_state_t controllerInputs = {};
+	GamePadPollControllers(controllerInputs);
+	AdvanceSimulation(PLACEHOLDER_DEMO_APP, controllerInputs);
+
+	size_t allocationSize = Megabytes(2);
+	if(!SystemMemoryCanAllocate(MAIN_MEMORY, allocationSize)) {
+		SystemMemoryReset(MAIN_MEMORY);
+	} else {
+		uint8* mainMemory = (uint8*)SystemMemoryAllocate(MAIN_MEMORY, allocationSize);
+		*mainMemory = 0xDE;
+		SystemMemoryDebugTouch(MAIN_MEMORY, mainMemory);
+	}
+
+	if(!SystemMemoryCanAllocate(TRANSIENT_MEMORY, 2 * allocationSize)) {
+		SystemMemoryReset(TRANSIENT_MEMORY);
+	} else {
+		uint8* transientMemory = (uint8*)SystemMemoryAllocate(TRANSIENT_MEMORY, 2 * allocationSize);
+		*transientMemory = 0xAB;
+		SystemMemoryDebugTouch(TRANSIENT_MEMORY, transientMemory);
+	}
+
+	DebugDrawUpdateBackgroundPattern(CPU_PERFORMANCE_METRICS.applicationUptime);
+}
 
 INTERNAL void SurfacePresentFrameBuffer(gdi_surface_t& surface, gdi_offscreen_buffer_t& backBuffer) {
 	if(!surface.displayDeviceContext || !surface.offscreenDeviceContext || !backBuffer.handle) {
@@ -203,7 +217,7 @@ LRESULT CALLBACK MainWindowProcessIncomingMessage(HWND window, UINT message, WPA
 		case WM_SIZE: {
 			MainWindowCreateFrameBuffers(window, GDI_SURFACE, GDI_BACKBUFFER);
 			// NOTE: Updating again allows the simulation to appear more fluid (evaluate UX later)
-			DebugDrawUpdateBackgroundPattern(CPU_PERFORMANCE_METRICS.applicationUptime);
+			PlatformRunSimulationStep();
 			MainWindowRedrawEverything(window);
 		} break;
 
@@ -389,35 +403,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE, LPSTR,
 
 		hardware_tick_t before = PerformanceMetricsNow();
 		if(!APPLICATION_SHOULD_PAUSE) {
-
-			// NOTE: Application/game state updates should go here (later)
-			PLACEHOLDER_DEMO_APP.offsetX++;
-			PLACEHOLDER_DEMO_APP.offsetY++;
-			PLACEHOLDER_DEMO_APP.offsetY++;
-
-			size_t allocationSize = Megabytes(2);
-			if(!SystemMemoryCanAllocate(MAIN_MEMORY, allocationSize)) {
-				SystemMemoryReset(MAIN_MEMORY);
-			} else {
-				uint8* mainMemory = (uint8*)SystemMemoryAllocate(MAIN_MEMORY, allocationSize);
-				*mainMemory = 0xDE;
-				SystemMemoryDebugTouch(MAIN_MEMORY, mainMemory);
-			}
-
-			if(!SystemMemoryCanAllocate(TRANSIENT_MEMORY, 2 * allocationSize)) {
-				SystemMemoryReset(TRANSIENT_MEMORY);
-			} else {
-
-				uint8* transientMemory = (uint8*)SystemMemoryAllocate(TRANSIENT_MEMORY, 2 * allocationSize);
-				*transientMemory = 0xAB;
-				SystemMemoryDebugTouch(TRANSIENT_MEMORY, transientMemory);
-			}
-
-			gamepad_state_t controllerInputs = {};
-			GamePadPollControllers(controllerInputs);
-			PLACEHOLDER_DEMO_APP.offsetX += controllerInputs.stickX >> 12;
-			PLACEHOLDER_DEMO_APP.offsetY += controllerInputs.stickY >> 12;
-			DebugDrawUpdateBackgroundPattern(CPU_PERFORMANCE_METRICS.applicationUptime);
+			PlatformRunSimulationStep();
 		}
 		CPU_PERFORMANCE_METRICS.worldUpdateTime = PerformanceMetricsGetTimeSince(before);
 
