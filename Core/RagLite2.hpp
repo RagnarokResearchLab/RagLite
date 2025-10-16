@@ -54,3 +54,32 @@ static_assert(PLATFORM_POINTER_SIZE == Bits(64), "Only 64-bit platforms are curr
 #if defined(__BYTE_ORDER__) && __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
 #error "Only Little-Endian platforms are currently supported"
 #endif
+
+#define GLOBAL static
+#define INTERNAL static
+#define LOCAL static
+
+#include "Assertions.hpp"
+#include "Intrinsics.hpp"
+#include "Numbers.hpp"
+#include "Strings.hpp"
+
+#include "Memory.hpp"
+
+typedef struct offscreen_bitmap {
+	int width;
+	int height;
+	int bytesPerPixel;
+	int stride;
+	void* pixelBuffer;
+} offscreen_buffer_t;
+
+typedef struct gamepad_controller_state {
+	int16 stickX;
+	int16 stickY;
+} gamepad_state_t;
+
+typedef struct volatile_simulation_state {
+	int32 offsetX;
+	int32 offsetY;
+} simulation_state_t;

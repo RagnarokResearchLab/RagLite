@@ -1,3 +1,5 @@
+#include "RagLite2.hpp"
+
 // TODO Eliminate this
 #include <math.h>
 
