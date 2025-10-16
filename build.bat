@@ -59,6 +59,8 @@ set SHARED_LINK_FLAGS=%SHARED_LINK_FLAGS% /MANIFEST:EMBED
 set SHARED_LINK_FLAGS=%SHARED_LINK_FLAGS% /noexp
 :: /NOLOGO				Prevents display of the copyright message and version number
 set SHARED_LINK_FLAGS=%SHARED_LINK_FLAGS% /NOLOGO
+:: /NOIMPLIB			Skip import library generation (.lib files aren't needed to load DLLs at runtime)
+set SHARED_LINK_FLAGS=%SHARED_LINK_FLAGS% /NOIMPLIB
 
 :::::: Build debug binary
 set DEBUG_COMPILE_FLAGS=
