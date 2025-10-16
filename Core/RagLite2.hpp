@@ -60,6 +60,7 @@ static_assert(PLATFORM_POINTER_SIZE == Bits(64), "Only 64-bit platforms are curr
 
 #include "Assertions.hpp"
 #include "Intrinsics.hpp"
+#include "Math.hpp"
 #include "Numbers.hpp"
 #include "Strings.hpp"
 

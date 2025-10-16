@@ -1,8 +1,5 @@
 #include "RagLite2.hpp"
 
-// TODO Eliminate this
-#include <math.h>
-
 typedef enum : uint8 {
 	PATTERN_SHIFTING_GRADIENT,
 	PATTERN_CIRCULAR_RIPPLE,
