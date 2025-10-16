@@ -431,7 +431,7 @@ INTERNAL void DebugDrawHistoryGraph(HDC& displayDeviceContext, int topLeftX, int
 				DebugDrawVerticalLine(displayDeviceContext, lineStartX, lineStartY, lineStartX, lineEndY, RGB_COLOR_GOLD);
 				lineStartY = lineEndY;
 
-				filled = (percentage)(recorded.worldUpdateTime / recorded.frameTime);
+				filled = (percentage)(recorded.simulationStepTime / recorded.frameTime);
 				lineEndY = lineStartY - (int)(filled * barHeight) + 1;
 				DebugDrawClipPointToRectangle(lineEndX, lineEndY, panelRect);
 				DebugDrawVerticalLine(displayDeviceContext, lineStartX, lineStartY, lineStartX, lineEndY, RGB_COLOR_VIOLET);
@@ -787,8 +787,8 @@ INTERNAL void DebugDrawProcessorUsageOverlay(HDC& displayDeviceContext) {
 	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, formatBuffer, lstrlenA(formatBuffer));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
-	percentage worldUpdatePercentage = CPU_PERFORMANCE_METRICS.worldUpdateTime / CPU_PERFORMANCE_METRICS.frameTime;
-	StringCbPrintfA(formatBuffer, FORMAT_BUFFER_SIZE, "World Update: %.0f ms (%d%%)", CPU_PERFORMANCE_METRICS.worldUpdateTime,
+	percentage worldUpdatePercentage = CPU_PERFORMANCE_METRICS.simulationStepTime / CPU_PERFORMANCE_METRICS.frameTime;
+	StringCbPrintfA(formatBuffer, FORMAT_BUFFER_SIZE, "Simulation: %.0f ms (%d%%)", CPU_PERFORMANCE_METRICS.simulationStepTime,
 		Percent(worldUpdatePercentage));
 	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, formatBuffer, lstrlenA(formatBuffer));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;

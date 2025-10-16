@@ -12,7 +12,7 @@ typedef struct system_performance_metrics {
 	milliseconds sleepTime;
 	milliseconds suspendedTime;
 	milliseconds userInterfaceRenderTime;
-	milliseconds worldUpdateTime;
+	milliseconds simulationStepTime;
 	milliseconds worldRenderTime;
 } performance_metrics_t;
 

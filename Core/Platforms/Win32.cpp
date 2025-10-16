@@ -405,7 +405,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE, LPSTR,
 		if(!APPLICATION_SHOULD_PAUSE) {
 			PlatformRunSimulationStep();
 		}
-		CPU_PERFORMANCE_METRICS.worldUpdateTime = PerformanceMetricsGetTimeSince(before);
+		CPU_PERFORMANCE_METRICS.simulationStepTime = PerformanceMetricsGetTimeSince(before);
 
 		MainWindowRedrawEverything(mainWindow);
 
