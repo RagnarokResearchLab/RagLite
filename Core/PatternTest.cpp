@@ -176,7 +176,7 @@ INTERNAL void DebugDrawIntoFrameBuffer(offscreen_buffer_t& bitmap, int paramA,
 	}
 }
 
-EXPORT void AdvanceSimulation(simulation_state_t& simulation, gamepad_state_t& controllerInputs, offscreen_buffer_t& bitmap, milliseconds uptime) {
+EXPORT void AdvanceSimulation(simulation_state_t& simulation, gamepad_state_t& controllerInputs, offscreen_buffer_t& bitmap, milliseconds uptime, memory_arena_t& persistentStorage, memory_arena_t& transientStorage) {
 	simulation.offsetX += controllerInputs.stickX >> 12;
 	simulation.offsetY += controllerInputs.stickY >> 12;
 
@@ -187,4 +187,21 @@ EXPORT void AdvanceSimulation(simulation_state_t& simulation, gamepad_state_t& c
 
 	DebugDrawIntoFrameBuffer(bitmap, simulation.offsetX, simulation.offsetY);
 	DebugDrawUpdateBackgroundPattern(uptime);
+
+	size_t allocationSize = Megabytes(2);
+	if(!ArenaCanAllocate(persistentStorage, allocationSize)) {
+		ArenaResetAllocations(persistentStorage);
+	} else {
+		uint8* mainMemory = (uint8*)ArenaAllocateMemoryRegion(persistentStorage, allocationSize);
+		*mainMemory = 0xDE;
+		ArenaDebugTouchAddress(persistentStorage, mainMemory);
+	}
+
+	if(!ArenaCanAllocate(transientStorage, 2 * allocationSize)) {
+		ArenaResetAllocations(transientStorage);
+	} else {
+		uint8* transientMemory = (uint8*)ArenaAllocateMemoryRegion(transientStorage, 2 * allocationSize);
+		*transientMemory = 0xAB;
+		ArenaDebugTouchAddress(transientStorage, transientMemory);
+	}
 }

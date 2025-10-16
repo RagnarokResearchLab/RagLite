@@ -86,24 +86,7 @@ INTERNAL const char* ArchitectureToDebugName(WORD wProcessorArchitecture) {
 INTERNAL void PlatformRunSimulationStep() {
 	gamepad_state_t controllerInputs = {};
 	GamePadPollControllers(controllerInputs);
-	AdvanceSimulation(PLACEHOLDER_DEMO_APP, controllerInputs, GDI_BACKBUFFER.bitmap, CPU_PERFORMANCE_METRICS.applicationUptime);
-
-	size_t allocationSize = Megabytes(2);
-	if(!ArenaCanAllocate(MAIN_MEMORY, allocationSize)) {
-		ArenaResetAllocations(MAIN_MEMORY);
-	} else {
-		uint8* mainMemory = (uint8*)ArenaAllocateMemoryRegion(MAIN_MEMORY, allocationSize);
-		*mainMemory = 0xDE;
-		ArenaDebugTouchAddress(MAIN_MEMORY, mainMemory);
-	}
-
-	if(!ArenaCanAllocate(TRANSIENT_MEMORY, 2 * allocationSize)) {
-		ArenaResetAllocations(TRANSIENT_MEMORY);
-	} else {
-		uint8* transientMemory = (uint8*)ArenaAllocateMemoryRegion(TRANSIENT_MEMORY, 2 * allocationSize);
-		*transientMemory = 0xAB;
-		ArenaDebugTouchAddress(TRANSIENT_MEMORY, transientMemory);
-	}
+	AdvanceSimulation(PLACEHOLDER_DEMO_APP, controllerInputs, GDI_BACKBUFFER.bitmap, CPU_PERFORMANCE_METRICS.applicationUptime, MAIN_MEMORY, TRANSIENT_MEMORY);
 }
 
 INTERNAL void SurfacePresentFrameBuffer(gdi_surface_t& surface, gdi_offscreen_buffer_t& backBuffer) {
