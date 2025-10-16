@@ -43,6 +43,7 @@ jobs:
           name: RagLite2-MSVC-Win64.zip
           path: |
             BuildArtifacts/*.exe
+            BuildArtifacts/*.dll
             BuildArtifacts/*.pdb
           if-no-files-found: error
           retention-days: 30
