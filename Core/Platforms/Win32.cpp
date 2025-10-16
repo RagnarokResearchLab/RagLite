@@ -77,7 +77,7 @@ INTERNAL const char* ArchitectureToDebugName(WORD wProcessorArchitecture) {
 
 #include "Win32/GamePad.cpp"
 #include "Win32/Keyboard.cpp"
-#include "Win32/Memory.cpp"
+#include "Win32/SystemMemory.cpp"
 #include "Win32/Time.cpp"
 #include "Win32/Windowing.cpp"
 
