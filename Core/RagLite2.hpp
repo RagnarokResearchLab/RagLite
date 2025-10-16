@@ -33,12 +33,11 @@
 #error "Unsupported Compiler: Toolchain-specific code paths have yet to be ported"
 #endif
 
-#define RAGLITE_DEFAULT_APP PatternTest
-
 #ifdef NDEBUG
-// TODO: Add feature flags for release builds here
+#define RAGLITE_DEFAULT_APP DummyTest
 #else
 #define RAGLITE_DEBUG_ASSERTIONS
+#define RAGLITE_DEFAULT_APP PatternTest
 #define RAGLITE_PREDICTABLE_MEMORY
 #endif
 
