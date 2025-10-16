@@ -1,4 +1,5 @@
 @echo off
+setlocal enabledelayedexpansion
 
 set DEFAULT_BUILD_DIR=BuildArtifacts
 if not exist %DEFAULT_BUILD_DIR% mkdir %DEFAULT_BUILD_DIR%
@@ -6,6 +7,7 @@ if not exist %DEFAULT_BUILD_DIR% mkdir %DEFAULT_BUILD_DIR%
 set CPP_MAIN=Core\RagLite2.cpp
 set DEBUG_EXE=%DEFAULT_BUILD_DIR%/RagLite2Dbg.exe
 set RELEASE_EXE=%DEFAULT_BUILD_DIR%/RagLite2.exe
+set PROGRAM_DLLS=PatternTest
 set RUNTIME_LIBS=gdi32.lib shlwapi.lib user32.lib xinput.lib winmm.lib
 
 for /f "delims=" %%i in ('call git describe --always --dirty') do set GIT_COMMIT_HASH=\"%%i\"
@@ -81,6 +83,15 @@ set DEBUG_LINK_FLAGS=%DEBUG_LINK_FLAGS% /DEBUG
 set DEBUG_COMPILE_FLAGS=%DEBUG_COMPILE_FLAGS% %SHARED_COMPILE_FLAGS%
 set DEBUG_LINK_FLAGS=%DEBUG_LINK_FLAGS% %SHARED_LINK_FLAGS%
 
+for %%D in (%PROGRAM_DLLS%) do (
+	set DLL_MAIN=Core/%%D.cpp
+	set DEBUG_DLL=%DEFAULT_BUILD_DIR%/RagLite%%DDbg.dll
+	set RELEASE_DLL=%DEFAULT_BUILD_DIR%/RagLite%%D.dll
+	echo Compiling !DLL_MAIN! to create !DEBUG_DLL! and !RELEASE_DLL!...
+	cl %DEBUG_COMPILE_FLAGS% !DLL_MAIN! %RUNTIME_LIBS% /link /DLL %DEBUG_LINK_FLAGS% /out:!DEBUG_DLL! || exit /b
+	cl %RELEASE_COMPILE_FLAGS% !DLL_MAIN! %RUNTIME_LIBS% /link /DLL %RELEASE_LINK_FLAGS% /out:!RELEASE_DLL! || exit /b
+)
+
 echo The Ancient One speaketh:
 echo 	Let us now turn %CPP_MAIN% into %DEBUG_EXE%!
 echo 	Harken, mortal, as I prepare thy unholy incantation...
@@ -127,3 +138,5 @@ echo 	cl%RELEASE_COMPILE_FLAGS% %CPP_MAIN% %RUNTIME_LIBS% /link %RELEASE_LINK_FL
 echo --------------------------------------------------------------------------------------------------------
 cl %RELEASE_COMPILE_FLAGS% %CPP_MAIN% %RUNTIME_LIBS% /link %RELEASE_LINK_FLAGS% %ICON_RES% /out:%RELEASE_EXE% || exit /b
 echo --------------------------------------------------------------------------------------------------------
+
+endlocal
