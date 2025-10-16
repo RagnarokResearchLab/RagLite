@@ -62,7 +62,7 @@ set SHARED_LINK_FLAGS=%SHARED_LINK_FLAGS% /NOLOGO
 :: /NOIMPLIB			Skip import library generation (.lib files aren't needed to load DLLs at runtime)
 set SHARED_LINK_FLAGS=%SHARED_LINK_FLAGS% /NOIMPLIB
 
-:::::: Build debug binary
+:::::: Debug binaries
 set DEBUG_COMPILE_FLAGS=
 :: /FC					Displays the full path of source code files in diagnostic text
 set DEBUG_COMPILE_FLAGS=%DEBUG_COMPILE_FLAGS% /FC
@@ -85,24 +85,8 @@ set DEBUG_LINK_FLAGS=%DEBUG_LINK_FLAGS% /DEBUG
 set DEBUG_COMPILE_FLAGS=%DEBUG_COMPILE_FLAGS% %SHARED_COMPILE_FLAGS%
 set DEBUG_LINK_FLAGS=%DEBUG_LINK_FLAGS% %SHARED_LINK_FLAGS%
 
-for %%D in (%PROGRAM_DLLS%) do (
-	set DLL_MAIN=Core/%%D.cpp
-	set DEBUG_DLL=%DEFAULT_BUILD_DIR%/RagLite%%DDbg.dll
-	set RELEASE_DLL=%DEFAULT_BUILD_DIR%/RagLite%%D.dll
-	echo Compiling !DLL_MAIN! to create !DEBUG_DLL! and !RELEASE_DLL!...
-	cl %DEBUG_COMPILE_FLAGS% !DLL_MAIN! %RUNTIME_LIBS% /link /DLL %DEBUG_LINK_FLAGS% /out:!DEBUG_DLL! || exit /b
-	cl %RELEASE_COMPILE_FLAGS% !DLL_MAIN! %RUNTIME_LIBS% /link /DLL %RELEASE_LINK_FLAGS% /out:!RELEASE_DLL! || exit /b
-)
 
-echo The Ancient One speaketh:
-echo 	Let us now turn %CPP_MAIN% into %DEBUG_EXE%!
-echo 	Harken, mortal, as I prepare thy unholy incantation...
-echo 	cl%DEBUG_COMPILE_FLAGS% %CPP_MAIN% %RUNTIME_LIBS% /link %DEBUG_LINK_FLAGS% %ICON_RES% /out:%DEBUG_EXE%
-echo --------------------------------------------------------------------------------------------------------
-cl %DEBUG_COMPILE_FLAGS% %CPP_MAIN% %RUNTIME_LIBS% /link %DEBUG_LINK_FLAGS% %ICON_RES% /out:%DEBUG_EXE% || exit /b
-echo --------------------------------------------------------------------------------------------------------
-
-:::::: Build release binary
+:::::: Release binaries
 set RELEASE_COMPILE_FLAGS=
 :: /DNDEBUG				Disable runtime assertions (#define NDEBUG)
 set RELEASE_COMPILE_FLAGS=%RELEASE_COMPILE_FLAGS% /DNDEBUG
@@ -133,12 +117,35 @@ set RELEASE_LINK_FLAGS=%RELEASE_LINK_FLAGS% /OPT:ICF
 set RELEASE_COMPILE_FLAGS=%RELEASE_COMPILE_FLAGS% %SHARED_COMPILE_FLAGS%
 set RELEASE_LINK_FLAGS=%RELEASE_LINK_FLAGS% %SHARED_LINK_FLAGS%
 
-echo The Ancient One speaketh:
-echo 	Let us now turn %CPP_MAIN% into %RELEASE_EXE%!
-echo 	Harken, mortal, as I prepare thy unholy incantation...
-echo 	cl%RELEASE_COMPILE_FLAGS% %CPP_MAIN% %RUNTIME_LIBS% /link %RELEASE_LINK_FLAGS% %ICON_RES% /out:%RELEASE_EXE%
-echo --------------------------------------------------------------------------------------------------------
-cl %RELEASE_COMPILE_FLAGS% %CPP_MAIN% %RUNTIME_LIBS% /link %RELEASE_LINK_FLAGS% %ICON_RES% /out:%RELEASE_EXE% || exit /b
-echo --------------------------------------------------------------------------------------------------------
+call :msvcbuild !DEBUG_EXE! "%CPP_MAIN%" "%RUNTIME_LIBS%" "%DEBUG_COMPILE_FLAGS%" "%ICON_RES% %DEBUG_LINK_FLAGS%" || exit /b
+call :msvcbuild !RELEASE_EXE! "%CPP_MAIN%" "%RUNTIME_LIBS%" "%RELEASE_COMPILE_FLAGS%" "%ICON_RES% %RELEASE_LINK_FLAGS%" || exit /b
+
+for %%D in (%PROGRAM_DLLS%) do (
+	set DLL_MAIN=Core/%%D.cpp
+	set DEBUG_DLL=%DEFAULT_BUILD_DIR%/RagLite%%DDbg.dll
+	set RELEASE_DLL=%DEFAULT_BUILD_DIR%/RagLite%%D.dll
+	set NO_LIBS=""
+	call :msvcbuild !DEBUG_DLL! !DLL_MAIN! "%NO_LIBS%" "%DEBUG_COMPILE_FLAGS%" "/DLL %DEBUG_LINK_FLAGS%" || exit /b
+	call :msvcbuild !RELEASE_DLL! !DLL_MAIN! "%NO_LIBS%" "%RELEASE_COMPILE_FLAGS%" "/DLL %RELEASE_LINK_FLAGS%" || exit /b
+)
 
 endlocal
+exit /b
+
+:msvcbuild
+
+set BUILD_TARGET=%1
+set SOURCE_FILES=%~2
+set STATIC_LIBS=%~3
+set COMPILE_FLAGS=%~4
+set LINKAGE_FLAGS=%~5
+set BUILD_COMMAND=cl %COMPILE_FLAGS% %SOURCE_FILES% %STATIC_LIBS% /link %LINKAGE_FLAGS% /out:%BUILD_TARGET% || exit /b
+echo The Ancient One speaketh:
+echo 	Let us now turn %SOURCE_FILES% into %BUILD_TARGET%!
+echo 	Harken, mortal, as I prepare thy unholy incantation...
+echo 	%BUILD_COMMAND%
+echo --------------------------------------------------------------------------------------------------------
+%BUILD_COMMAND%
+echo --------------------------------------------------------------------------------------------------------
+
+exit /b
