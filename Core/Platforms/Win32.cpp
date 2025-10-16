@@ -77,7 +77,7 @@ INTERNAL const char* ArchitectureToDebugName(WORD wProcessorArchitecture) {
 
 #include "Win32/GamePad.cpp"
 #include "Win32/Keyboard.cpp"
-#include "Win32/Memory.cpp"
+#include "Win32/SystemMemory.cpp"
 #include "Win32/Time.cpp"
 #include "Win32/Windowing.cpp"
 
@@ -86,24 +86,7 @@ INTERNAL const char* ArchitectureToDebugName(WORD wProcessorArchitecture) {
 INTERNAL void PlatformRunSimulationStep() {
 	gamepad_state_t controllerInputs = {};
 	GamePadPollControllers(controllerInputs);
-	AdvanceSimulation(PLACEHOLDER_DEMO_APP, controllerInputs, GDI_BACKBUFFER.bitmap, CPU_PERFORMANCE_METRICS.applicationUptime);
-
-	size_t allocationSize = Megabytes(2);
-	if(!SystemMemoryCanAllocate(MAIN_MEMORY, allocationSize)) {
-		SystemMemoryReset(MAIN_MEMORY);
-	} else {
-		uint8* mainMemory = (uint8*)SystemMemoryAllocate(MAIN_MEMORY, allocationSize);
-		*mainMemory = 0xDE;
-		SystemMemoryDebugTouch(MAIN_MEMORY, mainMemory);
-	}
-
-	if(!SystemMemoryCanAllocate(TRANSIENT_MEMORY, 2 * allocationSize)) {
-		SystemMemoryReset(TRANSIENT_MEMORY);
-	} else {
-		uint8* transientMemory = (uint8*)SystemMemoryAllocate(TRANSIENT_MEMORY, 2 * allocationSize);
-		*transientMemory = 0xAB;
-		SystemMemoryDebugTouch(TRANSIENT_MEMORY, transientMemory);
-	}
+	AdvanceSimulation(PLACEHOLDER_DEMO_APP, controllerInputs, GDI_BACKBUFFER.bitmap, CPU_PERFORMANCE_METRICS.applicationUptime, MAIN_MEMORY, TRANSIENT_MEMORY);
 }
 
 INTERNAL void SurfacePresentFrameBuffer(gdi_surface_t& surface, gdi_offscreen_buffer_t& backBuffer) {
