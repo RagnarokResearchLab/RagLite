@@ -5,8 +5,8 @@ set DEFAULT_BUILD_DIR=BuildArtifacts
 if not exist %DEFAULT_BUILD_DIR% mkdir %DEFAULT_BUILD_DIR%
 
 set CPP_MAIN=Core\RagLite2.cpp
-set DEBUG_EXE=%DEFAULT_BUILD_DIR%/RagLite2Dbg.exe
-set RELEASE_EXE=%DEFAULT_BUILD_DIR%/RagLite2.exe
+set DEBUG_EXE=%DEFAULT_BUILD_DIR%/RagLiteWin32Dbg.exe
+set RELEASE_EXE=%DEFAULT_BUILD_DIR%/RagLiteWin32.exe
 set PROGRAM_DLLS=PatternTest DummyTest
 set RUNTIME_LIBS=gdi32.lib shlwapi.lib user32.lib xinput.lib winmm.lib
 
