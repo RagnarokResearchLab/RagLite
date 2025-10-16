@@ -770,26 +770,26 @@ INTERNAL void DebugDrawProcessorUsageOverlay(HDC& displayDeviceContext) {
 
 	lineY += DEBUG_OVERLAY_MARGIN_SIZE;
 
-	percentage messageProcessingPercentage = CPU_PERFORMANCE_METRICS.messageProcessingTime / CPU_PERFORMANCE_METRICS.frameTime;
-	StringCbPrintfA(formatBuffer, FORMAT_BUFFER_SIZE, "Message Processing: %.0f ms (%d%%)", CPU_PERFORMANCE_METRICS.messageProcessingTime, Percent(messageProcessingPercentage));
+	percentage percent = CPU_PERFORMANCE_METRICS.messageProcessingTime / CPU_PERFORMANCE_METRICS.frameTime;
+	StringCbPrintfA(formatBuffer, FORMAT_BUFFER_SIZE, "Message Processing: %.0f ms (%d%%)", CPU_PERFORMANCE_METRICS.messageProcessingTime, Percent(percent));
 	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, formatBuffer, lstrlenA(formatBuffer));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
-	percentage interfaceDrawPercentage = CPU_PERFORMANCE_METRICS.userInterfaceRenderTime / CPU_PERFORMANCE_METRICS.frameTime;
+	percent = CPU_PERFORMANCE_METRICS.userInterfaceRenderTime / CPU_PERFORMANCE_METRICS.frameTime;
 	StringCbPrintfA(formatBuffer, FORMAT_BUFFER_SIZE, "User Interface: %.0f ms (%d%%)", CPU_PERFORMANCE_METRICS.userInterfaceRenderTime,
-		Percent(interfaceDrawPercentage));
-	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, formatBuffer, lstrlenA(formatBuffer));
-	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
-	// TODO DRY
-	percentage worldRenderPercentage = CPU_PERFORMANCE_METRICS.surfaceBlitTime / CPU_PERFORMANCE_METRICS.frameTime;
-	StringCbPrintfA(formatBuffer, FORMAT_BUFFER_SIZE, "Surface Blit: %.0f ms (%d%%)", CPU_PERFORMANCE_METRICS.surfaceBlitTime,
-		Percent(worldRenderPercentage));
+		Percent(percent));
 	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, formatBuffer, lstrlenA(formatBuffer));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
-	percentage worldUpdatePercentage = CPU_PERFORMANCE_METRICS.simulationStepTime / CPU_PERFORMANCE_METRICS.frameTime;
-	StringCbPrintfA(formatBuffer, FORMAT_BUFFER_SIZE, "Simulation: %.0f ms (%d%%)", CPU_PERFORMANCE_METRICS.simulationStepTime,
-		Percent(worldUpdatePercentage));
+	percent = CPU_PERFORMANCE_METRICS.surfaceBlitTime / CPU_PERFORMANCE_METRICS.frameTime;
+	StringCbPrintfA(formatBuffer, FORMAT_BUFFER_SIZE, "Surface Blit: %.0f ms (%d%%)", CPU_PERFORMANCE_METRICS.surfaceBlitTime,
+		Percent(percent));
+	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, formatBuffer, lstrlenA(formatBuffer));
+	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
+
+	percent = CPU_PERFORMANCE_METRICS.simulationStepTime / CPU_PERFORMANCE_METRICS.frameTime;
+	StringCbPrintfA(formatBuffer, FORMAT_BUFFER_SIZE, "Simulation Step: %.0f ms (%d%%)", CPU_PERFORMANCE_METRICS.simulationStepTime,
+		Percent(percent));
 	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, formatBuffer, lstrlenA(formatBuffer));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
