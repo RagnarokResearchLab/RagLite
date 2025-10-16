@@ -86,7 +86,7 @@ INTERNAL const char* ArchitectureToDebugName(WORD wProcessorArchitecture) {
 INTERNAL void PlatformRunSimulationStep() {
 	gamepad_state_t controllerInputs = {};
 	GamePadPollControllers(controllerInputs);
-	AdvanceSimulation(PLACEHOLDER_DEMO_APP, controllerInputs, GDI_BACKBUFFER.bitmap);
+	AdvanceSimulation(PLACEHOLDER_DEMO_APP, controllerInputs, GDI_BACKBUFFER.bitmap, CPU_PERFORMANCE_METRICS.applicationUptime);
 
 	size_t allocationSize = Megabytes(2);
 	if(!SystemMemoryCanAllocate(MAIN_MEMORY, allocationSize)) {
@@ -104,8 +104,6 @@ INTERNAL void PlatformRunSimulationStep() {
 		*transientMemory = 0xAB;
 		SystemMemoryDebugTouch(TRANSIENT_MEMORY, transientMemory);
 	}
-
-	DebugDrawUpdateBackgroundPattern(CPU_PERFORMANCE_METRICS.applicationUptime);
 }
 
 INTERNAL void SurfacePresentFrameBuffer(gdi_surface_t& surface, gdi_offscreen_buffer_t& backBuffer) {

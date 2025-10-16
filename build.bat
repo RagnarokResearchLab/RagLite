@@ -1,4 +1,5 @@
 @echo off
+setlocal enabledelayedexpansion
 
 set DEFAULT_BUILD_DIR=BuildArtifacts
 if not exist %DEFAULT_BUILD_DIR% mkdir %DEFAULT_BUILD_DIR%
@@ -6,6 +7,7 @@ if not exist %DEFAULT_BUILD_DIR% mkdir %DEFAULT_BUILD_DIR%
 set CPP_MAIN=Core\RagLite2.cpp
 set DEBUG_EXE=%DEFAULT_BUILD_DIR%/RagLite2Dbg.exe
 set RELEASE_EXE=%DEFAULT_BUILD_DIR%/RagLite2.exe
+set PROGRAM_DLLS=PatternTest DummyTest
 set RUNTIME_LIBS=gdi32.lib shlwapi.lib user32.lib xinput.lib winmm.lib
 
 for /f "delims=" %%i in ('call git describe --always --dirty') do set GIT_COMMIT_HASH=\"%%i\"
@@ -38,7 +40,7 @@ set SHARED_COMPILE_FLAGS=%SHARED_COMPILE_FLAGS% /options:strict
 :: /W4					Enable informational warnings (levels 0 through 4)
 set SHARED_COMPILE_FLAGS=%SHARED_COMPILE_FLAGS% /W4
 :: 						...except useless ones
-set SHARED_COMPILE_FLAGS=%SHARED_COMPILE_FLAGS% /wd4189 /wd4100
+set SHARED_COMPILE_FLAGS=%SHARED_COMPILE_FLAGS% /wd4189 /wd4100 /wd4505
 :: /WX					Treat all warnings as errors
 set SHARED_COMPILE_FLAGS=%SHARED_COMPILE_FLAGS% /WX
 :: /Zc:strictStrings	Require const qualifier for pointers initialized via string literals
@@ -57,8 +59,10 @@ set SHARED_LINK_FLAGS=%SHARED_LINK_FLAGS% /MANIFEST:EMBED
 set SHARED_LINK_FLAGS=%SHARED_LINK_FLAGS% /noexp
 :: /NOLOGO				Prevents display of the copyright message and version number
 set SHARED_LINK_FLAGS=%SHARED_LINK_FLAGS% /NOLOGO
+:: /NOIMPLIB			Skip import library generation (.lib files aren't needed to load DLLs at runtime)
+set SHARED_LINK_FLAGS=%SHARED_LINK_FLAGS% /NOIMPLIB
 
-:::::: Build debug binary
+:::::: Debug binaries
 set DEBUG_COMPILE_FLAGS=
 :: /FC					Displays the full path of source code files in diagnostic text
 set DEBUG_COMPILE_FLAGS=%DEBUG_COMPILE_FLAGS% /FC
@@ -81,15 +85,8 @@ set DEBUG_LINK_FLAGS=%DEBUG_LINK_FLAGS% /DEBUG
 set DEBUG_COMPILE_FLAGS=%DEBUG_COMPILE_FLAGS% %SHARED_COMPILE_FLAGS%
 set DEBUG_LINK_FLAGS=%DEBUG_LINK_FLAGS% %SHARED_LINK_FLAGS%
 
-echo The Ancient One speaketh:
-echo 	Let us now turn %CPP_MAIN% into %DEBUG_EXE%!
-echo 	Harken, mortal, as I prepare thy unholy incantation...
-echo 	cl%DEBUG_COMPILE_FLAGS% %CPP_MAIN% %RUNTIME_LIBS% /link %DEBUG_LINK_FLAGS% %ICON_RES% /out:%DEBUG_EXE%
-echo --------------------------------------------------------------------------------------------------------
-cl %DEBUG_COMPILE_FLAGS% %CPP_MAIN% %RUNTIME_LIBS% /link %DEBUG_LINK_FLAGS% %ICON_RES% /out:%DEBUG_EXE% || exit /b
-echo --------------------------------------------------------------------------------------------------------
 
-:::::: Build release binary
+:::::: Release binaries
 set RELEASE_COMPILE_FLAGS=
 :: /DNDEBUG				Disable runtime assertions (#define NDEBUG)
 set RELEASE_COMPILE_FLAGS=%RELEASE_COMPILE_FLAGS% /DNDEBUG
@@ -120,10 +117,35 @@ set RELEASE_LINK_FLAGS=%RELEASE_LINK_FLAGS% /OPT:ICF
 set RELEASE_COMPILE_FLAGS=%RELEASE_COMPILE_FLAGS% %SHARED_COMPILE_FLAGS%
 set RELEASE_LINK_FLAGS=%RELEASE_LINK_FLAGS% %SHARED_LINK_FLAGS%
 
+call :msvcbuild !DEBUG_EXE! "%CPP_MAIN%" "%RUNTIME_LIBS%" "%DEBUG_COMPILE_FLAGS%" "%ICON_RES% %DEBUG_LINK_FLAGS%" || exit /b
+call :msvcbuild !RELEASE_EXE! "%CPP_MAIN%" "%RUNTIME_LIBS%" "%RELEASE_COMPILE_FLAGS%" "%ICON_RES% %RELEASE_LINK_FLAGS%" || exit /b
+
+for %%D in (%PROGRAM_DLLS%) do (
+	set DLL_MAIN=Core/%%D.cpp
+	set DEBUG_DLL=%DEFAULT_BUILD_DIR%/RagLite%%DDbg.dll
+	set RELEASE_DLL=%DEFAULT_BUILD_DIR%/RagLite%%D.dll
+	set NO_LIBS=""
+	call :msvcbuild !DEBUG_DLL! !DLL_MAIN! "%NO_LIBS%" "%DEBUG_COMPILE_FLAGS%" "/DLL %DEBUG_LINK_FLAGS%" || exit /b
+	call :msvcbuild !RELEASE_DLL! !DLL_MAIN! "%NO_LIBS%" "%RELEASE_COMPILE_FLAGS%" "/DLL %RELEASE_LINK_FLAGS%" || exit /b
+)
+
+endlocal
+exit /b
+
+:msvcbuild
+
+set BUILD_TARGET=%1
+set SOURCE_FILES=%~2
+set STATIC_LIBS=%~3
+set COMPILE_FLAGS=%~4
+set LINKAGE_FLAGS=%~5
+set BUILD_COMMAND=cl %COMPILE_FLAGS% %SOURCE_FILES% %STATIC_LIBS% /link %LINKAGE_FLAGS% /out:%BUILD_TARGET% || exit /b
 echo The Ancient One speaketh:
-echo 	Let us now turn %CPP_MAIN% into %RELEASE_EXE%!
+echo 	Let us now turn %SOURCE_FILES% into %BUILD_TARGET%!
 echo 	Harken, mortal, as I prepare thy unholy incantation...
-echo 	cl%RELEASE_COMPILE_FLAGS% %CPP_MAIN% %RUNTIME_LIBS% /link %RELEASE_LINK_FLAGS% %ICON_RES% /out:%RELEASE_EXE%
+echo 	%BUILD_COMMAND%
 echo --------------------------------------------------------------------------------------------------------
-cl %RELEASE_COMPILE_FLAGS% %CPP_MAIN% %RUNTIME_LIBS% /link %RELEASE_LINK_FLAGS% %ICON_RES% /out:%RELEASE_EXE% || exit /b
+%BUILD_COMMAND%
 echo --------------------------------------------------------------------------------------------------------
+
+exit /b

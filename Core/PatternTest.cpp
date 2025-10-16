@@ -1,5 +1,4 @@
-// TODO Eliminate this
-#include <math.h>
+#include "RagLite2.hpp"
 
 typedef enum : uint8 {
 	PATTERN_SHIFTING_GRADIENT,
@@ -177,7 +176,7 @@ INTERNAL void DebugDrawIntoFrameBuffer(offscreen_buffer_t& bitmap, int paramA,
 	}
 }
 
-INTERNAL void AdvanceSimulation(simulation_state_t& simulation, gamepad_state_t& controllerInputs, offscreen_buffer_t& bitmap) {
+EXPORT void AdvanceSimulation(simulation_state_t& simulation, gamepad_state_t& controllerInputs, offscreen_buffer_t& bitmap, milliseconds uptime) {
 	simulation.offsetX += controllerInputs.stickX >> 12;
 	simulation.offsetY += controllerInputs.stickY >> 12;
 
@@ -187,4 +186,5 @@ INTERNAL void AdvanceSimulation(simulation_state_t& simulation, gamepad_state_t&
 	simulation.offsetY++;
 
 	DebugDrawIntoFrameBuffer(bitmap, simulation.offsetX, simulation.offsetY);
+	DebugDrawUpdateBackgroundPattern(uptime);
 }

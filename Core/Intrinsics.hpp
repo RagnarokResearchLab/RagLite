@@ -8,6 +8,8 @@ GLOBAL char CPU_BRAND_STRING[0x40] = { "N/A (__cpuid intrinsic not yet supported
 
 #ifdef RAGLITE_COMPILER_MSVC
 
+#define EXPORT extern "C" __declspec(dllexport)
+
 INTERNAL void IntrinsicsReadCPUID() {
 
 	__cpuid(CPU_INFO_MASK, 0x80000000);
