@@ -2,16 +2,6 @@
 
 #define TODO(msg) OutputDebugStringA(msg);
 
-// TODO: Replace these with the actual game/application state later
-typedef struct volatile_game_state {
-	int32 offsetX;
-	int32 offsetY;
-} game_state_t;
-GLOBAL game_state_t PLACEHOLDER_DEMO_APP = {
-	.offsetX = 0,
-	.offsetY = 0,
-};
-
 constexpr size_t MAX_ERROR_MSG_SIZE = 512;
 GLOBAL TCHAR SYSTEM_ERROR_MESSAGE[MAX_ERROR_MSG_SIZE];
 
@@ -84,7 +74,6 @@ INTERNAL const char* ArchitectureToDebugName(WORD wProcessorArchitecture) {
 }
 
 #include "Win32/DebugDraw.hpp"
-#include "Win32/Memory.hpp"
 
 #include "Win32/GamePad.cpp"
 #include "Win32/Keyboard.cpp"
@@ -94,14 +83,39 @@ INTERNAL const char* ArchitectureToDebugName(WORD wProcessorArchitecture) {
 
 #include "Win32/DebugDraw.cpp"
 
+INTERNAL void PlatformRunSimulationStep() {
+	gamepad_state_t controllerInputs = {};
+	GamePadPollControllers(controllerInputs);
+	AdvanceSimulation(PLACEHOLDER_DEMO_APP, controllerInputs, GDI_BACKBUFFER.bitmap);
+
+	size_t allocationSize = Megabytes(2);
+	if(!SystemMemoryCanAllocate(MAIN_MEMORY, allocationSize)) {
+		SystemMemoryReset(MAIN_MEMORY);
+	} else {
+		uint8* mainMemory = (uint8*)SystemMemoryAllocate(MAIN_MEMORY, allocationSize);
+		*mainMemory = 0xDE;
+		SystemMemoryDebugTouch(MAIN_MEMORY, mainMemory);
+	}
+
+	if(!SystemMemoryCanAllocate(TRANSIENT_MEMORY, 2 * allocationSize)) {
+		SystemMemoryReset(TRANSIENT_MEMORY);
+	} else {
+		uint8* transientMemory = (uint8*)SystemMemoryAllocate(TRANSIENT_MEMORY, 2 * allocationSize);
+		*transientMemory = 0xAB;
+		SystemMemoryDebugTouch(TRANSIENT_MEMORY, transientMemory);
+	}
+
+	DebugDrawUpdateBackgroundPattern(CPU_PERFORMANCE_METRICS.applicationUptime);
+}
+
 INTERNAL void SurfacePresentFrameBuffer(gdi_surface_t& surface, gdi_offscreen_buffer_t& backBuffer) {
 	if(!surface.displayDeviceContext || !surface.offscreenDeviceContext || !backBuffer.handle) {
 		// Minimized or not yet initialized
 		return;
 	}
 
-	int srcW = backBuffer.width;
-	int srcH = backBuffer.height;
+	int srcW = backBuffer.bitmap.width;
+	int srcH = backBuffer.bitmap.height;
 	int destW = surface.width;
 	int destH = surface.height;
 	if(!StretchBlt(surface.displayDeviceContext, 0, 0, destW, destH, surface.offscreenDeviceContext,
@@ -122,53 +136,51 @@ INTERNAL void SurfaceDrawDebugUI(gdi_surface_t& doubleBufferedWindowSurface) {
 INTERNAL void MainWindowRedrawEverything(HWND& window) {
 	if(IsIconic(window)) {
 		// Minimized - no point in drawing this frame
-		CPU_PERFORMANCE_METRICS.worldRenderTime = 0;
+		CPU_PERFORMANCE_METRICS.surfaceBlitTime = 0;
 		CPU_PERFORMANCE_METRICS.userInterfaceRenderTime = 0;
 		return;
 	}
 
 	hardware_tick_t before = PerformanceMetricsNow();
-	DebugDrawIntoFrameBuffer(GDI_BACKBUFFER, PLACEHOLDER_DEMO_APP.offsetX, PLACEHOLDER_DEMO_APP.offsetY);
-	CPU_PERFORMANCE_METRICS.worldRenderTime = PerformanceMetricsGetTimeSince(before);
-
-	before = PerformanceMetricsNow();
 	SurfaceDrawDebugUI(GDI_SURFACE);
 	CPU_PERFORMANCE_METRICS.userInterfaceRenderTime = PerformanceMetricsGetTimeSince(before);
 
+	before = PerformanceMetricsNow();
 	SurfacePresentFrameBuffer(GDI_SURFACE, GDI_BACKBUFFER);
+	CPU_PERFORMANCE_METRICS.surfaceBlitTime = PerformanceMetricsGetTimeSince(before);
 }
 
-INTERNAL void SurfaceResizeBackBuffer(gdi_surface_t& surface, gdi_offscreen_buffer_t& bitmap) {
+INTERNAL void SurfaceResizeBackBuffer(gdi_surface_t& surface, gdi_offscreen_buffer_t& backBuffer) {
 
-	DeleteObject(bitmap.handle);
-	bitmap.handle = NULL;
-	bitmap.pixelBuffer = NULL;
+	DeleteObject(backBuffer.handle);
+	backBuffer.handle = NULL;
+	backBuffer.bitmap.pixelBuffer = NULL;
 
-	bitmap.width = surface.width;
-	bitmap.height = surface.height;
-	bitmap.bytesPerPixel = 4;
-	bitmap.stride = surface.width * bitmap.bytesPerPixel;
+	backBuffer.bitmap.width = surface.width;
+	backBuffer.bitmap.height = surface.height;
+	backBuffer.bitmap.bytesPerPixel = 4;
+	backBuffer.bitmap.stride = surface.width * backBuffer.bitmap.bytesPerPixel;
 
-	ZeroMemory(&bitmap.info, sizeof(bitmap.info));
-	bitmap.info.bmiHeader.biSize = sizeof(bitmap.info.bmiHeader);
-	bitmap.info.bmiHeader.biWidth = surface.width;
-	bitmap.info.bmiHeader.biHeight = -surface.height; // Inverted Y
-	bitmap.info.bmiHeader.biPlanes = 1;
-	bitmap.info.bmiHeader.biBitCount = 32;
-	bitmap.info.bmiHeader.biCompression = BI_RGB;
+	ZeroMemory(&backBuffer.info, sizeof(backBuffer.info));
+	backBuffer.info.bmiHeader.biSize = sizeof(backBuffer.info.bmiHeader);
+	backBuffer.info.bmiHeader.biWidth = surface.width;
+	backBuffer.info.bmiHeader.biHeight = -surface.height; // Inverted Y
+	backBuffer.info.bmiHeader.biPlanes = 1;
+	backBuffer.info.bmiHeader.biBitCount = 32;
+	backBuffer.info.bmiHeader.biCompression = BI_RGB;
 
 	DeleteObject(surface.offscreenDeviceContext);
 	surface.offscreenDeviceContext = CreateCompatibleDC(surface.displayDeviceContext);
 	ASSUME(surface.offscreenDeviceContext, "Failed to create compatible memory DC");
 
-	bitmap.handle = CreateDIBSection(surface.offscreenDeviceContext, &bitmap.info,
-		DIB_RGB_COLORS, &bitmap.pixelBuffer, NULL, 0);
-	ASSUME(bitmap.handle, "Failed to create DIB handle");
-	ASSUME(bitmap.pixelBuffer, "Failed to create DIB buffer");
+	backBuffer.handle = CreateDIBSection(surface.offscreenDeviceContext, &backBuffer.info,
+		DIB_RGB_COLORS, &backBuffer.bitmap.pixelBuffer, NULL, 0);
+	ASSUME(backBuffer.handle, "Failed to create DIB handle");
+	ASSUME(backBuffer.bitmap.pixelBuffer, "Failed to create DIB buffer");
 
-	SelectObject(surface.offscreenDeviceContext, bitmap.handle);
+	SelectObject(surface.offscreenDeviceContext, backBuffer.handle);
 
-	uint32* pixelArray = (uint32*)bitmap.pixelBuffer;
+	uint32* pixelArray = (uint32*)backBuffer.bitmap.pixelBuffer;
 	size_t count = (size_t)surface.width * (size_t)surface.height;
 	for(size_t i = 0; i < count; ++i)
 		pixelArray[i] = UNINITIALIZED_WINDOW_COLOR.bytes;
@@ -203,7 +215,7 @@ LRESULT CALLBACK MainWindowProcessIncomingMessage(HWND window, UINT message, WPA
 		case WM_SIZE: {
 			MainWindowCreateFrameBuffers(window, GDI_SURFACE, GDI_BACKBUFFER);
 			// NOTE: Updating again allows the simulation to appear more fluid (evaluate UX later)
-			DebugDrawUpdateBackgroundPattern();
+			PlatformRunSimulationStep();
 			MainWindowRedrawEverything(window);
 		} break;
 
@@ -389,34 +401,9 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE, LPSTR,
 
 		hardware_tick_t before = PerformanceMetricsNow();
 		if(!APPLICATION_SHOULD_PAUSE) {
-
-			// NOTE: Application/game state updates should go here (later)
-			PLACEHOLDER_DEMO_APP.offsetX++;
-			PLACEHOLDER_DEMO_APP.offsetY++;
-			PLACEHOLDER_DEMO_APP.offsetY++;
-
-			size_t allocationSize = Megabytes(2);
-			if(!SystemMemoryCanAllocate(MAIN_MEMORY, allocationSize)) {
-				SystemMemoryReset(MAIN_MEMORY);
-			} else {
-				uint8* mainMemory = (uint8*)SystemMemoryAllocate(MAIN_MEMORY, allocationSize);
-				*mainMemory = 0xDE;
-				SystemMemoryDebugTouch(MAIN_MEMORY, mainMemory);
-			}
-
-			if(!SystemMemoryCanAllocate(TRANSIENT_MEMORY, 2 * allocationSize)) {
-				SystemMemoryReset(TRANSIENT_MEMORY);
-			} else {
-
-				uint8* transientMemory = (uint8*)SystemMemoryAllocate(TRANSIENT_MEMORY, 2 * allocationSize);
-				*transientMemory = 0xAB;
-				SystemMemoryDebugTouch(TRANSIENT_MEMORY, transientMemory);
-			}
-
-			GamePadPollControllers(PLACEHOLDER_DEMO_APP.offsetX, PLACEHOLDER_DEMO_APP.offsetY);
-			DebugDrawUpdateBackgroundPattern();
+			PlatformRunSimulationStep();
 		}
-		CPU_PERFORMANCE_METRICS.worldUpdateTime = PerformanceMetricsGetTimeSince(before);
+		CPU_PERFORMANCE_METRICS.simulationStepTime = PerformanceMetricsGetTimeSince(before);
 
 		MainWindowRedrawEverything(mainWindow);
 

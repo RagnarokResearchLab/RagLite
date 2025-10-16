@@ -1,6 +1,3 @@
-// TODO Eliminate this
-#include <math.h>
-
 constexpr int DISPLAY_SCREEN_WIDTH = 1920;
 GLOBAL int DEBUG_OVERLAY_LINE_HEIGHT = 18;
 constexpr int DEBUG_OVERLAY_MARGIN_SIZE = 8;
@@ -55,8 +52,8 @@ constexpr gdi_color_t COMMITTED_MEMORY_BLOCK_COLOR = RGB_COLOR_GRAY;
 constexpr gdi_color_t RESERVED_MEMORY_BLOCK_COLOR = RGB_COLOR_DARK;
 
 INTERNAL inline void DebugDrawClipToScreen(gdi_offscreen_buffer_t& backBuffer, int& x, int& y) {
-	x = ClampToInterval(x, 0, backBuffer.width - 1);
-	y = ClampToInterval(y, 0, backBuffer.height - 1);
+	x = ClampToInterval(x, 0, backBuffer.bitmap.width - 1);
+	y = ClampToInterval(y, 0, backBuffer.bitmap.height - 1);
 }
 
 INTERNAL inline void DebugDrawClipPointToRectangle(int& x, int& y, RECT& rectangle) {
@@ -65,21 +62,21 @@ INTERNAL inline void DebugDrawClipPointToRectangle(int& x, int& y, RECT& rectang
 }
 
 INTERNAL inline void DebugDrawClipPointToScreen(gdi_offscreen_buffer_t& backBuffer, int& x, int& y) {
-	x = ClampToInterval(x, 0, backBuffer.width - 1);
-	y = ClampToInterval(y, 0, backBuffer.height - 1);
+	x = ClampToInterval(x, 0, backBuffer.bitmap.width - 1);
+	y = ClampToInterval(y, 0, backBuffer.bitmap.height - 1);
 }
 
 INTERNAL inline void DebugDrawClipRectangleToScreen(gdi_offscreen_buffer_t& backBuffer, RECT& rectangle) {
-	rectangle.left = ClampToInterval(rectangle.left, 0, backBuffer.width - 1);
-	rectangle.right = ClampToInterval(rectangle.right, 0, backBuffer.width - 1);
-	rectangle.top = ClampToInterval(rectangle.top, 0, backBuffer.height - 1);
-	rectangle.bottom = ClampToInterval(rectangle.bottom, 0, backBuffer.height - 1);
+	rectangle.left = ClampToInterval(rectangle.left, 0, backBuffer.bitmap.width - 1);
+	rectangle.right = ClampToInterval(rectangle.right, 0, backBuffer.bitmap.width - 1);
+	rectangle.top = ClampToInterval(rectangle.top, 0, backBuffer.bitmap.height - 1);
+	rectangle.bottom = ClampToInterval(rectangle.bottom, 0, backBuffer.bitmap.height - 1);
 }
 
 INTERNAL inline bool DebugDrawIsPointOffscreen(int x, int y) {
-	if(x >= GDI_BACKBUFFER.width) return true;
+	if(x >= GDI_BACKBUFFER.bitmap.width) return true;
 	if(x <= 0) return true;
-	if(y >= GDI_BACKBUFFER.height) return true;
+	if(y >= GDI_BACKBUFFER.bitmap.height) return true;
 	if(y <= 0) return true;
 
 	return false;
@@ -89,9 +86,9 @@ INTERNAL inline bool DebugDrawIsRectangleOffscreen(RECT& rectangle) {
 	ASSUME(rectangle.left <= rectangle.right, "Unexpected horizontal orientation (don't do this, it's confusing)");
 	ASSUME(rectangle.bottom >= rectangle.top, "Unexpected vertical orientation (don't do this, it's confusing)");
 
-	if(rectangle.left >= GDI_BACKBUFFER.width) return true;
+	if(rectangle.left >= GDI_BACKBUFFER.bitmap.width) return true;
 	if(rectangle.right <= 0) return true;
-	if(rectangle.top >= GDI_BACKBUFFER.height) return true;
+	if(rectangle.top >= GDI_BACKBUFFER.bitmap.height) return true;
 	if(rectangle.bottom <= 0) return true;
 
 	return false;
@@ -143,7 +140,7 @@ INTERNAL inline void DebugDrawBlendPixelRGBA(gdi_color_t& source, gdi_color_t& d
 }
 
 INTERNAL inline void DebugDrawSetPixelColor(int x, int y, gdi_color_t source) {
-	if(x < 0 || y < 0 || x >= (int)GDI_BACKBUFFER.width || y >= (int)GDI_BACKBUFFER.height) {
+	if(x < 0 || y < 0 || x >= (int)GDI_BACKBUFFER.bitmap.width || y >= (int)GDI_BACKBUFFER.bitmap.height) {
 		return;
 	}
 
@@ -151,9 +148,9 @@ INTERNAL inline void DebugDrawSetPixelColor(int x, int y, gdi_color_t source) {
 		return;
 	}
 
-	uint32* pixelArray = (uint32*)GDI_BACKBUFFER.pixelBuffer;
+	uint32* pixelArray = (uint32*)GDI_BACKBUFFER.bitmap.pixelBuffer;
 	DebugDrawClipPointToScreen(GDI_BACKBUFFER, x, y);
-	size_t pixelIndex = (size_t)x + (size_t)y * (size_t)GDI_BACKBUFFER.width;
+	size_t pixelIndex = (size_t)x + (size_t)y * (size_t)GDI_BACKBUFFER.bitmap.width;
 	gdi_color_t blended = source;
 	if(source.alpha == 255) {
 		blended = source;
@@ -324,23 +321,23 @@ INTERNAL inline void DebugDrawVerticalLine(HDC& displayDeviceContext, int startX
 	int minY = Min(startY, endY);
 	int maxY = Max(startY, endY);
 
-	uint32* pixelArray = (uint32*)GDI_BACKBUFFER.pixelBuffer;
+	uint32* pixelArray = (uint32*)GDI_BACKBUFFER.bitmap.pixelBuffer;
 	DebugDrawClipPointToScreen(GDI_BACKBUFFER, startX, minY);
 	DebugDrawClipPointToScreen(GDI_BACKBUFFER, endX, maxY);
 	for(size_t y = minY; y <= maxY; ++y) { // For now: End is inclusive (GDI convention)
-		pixelArray[startX + y * GDI_BACKBUFFER.width] = color.bytes;
+		pixelArray[startX + y * GDI_BACKBUFFER.bitmap.width] = color.bytes;
 	}
 }
 
 INTERNAL inline void DebugDrawSolidColorRectangle(HDC& displayDeviceContext, RECT& rectangle, gdi_color_t color) {
 	if(DebugDrawIsRectangleOffscreen(rectangle)) return;
 
-	uint32* pixelArray = (uint32*)GDI_BACKBUFFER.pixelBuffer;
+	uint32* pixelArray = (uint32*)GDI_BACKBUFFER.bitmap.pixelBuffer;
 	DebugDrawClipRectangleToScreen(GDI_BACKBUFFER, rectangle);
 
 	for(size_t y = rectangle.top; y < rectangle.bottom; ++y) {
 		for(size_t x = rectangle.left; x < rectangle.right; ++x) {
-			pixelArray[x + y * GDI_BACKBUFFER.width] = color.bytes;
+			pixelArray[x + y * GDI_BACKBUFFER.bitmap.width] = color.bytes;
 		}
 	}
 }
@@ -348,23 +345,23 @@ INTERNAL inline void DebugDrawSolidColorRectangle(HDC& displayDeviceContext, REC
 INTERNAL inline void DebugDrawFramedColorRectangle(HDC& displayDeviceContext, RECT& rectangle, gdi_color_t rgbColor) {
 	if(DebugDrawIsRectangleOffscreen(rectangle)) return;
 
-	uint32* pixelArray = (uint32*)GDI_BACKBUFFER.pixelBuffer;
+	uint32* pixelArray = (uint32*)GDI_BACKBUFFER.bitmap.pixelBuffer;
 	DebugDrawClipRectangleToScreen(GDI_BACKBUFFER, rectangle);
 
 	// Top edge
 	for(int x = rectangle.left; x < rectangle.right; ++x) {
-		pixelArray[x + rectangle.top * GDI_BACKBUFFER.width] = rgbColor.bytes;
+		pixelArray[x + rectangle.top * GDI_BACKBUFFER.bitmap.width] = rgbColor.bytes;
 	}
 
 	// Bottom edge
 	for(int x = rectangle.left; x < rectangle.right; ++x) {
-		pixelArray[x + rectangle.bottom * GDI_BACKBUFFER.width] = rgbColor.bytes;
+		pixelArray[x + rectangle.bottom * GDI_BACKBUFFER.bitmap.width] = rgbColor.bytes;
 	}
 
 	// Left and right edges
 	for(int y = rectangle.top; y < rectangle.bottom; ++y) {
-		pixelArray[rectangle.left + y * GDI_BACKBUFFER.width] = rgbColor.bytes;
-		pixelArray[rectangle.right + y * GDI_BACKBUFFER.width] = rgbColor.bytes;
+		pixelArray[rectangle.left + y * GDI_BACKBUFFER.bitmap.width] = rgbColor.bytes;
+		pixelArray[rectangle.right + y * GDI_BACKBUFFER.bitmap.width] = rgbColor.bytes;
 	}
 }
 
@@ -434,13 +431,13 @@ INTERNAL void DebugDrawHistoryGraph(HDC& displayDeviceContext, int topLeftX, int
 				DebugDrawVerticalLine(displayDeviceContext, lineStartX, lineStartY, lineStartX, lineEndY, RGB_COLOR_GOLD);
 				lineStartY = lineEndY;
 
-				filled = (percentage)(recorded.worldUpdateTime / recorded.frameTime);
+				filled = (percentage)(recorded.simulationStepTime / recorded.frameTime);
 				lineEndY = lineStartY - (int)(filled * barHeight) + 1;
 				DebugDrawClipPointToRectangle(lineEndX, lineEndY, panelRect);
 				DebugDrawVerticalLine(displayDeviceContext, lineStartX, lineStartY, lineStartX, lineEndY, RGB_COLOR_VIOLET);
 				lineStartY = lineEndY;
 
-				filled = (percentage)(recorded.worldRenderTime / recorded.frameTime);
+				filled = (percentage)(recorded.surfaceBlitTime / recorded.frameTime);
 				lineEndY = lineStartY - (int)(filled * barHeight) + 1;
 				DebugDrawClipPointToRectangle(lineEndX, lineEndY, panelRect);
 				DebugDrawVerticalLine(displayDeviceContext, lineStartX, lineStartY, lineStartX, lineEndY, RGB_COLOR_TURQUOISE);
@@ -773,26 +770,26 @@ INTERNAL void DebugDrawProcessorUsageOverlay(HDC& displayDeviceContext) {
 
 	lineY += DEBUG_OVERLAY_MARGIN_SIZE;
 
-	percentage messageProcessingPercentage = CPU_PERFORMANCE_METRICS.messageProcessingTime / CPU_PERFORMANCE_METRICS.frameTime;
-	StringCbPrintfA(formatBuffer, FORMAT_BUFFER_SIZE, "Message Processing: %.0f ms (%d%%)", CPU_PERFORMANCE_METRICS.messageProcessingTime, Percent(messageProcessingPercentage));
+	percentage percent = CPU_PERFORMANCE_METRICS.messageProcessingTime / CPU_PERFORMANCE_METRICS.frameTime;
+	StringCbPrintfA(formatBuffer, FORMAT_BUFFER_SIZE, "Message Processing: %.0f ms (%d%%)", CPU_PERFORMANCE_METRICS.messageProcessingTime, Percent(percent));
 	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, formatBuffer, lstrlenA(formatBuffer));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
-	percentage interfaceDrawPercentage = CPU_PERFORMANCE_METRICS.userInterfaceRenderTime / CPU_PERFORMANCE_METRICS.frameTime;
+	percent = CPU_PERFORMANCE_METRICS.userInterfaceRenderTime / CPU_PERFORMANCE_METRICS.frameTime;
 	StringCbPrintfA(formatBuffer, FORMAT_BUFFER_SIZE, "User Interface: %.0f ms (%d%%)", CPU_PERFORMANCE_METRICS.userInterfaceRenderTime,
-		Percent(interfaceDrawPercentage));
-	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, formatBuffer, lstrlenA(formatBuffer));
-	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
-	// TODO DRY
-	percentage worldRenderPercentage = CPU_PERFORMANCE_METRICS.worldRenderTime / CPU_PERFORMANCE_METRICS.frameTime;
-	StringCbPrintfA(formatBuffer, FORMAT_BUFFER_SIZE, "World Render: %.0f ms (%d%%)", CPU_PERFORMANCE_METRICS.worldRenderTime,
-		Percent(worldRenderPercentage));
+		Percent(percent));
 	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, formatBuffer, lstrlenA(formatBuffer));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
-	percentage worldUpdatePercentage = CPU_PERFORMANCE_METRICS.worldUpdateTime / CPU_PERFORMANCE_METRICS.frameTime;
-	StringCbPrintfA(formatBuffer, FORMAT_BUFFER_SIZE, "World Update: %.0f ms (%d%%)", CPU_PERFORMANCE_METRICS.worldUpdateTime,
-		Percent(worldUpdatePercentage));
+	percent = CPU_PERFORMANCE_METRICS.surfaceBlitTime / CPU_PERFORMANCE_METRICS.frameTime;
+	StringCbPrintfA(formatBuffer, FORMAT_BUFFER_SIZE, "Surface Blit: %.0f ms (%d%%)", CPU_PERFORMANCE_METRICS.surfaceBlitTime,
+		Percent(percent));
+	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, formatBuffer, lstrlenA(formatBuffer));
+	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
+
+	percent = CPU_PERFORMANCE_METRICS.simulationStepTime / CPU_PERFORMANCE_METRICS.frameTime;
+	StringCbPrintfA(formatBuffer, FORMAT_BUFFER_SIZE, "Simulation Step: %.0f ms (%d%%)", CPU_PERFORMANCE_METRICS.simulationStepTime,
+		Percent(percent));
 	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, formatBuffer, lstrlenA(formatBuffer));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
@@ -1017,171 +1014,4 @@ INTERNAL void DebugDrawKeyboardOverlay(HDC& displayDeviceContext) {
 	}
 
 	SelectObject(displayDeviceContext, oldFont);
-}
-
-INTERNAL void DebugDrawUpdateBackgroundPattern() {
-	DWORD ticks = GetTickCount();
-	seconds elapsed = (seconds)ticks / MILLISECONDS_PER_SECOND;
-	seconds updateInterval = 5.0f;
-
-	gdi_debug_pattern_t newPattern = (gdi_debug_pattern_t)(elapsed / updateInterval);
-	GDI_DEBUG_PATTERN = (gdi_debug_pattern_t)(newPattern % PATTERN_COUNT);
-}
-
-INTERNAL void DebugDrawUseMarchingGradientPattern(gdi_offscreen_buffer_t& bitmap,
-	int offsetBlue,
-	int offsetGreen) {
-	if(!bitmap.pixelBuffer)
-		return;
-
-	uint8* row = (uint8*)bitmap.pixelBuffer;
-	for(int y = 0; y < bitmap.height; ++y) {
-		uint32* pixel = (uint32*)row;
-		for(int x = 0; x < bitmap.width; ++x) {
-			uint8 blue = (x + offsetBlue) & 0xFF;
-			uint8 green = (y + offsetGreen) & 0xFF;
-
-			*pixel++ = ((green << 8) | blue);
-		}
-
-		row += bitmap.stride;
-	}
-}
-
-INTERNAL void DebugDrawUseRipplingSpiralPattern(gdi_offscreen_buffer_t& bitmap, int time,
-	int) {
-	if(!bitmap.pixelBuffer)
-		return;
-
-	uint8* row = (uint8*)bitmap.pixelBuffer;
-
-	for(int y = 0; y < bitmap.height; ++y) {
-		uint32* pixel = (uint32*)row;
-		for(int x = 0; x < bitmap.width; ++x) {
-
-			int centerX = bitmap.width / 2;
-			int centerY = bitmap.height / 2;
-			float dx = (float)(x - centerX);
-			float dy = (float)(y - centerY);
-			float dist = sqrtf(dx * dx + dy * dy);
-			float wave = 0.5f + 0.5f * sinf(dist / 5.0f - time * 0.1f);
-
-			uint8 blue = (uint8)(wave * 255);
-			uint8 green = (uint8)((1.0f - wave) * 255);
-			uint8 red = (uint8)((0.5f + 0.5f * sinf(time * 0.05f)) * 255);
-
-			*pixel++ = (red << 16) | (green << 8) | blue;
-		}
-		row += bitmap.stride;
-	}
-}
-
-INTERNAL void DebugDrawUseCheckeredFloorPattern(gdi_offscreen_buffer_t& bitmap, int time,
-	int) {
-	if(!bitmap.pixelBuffer)
-		return;
-
-	uint8* row = (uint8*)bitmap.pixelBuffer;
-
-	float angle = time * 0.02f;
-	float cosA = cosf(angle);
-	float sinA = sinf(angle);
-
-	int cx = bitmap.width / 2;
-	int cy = bitmap.height / 2;
-
-	int squareSize = 32;
-
-	for(int y = 0; y < bitmap.height; ++y) {
-		uint32* pixel = (uint32*)row;
-		for(int x = 0; x < bitmap.width; ++x) {
-			int rx = x - cx;
-			int ry = y - cy;
-
-			float rX = rx * cosA - ry * sinA;
-			float rY = rx * sinA + ry * cosA;
-
-			int checkerX = ((int)floorf(rX / squareSize)) & 1;
-			int checkerY = ((int)floorf(rY / squareSize)) & 1;
-
-			uint8 c = (checkerX ^ checkerY) ? (PROGRESS_BAR_WIDTH - 1) : 80;
-			*pixel++ = (c << 16) | (c << 8) | c;
-		}
-		row += bitmap.stride;
-	}
-}
-
-INTERNAL void DebugDrawUseColorGradientPattern(gdi_offscreen_buffer_t& bitmap, int,
-	int) {
-	if(!bitmap.pixelBuffer)
-		return;
-
-	uint8* row = (uint8*)bitmap.pixelBuffer;
-
-	int cx = bitmap.width / 2;
-	int cy = bitmap.height / 2;
-
-	for(int y = 0; y < bitmap.height; ++y) {
-		uint32* pixel = (uint32*)row;
-		for(int x = 0; x < bitmap.width; ++x) {
-			uint8 red = (uint8)((x * 255) / bitmap.width);
-			uint8 green = (uint8)((y * 255) / bitmap.height);
-			uint8 blue = 0;
-
-			if(x == cx || y == cy) {
-				red = green = blue = 255;
-			}
-
-			*pixel++ = (red << 16) | (green << 8) | blue;
-		}
-		row += bitmap.stride;
-	}
-}
-
-INTERNAL void DebugDrawUseMovingScanlinePattern(gdi_offscreen_buffer_t& bitmap, int time,
-	int) {
-	if(!bitmap.pixelBuffer)
-		return;
-
-	uint8* row = (uint8*)bitmap.pixelBuffer;
-
-	int gridSpacing = 32;
-	int scanY = (time / 2) % bitmap.height;
-
-	for(int y = 0; y < bitmap.height; ++y) {
-		uint32* pixel = (uint32*)row;
-		for(int x = 0; x < bitmap.width; ++x) {
-			uint8 c = 180;
-
-			if(x % gridSpacing == 0 || y % gridSpacing == 0)
-				c = 100;
-
-			if(y == scanY)
-				c = 255;
-
-			*pixel++ = (c << 16) | (c << 8) | c;
-		}
-		row += bitmap.stride;
-	}
-}
-
-INTERNAL void DebugDrawIntoFrameBuffer(gdi_offscreen_buffer_t& bitmap, int paramA,
-	int paramB) {
-	switch(GDI_DEBUG_PATTERN) {
-		case PATTERN_SHIFTING_GRADIENT:
-			DebugDrawUseMarchingGradientPattern(bitmap, paramA, paramB);
-			break;
-		case PATTERN_CIRCULAR_RIPPLE:
-			DebugDrawUseRipplingSpiralPattern(bitmap, paramA, paramB);
-			break;
-		case PATTERN_CHECKERBOARD:
-			DebugDrawUseCheckeredFloorPattern(bitmap, paramA, paramB);
-			break;
-		case PATTERN_AXIS_GRADIENTS:
-			DebugDrawUseColorGradientPattern(bitmap, paramA, paramB);
-			break;
-		case PATTERN_GRID_SCANLINE:
-			DebugDrawUseMovingScanlinePattern(bitmap, paramA, paramB);
-			break;
-	}
 }
