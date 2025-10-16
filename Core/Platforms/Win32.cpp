@@ -413,7 +413,10 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE, LPSTR,
 				SystemMemoryDebugTouch(TRANSIENT_MEMORY, transientMemory);
 			}
 
-			GamePadPollControllers(PLACEHOLDER_DEMO_APP.offsetX, PLACEHOLDER_DEMO_APP.offsetY);
+			gamepad_state_t controllerInputs = {};
+			GamePadPollControllers(controllerInputs);
+			PLACEHOLDER_DEMO_APP.offsetX += controllerInputs.stickX >> 12;
+			PLACEHOLDER_DEMO_APP.offsetY += controllerInputs.stickY >> 12;
 			DebugDrawUpdateBackgroundPattern(CPU_PERFORMANCE_METRICS.applicationUptime);
 		}
 		CPU_PERFORMANCE_METRICS.worldUpdateTime = PerformanceMetricsGetTimeSince(before);

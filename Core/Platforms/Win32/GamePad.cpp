@@ -1,8 +1,13 @@
 #include <xinput.h>
 
+typedef struct gamepad_controller_state {
+	int16 stickX;
+	int16 stickY;
+} gamepad_state_t;
+
 GLOBAL bool APPLICATION_USES_GAMEPAD = false;
 
-void GamePadPollControllers(int& offsetX, int& offsetY) {
+INTERNAL void GamePadPollControllers(gamepad_state_t& controllerInputs) {
 
 	if(!APPLICATION_USES_GAMEPAD) return;
 
@@ -14,9 +19,7 @@ void GamePadPollControllers(int& offsetX, int& offsetY) {
 		}
 
 		XINPUT_GAMEPAD* gamePad = &gamePadButtonState.Gamepad;
-		int16 stickX = gamePad->sThumbLX;
-		int16 stickY = gamePad->sThumbLY;
-		offsetX += stickX >> 12;
-		offsetY += stickY >> 12;
+		controllerInputs.stickX = gamePad->sThumbLX;
+		controllerInputs.stickY = gamePad->sThumbLY;
 	}
 }
