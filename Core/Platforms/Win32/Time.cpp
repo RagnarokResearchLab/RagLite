@@ -13,7 +13,7 @@ typedef struct system_performance_metrics {
 	milliseconds suspendedTime;
 	milliseconds userInterfaceRenderTime;
 	milliseconds simulationStepTime;
-	milliseconds worldRenderTime;
+	milliseconds surfaceBlitTime;
 } performance_metrics_t;
 
 typedef struct system_performance_info {

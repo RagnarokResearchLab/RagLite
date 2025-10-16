@@ -86,7 +86,7 @@ INTERNAL const char* ArchitectureToDebugName(WORD wProcessorArchitecture) {
 INTERNAL void PlatformRunSimulationStep() {
 	gamepad_state_t controllerInputs = {};
 	GamePadPollControllers(controllerInputs);
-	AdvanceSimulation(PLACEHOLDER_DEMO_APP, controllerInputs);
+	AdvanceSimulation(PLACEHOLDER_DEMO_APP, controllerInputs, GDI_BACKBUFFER.bitmap);
 
 	size_t allocationSize = Megabytes(2);
 	if(!SystemMemoryCanAllocate(MAIN_MEMORY, allocationSize)) {
@@ -136,20 +136,18 @@ INTERNAL void SurfaceDrawDebugUI(gdi_surface_t& doubleBufferedWindowSurface) {
 INTERNAL void MainWindowRedrawEverything(HWND& window) {
 	if(IsIconic(window)) {
 		// Minimized - no point in drawing this frame
-		CPU_PERFORMANCE_METRICS.worldRenderTime = 0;
+		CPU_PERFORMANCE_METRICS.surfaceBlitTime = 0;
 		CPU_PERFORMANCE_METRICS.userInterfaceRenderTime = 0;
 		return;
 	}
 
 	hardware_tick_t before = PerformanceMetricsNow();
-	DebugDrawIntoFrameBuffer(GDI_BACKBUFFER.bitmap, PLACEHOLDER_DEMO_APP.offsetX, PLACEHOLDER_DEMO_APP.offsetY);
-	CPU_PERFORMANCE_METRICS.worldRenderTime = PerformanceMetricsGetTimeSince(before);
-
-	before = PerformanceMetricsNow();
 	SurfaceDrawDebugUI(GDI_SURFACE);
 	CPU_PERFORMANCE_METRICS.userInterfaceRenderTime = PerformanceMetricsGetTimeSince(before);
 
+	before = PerformanceMetricsNow();
 	SurfacePresentFrameBuffer(GDI_SURFACE, GDI_BACKBUFFER);
+	CPU_PERFORMANCE_METRICS.surfaceBlitTime = PerformanceMetricsGetTimeSince(before);
 }
 
 INTERNAL void SurfaceResizeBackBuffer(gdi_surface_t& surface, gdi_offscreen_buffer_t& backBuffer) {
