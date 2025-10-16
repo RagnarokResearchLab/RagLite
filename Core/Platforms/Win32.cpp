@@ -89,20 +89,20 @@ INTERNAL void PlatformRunSimulationStep() {
 	AdvanceSimulation(PLACEHOLDER_DEMO_APP, controllerInputs, GDI_BACKBUFFER.bitmap, CPU_PERFORMANCE_METRICS.applicationUptime);
 
 	size_t allocationSize = Megabytes(2);
-	if(!SystemMemoryCanAllocate(MAIN_MEMORY, allocationSize)) {
-		SystemMemoryReset(MAIN_MEMORY);
+	if(!ArenaCanAllocate(MAIN_MEMORY, allocationSize)) {
+		ArenaResetAllocations(MAIN_MEMORY);
 	} else {
-		uint8* mainMemory = (uint8*)SystemMemoryAllocate(MAIN_MEMORY, allocationSize);
+		uint8* mainMemory = (uint8*)ArenaAllocateMemoryRegion(MAIN_MEMORY, allocationSize);
 		*mainMemory = 0xDE;
-		SystemMemoryDebugTouch(MAIN_MEMORY, mainMemory);
+		ArenaDebugTouchAddress(MAIN_MEMORY, mainMemory);
 	}
 
-	if(!SystemMemoryCanAllocate(TRANSIENT_MEMORY, 2 * allocationSize)) {
-		SystemMemoryReset(TRANSIENT_MEMORY);
+	if(!ArenaCanAllocate(TRANSIENT_MEMORY, 2 * allocationSize)) {
+		ArenaResetAllocations(TRANSIENT_MEMORY);
 	} else {
-		uint8* transientMemory = (uint8*)SystemMemoryAllocate(TRANSIENT_MEMORY, 2 * allocationSize);
+		uint8* transientMemory = (uint8*)ArenaAllocateMemoryRegion(TRANSIENT_MEMORY, 2 * allocationSize);
 		*transientMemory = 0xAB;
-		SystemMemoryDebugTouch(TRANSIENT_MEMORY, transientMemory);
+		ArenaDebugTouchAddress(TRANSIENT_MEMORY, transientMemory);
 	}
 }
 

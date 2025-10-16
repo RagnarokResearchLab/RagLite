@@ -28,7 +28,7 @@ typedef struct virtual_memory_arena {
 } memory_arena_t;
 
 // TBD Guard with feature flag (check if compiler removes when unused - assumption: yes)
-INTERNAL String SystemMemoryDebugUsage(memory_arena_t& arena) {
+INTERNAL String ArenaUsageToString(memory_arena_t& arena) {
 	switch(arena.lifetime) {
 		case UNUSED_PLACEHOLDER:
 			return StringLiteral("Unused (Placeholder)");
@@ -43,7 +43,7 @@ INTERNAL String SystemMemoryDebugUsage(memory_arena_t& arena) {
 	}
 }
 
-INTERNAL String SystemMemoryDebugLifetime(memory_arena_t& arena) {
+INTERNAL String ArenaLifetimeToString(memory_arena_t& arena) {
 	switch(arena.lifetime) {
 		case KEEP_FOREVER_MANUAL_RESET:
 			return StringLiteral("Forever (Global Arena)");
@@ -58,7 +58,7 @@ INTERNAL String SystemMemoryDebugLifetime(memory_arena_t& arena) {
 	}
 }
 
-INTERNAL void* SystemMemoryAllocate(memory_arena_t& arena, size_t allocationSize) {
+INTERNAL void* ArenaAllocateMemoryRegion(memory_arena_t& arena, size_t allocationSize) {
 	size_t totalUsed = arena.used + allocationSize;
 	ASSUME(totalUsed <= arena.reservedSize, "Attempting to allocate outside the reserved set");
 
@@ -69,17 +69,17 @@ INTERNAL void* SystemMemoryAllocate(memory_arena_t& arena, size_t allocationSize
 	return memoryRegionStartPointer;
 }
 
-INTERNAL bool SystemMemoryCanAllocate(memory_arena_t& arena, size_t allocationSize) {
+INTERNAL bool ArenaCanAllocate(memory_arena_t& arena, size_t allocationSize) {
 	if(arena.used + allocationSize > arena.reservedSize) return false;
 	return true;
 }
 
-void SystemMemoryReset(memory_arena_t& arena) {
+void ArenaResetAllocations(memory_arena_t& arena) {
 	arena.allocationCount = 0;
 	arena.used = 0;
 }
 
-INTERNAL inline void SystemMemoryDebugTouch(memory_arena_t& arena, uint8* address) {
+INTERNAL inline void ArenaDebugTouchAddress(memory_arena_t& arena, uint8* address) {
 	ASSUME(address >= arena.baseAddress, "Attempted to access an invalid arena offset");
 	size_t offset = address - (uint8*)arena.baseAddress;
 	// TODO: Update last accessed time
