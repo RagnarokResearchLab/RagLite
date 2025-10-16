@@ -225,14 +225,14 @@ dir BuildArtifacts
 --------------------------------------------------------------------------------------------------------
 XX/XX/XXXX  00:00    <DIR>          .
 XX/XX/XXXX  00:00    <DIR>          ..
-XX/XX/XXXX  00:00           183.808 RagLite2.exe
-XX/XX/XXXX  00:00           180.667 RagLite2.obj
+XX/XX/XXXX  00:00           183.808 RagLiteWin32.exe
+XX/XX/XXXX  00:00           180.667 RagLiteWin32.obj
 XX/XX/XXXX  00:00            50.776 RagLite2.res
-XX/XX/XXXX  00:00         1.024.512 RagLite2Dbg.exe
-XX/XX/XXXX  00:00         5.984.256 RagLite2Dbg.pdb
+XX/XX/XXXX  00:00         1.024.512 RagLiteWin32Dbg.exe
+XX/XX/XXXX  00:00         5.984.256 RagLiteWin32Dbg.pdb
 ```
 
-During local development, you can then run `RagLite2Dbg.exe` in a debugger of your choice.
+During local development, you can then run `RagLiteWin32Dbg.exe` in a debugger of your choice.
 
 > [!TIP]
 > If you're not already familiar, the [RAD Debugger](https://github.com/EpicGamesExt/raddebugger/) is definitely worth checking out!
