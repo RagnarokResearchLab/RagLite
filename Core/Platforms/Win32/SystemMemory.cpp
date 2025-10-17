@@ -14,7 +14,6 @@ INTERNAL void SystemMemoryInitializeArenas(size_t mainMemorySize, size_t transie
 	MAIN_MEMORY = {
 		.displayName = StringLiteral("Main Memory"),
 		.lifetime = KEEP_FOREVER_MANUAL_RESET,
-		.usage = PREALLOCATED_ON_LOAD,
 		.baseAddress = VirtualAlloc(baseAddress, mainMemorySize + transientMemorySize, allocationTypeFlags, memoryProtectionFlags),
 		.reservedSize = mainMemorySize,
 		.committedSize = 0,
@@ -25,7 +24,6 @@ INTERNAL void SystemMemoryInitializeArenas(size_t mainMemorySize, size_t transie
 	TRANSIENT_MEMORY = {
 		.displayName = StringLiteral("Transient Memory"),
 		.lifetime = KEEP_FOREVER_MANUAL_RESET,
-		.usage = PREALLOCATED_ON_LOAD,
 		.baseAddress = (uint8*)MAIN_MEMORY.baseAddress + mainMemorySize,
 		.reservedSize = transientMemorySize,
 		.committedSize = 0,
