@@ -975,7 +975,7 @@ INTERNAL void DebugDrawProcessorUsageOverlay(HDC& displayDeviceContext) {
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
 	lineY += DEBUG_OVERLAY_MARGIN_SIZE;
-	StringCbPrintfA(formatBuffer, FORMAT_BUFFER_SIZE, "Page Size: %u KB (Allocation Granularity: %u KB)", CPU_PERFORMANCE_INFO.pageSize, CPU_PERFORMANCE_INFO.allocationGranularity / Kilobytes(1));
+	StringCbPrintfA(formatBuffer, FORMAT_BUFFER_SIZE, "Page Size: %u KB (Allocation Granularity: %u KB)", CPU_PERFORMANCE_INFO.pageSize / Kilobytes(1), CPU_PERFORMANCE_INFO.allocationGranularity / Kilobytes(1));
 	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, formatBuffer, lstrlenA(formatBuffer));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
