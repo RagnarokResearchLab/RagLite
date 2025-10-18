@@ -1,20 +1,54 @@
-constexpr size_t HIGHEST_VIRTUAL_ADDRESS = Terabytes(1);
-constexpr size_t INVALID_VIRTUAL_ADDRESS = 0xDEADBEEFULL;
+constexpr LPVOID PREDICTABLE_VIRTUAL_ADDRESS = Terabytes(1);
+constexpr LPVOID UNSPECIFIED_VIRTUAL_ADDRESS = NULL;
+
+typedef struct memory_allocation_options {
+	DWORD protectionConstraints;
+	WORD allocationType;
+	LPVOID baseAddress;
+} memory_allocation_options_t;
+
+INTERNAL inline memory_allocation_options_t DefaultAllocationOptions() {
+	memory_allocation_options_t options = {
+		.protectionConstraints = PAGE_READWRITE,
+		.allocationType = MEM_RESERVE | MEM_COMMIT,
+		.baseAddress = UNSPECIFIED_VIRTUAL_ADDRESS,
+	};
+
+	#ifdef RAGLITE_PREDICTABLE_MEMORY
+		options.baseAddress = PREDICTABLE_VIRTUAL_ADDRESS;
+	#endif
+
+	return options;
+}
+
+typedef pointer_t uintptr_t;
+typedef index_t pointer_t;
+typedef offset_t pointer_t;
+typedef length_t pointer_t;
+typedef pointer_diff_t intptr_t;
+
+typedef struct virtual_memory_region {
+	pointer_t startingAddress;
+	size_t allocationSize;
+} memory_t;
+typedef memory_t slice_t;
+
+INTERNAL memory_t SystemMemoryPreallocateBuffer(size_t allocationSize, memory_allocation_options_t options = DefaultAllocationOptions()) {
+	LPVOID memory = VirtualAlloc(options.baseAddress, allocationSize, options.allocationType, options.protectionConstraints);
+	ASSUME(memory != NULL, "Failed to allocate virtual memory region (check GetLastError for details?)");
+
+	#ifdef RAGLITE_PREDICTABLE_MEMORY
+		ASSUME(memory == PREDICTABLE_VIRTUAL_ADDRESS, "Platform allocator did not accept the provided base address");
+	#endif
+}
 
 INTERNAL void SystemMemoryInitializeArenas(size_t mainMemorySize, size_t transientMemorySize) {
 
-#ifdef RAGLITE_PREDICTABLE_MEMORY
-	LPVOID baseAddress = 0;
-#else
-	LPVOID baseAddress = (LPVOID)HIGHEST_VIRTUAL_ADDRESS;
-#endif
 
-	DWORD allocationTypeFlags = MEM_RESERVE | MEM_COMMIT;
-	DWORD memoryProtectionFlags = PAGE_READWRITE;
 	MAIN_MEMORY = {
 		.displayName = StringLiteral("Main Memory"),
 		.lifetime = KEEP_FOREVER_MANUAL_RESET,
-		.baseAddress = VirtualAlloc(baseAddress, mainMemorySize + transientMemorySize, allocationTypeFlags, memoryProtectionFlags),
+		.baseAddress = VirtualAlloc(options.baseAddress, allocationSize, options.allocationType, options.protectionConstraints),
 		.reservedSize = mainMemorySize,
 		.committedSize = 0,
 		.used = 0,
