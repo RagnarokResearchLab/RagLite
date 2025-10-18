@@ -8,6 +8,7 @@ set CPP_MAIN=Core\RagLite2.cpp
 set DEBUG_EXE=%DEFAULT_BUILD_DIR%/RagLiteWin32Dbg.exe
 set RELEASE_EXE=%DEFAULT_BUILD_DIR%/RagLiteWin32.exe
 set PROGRAM_DLLS=PatternTest DummyTest
+set CLI_TOOLS=DependencyCheck
 set RUNTIME_LIBS=gdi32.lib shlwapi.lib user32.lib xinput.lib winmm.lib
 
 for /f "delims=" %%i in ('call git describe --always --dirty') do set GIT_COMMIT_HASH=\"%%i\"
@@ -116,6 +117,15 @@ set RELEASE_LINK_FLAGS=%RELEASE_LINK_FLAGS% /OPT:ICF
 
 set RELEASE_COMPILE_FLAGS=%RELEASE_COMPILE_FLAGS% %SHARED_COMPILE_FLAGS%
 set RELEASE_LINK_FLAGS=%RELEASE_LINK_FLAGS% %SHARED_LINK_FLAGS%
+
+for %%T in (%CLI_TOOLS%) do (
+	set CLI_MAIN=Tools/%%T.cpp
+	set DEBUG_CLI=%DEFAULT_BUILD_DIR%/%%TDbg.exe
+	set RELEASE_CLI=%DEFAULT_BUILD_DIR%/%%T.exe
+	set NO_LIBS=""
+	call :msvcbuild !RELEASE_CLI! !CLI_MAIN! "%NO_LIBS%" "%RELEASE_COMPILE_FLAGS%" "%RELEASE_LINK_FLAGS%" || exit /b
+	call :msvcbuild !DEBUG_CLI! !CLI_MAIN! "%NO_LIBS%" "%DEBUG_COMPILE_FLAGS%" "%DEBUG_LINK_FLAGS%" || exit /b
+)
 
 call :msvcbuild !DEBUG_EXE! "%CPP_MAIN%" "%RUNTIME_LIBS%" "%DEBUG_COMPILE_FLAGS%" "%ICON_RES% %DEBUG_LINK_FLAGS%" || exit /b
 call :msvcbuild !RELEASE_EXE! "%CPP_MAIN%" "%RUNTIME_LIBS%" "%RELEASE_COMPILE_FLAGS%" "%ICON_RES% %RELEASE_LINK_FLAGS%" || exit /b
