@@ -156,7 +156,7 @@ set COMPILE_FLAGS=%~4
 set LINKAGE_FLAGS=%~5
 set BUILD_COMMAND=cl %COMPILE_FLAGS% %SOURCE_FILES% %STATIC_LIBS% /link %LINKAGE_FLAGS% /out:%BUILD_TARGET% || exit /b
 echo The Ancient One speaketh:
-echo 	Let us now turn %SOURCE_FILES% into %BUILD_TARGET%!
+echo 	Let us now turn %SOURCE_FILES% into %BUILD_TARGET%
 echo 	Harken, mortal, as I prepare thy unholy incantation...
 echo 	%BUILD_COMMAND%
 echo --------------------------------------------------------------------------------------------------------
