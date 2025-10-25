@@ -8,7 +8,8 @@ set CPP_MAIN=Core\RagLite2.cpp
 set DEBUG_EXE=%DEFAULT_BUILD_DIR%/RagLiteWin32Dbg.exe
 set RELEASE_EXE=%DEFAULT_BUILD_DIR%/RagLiteWin32.exe
 set PROGRAM_DLLS=PatternTest DummyTest
-set RUNTIME_LIBS=gdi32.lib shlwapi.lib user32.lib xinput.lib winmm.lib
+set CLI_TOOLS=DependencyCheck
+set RUNTIME_LIBS=gdi32.lib shlwapi.lib user32.lib xinput.lib winmm.lib imagehlp.lib
 
 for /f "delims=" %%i in ('call git describe --always --dirty') do set GIT_COMMIT_HASH=\"%%i\"
 
@@ -117,16 +118,30 @@ set RELEASE_LINK_FLAGS=%RELEASE_LINK_FLAGS% /OPT:ICF
 set RELEASE_COMPILE_FLAGS=%RELEASE_COMPILE_FLAGS% %SHARED_COMPILE_FLAGS%
 set RELEASE_LINK_FLAGS=%RELEASE_LINK_FLAGS% %SHARED_LINK_FLAGS%
 
+for %%T in (%CLI_TOOLS%) do (
+	set CLI_MAIN=Tools/%%T.cpp
+	set DEBUG_CLI=%DEFAULT_BUILD_DIR%/%%TDbg.exe
+	set RELEASE_CLI=%DEFAULT_BUILD_DIR%/%%T.exe
+	call :msvcbuild !RELEASE_CLI! !CLI_MAIN! "%RUNTIME_LIBS%" "%RELEASE_COMPILE_FLAGS%" "%RELEASE_LINK_FLAGS%" || exit /b
+	call :msvcbuild !DEBUG_CLI! !CLI_MAIN! "%RUNTIME_LIBS%" "%DEBUG_COMPILE_FLAGS%" "%DEBUG_LINK_FLAGS%" || exit /b
+	call :checkdeps !RELEASE_CLI! %DEFAULT_BUILD_DIR% || exit /b
+	call :checkdeps !DEBUG_CLI! %DEFAULT_BUILD_DIR% || exit /b
+)
+
 call :msvcbuild !DEBUG_EXE! "%CPP_MAIN%" "%RUNTIME_LIBS%" "%DEBUG_COMPILE_FLAGS%" "%ICON_RES% %DEBUG_LINK_FLAGS%" || exit /b
 call :msvcbuild !RELEASE_EXE! "%CPP_MAIN%" "%RUNTIME_LIBS%" "%RELEASE_COMPILE_FLAGS%" "%ICON_RES% %RELEASE_LINK_FLAGS%" || exit /b
+call :checkdeps !DEBUG_EXE! %DEFAULT_BUILD_DIR% || exit /b
+call :checkdeps !RELEASE_EXE! %DEFAULT_BUILD_DIR% || exit /b
 
 for %%D in (%PROGRAM_DLLS%) do (
 	set DLL_MAIN=Core/%%D.cpp
 	set DEBUG_DLL=%DEFAULT_BUILD_DIR%/RagLite%%DDbg.dll
 	set RELEASE_DLL=%DEFAULT_BUILD_DIR%/RagLite%%D.dll
-	set NO_LIBS=""
+	set NO_LIBS=
 	call :msvcbuild !DEBUG_DLL! !DLL_MAIN! "%NO_LIBS%" "%DEBUG_COMPILE_FLAGS%" "/DLL %DEBUG_LINK_FLAGS%" || exit /b
 	call :msvcbuild !RELEASE_DLL! !DLL_MAIN! "%NO_LIBS%" "%RELEASE_COMPILE_FLAGS%" "/DLL %RELEASE_LINK_FLAGS%" || exit /b
+	call :checkdeps !DEBUG_DLL! %DEFAULT_BUILD_DIR% || exit /b
+	call :checkdeps !RELEASE_DLL! %DEFAULT_BUILD_DIR% || exit /b
 )
 
 endlocal
@@ -141,11 +156,26 @@ set COMPILE_FLAGS=%~4
 set LINKAGE_FLAGS=%~5
 set BUILD_COMMAND=cl %COMPILE_FLAGS% %SOURCE_FILES% %STATIC_LIBS% /link %LINKAGE_FLAGS% /out:%BUILD_TARGET% || exit /b
 echo The Ancient One speaketh:
-echo 	Let us now turn %SOURCE_FILES% into %BUILD_TARGET%!
+echo 	Let us now turn %SOURCE_FILES% into %BUILD_TARGET%
 echo 	Harken, mortal, as I prepare thy unholy incantation...
 echo 	%BUILD_COMMAND%
 echo --------------------------------------------------------------------------------------------------------
 %BUILD_COMMAND%
+echo --------------------------------------------------------------------------------------------------------
+
+exit /b
+
+:checkdeps
+
+set INPUT_FILE=%1
+set ROOT_DIR=%2
+set CHECK_COMMAND=%ROOT_DIR%\DependencyCheck.exe %INPUT_FILE% || exit /b
+echo The Ancient One speaketh:
+echo 	Let us ensure no evil hides in %INPUT_FILE%
+echo 	Behold, mortal, as I expose what treachery it may obscure...
+echo 	%CHECK_COMMAND%
+echo --------------------------------------------------------------------------------------------------------
+%CHECK_COMMAND%
 echo --------------------------------------------------------------------------------------------------------
 
 exit /b
