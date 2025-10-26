@@ -506,7 +506,8 @@ INTERNAL void DebugDrawMemoryArenaHeatmap(HDC& displayDeviceContext, memory_aren
 	constexpr size_t FORMAT_BUFFER_SIZE = 256;
 	char formatBuffer[FORMAT_BUFFER_SIZE];
 
-	StringCbPrintfA(formatBuffer, FORMAT_BUFFER_SIZE, "Name: %s", arena.displayName.buffer);
+	String displayName = ArenaToDebugString(arena);
+	StringCbPrintfA(formatBuffer, FORMAT_BUFFER_SIZE, "Name: %s", displayName.buffer);
 	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, formatBuffer, lstrlenA(formatBuffer));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
@@ -515,12 +516,7 @@ INTERNAL void DebugDrawMemoryArenaHeatmap(HDC& displayDeviceContext, memory_aren
 	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, formatBuffer, lstrlenA(formatBuffer));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
-	String usage = ArenaUsageToString(arena);
-	StringCbPrintfA(formatBuffer, FORMAT_BUFFER_SIZE, "Usage: %s", usage.buffer);
-	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, formatBuffer, lstrlenA(formatBuffer));
-	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
-
-	StringCbPrintfA(formatBuffer, FORMAT_BUFFER_SIZE, "Base: 0x%p", arena.baseAddress);
+	StringCbPrintfA(formatBuffer, FORMAT_BUFFER_SIZE, "Base: 0x%p", arena.basePointer);
 	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, formatBuffer, lstrlenA(formatBuffer));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
@@ -540,9 +536,9 @@ INTERNAL void DebugDrawMemoryArenaHeatmap(HDC& displayDeviceContext, memory_aren
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
 
 	lineY += DEBUG_OVERLAY_MARGIN_SIZE;
-	percentage usedPercent = DoubleToFloat((double)(arena.used) / Max(arena.committedSize, EPSILON));
+	percentage usedPercent = DoubleToFloat((double)(arena.usedCapacity) / Max(arena.committedSize, EPSILON));
 	StringCbPrintfA(formatBuffer, FORMAT_BUFFER_SIZE, "Allocated: %d MB / %d MB (%d%%)",
-		(int)(arena.used / Megabytes(1)),
+		(int)(arena.usedCapacity / Megabytes(1)),
 		(int)(arena.committedSize / Megabytes(1)), Percent(usedPercent));
 	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, formatBuffer, lstrlenA(formatBuffer));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
@@ -553,7 +549,7 @@ INTERNAL void DebugDrawMemoryArenaHeatmap(HDC& displayDeviceContext, memory_aren
 
 	const size_t blockSize = CPU_PERFORMANCE_INFO.allocationGranularity;
 	size_t totalBlocks = arena.reservedSize / blockSize;
-	size_t usedBlocks = arena.used / blockSize;
+	size_t usedBlocks = arena.usedCapacity / blockSize;
 	size_t committedBlocks = arena.committedSize / blockSize;
 
 	lineY += DEBUG_OVERLAY_MARGIN_SIZE;

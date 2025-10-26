@@ -1,8 +1,8 @@
 
-	// TODO ASSUME baseAddress is aligned to alloc granularity
-	// TODO ASSUME allocSize is page-aligned
-	// The size of the region, in bytes. If the lpAddress parameter is NULL, this value is rounded up to the next page boundary. Otherwise, the allocated pages include all pages containing one or more bytes in the range from lpAddress to lpAddress+dwSize. This means that a 2-byte range straddling a page boundary causes both pages to be included in the allocated region.
-	void* memory = VirtualAlloc(baseAddress, mainMemorySize + transientMemorySize, allocationTypeFlags, memoryProtectionFlags)
+// TODO ASSUME baseAddress is aligned to alloc granularity
+// TODO ASSUME allocSize is page-aligned
+// The size of the region, in bytes. If the lpAddress parameter is NULL, this value is rounded up to the next page boundary. Otherwise, the allocated pages include all pages containing one or more bytes in the range from lpAddress to lpAddress+dwSize. This means that a 2-byte range straddling a page boundary causes both pages to be included in the allocated region.
+void* memory = VirtualAlloc(baseAddress, mainMemorySize + transientMemorySize, allocationTypeFlags, memoryProtectionFlags)
 
 	// Modes:
 	// MEM_COMMIT

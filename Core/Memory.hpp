@@ -1,4 +1,4 @@
-#ifdef RAGLITE_DEBUG_ARENAS
+#ifdef RAGLITE_DEBUG_ANNOTATIONS
 // NOTE: These are purely cosmetic right now - later they should be used to automatically reset arenas (?)
 enum arena_lifetime_flag : uint8 {
 	KEEP_FOREVER_MANUAL_RESET = 0,
@@ -15,19 +15,30 @@ typedef struct arena_debug_info {
 
 typedef struct virtual_memory_arena {
 	// TBD: Store this header in the arena itself (required for free-lists/resizes - later)?
-	void* baseAddress;
+	uint8* basePointer;
 	size_t reservedSize;
 	size_t committedSize;
-	size_t used;
+	size_t usedCapacity;
 	size_t allocationCount;
-#ifdef RAGLITE_DEBUG_ARENAS
+#ifdef RAGLITE_DEBUG_ANNOTATIONS
 	arena_metadata_t debugInfo;
 #endif
 } memory_arena_t;
 
-#ifdef RAGLITE_DEBUG_ARENAS
+INTERNAL inline String ArenaToDebugString(memory_arena_t& arena) {
+	String displayName = StringLiteral("N/A");
+
+#ifdef RAGLITE_DEBUG_ANNOTATIONS
+	displayName = arena.debugInfo.displayName;
+#endif
+
+	return displayName;
+}
 
 INTERNAL String ArenaLifetimeToString(memory_arena_t& arena) {
+
+#ifdef RAGLITE_DEBUG_ANNOTATIONS
+
 	switch(arena.debugInfo.lifetime) {
 		case KEEP_FOREVER_MANUAL_RESET:
 			return StringLiteral("Forever (Global Arena)");
@@ -37,36 +48,46 @@ INTERNAL String ArenaLifetimeToString(memory_arena_t& arena) {
 			return StringLiteral("Task Completion (Transfer Arena)");
 		case RESET_AUTOMATICALLY_TIMED_EXPIRY:
 			return StringLiteral("Auto-Expires (Caching Arena)");
-		default:
-			return StringLiteral("N/A");
 	}
-}
 
 #endif
 
-INTERNAL void* ArenaAllocateMemoryRegion(memory_arena_t& arena, size_t allocationSize) {
-	size_t totalUsed = arena.used + allocationSize;
-	ASSUME(totalUsed <= arena.reservedSize, "Attempting to allocate outside the reserved set");
+	return StringLiteral("N/A");
+}
 
-	void* memoryRegionStartPointer = (uint8*)arena.baseAddress + arena.used;
-	arena.used = totalUsed;
+INTERNAL inline void ArenaInitializeFromMemory(memory_arena_t& arena, uint8* startingAddress, size_t allocatedBufferSize) {
+	arena.basePointer = startingAddress;
+
+	arena.reservedSize = allocatedBufferSize;
+	arena.committedSize = allocatedBufferSize;
+
+	arena.allocationCount = 0;
+	arena.usedCapacity = 0;
+}
+
+INTERNAL inline uint8* ArenaAllocateMemoryRegion(memory_arena_t& arena, size_t allocationSize) {
+	size_t totalUsed = arena.usedCapacity + allocationSize;
+	ASSUME(totalUsed <= arena.reservedSize, "Attempting to allocate outside of the reserved region");
+
+	uint8* memoryRegionStartPointer = arena.basePointer + arena.usedCapacity;
+	arena.usedCapacity = totalUsed;
 	arena.allocationCount++;
 
 	return memoryRegionStartPointer;
 }
 
-INTERNAL bool ArenaCanAllocate(memory_arena_t& arena, size_t allocationSize) {
-	if(arena.used + allocationSize > arena.reservedSize) return false;
+INTERNAL inline bool ArenaCanAllocate(memory_arena_t& arena, size_t allocationSize) {
+	if(arena.usedCapacity + allocationSize > arena.reservedSize) return false;
 	return true;
 }
 
-void ArenaResetAllocations(memory_arena_t& arena) {
+INTERNAL inline void ArenaResetAllocations(memory_arena_t& arena) {
 	arena.allocationCount = 0;
-	arena.used = 0;
+	arena.usedCapacity = 0;
 }
 
 INTERNAL inline void ArenaDebugTouchAddress(memory_arena_t& arena, uint8* address) {
-	ASSUME(address >= arena.baseAddress, "Attempted to access an invalid arena offset");
-	size_t offset = address - (uint8*)arena.baseAddress;
+	ASSUME(address >= arena.basePointer, "Attempted to access an invalid memory offset");
+	pointer_diff_t offset = PointerToAddress(address) - PointerToAddress(arena.basePointer);
 	// TODO: Update last accessed time
 }

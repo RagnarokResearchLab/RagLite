@@ -10,6 +10,12 @@ typedef uint16_t uint16;
 typedef uint32_t uint32;
 typedef uint64_t uint64;
 
+typedef uintptr_t pointer_t;
+typedef intptr_t pointer_diff_t;
+#define PointerToAddress(memoryAddress) ((pointer_t)(memoryAddress))
+#define AddressToPointer(numericPointerValue, type) (type*)(numericPointerValue)
+// #define AddressToPointer(numericPointerValue) (void*)(numericPointerValue)
+
 #define Kilobytes(bytes) ((bytes) * 1024LL)
 #define Megabytes(bytes) (Kilobytes(bytes) * 1024LL)
 #define Gigabytes(bytes) (Megabytes(bytes) * 1024LL)
