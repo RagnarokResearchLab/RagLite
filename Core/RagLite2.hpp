@@ -4,7 +4,7 @@
 #define RAGLITE_COMMIT_HASH "N/A"
 #endif
 
-#ifdef _WIN32
+#ifdef _WIN64
 #define RAGLITE_PLATFORM_WINDOWS
 #elifdef __APPLE__
 #define RAGLITE_PLATFORM_MACOS
