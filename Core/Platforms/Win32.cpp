@@ -336,11 +336,6 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE, LPSTR,
 	uint8* transientMemory = mainMemory + MAIN_MEMORY_SIZE;
 	ArenaInitializeFromMemory(TRANSIENT_MEMORY, transientMemory, TRANSIENT_MEMORY_SIZE);
 
-#ifdef RAGLITE_DEBUG_ANNOTATIONS
-	MAIN_MEMORY.debugInfo.displayName = StringLiteral("MAIN_MEMORY");
-	TRANSIENT_MEMORY.debugInfo.displayName = StringLiteral("TRANSIENT_MEMORY");
-#endif
-
 	WNDCLASSEX windowClass = {};
 	// TODO Is this really a good idea? Beware the CS_OWNDC footguns...
 	// TODO https://devblogs.microsoft.com/oldnewthing/20060601-06/?p=31003
