@@ -192,7 +192,7 @@ EXPORT void AdvanceSimulation(simulation_state_t& simulation, gamepad_state_t& c
 	if(!ArenaCanAllocate(persistentStorage, allocationSize)) {
 		ArenaResetAllocations(persistentStorage);
 	} else {
-		uint8* mainMemory = (uint8*)ArenaAllocateMemoryRegion(persistentStorage, allocationSize);
+		uint8* mainMemory = ArenaAllocateMemoryRegion(persistentStorage, allocationSize);
 		*mainMemory = 0xDE;
 		ArenaDebugTouchAddress(persistentStorage, mainMemory);
 	}
@@ -200,7 +200,7 @@ EXPORT void AdvanceSimulation(simulation_state_t& simulation, gamepad_state_t& c
 	if(!ArenaCanAllocate(transientStorage, 2 * allocationSize)) {
 		ArenaResetAllocations(transientStorage);
 	} else {
-		uint8* transientMemory = (uint8*)ArenaAllocateMemoryRegion(transientStorage, 2 * allocationSize);
+		uint8* transientMemory = ArenaAllocateMemoryRegion(transientStorage, 2 * allocationSize);
 		*transientMemory = 0xAB;
 		ArenaDebugTouchAddress(transientStorage, transientMemory);
 	}

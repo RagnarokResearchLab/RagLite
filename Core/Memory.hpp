@@ -7,7 +7,7 @@ typedef struct virtual_memory_arena {
 	size_t allocationCount;
 } memory_arena_t;
 
-INTERNAL void* ArenaAllocateMemoryRegion(memory_arena_t& arena, size_t allocationSize) {
+INTERNAL uint8* ArenaAllocateMemoryRegion(memory_arena_t& arena, size_t allocationSize) {
 	size_t totalBytesUsed = arena.usedCapacity + allocationSize;
 	ASSUME(totalBytesUsed <= arena.reservedSize, "Attempting to allocate outside the reserved set");
 
