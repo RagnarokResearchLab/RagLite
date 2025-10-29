@@ -506,20 +506,6 @@ INTERNAL void DebugDrawMemoryArenaHeatmap(HDC& displayDeviceContext, memory_aren
 	constexpr size_t FORMAT_BUFFER_SIZE = 256;
 	char formatBuffer[FORMAT_BUFFER_SIZE];
 
-	StringCbPrintfA(formatBuffer, FORMAT_BUFFER_SIZE, "Name: %s", arena.displayName.buffer);
-	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, formatBuffer, lstrlenA(formatBuffer));
-	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
-
-	String lifetime = ArenaLifetimeToString(arena);
-	StringCbPrintfA(formatBuffer, FORMAT_BUFFER_SIZE, "Lifetime: %s", lifetime.buffer);
-	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, formatBuffer, lstrlenA(formatBuffer));
-	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
-
-	String usage = ArenaUsageToString(arena);
-	StringCbPrintfA(formatBuffer, FORMAT_BUFFER_SIZE, "Usage: %s", usage.buffer);
-	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, formatBuffer, lstrlenA(formatBuffer));
-	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
-
 	StringCbPrintfA(formatBuffer, FORMAT_BUFFER_SIZE, "Base: 0x%p", arena.baseAddress);
 	TextOutA(displayDeviceContext, startX + DEBUG_OVERLAY_PADDING_SIZE, lineY, formatBuffer, lstrlenA(formatBuffer));
 	lineY += DEBUG_OVERLAY_LINE_HEIGHT;
