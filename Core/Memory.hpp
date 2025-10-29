@@ -1,6 +1,6 @@
 typedef struct virtual_memory_arena {
 	// TBD: Store this header in the arena itself (required for free-lists/resizes - later)?
-	void* baseAddress;
+	uint8* basePointer;
 	size_t reservedSize;
 	size_t committedSize;
 	size_t usedCapacity;
@@ -11,7 +11,7 @@ INTERNAL void* ArenaAllocateMemoryRegion(memory_arena_t& arena, size_t allocatio
 	size_t totalBytesUsed = arena.usedCapacity + allocationSize;
 	ASSUME(totalBytesUsed <= arena.reservedSize, "Attempting to allocate outside the reserved set");
 
-	void* memoryRegionStartPointer = (uint8*)arena.baseAddress + arena.usedCapacity;
+	uint8* memoryRegionStartPointer = arena.basePointer + arena.usedCapacity;
 	arena.usedCapacity = totalBytesUsed;
 	arena.allocationCount++;
 
@@ -29,7 +29,7 @@ void ArenaResetAllocations(memory_arena_t& arena) {
 }
 
 INTERNAL inline void ArenaDebugTouchAddress(memory_arena_t& arena, uint8* address) {
-	ASSUME(address >= arena.baseAddress, "Attempted to access an invalid arena offset");
-	size_t offset = address - (uint8*)arena.baseAddress;
+	ASSUME(address >= arena.basePointer, "Attempted to access an invalid arena offset");
+	size_t offset = address - arena.basePointer;
 	// TODO: Update last accessed time
 }

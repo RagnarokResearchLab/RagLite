@@ -12,7 +12,7 @@ INTERNAL void SystemMemoryInitializeArenas(size_t mainMemorySize, size_t transie
 	DWORD allocationTypeFlags = MEM_RESERVE | MEM_COMMIT;
 	DWORD memoryProtectionFlags = PAGE_READWRITE;
 	MAIN_MEMORY = {
-		.baseAddress = VirtualAlloc(baseAddress, mainMemorySize + transientMemorySize, allocationTypeFlags, memoryProtectionFlags),
+		.basePointer = (uint8*)VirtualAlloc(baseAddress, mainMemorySize + transientMemorySize, allocationTypeFlags, memoryProtectionFlags),
 		.reservedSize = mainMemorySize,
 		.committedSize = 0,
 		.usedCapacity = 0,
@@ -20,7 +20,7 @@ INTERNAL void SystemMemoryInitializeArenas(size_t mainMemorySize, size_t transie
 	};
 
 	TRANSIENT_MEMORY = {
-		.baseAddress = (uint8*)MAIN_MEMORY.baseAddress + mainMemorySize,
+		.basePointer = MAIN_MEMORY.basePointer + mainMemorySize,
 		.reservedSize = transientMemorySize,
 		.committedSize = 0,
 		.usedCapacity = 0,
