@@ -15,7 +15,7 @@ INTERNAL void SystemMemoryInitializeArenas(size_t mainMemorySize, size_t transie
 		.baseAddress = VirtualAlloc(baseAddress, mainMemorySize + transientMemorySize, allocationTypeFlags, memoryProtectionFlags),
 		.reservedSize = mainMemorySize,
 		.committedSize = 0,
-		.used = 0,
+		.usedCapacity = 0,
 		.allocationCount = 0
 	};
 
@@ -23,7 +23,7 @@ INTERNAL void SystemMemoryInitializeArenas(size_t mainMemorySize, size_t transie
 		.baseAddress = (uint8*)MAIN_MEMORY.baseAddress + mainMemorySize,
 		.reservedSize = transientMemorySize,
 		.committedSize = 0,
-		.used = 0,
+		.usedCapacity = 0,
 		.allocationCount = 0
 	};
 

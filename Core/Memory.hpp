@@ -3,29 +3,29 @@ typedef struct virtual_memory_arena {
 	void* baseAddress;
 	size_t reservedSize;
 	size_t committedSize;
-	size_t used;
+	size_t usedCapacity;
 	size_t allocationCount;
 } memory_arena_t;
 
 INTERNAL void* ArenaAllocateMemoryRegion(memory_arena_t& arena, size_t allocationSize) {
-	size_t totalUsed = arena.used + allocationSize;
-	ASSUME(totalUsed <= arena.reservedSize, "Attempting to allocate outside the reserved set");
+	size_t totalBytesUsed = arena.usedCapacity + allocationSize;
+	ASSUME(totalBytesUsed <= arena.reservedSize, "Attempting to allocate outside the reserved set");
 
-	void* memoryRegionStartPointer = (uint8*)arena.baseAddress + arena.used;
-	arena.used = totalUsed;
+	void* memoryRegionStartPointer = (uint8*)arena.baseAddress + arena.usedCapacity;
+	arena.usedCapacity = totalBytesUsed;
 	arena.allocationCount++;
 
 	return memoryRegionStartPointer;
 }
 
 INTERNAL bool ArenaCanAllocate(memory_arena_t& arena, size_t allocationSize) {
-	if(arena.used + allocationSize > arena.reservedSize) return false;
+	if(arena.usedCapacity + allocationSize > arena.reservedSize) return false;
 	return true;
 }
 
 void ArenaResetAllocations(memory_arena_t& arena) {
 	arena.allocationCount = 0;
-	arena.used = 0;
+	arena.usedCapacity = 0;
 }
 
 INTERNAL inline void ArenaDebugTouchAddress(memory_arena_t& arena, uint8* address) {
