@@ -29,6 +29,18 @@ INTERNAL inline size_t SystemMemoryAlignToPageBoundary(size_t unalignedAllocatio
 	return alignedAllocationSize;
 }
 
+INTERNAL size_t SystemMemoryDebugScanAvailableRange(void* basePointer) {
+	MEMORY_BASIC_INFORMATION memoryInfo;
+	void* scanCursor = basePointer;
+	VirtualQuery(scanCursor, &memoryInfo, sizeof(memoryInfo));
+	while(memoryInfo.AllocationBase == basePointer) {
+		scanCursor = (uint8*)scanCursor + memoryInfo.RegionSize;
+		VirtualQuery(scanCursor, &memoryInfo, sizeof(memoryInfo));
+	}
+	uintptr_t advancedBytes = PointerToAddress(scanCursor) - PointerToAddress(basePointer);
+	return advancedBytes;
+}
+
 INTERNAL uint8* SystemMemoryPreallocateBuffer(size_t allocationSize, memory_allocation_options_t options = SystemMemoryDefaultAllocationOptions()) {
 	size_t alignedSize = SystemMemoryAlignToPageBoundary(allocationSize);
 
@@ -36,8 +48,15 @@ INTERNAL uint8* SystemMemoryPreallocateBuffer(size_t allocationSize, memory_allo
 	ASSUME(regionStartPointer != NULL, "Failed to allocate virtual memory region (check GetLastError for details?)");
 	ASSUME(regionStartPointer == options.baseAddress, "Platform allocator did not accept the provided base address");
 
-	// TODO: Add guard pages before/after the memory region to catch OOB access faults
-	// TODO: Zeroize (not actually required on Win32, but maybe for other platforms?)
+#ifdef RAGLITE_ZEROIZED_PAGES
+	size_t totalAllocatedSize = SystemMemoryDebugScanAvailableRange(regionStartPointer);
+	ASSUME(totalAllocatedSize >= allocationSize, "Platform allocated less memory than requested (??)");
+	ASSUME(totalAllocatedSize == alignedSize, "Platform allocated with different alignment than expected");
+	// NOTE: This is guaranteed by VirtualAlloc on Win32, but that's not necessarily true on other platforms
+	ZeroMemory(regionStartPointer, totalAllocatedSize); // TODO: Move to test program since it's extremely slow
+#endif
 
 	return (uint8*)regionStartPointer;
+}
+
 }
