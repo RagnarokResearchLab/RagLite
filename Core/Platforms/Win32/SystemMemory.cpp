@@ -48,29 +48,3 @@ INTERNAL uint8* SystemMemoryPreallocateBuffer(size_t allocationSize, memory_allo
 
 	return (uint8*)regionStartPointer;
 }
-
-// INTERNAL void SystemMemoryInitializeArenas(size_t mainMemorySize, size_t transientMemorySize) {
-
-// 	MAIN_MEMORY = {
-// 		.displayName = StringLiteral("Main Memory"),
-// 		.lifetime = KEEP_FOREVER_MANUAL_RESET,
-// 		.baseAddress = VirtualAlloc(options.baseAddress, allocationSize, options.allocationType, options.protectionConstraints),
-// 		.reservedSize = mainMemorySize,
-// 		.committedSize = 0,
-// 		.used = 0,
-// 		.allocationCount = 0
-// 	};
-
-// 	TRANSIENT_MEMORY = {
-// 		.displayName = StringLiteral("Transient Memory"),
-// 		.lifetime = KEEP_FOREVER_MANUAL_RESET,
-// 		.baseAddress = (uint8*)MAIN_MEMORY.baseAddress + mainMemorySize,
-// 		.reservedSize = transientMemorySize,
-// 		.committedSize = 0,
-// 		.used = 0,
-// 		.allocationCount = 0
-// 	};
-
-// 	MAIN_MEMORY.committedSize = mainMemorySize;
-// 	TRANSIENT_MEMORY.committedSize = transientMemorySize;
-// }
