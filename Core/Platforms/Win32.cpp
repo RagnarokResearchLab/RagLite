@@ -319,7 +319,10 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE, LPSTR,
 	// TODO Override via CLI arguments or something? (Can also compute based on available RAM)
 	constexpr size_t MAIN_MEMORY_SIZE = Megabytes(85);
 	constexpr size_t TRANSIENT_MEMORY_SIZE = Megabytes(1596) + Kilobytes(896);
-	SystemMemoryInitializeArenas(MAIN_MEMORY_SIZE, TRANSIENT_MEMORY_SIZE);
+	uint8* mainMemory = SystemMemoryPreallocateBuffer(MAIN_MEMORY_SIZE + TRANSIENT_MEMORY_SIZE);
+	ArenaInitializeFromMemory(MAIN_MEMORY, mainMemory, MAIN_MEMORY_SIZE);
+	uint8* transientMemory = mainMemory + MAIN_MEMORY_SIZE;
+	ArenaInitializeFromMemory(TRANSIENT_MEMORY, transientMemory, TRANSIENT_MEMORY_SIZE);
 
 	WNDCLASSEX windowClass = {};
 	// TODO Is this really a good idea? Beware the CS_OWNDC footguns...

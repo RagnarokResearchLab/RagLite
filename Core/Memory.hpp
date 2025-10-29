@@ -7,6 +7,16 @@ typedef struct virtual_memory_arena {
 	size_t allocationCount;
 } memory_arena_t;
 
+INTERNAL inline void ArenaInitializeFromMemory(memory_arena_t& arena, uint8* startingAddress, size_t allocatedBufferSize) {
+	arena.basePointer = startingAddress;
+
+	arena.reservedSize = allocatedBufferSize;
+	arena.committedSize = allocatedBufferSize;
+
+	arena.allocationCount = 0;
+	arena.usedCapacity = 0;
+}
+
 INTERNAL inline uint8* ArenaAllocateMemoryRegion(memory_arena_t& arena, size_t allocationSize) {
 	size_t totalBytesUsed = arena.usedCapacity + allocationSize;
 	ASSUME(totalBytesUsed <= arena.reservedSize, "Attempting to allocate outside the reserved set");
