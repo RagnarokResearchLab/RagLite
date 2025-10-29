@@ -59,4 +59,20 @@ INTERNAL uint8* SystemMemoryPreallocateBuffer(size_t allocationSize, memory_allo
 	return (uint8*)regionStartPointer;
 }
 
+INTERNAL inline void SystemMemorySanityCheckAssumptions() {
+#ifdef RAGLITE_PREDICTABLE_MEMORY
+	SYSTEM_INFO sysInfo;
+	GetSystemInfo(&sysInfo);
+
+	ASSUME(HIGHEST_VIRTUAL_ADDRESS <= (uint64)sysInfo.lpMaximumApplicationAddress, "Highest address should be reduced");
+	ASSUME((PREDICTABLE_VIRTUAL_ADDRESS % sysInfo.dwAllocationGranularity) == 0, "Base address must not be misaligned");
+	ASSUME(PREDICTABLE_VIRTUAL_ADDRESS < (uint64)sysInfo.lpMaximumApplicationAddress, "Base address must be in range");
+	MEMORY_BASIC_INFORMATION memoryInfo;
+	VirtualQuery((LPCVOID)PREDICTABLE_VIRTUAL_ADDRESS, &memoryInfo, sizeof(memoryInfo));
+	ASSUME(memoryInfo.State == MEM_FREE, "Fixed base address already reserved (this should never happen)");
+
+	void* test = VirtualAlloc((LPVOID)PREDICTABLE_VIRTUAL_ADDRESS, sysInfo.dwPageSize, MEM_RESERVE, PAGE_READWRITE);
+	ASSUME(test == (LPVOID)PREDICTABLE_VIRTUAL_ADDRESS, "Fixed base address cannot be reserved (occupied or invalid?)");
+	VirtualFree(test, 0, MEM_RELEASE);
+#endif
 }

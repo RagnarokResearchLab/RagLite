@@ -310,6 +310,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE, LPSTR,
 	CPU_PERFORMANCE_INFO.processorArchitecture = sysInfo.wProcessorArchitecture;
 	CPU_PERFORMANCE_INFO.pageSize = sysInfo.dwPageSize;
 	CPU_PERFORMANCE_INFO.allocationGranularity = sysInfo.dwAllocationGranularity;
+	SystemMemorySanityCheckAssumptions();
 
 	LARGE_INTEGER ticksPerSecond;
 	QueryPerformanceFrequency(&ticksPerSecond);
