@@ -40,6 +40,6 @@ INTERNAL inline void ArenaResetAllocations(memory_arena_t& arena) {
 
 INTERNAL inline void ArenaDebugTouchAddress(memory_arena_t& arena, uint8* address) {
 	ASSUME(address >= arena.basePointer, "Attempted to access an invalid memory offset");
-	pointer_diff_t offset = PointerToAddress(address) - PointerToAddress(arena.basePointer);
+	intptr_t offset = PointerToAddress(address) - PointerToAddress(arena.basePointer);
 	// TODO: Update last accessed time
 }
