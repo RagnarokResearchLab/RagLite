@@ -34,10 +34,7 @@ INTERNAL uint8* SystemMemoryPreallocateBuffer(size_t allocationSize, memory_allo
 
 	LPVOID regionStartPointer = VirtualAlloc(options.baseAddress, alignedSize, options.allocationType, options.protectionConstraints);
 	ASSUME(regionStartPointer != NULL, "Failed to allocate virtual memory region (check GetLastError for details?)");
-
-#ifdef RAGLITE_PREDICTABLE_MEMORY
 	ASSUME(regionStartPointer == options.baseAddress, "Platform allocator did not accept the provided base address");
-#endif
 
 	// TODO: Add guard pages before/after the memory region to catch OOB access faults
 
