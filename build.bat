@@ -7,6 +7,8 @@ if not exist %DEFAULT_BUILD_DIR% mkdir %DEFAULT_BUILD_DIR%
 set CPP_MAIN=Core\RagLite2.cpp
 set DEBUG_EXE=%DEFAULT_BUILD_DIR%/RagLiteWin32Dbg.exe
 set RELEASE_EXE=%DEFAULT_BUILD_DIR%/RagLiteWin32.exe
+set PAK_MAIN=Core\FileFormats\ArcturusPAK.cpp
+set PAK_COMMANDLINE_EXE=%DEFAULT_BUILD_DIR%/ArcturusPAK.exe
 set PROGRAM_DLLS=PatternTest DummyTest
 set CLI_TOOLS=DependencyCheck
 set RUNTIME_LIBS=gdi32.lib shlwapi.lib user32.lib xinput.lib winmm.lib imagehlp.lib
@@ -130,6 +132,7 @@ for %%T in (%CLI_TOOLS%) do (
 
 call :msvcbuild !DEBUG_EXE! "%CPP_MAIN%" "%RUNTIME_LIBS%" "%DEBUG_COMPILE_FLAGS%" "%ICON_RES% %DEBUG_LINK_FLAGS%" || exit /b
 call :msvcbuild !RELEASE_EXE! "%CPP_MAIN%" "%RUNTIME_LIBS%" "%RELEASE_COMPILE_FLAGS%" "%ICON_RES% %RELEASE_LINK_FLAGS%" || exit /b
+call :msvcbuild !PAK_COMMANDLINE_EXE! "%PAK_MAIN%" "%RUNTIME_LIBS%" "%RELEASE_COMPILE_FLAGS%" "%ICON_RES% %RELEASE_LINK_FLAGS%" || exit /b
 call :checkdeps !DEBUG_EXE! %DEFAULT_BUILD_DIR% || exit /b
 call :checkdeps !RELEASE_EXE! %DEFAULT_BUILD_DIR% || exit /b
 
