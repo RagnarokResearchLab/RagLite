@@ -11,6 +11,7 @@ static const char* expectedDependencies[] = {
 	"XINPUT1_4.DLL",
 	"WINMM.DLL",
 	"IMAGEHLP.DLL",
+	"WS2_32.DLL",
 	NULL
 };
 

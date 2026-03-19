@@ -10,8 +10,8 @@ set RELEASE_EXE=%DEFAULT_BUILD_DIR%/RagLiteWin32.exe
 set PAK_MAIN=Core\FileFormats\ArcturusPAK.cpp
 set PAK_COMMANDLINE_EXE=%DEFAULT_BUILD_DIR%/ArcturusPAK.exe
 set PROGRAM_DLLS=PatternTest DummyTest
-set CLI_TOOLS=DependencyCheck
-set RUNTIME_LIBS=gdi32.lib shlwapi.lib user32.lib xinput.lib winmm.lib imagehlp.lib
+set CLI_TOOLS=DependencyCheck PatchInfo
+set RUNTIME_LIBS=gdi32.lib shlwapi.lib user32.lib xinput.lib winmm.lib imagehlp.lib ws2_32.lib
 
 for /f "delims=" %%i in ('call git describe --always --dirty') do set GIT_COMMIT_HASH=\"%%i\"
 
@@ -52,6 +52,7 @@ set SHARED_COMPILE_FLAGS=%SHARED_COMPILE_FLAGS% /Zc:strictStrings
 set SHARED_COMPILE_FLAGS=%SHARED_COMPILE_FLAGS% /Zf
 set SHARED_COMPILE_FLAGS=%SHARED_COMPILE_FLAGS% %CPP_STANDARD%
 set SHARED_COMPILE_FLAGS=%SHARED_COMPILE_FLAGS% /DRAGLITE_COMMIT_HASH=%GIT_COMMIT_HASH%
+set SHARED_COMPILE_FLAGS=%SHARED_COMPILE_FLAGS% /D_CRT_SECURE_NO_WARNINGS
 set SHARED_COMPILE_FLAGS=%SHARED_COMPILE_FLAGS% /Fo%DEFAULT_BUILD_DIR%\
 
 :: /INCREMENTAL:NO		Disable incremental linkage
