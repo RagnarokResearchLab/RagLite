@@ -1,7 +1,5 @@
 #include "Win32.hpp"
 
-#define TODO(msg) OutputDebugStringA(msg);
-
 constexpr size_t MAX_ERROR_MSG_SIZE = 512;
 GLOBAL TCHAR SYSTEM_ERROR_MESSAGE[MAX_ERROR_MSG_SIZE];
 
@@ -99,10 +97,9 @@ INTERNAL void SurfacePresentFrameBuffer(gdi_surface_t& surface, gdi_offscreen_bu
 	int srcH = backBuffer.bitmap.height;
 	int destW = surface.width;
 	int destH = surface.height;
-	if(!StretchBlt(surface.displayDeviceContext, 0, 0, destW, destH, surface.offscreenDeviceContext,
-		   0, 0, srcW, srcH, SRCCOPY)) {
-		TODO("StretchBlt failed\n");
-	}
+	BOOL success = StretchBlt(surface.displayDeviceContext, 0, 0, destW, destH, surface.offscreenDeviceContext,
+		0, 0, srcW, srcH, SRCCOPY);
+	ASSUME(success, "StretchBlt failed (multi-monitor setup with mismatching source/destination HDCs?)");
 }
 
 INTERNAL void SurfaceDrawDebugUI(gdi_surface_t& doubleBufferedWindowSurface) {
@@ -184,11 +181,6 @@ LRESULT CALLBACK MainWindowProcessIncomingMessage(HWND window, UINT message, WPA
 	LRESULT result = 0;
 
 	switch(message) {
-		case WM_CREATE: {
-			TODO("Received WM_CREATE\n");
-			// TODO Initialize child windows here?
-		} break;
-
 		case WM_DISPLAYCHANGE:
 		case WM_MOVE:
 		case WM_MOVING:
@@ -266,12 +258,7 @@ LRESULT CALLBACK MainWindowProcessIncomingMessage(HWND window, UINT message, WPA
 		} break;
 
 		case WM_CLOSE: {
-			TODO("Received WM_CLOSE\n");
 			APPLICATION_SHOULD_EXIT = true;
-		} break;
-
-		case WM_ACTIVATEAPP: {
-			TODO("Received WM_ACTIVATEAPP\n");
 		} break;
 
 		case WM_ERASEBKGND: {
@@ -338,10 +325,8 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE, LPSTR,
 		GetSystemMetrics(SM_CXSMICON),
 		GetSystemMetrics(SM_CYSMICON), LR_DEFAULTCOLOR);
 
-	if(!RegisterClassEx(&windowClass)) {
-		TODO("Failed to register window class\n");
-		return EXIT_FAILURE;
-	}
+	ATOM classGUID = RegisterClassEx(&windowClass);
+	ASSUME(classGUID != NULL, "Failed to register window class (...really?)");
 
 	// TODO: On modern Windows systems, MAX_PATH is insufficient and Unicode paths should ideally be supported (later?)
 	TCHAR executableFileSystemPath[MAX_PATH];
@@ -358,10 +343,8 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE, LPSTR,
 		0, windowClass.lpszClassName, windowTitle.buffer,
 		WS_OVERLAPPEDWINDOW | WS_VISIBLE | WS_MAXIMIZE, CW_USEDEFAULT,
 		CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, 0, 0, instance, 0);
-	if(!mainWindow) {
-		TODO("Failed to CreateWindowExA - Exiting...");
-		return EXIT_FAILURE;
-	}
+	ASSUME(mainWindow != NULL, "Failed to CreateWindowExA (...can this actually happen in practice?)");
+
 	MainWindowCreateFrameBuffers(mainWindow, GDI_SURFACE, GDI_BACKBUFFER);
 
 	CPU_PERFORMANCE_INFO.applicationLaunchTime = PerformanceMetricsGetTimeSince(applicationStartTime);
