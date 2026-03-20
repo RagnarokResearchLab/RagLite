@@ -18,13 +18,13 @@
 #error "Unsupported Platform: OS-specific code paths have yet to be ported"
 #endif
 
-#define RAGLITE_COMPILER_GCC 0
-#define RAGLITE_COMPILER_LLVM 0
-#define RAGLITE_COMPILER_MSVC 0
-
-#ifdef _MSC_VER
-#undef RAGLITE_COMPILER_MSVC
-#define RAGLITE_COMPILER_MSVC 1
+// NOTE: Should probably use feature detection macros, but for now assume the latest (tested) version will work
+#if defined(__clang__)
+#define RAGLITE_COMPILER_CLANG
+#elif defined(_MSC_VER)
+#define RAGLITE_COMPILER_MSVC
+#elif defined(__GNUC__)
+#define RAGLITE_COMPILER_GCC 1
 #else
 #define RAGLITE_UNSUPPORTED_COMPILER
 #endif
