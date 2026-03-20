@@ -280,14 +280,17 @@ LRESULT CALLBACK MainWindowProcessIncomingMessage(HWND window, UINT message, WPA
 	return result;
 }
 
-INTERNAL void PlatformRuntimeMain() {
-	HINSTANCE instance = GetModuleHandle(NULL);
-	hardware_tick_t applicationStartTime = PerformanceMetricsNow();
+GLOBAL hardware_tick_t lastUpdateTime;
+GLOBAL hardware_tick_t applicationStartTime;
+GLOBAL HWND mainWindow;
+GLOBAL UINT requestedSchedulerGranularityInMilliseconds = 1;
 
+INTERNAL void PlatformDoSetup() {
+	HINSTANCE instance = GetModuleHandle(NULL);
+	applicationStartTime = PerformanceMetricsNow();
 	IntrinsicsReadCPUID();
 	ReadKernelVersionInfo();
 
-	UINT requestedSchedulerGranularityInMilliseconds = 1;
 	bool didAdjustGranularity = (timeBeginPeriod(requestedSchedulerGranularityInMilliseconds) == TIMERR_NOERROR);
 	ASSUME(didAdjustGranularity, "Failed to adjust the process scheduler's time period (HW issue or legacy OS?)");
 
@@ -301,7 +304,7 @@ INTERNAL void PlatformRuntimeMain() {
 	LARGE_INTEGER ticksPerSecond;
 	QueryPerformanceFrequency(&ticksPerSecond);
 	MONOTONIC_CLOCK_SPEED = ticksPerSecond.QuadPart;
-	hardware_tick_t lastUpdateTime = PerformanceMetricsNow();
+	lastUpdateTime = PerformanceMetricsNow();
 
 	// TODO Override via CLI arguments or something? (Can also compute based on available RAM)
 	constexpr size_t MAIN_MEMORY_SIZE = Megabytes(85);
@@ -339,7 +342,7 @@ INTERNAL void PlatformRuntimeMain() {
 	StringAppend(windowTitle, " [");
 	StringAppend(windowTitle, RAGLITE_COMMIT_HASH);
 	StringAppend(windowTitle, "]");
-	HWND mainWindow = CreateWindowExA(
+	mainWindow = CreateWindowExA(
 		0, windowClass.lpszClassName, windowTitle.buffer,
 		WS_OVERLAPPEDWINDOW | WS_VISIBLE | WS_MAXIMIZE, CW_USEDEFAULT,
 		CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, 0, 0, instance, 0);
@@ -348,41 +351,54 @@ INTERNAL void PlatformRuntimeMain() {
 	MainWindowCreateFrameBuffers(mainWindow, GDI_SURFACE, GDI_BACKBUFFER);
 
 	CPU_PERFORMANCE_INFO.applicationLaunchTime = PerformanceMetricsGetTimeSince(applicationStartTime);
+}
+
+INTERNAL bool PlatformShouldExit() {
+	return APPLICATION_SHOULD_EXIT;
+}
+
+INTERNAL void PlatformDoNextTick() {
+	lastUpdateTime = PerformanceMetricsNow();
+	CPU_PERFORMANCE_METRICS.applicationUptime = PerformanceMetricsGetTimeSince(applicationStartTime);
 
 	MSG message;
-	while(!APPLICATION_SHOULD_EXIT) {
-		lastUpdateTime = PerformanceMetricsNow();
-		CPU_PERFORMANCE_METRICS.applicationUptime = PerformanceMetricsGetTimeSince(applicationStartTime);
-
-		while(PeekMessage(&message, 0, 0, 0, PM_REMOVE)) {
-
-			TranslateMessage(&message);
-			DispatchMessageA(&message);
-			if(message.message == WM_QUIT)
-				APPLICATION_SHOULD_EXIT = true;
-		}
-		CPU_PERFORMANCE_METRICS.messageProcessingTime = PerformanceMetricsGetTimeSince(lastUpdateTime);
-
-		hardware_tick_t before = PerformanceMetricsNow();
-		if(!APPLICATION_SHOULD_PAUSE) {
-			PlatformRunSimulationStep();
-		}
-		CPU_PERFORMANCE_METRICS.simulationStepTime = PerformanceMetricsGetTimeSince(before);
-
-		MainWindowRedrawEverything(mainWindow);
-
-		milliseconds maxResponsiveSleepTime = MAX_FRAME_TIME;
-		milliseconds sleepTime = maxResponsiveSleepTime - CPU_PERFORMANCE_METRICS.frameTime;
-		hardware_tick_t beforeSleep = PerformanceMetricsNow();
-		if(sleepTime > 0) Sleep((DWORD)sleepTime);
-		CPU_PERFORMANCE_METRICS.sleepTime = sleepTime;
-		CPU_PERFORMANCE_METRICS.suspendedTime = PerformanceMetricsGetTimeSince(beforeSleep);
-
-		milliseconds frameTime = PerformanceMetricsGetTimeSince(lastUpdateTime);
-		CPU_PERFORMANCE_METRICS.frameTime = frameTime;
-
-		PerformanceMetricsRecordSample(CPU_PERFORMANCE_METRICS, PERFORMANCE_METRICS_HISTORY);
+	while(PeekMessage(&message, 0, 0, 0, PM_REMOVE)) {
+		TranslateMessage(&message);
+		DispatchMessageA(&message);
+		if(message.message == WM_QUIT)
+			APPLICATION_SHOULD_EXIT = true;
 	}
+	CPU_PERFORMANCE_METRICS.messageProcessingTime = PerformanceMetricsGetTimeSince(lastUpdateTime);
 
+	hardware_tick_t before = PerformanceMetricsNow();
+	if(!APPLICATION_SHOULD_PAUSE) {
+		PlatformRunSimulationStep();
+	}
+	CPU_PERFORMANCE_METRICS.simulationStepTime = PerformanceMetricsGetTimeSince(before);
+
+	MainWindowRedrawEverything(mainWindow);
+
+	milliseconds maxResponsiveSleepTime = MAX_FRAME_TIME;
+	milliseconds sleepTime = maxResponsiveSleepTime - CPU_PERFORMANCE_METRICS.frameTime;
+	hardware_tick_t beforeSleep = PerformanceMetricsNow();
+	if(sleepTime > 0) Sleep((DWORD)sleepTime);
+	CPU_PERFORMANCE_METRICS.sleepTime = sleepTime;
+	CPU_PERFORMANCE_METRICS.suspendedTime = PerformanceMetricsGetTimeSince(beforeSleep);
+
+	milliseconds frameTime = PerformanceMetricsGetTimeSince(lastUpdateTime);
+	CPU_PERFORMANCE_METRICS.frameTime = frameTime;
+
+	PerformanceMetricsRecordSample(CPU_PERFORMANCE_METRICS, PERFORMANCE_METRICS_HISTORY);
+}
+
+INTERNAL void PlatformDoShutdown() {
 	timeEndPeriod(requestedSchedulerGranularityInMilliseconds);
+}
+
+INTERNAL void PlatformRuntimeMain() {
+	PlatformDoSetup();
+	while(!PlatformShouldExit()) {
+		PlatformDoNextTick();
+	}
+	PlatformDoShutdown();
 }
