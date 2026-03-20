@@ -12,11 +12,36 @@ typedef enum : uint8_t {
 	FILE_FORMAT_NONE,
 	FILE_FORMAT_PAK,
 	FILE_FORMAT_GRF,
+	// NYI: Definitely need these later
+	// FILE_FORMAT_PAL,
+	// FILE_FORMAT_SPR,
+	// FILE_FORMAT_ACT,
+	// FILE_FORMAT_RSW,
+	// FILE_FORMAT_GAT,
+	// FILE_FORMAT_GND,
+	// FILE_FORMAT_RSM,
+	// FILE_FORMAT_STR,
+	// NOTE: Maybe this is a bit much, but it would be useful to support all types that may appear in the GRF/PAK files?
+	// FILE_FORMAT_EZV,
+	// FILE_FORMAT_BMP,
+	// FILE_FORMAT_TGA,
+	// FILE_FORMAT_JPG,
+	// FILE_FORMAT_PNG,
+	// FILE_FORMAT_GR2,
+	// FILE_FORMAT_BIK,
 } roff_format_t;
 
 typedef enum : uint8_t {
 	OPCODE_DEFAULT_ACTION,
 	OPCODE_LIST_CONTENTS,
+	// OPCODE_EXPORT_CONTENTS,
+	// OPCODE_HASH_CONTENTS,
+	// OPCODE_VALIDATE_CONTENTS,
+	// OPCODE_ADD_CONTENTS,
+	// OPCODE_REMOVE_CONTENTS,
+	// OPCODE_ANALYZE_CONTENTS,
+	// OPCODE_RENDER_CONTENTS,
+	// OPCODE_MIGRATE_CONTENTS,
 } roff_opcode_t;
 
 typedef struct {
