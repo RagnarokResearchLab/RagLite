@@ -11,4 +11,11 @@ GLOBAL memory_arena_t TRANSIENT_MEMORY = {};
 
 #ifdef RAGLITE_PLATFORM_WINDOWS
 #include "Platforms/Win32.cpp"
+int APIENTRY WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
+#else
+int main()
 #endif
+{
+	PlatformRuntimeMain();
+	return 0;
+}
