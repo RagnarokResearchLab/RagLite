@@ -280,8 +280,8 @@ LRESULT CALLBACK MainWindowProcessIncomingMessage(HWND window, UINT message, WPA
 	return result;
 }
 
-int WINAPI WinMain(HINSTANCE instance, HINSTANCE, LPSTR,
-	int) {
+INTERNAL void PlatformRuntimeMain() {
+	HINSTANCE instance = GetModuleHandle(NULL);
 	hardware_tick_t applicationStartTime = PerformanceMetricsNow();
 
 	IntrinsicsReadCPUID();
@@ -326,7 +326,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE, LPSTR,
 		GetSystemMetrics(SM_CYSMICON), LR_DEFAULTCOLOR);
 
 	ATOM classGUID = RegisterClassEx(&windowClass);
-	ASSUME(classGUID != NULL, "Failed to register window class (...really?)");
+	ASSUME(classGUID, "Failed to register window class (...really?)");
 
 	// TODO: On modern Windows systems, MAX_PATH is insufficient and Unicode paths should ideally be supported (later?)
 	TCHAR executableFileSystemPath[MAX_PATH];
@@ -385,6 +385,4 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE, LPSTR,
 	}
 
 	timeEndPeriod(requestedSchedulerGranularityInMilliseconds);
-
-	return 0;
 }

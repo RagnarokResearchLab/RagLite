@@ -18,13 +18,13 @@
 #error "Unsupported Platform: OS-specific code paths have yet to be ported"
 #endif
 
-#define RAGLITE_COMPILER_GCC 0
-#define RAGLITE_COMPILER_LLVM 0
-#define RAGLITE_COMPILER_MSVC 0
-
-#ifdef _MSC_VER
-#undef RAGLITE_COMPILER_MSVC
-#define RAGLITE_COMPILER_MSVC 1
+// NOTE: Should probably use feature detection macros, but for now assume the latest (tested) version will work
+#if defined(__clang__)
+#define RAGLITE_COMPILER_CLANG
+#elif defined(_MSC_VER)
+#define RAGLITE_COMPILER_MSVC
+#elif defined(__GNUC__)
+#define RAGLITE_COMPILER_GCC 1
 #else
 #define RAGLITE_UNSUPPORTED_COMPILER
 #endif
@@ -44,10 +44,10 @@
 #define EXPAND_AS_STRING(x) #x
 #define TOSTRING(x) EXPAND_AS_STRING(x)
 
-constexpr size_t BITS_PER_BYTE = 8ULL;
+constexpr int BITS_PER_BYTE = 8;
 #define Bits(bits) ((bits) / BITS_PER_BYTE)
 
-constexpr size_t PLATFORM_POINTER_SIZE = sizeof(void*);
+constexpr int PLATFORM_POINTER_SIZE = sizeof(void*);
 static_assert(PLATFORM_POINTER_SIZE == Bits(64), "Only 64-bit platforms are currently supported");
 
 #if defined(__BYTE_ORDER__) && __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
