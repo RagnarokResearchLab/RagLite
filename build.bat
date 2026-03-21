@@ -10,7 +10,7 @@ set RELEASE_EXE=%DEFAULT_BUILD_DIR%/RagLiteWin32.exe
 set PAK_MAIN=Core\FileFormats\ArcturusPAK.cpp
 set PAK_COMMANDLINE_EXE=%DEFAULT_BUILD_DIR%/ArcturusPAK.exe
 set PROGRAM_DLLS=PatternTest DummyTest
-set CLI_TOOLS=DependencyCheck PatchInfo
+set CLI_TOOLS=DependencyCheck PatchInfo RagnarokTools
 set RUNTIME_LIBS=gdi32.lib shlwapi.lib user32.lib xinput.lib winmm.lib imagehlp.lib ws2_32.lib
 
 for /f "delims=" %%i in ('call git describe --always --dirty') do set GIT_COMMIT_HASH=\"%%i\"
