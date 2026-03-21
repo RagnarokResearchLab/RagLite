@@ -36,6 +36,7 @@
 #ifdef NDEBUG
 #define RAGLITE_DEFAULT_APP DummyTest
 #else
+#define RAGLITE_DEBUG_ANNOTATIONS
 #define RAGLITE_DEBUG_ASSERTIONS
 #define RAGLITE_DEFAULT_APP PatternTest
 #define RAGLITE_PREDICTABLE_MEMORY
@@ -83,3 +84,11 @@ typedef struct volatile_simulation_state {
 	int32 offsetX;
 	int32 offsetY;
 } simulation_state_t;
+
+#ifdef RAGLITE_PLATFORM_WINDOWS
+#include "Platforms/Win32.hpp"
+#elifdef RAGLITE_PLATFORM_MACOS
+#include "Platforms/MacOS.hpp"
+#elifdef RAGLITE_PLATFORM_LINUX
+#include "Platforms/Linux.hpp"
+#endif
