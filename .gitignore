@@ -1,5 +1,4 @@
 *.log
-data.grf
 *.grf.extracted/*
 Cache/
 Exports
@@ -12,3 +11,6 @@ Screenshots/
 evo
 /BuildArtifacts
 /Downloads
+
+*.pak
+*.grf
