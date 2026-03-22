@@ -322,7 +322,12 @@ int main(size_t argCount, const char** arguments) {
 	roff_request_t requestDetails = HandleCommandLineArguments(argCount, arguments);
 	if(requestDetails.fileFormat == FILE_FORMAT_NONE) return DisplayUsageInfo();
 
-	// TODO: Preallocate a temporary memory arena for the format-specific decoders here
+	arena_allocator_t tempArena = PlatformCreateBumpAllocator(Megabytes(16));
+	if(!PlatformNoMemoryErrors(tempArena)) {
+		fprintf(stderr, "Failed to allocate virtual memory region (platform reported error: %s)\n", PlatformGetMemoryError(tempArena));
+		fprintf(stderr, "Retry after making sure there is enough memory available to run this program.\n");
+		return 1;
+	}
 
 	platform_handle_t inputFileHandle = {};
 	if(!requestDetails.inputSource) {
@@ -336,6 +341,7 @@ int main(size_t argCount, const char** arguments) {
 			return 1;
 		}
 		size_t fileSize = PlatformGetFileSize(inputFileHandle);
+		string_view_t readableFileSize = StringFormatFileSize(tempArena, fileSize);
 		printf("[NYI] Reading file contents from %s (%zd bytes)\n", requestDetails.inputSource, fileSize);
 		PlatformCloseFileHandle(inputFileHandle);
 	}
