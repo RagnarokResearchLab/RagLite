@@ -4,8 +4,7 @@
 #define GLOBAL static
 #define INTERNAL static
 
-// TODO: Use the exported types from the platform API (unfinished/WIP)
-typedef void* platform_handle_t;
+#include "../Core/RagLite2.hpp"
 
 // TODO: Compute this automatically (requires a bit of annoying boilerplate, but it's not too difficult)
 GLOBAL const char* THIS_EXECUTABLE = "RagnarokTools.exe";
@@ -133,15 +132,15 @@ typedef struct {
 } opcode_list_t;
 
 INTERNAL void PlaceholderNotYetImplemented(roff_request_t requestDetails, platform_handle_t inputFileHandle, platform_handle_t outputFileHandle) {
-	printf("[DISPATCH] Using platform-specific input file handle: 0x%p\n", inputFileHandle);
-	printf("[DISPATCH] Using platform-specific output file handle: 0x%p\n", outputFileHandle);
+	printf("[DISPATCH] Using platform-specific input file handle: 0x%p\n", &inputFileHandle);
+	printf("[DISPATCH] Using platform-specific output file handle: 0x%p\n", &outputFileHandle);
 
 	printf("[NYI] Alas... It is with great sorrow that I must inform you: This feature has not been implemented yet\n");
 	printf("[NYI] Some day, the missing functionality may indeed be available - but, clearly, today is not that day\n");
 	printf("[NYI] In due time, the patient shall see this great work come to fruition (or implement it yourself maybe)\n");
 
-	if(!inputFileHandle) fprintf(stderr, "[DISPATCH] Request aborted: Cannot read from an invalid OS file handle\n");
-	if(!outputFileHandle) fprintf(stderr, "[DISPATCH] Request aborted: Cannot write to an invalid OS file handle\n");
+	if(!PlatformNoFileErrors(inputFileHandle)) fprintf(stderr, "[DISPATCH] Request aborted: Cannot read from an invalid OS file handle\n");
+	if(!PlatformNoFileErrors(outputFileHandle)) fprintf(stderr, "[DISPATCH] Request aborted: Cannot write to an invalid OS file handle\n");
 }
 
 INTERNAL void DisplayFormatInfo(roff_request_t requestDetails, platform_handle_t inputFileHandle, platform_handle_t outputFileHandle) {
@@ -157,7 +156,7 @@ INTERNAL void DisplayFormatInfo(roff_request_t requestDetails, platform_handle_t
 	// TODO: It would probably be better to display (only) the supported operations for this format here
 
 	// TODO: Might be useful to print some file metadata here (size, hash, maybe even the header?)
-	printf("[NYI] A more useful file description for OS handle 0x%p should eventually appear here\n", inputFileHandle);
+	printf("[NYI] A more useful file description for OS handle 0x%p should eventually appear here\n", &inputFileHandle);
 }
 
 INTERNAL opcode_list_t GetSupportedFormatOperations(roff_format_t fileFormat) {
@@ -325,16 +324,24 @@ int main(size_t argCount, const char** arguments) {
 
 	// TODO: Preallocate a temporary memory arena for the format-specific decoders here
 
-	// TODO: Open platform handle to input file or stream
-	platform_handle_t inputFileHandle = NULL;
+	platform_handle_t inputFileHandle = {};
 	if(!requestDetails.inputSource) {
 		printf("[NYI] Reading from STDIN isn't currently supported, but should be very soon (... famous last words?)\n");
+		// TODO: Open platform handle to stdin
 	} else {
-		printf("[NYI] Reading files isn't currently supported, but should be very soon (... famous last words?)\n");
+		inputFileHandle = PlatformOpenFileHandle(requestDetails.inputSource, PlatformPolicyReadOnly());
+		if(!PlatformNoFileErrors(inputFileHandle)) {
+			fprintf(stderr, "Failed to open %s (platform reported error: %s)\n", requestDetails.inputSource, PlatformGetFileError(inputFileHandle));
+			fprintf(stderr, "Make sure the file exists in the working directory and is readable by this process\n");
+			return 1;
+		}
+		size_t fileSize = PlatformGetFileSize(inputFileHandle);
+		printf("[NYI] Reading file contents from %s (%zd bytes)\n", requestDetails.inputSource, fileSize);
+		PlatformCloseFileHandle(inputFileHandle);
 	}
 
 	// TODO: Open platform handle to output file or stream
-	platform_handle_t outputFileHandle = NULL;
+	platform_handle_t outputFileHandle = {};
 	if(!requestDetails.outputDestination) {
 		printf("[NYI] Writing to STDOUT isn't currently supported, but should be very soon (... famous last words?)\n");
 	} else {
