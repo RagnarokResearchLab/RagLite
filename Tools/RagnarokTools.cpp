@@ -316,15 +316,136 @@ INTERNAL void InitializeCommandRegistry() {
 	};
 }
 
+// TODO: Move elsewhere
+typedef struct {
+	union {
+		void* memory;
+		uint8_t* bytes;
+	};
+	size_t capacity;
+	size_t used;
+} arena_allocator_t;
+
+// TODO: Move to Platforms\Win32\.hpp
+// TBD: Rename this?
+// INTERNAL arena_allocator_t PlatformAllocateMemoryRegion(size_t backingStorageCapacityInBytes) {
+// INTERNAL arena_allocator_t PlatformAllocateMemoryArena(size_t backingStorageCapacityInBytes) {
+// INTERNAL arena_allocator_t PlatformCreateArenaAllocator(size_t backingStorageCapacityInBytes) {
+INTERNAL arena_allocator_t PlatformCreateArenaAllocator(size_t backingStorageCapacityInBytes) {
+	arena_allocator_t arena = {};
+	// NYI: Allocate virtual memory
+	return arena;
+}
+
+INTERNAL inline bool PlatformNoMemoryErrors(arena_allocator_t& memoryArena) {
+	// NYI: Check whether there were errors when creating the arena?
+	return false;
+}
+
+typedef struct {
+	size_t length;
+	union {
+		void* memory;
+		uint8_t* bytes;
+		const char* chars;
+	};
+} string_view_t;
+
+// TBD: Names? Is it always immutable? Is sizeof even getting the right value here? Seems kinda sussy, review later...
+#define StringView(nullTerminatedStringLiteral) { sizeof(nullTerminatedStringLiteral) - sizeof(ASCII_NULL_TERMINATOR), (char*)(nullTerminatedStringLiteral) }
+#define StringViewImmutable(nullTerminatedStringLiteral) {               \
+	sizeof(nullTerminatedStringLiteral) - sizeof(ASCII_NULL_TERMINATOR), \
+	(char*)(nullTerminatedStringLiteral),                                \
+}
+
+
+INTERNAL inline bool ArenaIsValidOffset(arena_allocator_t& arena, size_t offset) {
+	// NYI
+	// return(offset <= arena.capacity);
+	return false;
+}
+
+INTERNAL inline bool ArenaHasCapacity(arena_allocator_t& arena, size_t allocationSize) {
+	// TBD: Alignment needs to be considered, too?
+	uint8_t* nextAvailableStartPointer = arena.bytes + arena.used;
+	uint8_t* nextAlignedStartPointer = nextAvailableStartPointer; // NYI
+
+	size_t allocationStartOffset = (size_t)nextAlignedStartPointer - (size_t)arena.bytes;
+	size_t allocationEndOffset = allocationStartOffset - allocationSize;
+	return ArenaIsValidOffset(arena, allocationStartOffset) && ArenaIsValidOffset(arena, allocationEndOffset);
+}
+
+// NOTE: Deliberately skipping alignment here (for now)
+// TODO: Debug annotations (alignment waste, count) -> Then add alignment option
+// TBD: Use ArenaHasCapacity? // ArenaNoCapacity // ArenaEnsureCapacity
+INTERNAL void* ArenaAllocateBytes(arena_allocator_t& arena, size_t allocationSize) {
+	uint8_t* nextAvailableStartPointer = arena.bytes + arena.used;
+	uint8_t* nextAlignedStartPointer = nextAvailableStartPointer; // NYI
+
+	size_t allocationStartOffset = (size_t)nextAlignedStartPointer - (size_t)arena.bytes;
+	ASSUME(ArenaIsValidOffset(arena, allocationStartOffset), "Invalid allocation start offset leads to OOB access");
+
+	// TBD: What if at capacity? Fail or check via ArenaHasCapacity?
+
+	uint8_t* allocationStartPointer = arena.bytes + allocationStartOffset;
+	arena.used = allocationStartOffset + allocationSize;
+
+	return allocationStartPointer;
+}
+
+INTERNAL string_view_t ArenaPushFormattedString(arena_allocator_t& arena, const char* formatString, ...) {
+	va_list arguments;
+	va_start(arguments, formatString);
+
+	// First pass: get required size
+	int32_t bytesNeeded = _vscprintf(formatString, arguments);
+	va_end(arguments);
+
+	ASSUME(bytesNeeded > 0, "Why push a formatted string instead of a regular one? Silly goose...");
+
+	size_t totalBytes = bytesNeeded + sizeof(ASCII_NULL_TERMINATOR);
+	ASSUME(ArenaHasCapacity(arena, totalBytes), "Insufficient memory available (preallocate more or reset the arena?)");
+	char* buffer = (char*)ArenaAllocateBytes(arena, totalBytes);
+
+	va_start(arguments, formatString);
+	vsnprintf(buffer, totalBytes, formatString, arguments);
+	va_end(arguments);
+
+	// string_view_t result = {.bytes = buffer, .size = totalBytes};
+	string_view_t result = StringView(buffer);
+	return result;
+}
+
+// TBD: TB or TiB?
+// TBD: Can streamline control flow? Seems a bit convoluted...
+INTERNAL string_view_t StringFormatFileSize(arena_allocator_t& arena, size_t fileSizeInBytes) {
+	if(fileSizeInBytes < Kilobytes(1)) return ArenaPushFormattedString(arena, "%llu Bytes", fileSizeInBytes);
+
+	if(fileSizeInBytes < Megabytes(1)) return ArenaPushFormattedString(arena, "%llu.%02llu KB", fileSizeInBytes / Kilobytes(1), ((fileSizeInBytes) / Kilobytes(1)) % 100);
+
+	if(fileSizeInBytes < Gigabytes(1)) return ArenaPushFormattedString(arena, "%llu.%02llu MB", fileSizeInBytes / Megabytes(1), ((fileSizeInBytes) / Megabytes(1)) % 100);
+
+	if(fileSizeInBytes < Terabytes(1)) return ArenaPushFormattedString(arena, "%llu.%02llu GB", fileSizeInBytes / Gigabytes(1), ((fileSizeInBytes) / Gigabytes(1)) % 100);
+
+	return ArenaPushFormattedString(arena, "%llu.%02llu TB", fileSizeInBytes / Gigabytes(1), ((fileSizeInBytes) / Gigabytes(1)) % 100);
+}
+
+INTERNAL inline string_view_t PlatformGetMemoryError(arena_allocator_t& arena) {
+	// NYI: Get error message and code from the OS
+	string_view_t errorMessage = StringViewImmutable("Oopsie-whoopsie");
+	return errorMessage;
+}
+
 int main(size_t argCount, const char** arguments) {
 	InitializeCommandRegistry();
 
 	roff_request_t requestDetails = HandleCommandLineArguments(argCount, arguments);
 	if(requestDetails.fileFormat == FILE_FORMAT_NONE) return DisplayUsageInfo();
 
-	arena_allocator_t tempArena = PlatformCreateBumpAllocator(Megabytes(16));
+	arena_allocator_t tempArena = PlatformCreateArenaAllocator(Megabytes(16));
 	if(!PlatformNoMemoryErrors(tempArena)) {
-		fprintf(stderr, "Failed to allocate virtual memory region (platform reported error: %s)\n", PlatformGetMemoryError(tempArena));
+		string_view_t errorMessage = PlatformGetMemoryError(tempArena);
+		fprintf(stderr, "Failed to allocate virtual memory region (platform reported error: %s)\n", errorMessage.chars);
 		fprintf(stderr, "Retry after making sure there is enough memory available to run this program.\n");
 		return 1;
 	}
